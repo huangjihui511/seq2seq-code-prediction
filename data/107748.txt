@@ -1,0 +1,42 @@
+package com.iluwatar.masterworker.system.systemmaster;
+import com.iluwatar.masterworker.ArrayResult;
+import com.iluwatar.masterworker.system.systemworkers.ArrayTransposeWorker;
+import com.iluwatar.masterworker.system.systemworkers.Worker;
+import java.util.ArrayList;
+import java.util.Enumeration;
+public class ArrayTransposeMaster extends Master {
+public ArrayTransposeMaster(int numOfWorkers) {
+super(numOfWorkers);
+}
+@Override
+ArrayList<Worker> setWorkers(int num) {
+ArrayList<Worker> ws = new ArrayList<Worker>(num);
+for (int i = 0; i < num; i++) {
+ws.add(new ArrayTransposeWorker(this, i + 1));
+}
+return ws;
+}
+@Override
+ArrayResult aggregateData() {
+int rows = ((ArrayResult) this.getAllResultData()
+.get(this.getAllResultData().keys().nextElement())).data.length;
+int columns =
+0; 
+for (Enumeration<Integer> e = this.getAllResultData().keys(); e.hasMoreElements(); ) {
+columns += ((ArrayResult) this.getAllResultData().get(e.nextElement())).data[0].length;
+}
+int[][] resultData = new int[rows][columns];
+int columnsDone = 0; 
+for (int i = 0; i < this.getExpectedNumResults(); i++) {
+int[][] work =
+((ArrayResult) this.getAllResultData().get(this.getWorkers().get(i).getWorkerId())).data;
+for (int m = 0; m < work.length; m++) {
+for (int n = 0; n < work[0].length; n++) {
+resultData[m][columnsDone + n] = work[m][n];
+}
+}
+columnsDone += work[0].length;
+}
+return new ArrayResult(resultData);
+}
+}

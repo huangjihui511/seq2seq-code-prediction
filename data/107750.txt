@@ -1,0 +1,22 @@
+package com.iluwatar.masterworker.system.systemworkers;
+import com.iluwatar.masterworker.ArrayInput;
+import com.iluwatar.masterworker.ArrayResult;
+import com.iluwatar.masterworker.system.systemmaster.Master;
+public class ArrayTransposeWorker extends Worker {
+public ArrayTransposeWorker(Master master, int id) {
+super(master, id);
+}
+@Override
+ArrayResult executeOperation() {
+ArrayInput arrayInput = (ArrayInput) this.getReceivedData();
+final int rows = arrayInput.data[0].length;
+final int cols = arrayInput.data.length;
+int[][] resultData = new int[rows][cols];
+for (int i = 0; i < cols; i++) {
+for (int j = 0; j < rows; j++) {
+resultData[j][i] = arrayInput.data[i][j];
+}
+}
+return new ArrayResult(resultData);
+}
+}

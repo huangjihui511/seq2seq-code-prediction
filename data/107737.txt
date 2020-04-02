@@ -1,0 +1,27 @@
+package threadPoolExecutor;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import static common.ThreadPoolConstants.CORE_POOL_SIZE;
+import static common.ThreadPoolConstants.KEEP_ALIVE_TIME;
+import static common.ThreadPoolConstants.MAX_POOL_SIZE;
+import static common.ThreadPoolConstants.QUEUE_CAPACITY;
+public class ThreadPoolExecutorDemo {
+public static void main(String[] args) {
+ThreadPoolExecutor executor = new ThreadPoolExecutor(
+CORE_POOL_SIZE,
+MAX_POOL_SIZE,
+KEEP_ALIVE_TIME,
+TimeUnit.SECONDS,
+new ArrayBlockingQueue<>(QUEUE_CAPACITY),
+new ThreadPoolExecutor.CallerRunsPolicy());
+for (int i = 0; i < 10; i++) {
+Runnable worker = new MyRunnable("" + i);
+executor.execute(worker);
+}
+executor.shutdown();
+while (!executor.isTerminated()) {
+}
+System.out.println("Finished all threads");
+}
+}
