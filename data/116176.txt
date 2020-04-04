@@ -1,0 +1,57 @@
+package net.i2p.crypto;
+import com.southernstorm.noise.crypto.chacha20.ChaChaCore;
+import net.i2p.data.DataHelper;
+public final class ChaCha20 {
+private ChaCha20() {}
+public static void encrypt(byte[] key, byte[] iv,
+byte[] plaintext, int plaintextOffset,
+byte[] ciphertext, int ciphertextOffset, int length) {
+int[] input = new int[16];
+int[] output = new int[16];
+ChaChaCore.initKey256(input, key, 0);
+input[12] = 1;
+input[13] = (int) DataHelper.fromLongLE(iv, 0, 4);
+input[14] = (int) DataHelper.fromLongLE(iv, 4, 4);
+input[15] = (int) DataHelper.fromLongLE(iv, 8, 4);
+ChaChaCore.hash(output, input);
+while (length > 0) {
+int tempLen = 64;
+if (tempLen > length)
+tempLen = length;
+ChaChaCore.hash(output, input);
+ChaChaCore.xorBlock(plaintext, plaintextOffset, ciphertext, ciphertextOffset, tempLen, output);
+if (++(input[12]) == 0)
+++(input[13]);
+plaintextOffset += tempLen;
+ciphertextOffset += tempLen;
+length -= tempLen;
+}
+}
+public static void decrypt(byte[] key, byte[] iv,
+byte[] ciphertext, int ciphertextOffset,
+byte[] plaintext, int plaintextOffset, int length) {
+encrypt(key, iv, ciphertext, ciphertextOffset, plaintext, plaintextOffset, length);
+}
+public static void main(String[] args) {
+byte[] plaintext = DataHelper.getASCII("Ladies and Gentlemen of the class of '99: If I could offer you only one tip for the future, sunscreen would be it.");
+byte[] key = new byte[32];
+for (int i = 0; i < 32; i++) {
+key[i] = (byte) i;
+}
+byte[] iv = new byte[12];
+iv[7] = 0x4a;
+byte[] out = new byte[plaintext.length];
+encrypt(key, iv, plaintext, 0, out, 0, plaintext.length);
+System.out.println("Ciphertext:\n" + net.i2p.util.HexDump.dump(out));
+byte[] out2 = new byte[plaintext.length];
+decrypt(key, iv, out, 0, out2, 0, plaintext.length);
+System.out.println("Plaintext:\n" + net.i2p.util.HexDump.dump(out2));
+}
+private static void dumpBlock(int[] b) {
+byte[] d = new byte[64];
+for (int i = 0; i < 16; i++) {
+DataHelper.toLong(d, i*4, 4, b[i] & 0xffffffffL);
+}
+System.out.println(net.i2p.util.HexDump.dump(d));
+}
+}

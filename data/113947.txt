@@ -1,0 +1,9 @@
+package org.spongepowered.mod.util;
+final class DamageEventObject {
+int level;
+int previousLevel;
+double previousDamage;
+double ratio;
+double previousRatio;
+boolean augment = false;
+}

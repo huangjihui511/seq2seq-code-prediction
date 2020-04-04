@@ -1,0 +1,64 @@
+package org.spongepowered.mod.event;
+import net.minecraftforge.fml.common.eventhandler.IEventListener;
+import org.spongepowered.api.Sponge;
+import org.spongepowered.common.event.RegisteredListener;
+public class EventData {
+private final boolean useCauseStackManager;
+private org.spongepowered.api.event.Event spongeEvent;
+private net.minecraftforge.fml.common.eventhandler.Event forgeEvent;
+private Class<? extends net.minecraftforge.fml.common.eventhandler.Event> forgeClass;
+private IEventListener[] forgeListeners;
+private RegisteredListener.Cache spongeListenerCache;
+private boolean beforeModifications = false;
+private boolean forced = false;
+public EventData(net.minecraftforge.fml.common.eventhandler.Event forgeEvent, final IEventListener[] forgeListeners) {
+this.forgeEvent = forgeEvent;
+this.forgeListeners = forgeListeners;
+this.useCauseStackManager = SpongeModEventManager.shouldUseCauseStackManager(false);
+}
+public EventData(org.spongepowered.api.event.Event spongeEvent, Class<? extends net.minecraftforge.fml.common.eventhandler.Event> forgeClass, RegisteredListener.Cache cache, boolean useCauseStackManager) {
+this.spongeEvent = spongeEvent;
+this.forgeClass = forgeClass;
+this.spongeListenerCache = cache;
+this.useCauseStackManager = useCauseStackManager;
+}
+public net.minecraftforge.fml.common.eventhandler.Event getForgeEvent() {
+return this.forgeEvent;
+}
+public org.spongepowered.api.event.Event getSpongeEvent() {
+return this.spongeEvent;
+}
+public IEventListener[] getForgeListeners() {
+return this.forgeListeners;
+}
+public boolean useCauseStackManager() {
+return this.useCauseStackManager;
+}
+public boolean isBeforeModifications() {
+return this.beforeModifications;
+}
+public boolean isForced() {
+return this.forced;
+}
+public RegisteredListener.Cache getSpongeListenerCache() {
+return this.spongeListenerCache;
+}
+public void setBeforeModifications(boolean beforeModifications) {
+this.beforeModifications = beforeModifications;
+}
+public void setForced(boolean forced) {
+this.forced = forced;
+}
+public void setSpongeEvent(org.spongepowered.api.event.Event event) {
+this.spongeEvent = event;
+}
+public void setSpongeListenerCache(RegisteredListener.Cache cache) {
+this.spongeListenerCache = cache;
+}
+public Class<? extends net.minecraftforge.fml.common.eventhandler.Event> getForgeClass() {
+return this.forgeClass;
+}
+public void setForgeEvent(net.minecraftforge.fml.common.eventhandler.Event event) {
+this.forgeEvent = event;
+}
+}

@@ -1,0 +1,13 @@
+package io.ebeaninternal.server.profile;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+public class TimedProfileLocationRegistry {
+private static final List<TimedProfileLocation> list = Collections.synchronizedList(new ArrayList<>());
+public static void register(TimedProfileLocation location) {
+list.add(location);
+}
+public static List<TimedProfileLocation> registered() {
+return list;
+}
+}

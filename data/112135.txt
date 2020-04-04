@@ -1,0 +1,76 @@
+package org.menacheri.jetclient.communication;
+import org.jboss.netty.channel.Channel;
+import org.jboss.netty.channel.ChannelFuture;
+import org.jboss.netty.channel.ChannelFutureListener;
+import org.menacheri.jetclient.communication.MessageSender.Reliable;
+import org.menacheri.jetclient.event.Events;
+import org.menacheri.jetclient.event.Event;
+public class NettyTCPMessageSender implements Reliable
+{
+private boolean isClosed = false;
+private final Channel channel;
+private static final DeliveryGuaranty DELIVERY_GUARANTY = DeliveryGuaranty.DeliveryGuarantyOptions.RELIABLE;
+public NettyTCPMessageSender(Channel channel)
+{
+super();
+this.channel = channel;
+}
+@Override
+public Object sendMessage(Object message)
+{
+return channel.write(message);
+}
+@Override
+public DeliveryGuaranty getDeliveryGuaranty()
+{
+return DELIVERY_GUARANTY;
+}
+public Channel getChannel()
+{
+return channel;
+}
+public synchronized void close()
+{
+if (isClosed)
+return;
+ChannelFuture closeFuture = channel.close();
+closeFuture.awaitUninterruptibly();
+if (!closeFuture.isSuccess())
+{
+System.err.println("TCP channel " + channel.getId()
++ " did not close successfully");
+}
+isClosed = true;
+}
+public void close(Event closeEvent)
+{
+closeAfterFlushingPendingWrites(channel, closeEvent);
+}
+public void closeAfterFlushingPendingWrites(Channel channel, Event event)
+{
+if (channel.isConnected())
+{
+channel.write(event).addListener(ChannelFutureListener.CLOSE);
+}
+else
+{
+System.err.println("Unable to write the Event :" + event
++ " to socket as channel is ot connected");
+}
+}
+@Override
+public String toString()
+{
+String channelId = "TCP channel with Id: ";
+if (null != channel)
+{
+channelId += channel.getId().toString();
+}
+else
+{
+channelId += "0";
+}
+String sender = "Netty " + channelId;
+return sender;
+}
+}

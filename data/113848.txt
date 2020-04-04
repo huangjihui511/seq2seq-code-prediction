@@ -1,0 +1,60 @@
+package psiprobe.tools.logging.logback;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.List;
+import org.apache.commons.lang3.reflect.MethodUtils;
+import psiprobe.tools.logging.DefaultAccessor;
+public class LogbackFactoryAccessor extends DefaultAccessor {
+public LogbackFactoryAccessor(ClassLoader cl)
+throws ClassNotFoundException, IllegalAccessException, InvocationTargetException {
+Class<?> clazz = cl.loadClass("org.slf4j.impl.StaticLoggerBinder");
+Method getSingleton = MethodUtils.getAccessibleMethod(clazz, "getSingleton");
+Object singleton = getSingleton.invoke(null);
+Method getLoggerFactory = MethodUtils.getAccessibleMethod(clazz, "getLoggerFactory");
+Object loggerFactory = getLoggerFactory.invoke(singleton);
+Class<?> loggerFactoryClass = cl.loadClass("ch.qos.logback.classic.LoggerContext");
+if (!loggerFactoryClass.isInstance(loggerFactory)) {
+throw new RuntimeException("The singleton SLF4J binding was not Logback");
+}
+setTarget(loggerFactory);
+}
+public LogbackLoggerAccessor getRootLogger() {
+return getLogger("ROOT");
+}
+public LogbackLoggerAccessor getLogger(String name) {
+try {
+Class<? extends Object> clazz = getTarget().getClass();
+Method getLogger = MethodUtils.getAccessibleMethod(clazz, "getLogger", String.class);
+Object logger = getLogger.invoke(getTarget(), name);
+if (logger == null) {
+throw new NullPointerException(getTarget() + ".getLogger(\"" + name + "\") returned null");
+}
+LogbackLoggerAccessor accessor = new LogbackLoggerAccessor();
+accessor.setTarget(logger);
+accessor.setApplication(getApplication());
+return accessor;
+} catch (Exception e) {
+logger.error("{}.getLogger('{}') failed", getTarget(), name, e);
+}
+return null;
+}
+@SuppressWarnings("unchecked")
+public List<LogbackAppenderAccessor> getAppenders() {
+List<LogbackAppenderAccessor> appenders = new ArrayList<>();
+try {
+Class<? extends Object> clazz = getTarget().getClass();
+Method getLoggerList = MethodUtils.getAccessibleMethod(clazz, "getLoggerList");
+List<Object> loggers = (List<Object>) getLoggerList.invoke(getTarget());
+for (Object logger : loggers) {
+LogbackLoggerAccessor accessor = new LogbackLoggerAccessor();
+accessor.setTarget(logger);
+accessor.setApplication(getApplication());
+appenders.addAll(accessor.getAppenders());
+}
+} catch (Exception e) {
+logger.error("{}.getLoggerList() failed", getTarget(), e);
+}
+return appenders;
+}
+}

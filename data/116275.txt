@@ -1,0 +1,10 @@
+package org.apache.struts2.oval.interceptor;
+public class SimpleFieldsXMLChild extends SimpleFieldsXML {
+private String middleName;
+public String getMiddleName() {
+return middleName;
+}
+public void setMiddleName(String middleName) {
+this.middleName = middleName;
+}
+}

@@ -1,0 +1,177 @@
+package org.springframework.integration.support.management;
+import java.util.concurrent.atomic.AtomicLong;
+@SuppressWarnings("deprecation")
+public class DefaultMessageChannelMetrics extends AbstractMessageChannelMetrics {
+public static final long ONE_SECOND_SECONDS = 1;
+public static final long ONE_MINUTE_SECONDS = 60;
+public static final int DEFAULT_MOVING_AVERAGE_WINDOW = 10;
+protected final ExponentialMovingAverage sendDuration; 
+protected final ExponentialMovingAverageRate sendErrorRate; 
+protected final ExponentialMovingAverageRatio sendSuccessRatio; 
+protected final ExponentialMovingAverageRate sendRate; 
+protected final AtomicLong sendCount = new AtomicLong(); 
+protected final AtomicLong sendErrorCount = new AtomicLong(); 
+protected final AtomicLong receiveCount = new AtomicLong(); 
+protected final AtomicLong receiveErrorCount = new AtomicLong(); 
+public DefaultMessageChannelMetrics() {
+this(null);
+}
+public DefaultMessageChannelMetrics(String name) {
+this(name, new ExponentialMovingAverage(DEFAULT_MOVING_AVERAGE_WINDOW, 1000000.),
+new ExponentialMovingAverageRate(
+ONE_SECOND_SECONDS, ONE_MINUTE_SECONDS, DEFAULT_MOVING_AVERAGE_WINDOW, true),
+new ExponentialMovingAverageRatio(
+ONE_MINUTE_SECONDS, DEFAULT_MOVING_AVERAGE_WINDOW, true),
+new ExponentialMovingAverageRate(
+ONE_SECOND_SECONDS, ONE_MINUTE_SECONDS, DEFAULT_MOVING_AVERAGE_WINDOW, true));
+}
+public DefaultMessageChannelMetrics(String name, ExponentialMovingAverage sendDuration,
+ExponentialMovingAverageRate sendErrorRate, ExponentialMovingAverageRatio sendSuccessRatio,
+ExponentialMovingAverageRate sendRate) {
+super(name);
+this.sendDuration = sendDuration;
+this.sendErrorRate = sendErrorRate;
+this.sendSuccessRatio = sendSuccessRatio;
+this.sendRate = sendRate;
+}
+public void destroy() {
+if (logger.isDebugEnabled()) {
+logger.debug(this.sendDuration);
+}
+}
+@Override
+public MetricsContext beforeSend() {
+long start = 0;
+if (isFullStatsEnabled()) {
+start = System.nanoTime();
+this.sendRate.increment(start);
+}
+this.sendCount.incrementAndGet();
+return new DefaultChannelMetricsContext(start);
+}
+@Override
+public void afterSend(MetricsContext context, boolean result) {
+if (result) {
+if (isFullStatsEnabled()) {
+long now = System.nanoTime();
+this.sendSuccessRatio.success(now);
+this.sendDuration.append(now - ((DefaultChannelMetricsContext) context).start);
+}
+}
+else {
+if (isFullStatsEnabled()) {
+long now = System.nanoTime();
+this.sendSuccessRatio.failure(now);
+this.sendErrorRate.increment(now);
+}
+this.sendErrorCount.incrementAndGet();
+}
+}
+@Override
+public synchronized void reset() {
+this.sendDuration.reset();
+this.sendErrorRate.reset();
+this.sendSuccessRatio.reset();
+this.sendRate.reset();
+this.sendCount.set(0);
+this.sendErrorCount.set(0);
+this.receiveErrorCount.set(0);
+this.receiveCount.set(0);
+}
+@Override
+public int getSendCount() {
+return (int) this.sendCount.get();
+}
+@Override
+public long getSendCountLong() {
+return this.sendCount.get();
+}
+@Override
+public int getSendErrorCount() {
+return (int) this.sendErrorCount.get();
+}
+@Override
+public long getSendErrorCountLong() {
+return this.sendErrorCount.get();
+}
+@Override
+public double getTimeSinceLastSend() {
+return this.sendRate.getTimeSinceLastMeasurement();
+}
+@Override
+public double getMeanSendRate() {
+return this.sendRate.getMean();
+}
+@Override
+public double getMeanErrorRate() {
+return this.sendErrorRate.getMean();
+}
+@Override
+public double getMeanErrorRatio() {
+return 1 - this.sendSuccessRatio.getMean();
+}
+@Override
+public double getMeanSendDuration() {
+return this.sendDuration.getMean();
+}
+@Override
+public double getMinSendDuration() {
+return this.sendDuration.getMin();
+}
+@Override
+public double getMaxSendDuration() {
+return this.sendDuration.getMax();
+}
+@Override
+public double getStandardDeviationSendDuration() {
+return this.sendDuration.getStandardDeviation();
+}
+@Override
+public Statistics getSendDuration() {
+return this.sendDuration.getStatistics();
+}
+@Override
+public Statistics getSendRate() {
+return this.sendRate.getStatistics();
+}
+@Override
+public Statistics getErrorRate() {
+return this.sendErrorRate.getStatistics();
+}
+@Override
+public void afterReceive() {
+this.receiveCount.incrementAndGet();
+}
+@Override
+public void afterError() {
+this.receiveErrorCount.incrementAndGet();
+}
+@Override
+public int getReceiveCount() {
+return (int) this.receiveCount.get();
+}
+@Override
+public long getReceiveCountLong() {
+return this.receiveCount.get();
+}
+@Override
+public int getReceiveErrorCount() {
+return (int) this.receiveErrorCount.get();
+}
+@Override
+public long getReceiveErrorCountLong() {
+return this.receiveErrorCount.get();
+}
+@Override
+public String toString() {
+return String.format("MessageChannelMonitor: [name=%s, sends=%d"
++ (this.receiveCount.get() == 0 ? "" : this.receiveCount.get())
++ "]", name, this.sendCount.get());
+}
+protected static class DefaultChannelMetricsContext implements MetricsContext {
+protected final long start; 
+protected DefaultChannelMetricsContext(long start) {
+this.start = start;
+}
+}
+}

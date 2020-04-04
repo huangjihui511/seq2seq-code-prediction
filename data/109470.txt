@@ -1,0 +1,10 @@
+package com.facebook.presto.operator.aggregation;
+public class TestBooleanMaxAggregation
+extends TestBooleanOrAggregation
+{
+@Override
+protected String getFunctionName()
+{
+return "max";
+}
+}

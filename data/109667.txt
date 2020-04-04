@@ -1,0 +1,57 @@
+package com.google.inject.internal;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
+import com.google.inject.Stage;
+import com.google.inject.internal.InjectorImpl.InjectorOptions;
+import com.google.inject.spi.DisableCircularProxiesOption;
+import com.google.inject.spi.RequireAtInjectOnConstructorsOption;
+import com.google.inject.spi.RequireExactBindingAnnotationsOption;
+import com.google.inject.spi.RequireExplicitBindingsOption;
+class InjectorOptionsProcessor extends AbstractProcessor {
+private boolean disableCircularProxies = false;
+private boolean jitDisabled = false;
+private boolean atInjectRequired = false;
+private boolean exactBindingAnnotationsRequired = false;
+InjectorOptionsProcessor(Errors errors) {
+super(errors);
+}
+@Override
+public Boolean visit(DisableCircularProxiesOption option) {
+disableCircularProxies = true;
+return true;
+}
+@Override
+public Boolean visit(RequireExplicitBindingsOption option) {
+jitDisabled = true;
+return true;
+}
+@Override
+public Boolean visit(RequireAtInjectOnConstructorsOption option) {
+atInjectRequired = true;
+return true;
+}
+@Override
+public Boolean visit(RequireExactBindingAnnotationsOption option) {
+exactBindingAnnotationsRequired = true;
+return true;
+}
+InjectorOptions getOptions(Stage stage, InjectorOptions parentOptions) {
+checkNotNull(stage, "stage must be set");
+if (parentOptions == null) {
+return new InjectorOptions(
+stage,
+jitDisabled,
+disableCircularProxies,
+atInjectRequired,
+exactBindingAnnotationsRequired);
+} else {
+checkState(stage == parentOptions.stage, "child & parent stage don't match");
+return new InjectorOptions(
+stage,
+jitDisabled || parentOptions.jitDisabled,
+disableCircularProxies || parentOptions.disableCircularProxies,
+atInjectRequired || parentOptions.atInjectRequired,
+exactBindingAnnotationsRequired || parentOptions.exactBindingAnnotationsRequired);
+}
+}
+}

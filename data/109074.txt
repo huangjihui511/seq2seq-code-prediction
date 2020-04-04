@@ -1,0 +1,19 @@
+package io.vertx.core;
+import io.vertx.codegen.annotations.VertxGen;
+import io.vertx.core.streams.ReadStream;
+@VertxGen
+public interface TimeoutStream extends ReadStream<Long> {
+@Override
+TimeoutStream exceptionHandler(Handler<Throwable> handler);
+@Override
+TimeoutStream handler(Handler<Long> handler);
+@Override
+TimeoutStream pause();
+@Override
+TimeoutStream resume();
+@Override
+TimeoutStream fetch(long amount);
+@Override
+TimeoutStream endHandler(Handler<Void> endHandler);
+void cancel();
+}

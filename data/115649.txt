@@ -1,0 +1,44 @@
+package com.graphhopper.jsprit.analysis.toolbox;
+import com.graphhopper.jsprit.core.algorithm.VehicleRoutingAlgorithm;
+import com.graphhopper.jsprit.core.algorithm.listener.AlgorithmEndsListener;
+import com.graphhopper.jsprit.core.algorithm.listener.AlgorithmStartsListener;
+import com.graphhopper.jsprit.core.problem.VehicleRoutingProblem;
+import com.graphhopper.jsprit.core.problem.solution.VehicleRoutingProblemSolution;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import java.util.Collection;
+public class StopWatch implements AlgorithmStartsListener, AlgorithmEndsListener {
+private static Logger log = LoggerFactory.getLogger(StopWatch.class);
+private double ran;
+private double startTime;
+@Override
+public void informAlgorithmStarts(VehicleRoutingProblem problem, VehicleRoutingAlgorithm algorithm, Collection<VehicleRoutingProblemSolution> solutions) {
+reset();
+start();
+}
+public double getCompTimeInSeconds() {
+return (ran) / 1000.0;
+}
+@Override
+public void informAlgorithmEnds(VehicleRoutingProblem problem, Collection<VehicleRoutingProblemSolution> solutions) {
+stop();
+log.info("computation time [in sec]: {}", getCompTimeInSeconds());
+}
+public void stop() {
+ran += System.currentTimeMillis() - startTime;
+}
+public void start() {
+startTime = System.currentTimeMillis();
+}
+public void reset() {
+startTime = 0;
+ran = 0;
+}
+@Override
+public String toString() {
+return "stopWatch: " + getCompTimeInSeconds() + " sec";
+}
+public double getCurrTimeInSeconds() {
+return (System.currentTimeMillis() - startTime) / 1000.0;
+}
+}

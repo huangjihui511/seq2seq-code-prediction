@@ -1,0 +1,21 @@
+package mobi.hsz.idea.gitignore.lang.kind;
+import mobi.hsz.idea.gitignore.file.type.IgnoreFileType;
+import mobi.hsz.idea.gitignore.file.type.kind.SwaggerCodegenFileType;
+import mobi.hsz.idea.gitignore.lang.IgnoreLanguage;
+import mobi.hsz.idea.gitignore.util.Icons;
+import org.jetbrains.annotations.NotNull;
+public class SwaggerCodegenLanguage extends IgnoreLanguage {
+public static final SwaggerCodegenLanguage INSTANCE = new SwaggerCodegenLanguage();
+private SwaggerCodegenLanguage() {
+super("Swagger Codegen", "swagger-codegen-ignore", null, Icons.SWAGGER_CODEGEN);
+}
+@NotNull
+@Override
+public IgnoreFileType getFileType() {
+return SwaggerCodegenFileType.INSTANCE;
+}
+@Override
+public boolean isVCS() {
+return false;
+}
+}

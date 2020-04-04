@@ -1,0 +1,53 @@
+package br.com.leonardoz.features.parallel_stream;
+import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+public class UsingParallelStreams {
+public static void main(String[] args) {
+new ArrayList<>().parallelStream();
+IntStream.rangeClosed(0, 30_000) 
+.parallel().mapToObj(BigInteger::valueOf).map(UsingParallelStreams::isPrime) 
+.collect(Collectors.toList()); 
+IntStream.rangeClosed(0, 20) 
+.parallel().mapToObj(Integer::toString) 
+.forEach(System.out::print); 
+System.out.println("\n");
+IntStream.rangeClosed(0, 20)
+.mapToObj(Integer::toString)
+.forEach(System.out::print);
+System.out.println("\n");
+dummyPerformanceCheck();
+}
+private static void dummyPerformanceCheck() {
+var start1 = System.currentTimeMillis();
+IntStream.rangeClosed(0, 50_000)
+.mapToObj(BigInteger::valueOf)
+.map(UsingParallelStreams::isPrime)
+.collect(Collectors.toList());
+var end1 = System.currentTimeMillis();
+var time1 = (end1 - start1) / 1000;
+System.out.println("Sequential: " + time1);
+var start2 = System.currentTimeMillis();
+IntStream.rangeClosed(0, 50_000)
+.parallel()
+.mapToObj(BigInteger::valueOf)
+.map(UsingParallelStreams::isPrime)
+.collect(Collectors.toList());
+var end2 = System.currentTimeMillis();
+var time2 = (end2 - start2) / 1000;
+System.out.println("Parallel: " + time2);
+}
+public static boolean isPrime(BigInteger n) {
+var counter = BigInteger.ONE.add(BigInteger.ONE);
+var isPrime = true;
+while (counter.compareTo(n) == -1) {
+if (n.remainder(counter).compareTo(BigInteger.ZERO) == 0) {
+isPrime = false;
+break;
+}
+counter = counter.add(BigInteger.ONE);
+}
+return isPrime;
+}
+}

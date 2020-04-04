@@ -1,0 +1,44 @@
+package org.apache.pdfbox.pdmodel.graphics;
+import org.apache.pdfbox.cos.COSArray;
+import org.apache.pdfbox.cos.COSBase;
+import org.apache.pdfbox.cos.COSInteger;
+import org.apache.pdfbox.pdmodel.common.COSObjectable;
+import java.util.Arrays;
+public final class PDLineDashPattern implements COSObjectable
+{
+private final int phase;
+private final float[] array;
+public PDLineDashPattern()
+{
+array = new float[] { };
+phase = 0;
+}
+public PDLineDashPattern(COSArray array, int phase)
+{
+this.array = array.toFloatArray();
+this.phase = phase;
+}
+@Override
+public COSBase getCOSObject()
+{
+COSArray cos = new COSArray();
+COSArray patternArray = new COSArray();
+patternArray.setFloatArray(array);
+cos.add(patternArray);
+cos.add(COSInteger.get(phase));
+return cos;
+}
+public int getPhase()
+{
+return phase;
+}
+public float[] getDashArray()
+{
+return array.clone();
+}
+@Override
+public String toString()
+{
+return "PDLineDashPattern{array=" + Arrays.toString(array) + ", phase=" + phase + "}";
+}
+}

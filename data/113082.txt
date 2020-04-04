@@ -1,0 +1,17 @@
+package br.com.leonardoz.patterns.task_cancel;
+public class ThreadTaskCancel {
+private Thread thread;
+private Runnable task = () -> {
+while (!Thread.currentThread().isInterrupted()) {
+}
+};
+public void run() {
+thread = new Thread(task);
+thread.start();
+}
+public void cancel() {
+if (thread != null) {
+thread.interrupt();
+}
+}
+}

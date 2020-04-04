@@ -1,0 +1,15 @@
+package org.spongepowered.mod.bridge.registry;
+import net.minecraftforge.fml.common.registry.VillagerRegistry;
+import org.spongepowered.common.entity.SpongeCareer;
+import java.util.Optional;
+import javax.annotation.Nullable;
+public interface VillagerCareerBridge_Forge {
+VillagerRegistry.VillagerProfession forgeBridge$getProfession();
+Optional<SpongeCareer> forgeBridge$getSpongeCareer();
+void forgeBridge$setSpongeCareer(@Nullable SpongeCareer career);
+int forgeBridge$getId();
+boolean forgeBridge$isDelayed();
+void forgeBridge$performDelayedInit();
+void forgeBridge$forceProfession(VillagerRegistry.VillagerProfession villagerProfession);
+boolean forgeBridge$isModded();
+}

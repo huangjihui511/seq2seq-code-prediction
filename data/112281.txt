@@ -1,0 +1,13 @@
+package com.github.jknack.handlebars;
+import java.util.Map.Entry;
+import java.util.Set;
+import com.github.jknack.handlebars.context.JavaBeanValueResolver;
+import com.github.jknack.handlebars.context.MapValueResolver;
+public interface ValueResolver {
+ValueResolver[] VALUE_RESOLVERS = {MapValueResolver.INSTANCE,
+JavaBeanValueResolver.INSTANCE };
+Object UNRESOLVED = new Object();
+Object resolve(Object context, String name);
+Object resolve(Object context);
+Set<Entry<String, Object>> propertySet(Object context);
+}

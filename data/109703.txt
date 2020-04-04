@@ -1,0 +1,15 @@
+package lombok.eclipse.handlers;
+import static lombok.core.handlers.HandlerUtil.handleExperimentalFlagUsage;
+import lombok.ConfigurationKeys;
+import lombok.core.AnnotationValues;
+import lombok.eclipse.EclipseAnnotationHandler;
+import lombok.eclipse.EclipseNode;
+import lombok.experimental.Delegate;
+import org.eclipse.jdt.internal.compiler.ast.Annotation;
+import org.mangosdk.spi.ProviderFor;
+@ProviderFor(EclipseAnnotationHandler.class)
+public class HandleDelegate extends EclipseAnnotationHandler<Delegate> {
+public void handle(AnnotationValues<Delegate> annotation, Annotation ast, EclipseNode annotationNode) {
+handleExperimentalFlagUsage(annotationNode, ConfigurationKeys.DELEGATE_FLAG_USAGE, "@Delegate");
+}
+}

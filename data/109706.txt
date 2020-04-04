@@ -1,0 +1,39 @@
+package lombok.eclipse.handlers;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.PrintStream;
+import org.eclipse.jdt.internal.compiler.ast.Annotation;
+import org.mangosdk.spi.ProviderFor;
+import lombok.Lombok;
+import lombok.core.AnnotationValues;
+import lombok.core.HandlerPriority;
+import lombok.core.PrintAST;
+import lombok.eclipse.DeferUntilPostDiet;
+import lombok.eclipse.EclipseASTVisitor;
+import lombok.eclipse.EclipseAnnotationHandler;
+import lombok.eclipse.EclipseNode;
+@ProviderFor(EclipseAnnotationHandler.class)
+@DeferUntilPostDiet
+@HandlerPriority(536870912) 
+public class HandlePrintAST extends EclipseAnnotationHandler<PrintAST> {
+public void handle(AnnotationValues<PrintAST> annotation, Annotation ast, EclipseNode annotationNode) {
+PrintStream stream = System.out;
+String fileName = annotation.getInstance().outfile();
+if (fileName.length() > 0) try {
+stream = new PrintStream(new File(fileName));
+} catch (FileNotFoundException e) {
+throw Lombok.sneakyThrow(e);
+}
+try {
+annotationNode.up().traverse(new EclipseASTVisitor.Printer(annotation.getInstance().printContent(), stream, annotation.getInstance().printPositions()));
+} finally {
+if (stream != System.out) {
+try {
+stream.close();
+} catch (Exception e) {
+throw Lombok.sneakyThrow(e);
+}
+}
+}
+}
+}

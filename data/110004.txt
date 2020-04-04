@@ -1,0 +1,32 @@
+package com.google.cloud.tools.jib.builder;
+import com.google.cloud.tools.jib.event.events.TimerEvent;
+import java.time.Clock;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.Optional;
+import javax.annotation.Nullable;
+class Timer implements TimerEvent.Timer {
+private final Clock clock;
+@Nullable private final Timer parentTimer;
+private final Instant startTime;
+private Instant lapStartTime;
+Timer(Clock clock, @Nullable Timer parentTimer) {
+this.clock = clock;
+this.parentTimer = parentTimer;
+startTime = clock.instant();
+lapStartTime = startTime;
+}
+@Override
+public Optional<? extends Timer> getParent() {
+return Optional.ofNullable(parentTimer);
+}
+Duration lap() {
+Instant now = clock.instant();
+Duration duration = Duration.between(lapStartTime, now);
+lapStartTime = now;
+return duration;
+}
+Duration getElapsedTime() {
+return Duration.between(startTime, clock.instant());
+}
+}

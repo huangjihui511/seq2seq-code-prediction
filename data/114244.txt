@@ -1,0 +1,449 @@
+package com.datumbox.framework.core.common.dataobjects;
+import com.datumbox.framework.common.Configuration;
+import com.datumbox.framework.common.concurrency.ForkJoinStream;
+import com.datumbox.framework.common.concurrency.StreamMethods;
+import com.datumbox.framework.common.concurrency.ThreadMethods;
+import com.datumbox.framework.common.dataobjects.AssociativeArray;
+import com.datumbox.framework.common.dataobjects.FlatDataList;
+import com.datumbox.framework.common.dataobjects.TypeInference;
+import com.datumbox.framework.common.interfaces.Copyable;
+import com.datumbox.framework.core.common.interfaces.Extractable;
+import com.datumbox.framework.core.common.interfaces.Savable;
+import com.datumbox.framework.common.storage.abstracts.BigMapHolder;
+import com.datumbox.framework.common.storage.interfaces.BigMap;
+import com.datumbox.framework.common.storage.interfaces.StorageEngine;
+import com.datumbox.framework.common.storage.interfaces.StorageEngine.MapType;
+import com.datumbox.framework.common.storage.interfaces.StorageEngine.StorageHint;
+import com.datumbox.framework.common.utilities.RandomGenerator;
+import com.datumbox.framework.core.common.text.StringCleaner;
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVParser;
+import org.apache.commons.csv.CSVRecord;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import java.io.*;
+import java.net.URI;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Stream;
+public class Dataframe implements Collection<Record>, Copyable<Dataframe>, Savable {
+public static final String COLUMN_NAME_Y = "~Y";
+public static final String COLUMN_NAME_CONSTANT = "~CONSTANT";
+public static class Builder {
+public static Dataframe parseTextFiles(Map<Object, URI> textFilesMap, Extractable textExtractor, Configuration configuration) {
+Dataframe dataset = new Dataframe(configuration);
+Logger logger = LoggerFactory.getLogger(Dataframe.Builder.class);
+for (Map.Entry<Object, URI> entry : textFilesMap.entrySet()) {
+Object theClass = entry.getKey();
+URI datasetURI = entry.getValue();
+logger.info("Dataset Parsing {} class", theClass);
+try (BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(new File(datasetURI)), "UTF8"))) {
+final int baseCounter = dataset.size(); 
+ThreadMethods.throttledExecution(StreamMethods.enumerate(br.lines()), e -> {
+Integer rId = baseCounter + e.getKey();
+String line = e.getValue();
+AssociativeArray xData = new AssociativeArray(
+textExtractor.extract(StringCleaner.clear(line))
+);
+Record r = new Record(xData, theClass);
+dataset.set(rId, r);
+}, configuration.getConcurrencyConfiguration());
+}
+catch (IOException ex) {
+throw new RuntimeException(ex);
+}
+}
+return dataset;
+}
+public static Dataframe parseCSVFile(Reader reader, String yVariable, LinkedHashMap<String, TypeInference.DataType> headerDataTypes,
+char delimiter, char quote, String recordSeparator, Long skip, Long limit, Configuration configuration) {
+Logger logger = LoggerFactory.getLogger(Dataframe.Builder.class);
+if(skip == null) {
+skip = 0L;
+}
+if(limit == null) {
+limit = Long.MAX_VALUE;
+}
+logger.info("Parsing CSV file");
+if (!headerDataTypes.containsKey(yVariable)) {
+logger.warn("WARNING: The file is missing the response variable column {}.", yVariable);
+}
+TypeInference.DataType yDataType = headerDataTypes.get(yVariable);
+Map<String, TypeInference.DataType> xDataTypes = new HashMap<>(headerDataTypes); 
+xDataTypes.remove(yVariable); 
+Dataframe dataset = new Dataframe(configuration, yDataType, xDataTypes); 
+CSVFormat format = CSVFormat
+.RFC4180
+.withHeader()
+.withDelimiter(delimiter)
+.withQuote(quote)
+.withRecordSeparator(recordSeparator);
+try (final CSVParser parser = new CSVParser(reader, format)) {
+ThreadMethods.throttledExecution(StreamMethods.enumerate(StreamMethods.stream(parser.spliterator(), false)).skip(skip).limit(limit), e -> {
+Integer rId = e.getKey();
+CSVRecord row = e.getValue();
+if (!row.isConsistent()) {
+logger.warn("WARNING: Skipping row {} because its size does not match the header size.", row.getRecordNumber());
+}
+else {
+Object y = null;
+AssociativeArray xData = new AssociativeArray();
+for (Map.Entry<String, TypeInference.DataType> entry : headerDataTypes.entrySet()) {
+String column = entry.getKey();
+TypeInference.DataType dataType = entry.getValue();
+Object value = TypeInference.DataType.parse(row.get(column), dataType); 
+if (yVariable != null && yVariable.equals(column)) {
+y = value;
+}
+else {
+xData.put(column, value);
+}
+}
+Record r = new Record(xData, y);
+dataset._unsafe_set(rId, r);
+}
+}, configuration.getConcurrencyConfiguration());
+}
+catch (IOException ex) {
+throw new RuntimeException(ex);
+}
+return dataset;
+}
+public static Dataframe load(String storageName, Configuration configuration) {
+return new Dataframe(storageName, configuration);
+}
+}
+private static class Data extends BigMapHolder {
+private TypeInference.DataType yDataType = null;
+private AtomicInteger atomicNextAvailableRecordId = new AtomicInteger();
+@BigMap(keyClass=Object.class, valueClass=TypeInference.DataType.class, mapType=MapType.HASHMAP, storageHint=StorageHint.IN_MEMORY, concurrent=true)
+private Map<Object, TypeInference.DataType> xDataTypes;
+@BigMap(keyClass=Integer.class, valueClass=Record.class, mapType=MapType.TREEMAP, storageHint=StorageHint.IN_DISK, concurrent=true)
+private Map<Integer, Record> records;
+private Data(StorageEngine storageEngine) {
+super(storageEngine);
+}
+}
+private Data data;
+private boolean stored;
+private final StorageEngine storageEngine;
+protected final Configuration configuration;
+private final ForkJoinStream streamExecutor;
+public Dataframe(Configuration configuration) {
+this.configuration = configuration;
+storageEngine = this.configuration.getStorageConfiguration().createStorageEngine("dts" + RandomGenerator.getThreadLocalRandomUnseeded().nextLong());
+streamExecutor = new ForkJoinStream(this.configuration.getConcurrencyConfiguration());
+data = new Data(storageEngine);
+stored = false;
+}
+private Dataframe(String storageName, Configuration configuration) {
+this.configuration = configuration;
+storageEngine = this.configuration.getStorageConfiguration().createStorageEngine(storageName);
+streamExecutor = new ForkJoinStream(this.configuration.getConcurrencyConfiguration());
+data = storageEngine.loadObject("data", Data.class);
+stored = true;
+}
+private Dataframe(Configuration configuration, TypeInference.DataType yDataType, Map<String, TypeInference.DataType> xDataTypes) {
+this(configuration);
+this.data.yDataType = yDataType;
+this.data.xDataTypes.putAll(xDataTypes);
+}
+public void save(String storageName) {
+storageEngine.saveObject("data", data);
+storageEngine.rename(storageName);
+data = storageEngine.loadObject("data", Data.class);
+stored = true;
+}
+public void delete() {
+storageEngine.clear();
+_close();
+}
+@Override
+public void close() {
+if(stored) {
+_close();
+}
+else {
+delete();
+}
+}
+private void _close() {
+try {
+storageEngine.close();
+}
+catch (Exception ex) {
+throw new RuntimeException(ex);
+}
+finally {
+data = null;
+}
+}
+@Override
+public int size() {
+return data.records.size();
+}
+@Override
+public boolean isEmpty() {
+return data.records.isEmpty();
+}
+@Override
+public void clear() {
+data.yDataType = null;
+data.atomicNextAvailableRecordId.set(0);
+data.xDataTypes.clear();
+data.records.clear();
+}
+@Override
+public boolean add(Record r) {
+addRecord(r);
+return true;
+}
+@Override
+public boolean contains(Object o) {
+return data.records.containsValue((Record)o);
+}
+@Override
+public boolean addAll(Collection<? extends Record> c) {
+c.stream().forEach(r -> {
+add(r);
+});
+return true;
+}
+@Override
+public boolean containsAll(Collection<?> c) {
+return data.records.values().containsAll(c);
+}
+@Override
+public Object[] toArray() {
+Object[] array = new Object[size()];
+int i = 0;
+for(Record r : values()) {
+array[i++] = r;
+}
+return array;
+}
+@Override
+@SuppressWarnings("unchecked")
+public <T> T[] toArray(T[] a) {
+int size = size();
+if (a.length < size) {
+a = (T[])java.lang.reflect.Array.newInstance(a.getClass().getComponentType(), size);
+}
+int i = 0;
+for (Record r : values()) {
+a[i++] = (T) r;
+}
+return a;
+}
+@Override
+public Iterator<Record> iterator() {
+return values().iterator();
+}
+@Override
+public Stream<Record> stream() {
+return StreamMethods.stream(values(), false);
+}
+@Override
+public boolean remove(Object o) {
+Integer id = indexOf((Record) o);
+if(id == null) {
+return false;
+}
+remove(id);
+return true;
+}
+@Override
+public boolean removeAll(Collection<?> c) {
+boolean modified = false;
+for(Object o : c) {
+modified |= remove((Record)o);
+}
+if(modified) {
+recalculateMeta();
+}
+return modified;
+}
+@Override
+public boolean retainAll(Collection<?> c) {
+boolean modified = false;
+for(Map.Entry<Integer, Record> e : entries()) {
+Integer rId = e.getKey();
+Record r = e.getValue();
+if(!c.contains(r)) {
+remove(rId);
+modified = true;
+}
+}
+if(modified) {
+recalculateMeta();
+}
+return modified;
+}
+public Record remove(Integer id) {
+return data.records.remove(id);
+}
+public Integer indexOf(Record o) {
+if(o!=null) {
+for(Map.Entry<Integer, Record> e : entries()) {
+Integer rId = e.getKey();
+Record r = e.getValue();
+if(o.equals(r)) {
+return rId;
+}
+}
+}
+return null;
+}
+public Record get(Integer id) {
+return data.records.get(id);
+}
+public Integer addRecord(Record r) {
+Integer rId = _unsafe_add(r);
+updateMeta(r);
+return rId;
+}
+public Integer set(Integer rId, Record r) {
+_unsafe_set(rId, r);
+updateMeta(r);
+return rId;
+}
+public int xColumnSize() {
+return data.xDataTypes.size();
+}
+public TypeInference.DataType getYDataType() {
+return data.yDataType;
+}
+public Map<Object, TypeInference.DataType> getXDataTypes() {
+return Collections.unmodifiableMap(data.xDataTypes);
+}
+public FlatDataList getXColumn(Object column) {
+FlatDataList flatDataList = new FlatDataList();
+for(Record r : values()) {
+flatDataList.add(r.getX().get(column));
+}
+return flatDataList;
+}
+public FlatDataList getYColumn() {
+FlatDataList flatDataList = new FlatDataList();
+for(Record r : values()) {
+flatDataList.add(r.getY());
+}
+return flatDataList;
+}
+public void dropXColumns(Set<Object> columnSet) {
+columnSet.retainAll(data.xDataTypes.keySet()); 
+if(columnSet.isEmpty()) {
+return;
+}
+data.xDataTypes.keySet().removeAll(columnSet);
+streamExecutor.forEach(StreamMethods.stream(entries(), true), e -> {
+Integer rId = e.getKey();
+Record r = e.getValue();
+AssociativeArray xData = r.getX().copy();
+boolean modified = xData.keySet().removeAll(columnSet);
+if(modified) {
+Record newR = new Record(xData, r.getY(), r.getYPredicted(), r.getYPredictedProbabilities());
+_unsafe_set(rId, newR);
+}
+});
+}
+public Dataframe getSubset(FlatDataList idsCollection) {
+Dataframe d = new Dataframe(configuration);
+for(Object id : idsCollection) {
+d.add(get((Integer)id));
+}
+return d;
+}
+public void recalculateMeta() {
+data.yDataType = null;
+data.xDataTypes.clear();
+for(Record r : values()) {
+updateMeta(r);
+}
+}
+@Override
+public Dataframe copy() {
+Dataframe d = new Dataframe(configuration);
+for(Map.Entry<Integer, Record> e : entries()) {
+Integer rId = e.getKey();
+Record r = e.getValue();
+d.set(rId, r);
+}
+return d;
+}
+public Iterable<Map.Entry<Integer, Record>> entries() {
+return () -> new Iterator<Map.Entry<Integer, Record>>() {
+private final Iterator<Map.Entry<Integer, Record>> it = data.records.entrySet().iterator();
+@Override
+public boolean hasNext() {
+return it.hasNext();
+}
+@Override
+public Map.Entry<Integer, Record> next() {
+return it.next();
+}
+@Override
+public void remove() {
+throw new UnsupportedOperationException("This is a read-only iterator, remove operation is not supported.");
+}
+};
+}
+public Iterable<Integer> index() {
+return () -> new Iterator<Integer>() {
+private final Iterator<Integer> it = data.records.keySet().iterator();
+@Override
+public boolean hasNext() {
+return it.hasNext();
+}
+@Override
+public Integer next() {
+return it.next();
+}
+@Override
+public void remove() {
+throw new UnsupportedOperationException("This is a read-only iterator, remove operation is not supported.");
+}
+};
+}
+public Iterable<Record> values() {
+return () -> new Iterator<Record>(){
+private final Iterator<Record> it = data.records.values().iterator();
+@Override
+public boolean hasNext() {
+return it.hasNext();
+}
+@Override
+public Record next() {
+return it.next();
+}
+@Override
+public void remove() {
+throw new UnsupportedOperationException("This is a read-only iterator, remove operation is not supported.");
+}
+};
+}
+public Record _unsafe_set(Integer rId, Record r) {
+data.atomicNextAvailableRecordId.updateAndGet(x -> (x<rId)?Math.max(x+1,rId+1):x);
+return data.records.put(rId, r);
+}
+private Integer _unsafe_add(Record r) {
+Integer newId = data.atomicNextAvailableRecordId.getAndIncrement();
+data.records.put(newId, r);
+return newId;
+}
+private void updateMeta(Record r) {
+for(Map.Entry<Object, Object> entry : r.getX().entrySet()) {
+Object column = entry.getKey();
+Object value = entry.getValue();
+if(value!=null) {
+data.xDataTypes.putIfAbsent(column, TypeInference.getDataType(value));
+}
+}
+if(data.yDataType == null) {
+Object value = r.getY();
+if(value!=null) {
+data.yDataType = TypeInference.getDataType(r.getY());
+}
+}
+}
+}

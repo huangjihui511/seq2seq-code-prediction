@@ -1,0 +1,62 @@
+package com.datumbox.framework.common.dataobjects;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+public class FlatDataCollection extends AbstractDataStructureCollection<Collection<Object>> implements Collection<Object> {
+private static final long serialVersionUID = 1L;
+public FlatDataCollection(Collection<Object> internalData) {
+super(internalData);
+}
+public final boolean remove(Object o) {
+return internalData.remove(o);
+}
+@Override
+public boolean containsAll(Collection<?> c) {
+return internalData.containsAll(c);
+}
+@Override
+public boolean addAll(Collection<?> c) {
+return internalData.addAll(c);
+}
+@Override
+public boolean removeAll(Collection<?> c) {
+return internalData.removeAll(c);
+}
+@Override
+public boolean retainAll(Collection<?> c) {
+return internalData.retainAll(c);
+}
+public final boolean add(Object e) {
+return internalData.add(e);
+}
+@Override
+public final Iterator<Object> iterator() {
+return internalData.iterator();
+}
+@Override
+public <T> T[] toArray(T[] a) {
+return internalData.toArray(a);
+}
+@SuppressWarnings("unchecked")
+public final FlatDataList toFlatDataList() {
+List<Object> list;
+if (internalData instanceof List<?>) {
+list = (List<Object>)internalData;
+}
+else {
+list = new ArrayList(internalData);
+}
+return new FlatDataList(list);
+}
+@Override
+public boolean equals(Object o) {
+if ( this == o ) return true;
+if ( !(o instanceof FlatDataCollection) ) return false;
+return internalData.equals(((FlatDataCollection)o).internalData);
+}
+@Override
+public int hashCode() {
+return internalData.hashCode();
+}
+}

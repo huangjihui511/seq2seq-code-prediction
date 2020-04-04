@@ -1,0 +1,23 @@
+package org.spongepowered.mod.network.brokenmod;
+import net.minecraft.client.Minecraft;
+import net.minecraft.util.IThreadListener;
+import net.minecraftforge.fml.common.ModContainer;
+import net.minecraftforge.fml.relauncher.Side;
+import org.spongepowered.common.SpongeImpl;
+import java.util.function.Supplier;
+public class BrokenModData {
+private Supplier<Side> side;
+public BrokenModData(Supplier<Side> side) {
+this.side = side;
+}
+private IThreadListener getScheduler() {
+if (this.side.get() == Side.CLIENT) {
+return Minecraft.getMinecraft();
+} else {
+return SpongeImpl.getServer();
+}
+}
+public void schedule(Runnable runnable) {
+this.getScheduler().addScheduledTask(runnable);
+}
+}

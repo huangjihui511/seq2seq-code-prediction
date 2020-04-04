@@ -1,0 +1,154 @@
+package org.menacheri.jetclient;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.UnknownHostException;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import org.jboss.netty.bootstrap.ConnectionlessBootstrap;
+import org.jboss.netty.channel.Channel;
+import org.jboss.netty.channel.ChannelFactory;
+import org.jboss.netty.channel.ChannelFuture;
+import org.jboss.netty.channel.ChannelFutureListener;
+import org.jboss.netty.channel.ChannelPipeline;
+import org.jboss.netty.channel.ChannelPipelineFactory;
+import org.jboss.netty.channel.socket.DatagramChannel;
+import org.jboss.netty.channel.socket.DatagramChannelFactory;
+import org.jboss.netty.channel.socket.nio.NioDatagramChannelFactory;
+import org.menacheri.jetclient.app.Session;
+import org.menacheri.jetclient.event.Events;
+import org.menacheri.jetclient.event.Event;
+import org.menacheri.jetclient.handlers.netty.UDPUpstreamHandler;
+public class NettyUDPClient
+{
+private final InetSocketAddress serverAddress;
+private final ExecutorService worker;
+private final ConnectionlessBootstrap udpBootstrap;
+private final DatagramChannelFactory channelFactory;
+private final ChannelPipelineFactory pipelineFactory;
+public static final Map<InetSocketAddress, Session> CLIENTS = new HashMap<InetSocketAddress, Session>();
+public NettyUDPClient(String jetserverHost, int port,
+final ChannelPipelineFactory pipelineFactory)
+throws UnknownHostException, Exception
+{
+this(new InetSocketAddress(jetserverHost, port), pipelineFactory);
+}
+public NettyUDPClient(final InetSocketAddress serverAddress,
+final ChannelPipelineFactory pipelineFactory)
+throws UnknownHostException, Exception
+{
+this(serverAddress, pipelineFactory, null, Executors
+.newCachedThreadPool());
+}
+public NettyUDPClient(final InetSocketAddress serverAddress,
+final ChannelPipelineFactory pipelineFactory,
+final DatagramChannelFactory channelFactory,
+final ExecutorService worker) throws UnknownHostException,
+Exception
+{
+this.worker = worker;
+this.serverAddress = serverAddress;
+if (channelFactory == null)
+{
+this.channelFactory = new NioDatagramChannelFactory(worker);
+}
+else
+{
+this.channelFactory = channelFactory;
+}
+this.udpBootstrap = new ConnectionlessBootstrap(this.channelFactory);
+udpBootstrap.setOption("broadcast", "true");
+this.pipelineFactory = pipelineFactory;
+udpBootstrap.setPipeline(pipelineFactory.getPipeline());
+Runtime.getRuntime().addShutdownHook(new Thread()
+{
+public void run()
+{
+udpBootstrap.releaseExternalResources();
+}
+});
+}
+public DatagramChannel createDatagramChannel() throws UnknownHostException
+{
+return createDatagramChannel(InetAddress.getLocalHost()
+.getHostAddress());
+}
+public DatagramChannel createDatagramChannel(String localhostName)
+throws UnknownHostException
+{
+DatagramChannel datagramChannel = (DatagramChannel) udpBootstrap
+.bind(new InetSocketAddress(localhostName, 0));
+return datagramChannel;
+}
+public ChannelFuture connect(Session session,
+DatagramChannel datagramChannel) throws UnknownHostException,
+InterruptedException
+{
+return connect(session, datagramChannel, this.serverAddress, 5,
+TimeUnit.SECONDS);
+}
+public ChannelFuture connect(Session session,
+DatagramChannel datagramChannel, InetSocketAddress serverAddress,
+int timeout, TimeUnit unit) throws UnknownHostException,
+InterruptedException
+{
+if (null == datagramChannel)
+{
+throw new NullPointerException(
+"DatagramChannel passed to connect method cannot be null");
+}
+if (!datagramChannel.isBound())
+{
+throw new IllegalStateException("DatagramChannel: "
++ datagramChannel
++ " Passed to connect method is not bound");
+}
+Event event = Events.event(null, Events.CONNECT);
+ChannelFuture future = datagramChannel.write(event, serverAddress);
+future.addListener(new ChannelFutureListener()
+{
+@Override
+public void operationComplete(ChannelFuture future)
+throws Exception
+{
+if (!future.isSuccess())
+{
+throw new RuntimeException(future.getCause());
+}
+}
+});
+CLIENTS.put(datagramChannel.getLocalAddress(), session);
+return future;
+}
+public ChannelFuture write(DatagramChannel datagramChannel, Object message)
+{
+return write(datagramChannel, message, serverAddress);
+}
+public static ChannelFuture write(DatagramChannel datagramChannel, Object message,
+InetSocketAddress serverAddress)
+{
+return datagramChannel.write(message, serverAddress);
+}
+public InetSocketAddress getServerAddress()
+{
+return serverAddress;
+}
+public ExecutorService getWorker()
+{
+return worker;
+}
+public ConnectionlessBootstrap getUdpBootstrap()
+{
+return udpBootstrap;
+}
+public DatagramChannelFactory getChannelFactory()
+{
+return channelFactory;
+}
+public ChannelPipelineFactory getPipelineFactory()
+{
+return pipelineFactory;
+}
+}

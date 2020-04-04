@@ -1,0 +1,42 @@
+package org.spongepowered.api.event.entity;
+import org.spongepowered.api.data.key.Keys;
+import org.spongepowered.api.data.manipulator.immutable.entity.ImmutableExperienceHolderData;
+import org.spongepowered.api.data.manipulator.mutable.entity.ExperienceHolderData;
+import org.spongepowered.api.entity.Entity;
+import org.spongepowered.api.event.Cancellable;
+import org.spongepowered.api.event.SpongeEventFactory;
+import org.spongepowered.api.event.cause.Cause;
+import org.spongepowered.api.util.annotation.eventgen.AbsoluteSortPosition;
+import org.spongepowered.api.util.annotation.eventgen.FactoryMethod;
+import org.spongepowered.api.util.annotation.eventgen.PropertySettings;
+public interface ChangeEntityExperienceEvent extends TargetEntityEvent, Cancellable {
+@PropertySettings(generateMethods = false, requiredParameter = false)
+@Deprecated
+default int getOriginalExperience() {
+return getOriginalData().totalExperience().get();
+}
+@AbsoluteSortPosition(1)
+ImmutableExperienceHolderData getOriginalData();
+@PropertySettings(generateMethods = false, requiredParameter = false)
+@Deprecated
+default int getExperience() {
+return getFinalData().totalExperience().get();
+}
+@PropertySettings(generateMethods = false, requiredParameter = false)
+@Deprecated
+default void setExperience(int experience) {
+getFinalData().set(Keys.TOTAL_EXPERIENCE, experience);
+}
+@AbsoluteSortPosition(2)
+ExperienceHolderData getFinalData();
+@FactoryMethod
+@Deprecated
+static ChangeEntityExperienceEvent createChangeEntityExperienceEvent(Cause cause, int originalExperience, int experience, Entity targetEntity) {
+ExperienceHolderData finalData = targetEntity.getOrCreate(ExperienceHolderData.class)
+.orElseThrow(() -> new RuntimeException("Failed to get ExperienceHolderData from " + targetEntity));
+ImmutableExperienceHolderData originalData = finalData.asImmutable();
+originalData = originalData.with(Keys.TOTAL_EXPERIENCE, originalExperience).get();
+finalData.set(Keys.TOTAL_EXPERIENCE, experience);
+return SpongeEventFactory.createChangeEntityExperienceEvent(cause, originalData, finalData, targetEntity);
+}
+}

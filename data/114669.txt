@@ -1,0 +1,251 @@
+package com.twelvemonkeys.sql;
+import com.twelvemonkeys.lang.SystemUtil;
+import java.io.*;
+import java.util.Date;
+import java.util.Hashtable;
+import java.util.Properties;
+class Log {
+private static Hashtable streamCache = new Hashtable();
+static {
+streamCache.put("System.out", System.out);
+streamCache.put("System.err", System.err);
+}
+private static Log globalLog = null;
+private String owner = null;
+private boolean logDebug = false;
+private boolean logWarning = false;
+private boolean logError = true; 
+private boolean logInfo = false;
+private PrintStream debugLog = null;
+private PrintStream warningLog = null;
+private PrintStream errorLog = null;
+private PrintStream infoLog = null;
+static {
+Properties config = null;
+try {
+config = SystemUtil.loadProperties(Log.class);
+}
+catch (FileNotFoundException fnf) {
+}
+catch (IOException ioe) {
+log(System.err, "ERROR", Log.class.getName(), null, ioe);
+}
+globalLog = new Log(new Log(), config);
+if (globalLog.debugLog == null)
+globalLog.setDebugLog(System.out);
+if (globalLog.warningLog == null)
+globalLog.setWarningLog(System.err);
+if (globalLog.errorLog == null)
+globalLog.setErrorLog(System.err);
+if (globalLog.infoLog == null)
+globalLog.setInfoLog(System.out);
+globalLog.logDebug("Logging system started.");
+log(globalLog.infoLog, "INFO", Log.class.getName(),
+"Logging system started.", null);
+}
+private Log() {
+}
+public Log(Object owner) {
+this.owner = owner.getClass().getName();
+}
+public Log(Object owner, Properties config) {
+this(owner);
+if (config == null)
+return;
+logDebug = new Boolean(config.getProperty("logDebug",
+"false")).booleanValue();
+logWarning = new Boolean(config.getProperty("logWarning",
+"false")).booleanValue();
+logError = new Boolean(config.getProperty("logError",
+"true")).booleanValue();
+logInfo = new Boolean(config.getProperty("logInfo",
+"true")).booleanValue();
+String fileName;
+try {
+if ((fileName = config.getProperty("debugLog")) != null)
+setDebugLog(fileName);
+if ((fileName = config.getProperty("warningLog")) != null)
+setWarningLog(fileName);
+if ((fileName = config.getProperty("errorLog")) != null)
+setErrorLog(fileName);
+if ((fileName = config.getProperty("infoLog")) != null)
+setInfoLog(fileName);
+}
+catch (IOException ioe) {
+if (errorLog == null)
+setErrorLog(System.err);
+logError("Could not create one or more logging streams! ", ioe);
+}
+}
+public boolean getLogDebug() {
+return logDebug;
+}
+public void setLogDebug(boolean logDebug) {
+this.logDebug = logDebug;
+}
+public static boolean getGlobalDebug() {
+return globalDebug;
+}
+public static void setGlobalDebug(boolean globalDebug) {
+Log.globalDebug = globalDebug;
+}
+public void setDebugLog(OutputStream os) {
+debugLog = new PrintStream(os, true);
+}
+public void setDebugLog(String fileName) throws IOException {
+setDebugLog(getStream(fileName));
+}
+public void logDebug(String message) {
+logDebug(message, null);
+}
+public void logDebug(Exception exception) {
+logDebug(null, exception);
+}
+public void logDebug(String message, Exception exception) {
+if (!(logDebug || globalLog.logDebug))
+return;
+if (debugLog != null)
+log(debugLog, "DEBUG", owner, message, exception);
+else
+log(globalLog.debugLog, "DEBUG", owner, message, exception);
+}
+public boolean getLogWarning() {
+return logWarning;
+}
+public void setLogWarning(boolean logWarning) {
+this.logWarning = logWarning;
+}
+public static boolean getGlobalWarning() {
+return globalWarning;
+}
+public static void setGlobalWarning(boolean globalWarning) {
+Log.globalWarning = globalWarning;
+}
+public void setWarningLog(OutputStream os) {
+warningLog = new PrintStream(os, true);
+}
+public void setWarningLog(String fileName) throws IOException {
+setWarningLog(getStream(fileName));
+}
+public void logWarning(String message) {
+logWarning(message, null);
+}
+public void logWarning(Exception exception) {
+logWarning(null, exception);
+}
+public void logWarning(String message, Exception exception) {
+if (!(logWarning || globalLog.logWarning))
+return;
+if (warningLog != null)
+log(warningLog, "WARNING", owner, message, exception);
+else
+log(globalLog.warningLog, "WARNING", owner, message, exception);
+}
+public boolean getLogError() {
+return logError;
+}
+public void setLogError(boolean logError) {
+this.logError = logError;
+}
+public static boolean getGlobalError() {
+return globalError;
+}
+public static void setGlobalError(boolean globalError) {
+Log.globalError = globalError;
+}
+public void setErrorLog(OutputStream os) {
+errorLog = new PrintStream(os, true);
+}
+public void setErrorLog(String fileName) throws IOException {
+setErrorLog(getStream(fileName));
+}
+public void logError(String message) {
+logError(message, null);
+}
+public void logError(Exception exception) {
+logError(null, exception);
+}
+public void logError(String message, Exception exception) {
+if (!(logError || globalLog.logError))
+return;
+if (errorLog != null)
+log(errorLog, "ERROR", owner, message, exception);
+else
+log(globalLog.errorLog, "ERROR", owner, message, exception);
+}
+public boolean getLogInfo() {
+return logInfo;
+}
+public void setLogInfo(boolean logInfo) {
+this.logInfo = logInfo;
+}
+public static boolean getGlobalInfo() {
+return globalInfo;
+}
+public static void setGlobalInfo(boolean globalInfo) {
+Log.globalInfo = globalInfo;
+}
+public void setInfoLog(OutputStream os) {
+infoLog = new PrintStream(os, true);
+}
+public void setInfoLog(String fileName) throws IOException {
+setInfoLog(getStream(fileName));
+}
+public void logInfo(String message) {
+logInfo(message, null);
+}
+public void logInfo(Exception exception) {
+logInfo(null, exception);
+}
+public void logInfo(String message, Exception exception) {
+if (!(logInfo || globalLog.logInfo))
+return;
+if (infoLog != null)
+log(infoLog, "INFO", owner, message, exception);
+else
+log(globalLog.infoLog, "INFO", owner, message, exception);
+}
+private static OutputStream getStream(String name) throws IOException {
+OutputStream os = null;
+synchronized (streamCache) {
+if ((os = (OutputStream) streamCache.get(name)) != null)
+return os;
+os = new FileOutputStream(name, true);
+streamCache.put(name, os);
+}
+return os;
+}
+private static void log(PrintStream ps, String header,
+String owner, String message, Exception ex) {
+synchronized (ps) {
+LogStream logStream = new LogStream(ps);
+logStream.time = new Date(System.currentTimeMillis());
+logStream.header = header;
+logStream.owner = owner;
+if (message != null)
+logStream.println(message);
+if (ex != null) {
+logStream.println(ex.getMessage());
+ex.printStackTrace(logStream);
+}
+}
+}
+}
+class LogStream extends PrintStream {
+Date time = null;
+String header = null;
+String owner = null;
+public LogStream(OutputStream ps) {
+super(ps);
+}
+public void println(Object o) {
+if (o == null)
+println("null");
+else
+println(o.toString());
+}
+public void println(String str) {
+super.println("*** " + header + " (" + time + ", " + time.getTime()
++ ") " + owner + ": " + str);
+}
+}

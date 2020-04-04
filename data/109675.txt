@@ -1,0 +1,29 @@
+package com.google.inject.internal;
+import static com.google.common.base.Preconditions.checkNotNull;
+import com.google.inject.Provider;
+import com.google.inject.spi.Dependency;
+final class InternalFactoryToProviderAdapter<T> implements InternalFactory<T> {
+private final Provider<? extends T> provider;
+private final Object source;
+public InternalFactoryToProviderAdapter(Provider<? extends T> provider, Object source) {
+this.provider = checkNotNull(provider, "provider");
+this.source = checkNotNull(source, "source");
+}
+@Override
+public T get(InternalContext context, Dependency<?> dependency, boolean linked)
+throws InternalProvisionException {
+try {
+T t = provider.get();
+if (t == null && !dependency.isNullable()) {
+InternalProvisionException.onNullInjectedIntoNonNullableDependency(source, dependency);
+}
+return t;
+} catch (RuntimeException userException) {
+throw InternalProvisionException.errorInProvider(userException).addSource(source);
+}
+}
+@Override
+public String toString() {
+return provider.toString();
+}
+}

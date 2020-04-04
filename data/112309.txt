@@ -1,0 +1,18 @@
+package com.github.jknack.handlebars.io;
+import java.net.URL;
+public class ClassPathTemplateLoader extends URLTemplateLoader {
+public ClassPathTemplateLoader(final String prefix, final String suffix) {
+setPrefix(prefix);
+setSuffix(suffix);
+}
+public ClassPathTemplateLoader(final String prefix) {
+this(prefix, DEFAULT_SUFFIX);
+}
+public ClassPathTemplateLoader() {
+this("/");
+}
+@Override
+protected URL getResource(final String location) {
+return  getClass().getResource(location);
+}
+}

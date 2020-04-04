@@ -1,0 +1,108 @@
+package com.github.jknack.handlebars.cache;
+import static org.apache.commons.lang3.Validate.notNull;
+import java.io.IOException;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.FutureTask;
+import org.apache.commons.lang3.tuple.Pair;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import com.github.jknack.handlebars.HandlebarsException;
+import com.github.jknack.handlebars.Parser;
+import com.github.jknack.handlebars.Template;
+import com.github.jknack.handlebars.io.TemplateSource;
+public class HighConcurrencyTemplateCache implements TemplateCache {
+private final Logger logger = LoggerFactory.getLogger(getClass());
+private final ConcurrentMap<TemplateSource, Future<Pair<TemplateSource, Template>>> cache;
+private boolean reload;
+protected HighConcurrencyTemplateCache(
+final ConcurrentMap<TemplateSource, Future<Pair<TemplateSource, Template>>> cache) {
+this.cache = notNull(cache, "The cache is required.");
+}
+public HighConcurrencyTemplateCache() {
+this(new ConcurrentHashMap<TemplateSource, Future<Pair<TemplateSource, Template>>>());
+}
+@Override
+public void clear() {
+cache.clear();
+}
+@Override
+public void evict(final TemplateSource source) {
+cache.remove(source);
+}
+@Override
+public Template get(final TemplateSource source, final Parser parser) throws IOException {
+notNull(source, "The source is required.");
+notNull(parser, "The parser is required.");
+return cacheGet(source, parser);
+}
+@Override
+public HighConcurrencyTemplateCache setReload(final boolean reload) {
+this.reload = reload;
+return this;
+}
+private Template cacheGet(final TemplateSource source, final Parser parser) throws IOException {
+notNull(source, "The source is required.");
+notNull(parser, "The parser is required.");
+boolean interrupted = false;
+FutureTask<Pair<TemplateSource, Template>> futureTask = newTask(source, parser);
+try {
+while (true) {
+Future<Pair<TemplateSource, Template>> future = cache.get(source);
+try {
+if (future == null) {
+logger.debug("Loading: {}", source);
+future = putIfAbsent(source, futureTask);
+} else if (reload && source.lastModified() != future.get().getKey().lastModified()) {
+evict(source);
+logger.debug("Reloading: {}", source);
+future = putIfAbsent(source, futureTask);
+} else {
+logger.debug("Found in cache: {}", source);
+}
+Pair<TemplateSource, Template> entry = future.get();
+return entry.getValue();
+} catch (CancellationException ex) {
+cache.remove(source, future);
+} catch (InterruptedException ex) {
+interrupted = true;
+} catch (ExecutionException ex) {
+if (future != null) {
+cache.remove(source, future);
+}
+throw launderThrowable(source, ex.getCause());
+}
+}
+} finally {
+if (interrupted) {
+Thread.currentThread().interrupt();
+}
+}
+}
+private FutureTask<Pair<TemplateSource, Template>> newTask(final TemplateSource source,
+final Parser parser) {
+return new FutureTask<>(
+() -> Pair.of(source, parser.parse(source)));
+}
+private Future<Pair<TemplateSource, Template>> putIfAbsent(final TemplateSource source,
+final FutureTask<Pair<TemplateSource, Template>> futureTask) {
+Future<Pair<TemplateSource, Template>> future = cache.putIfAbsent(source, futureTask);
+if (future == null) {
+future = futureTask;
+futureTask.run();
+}
+return future;
+}
+private RuntimeException launderThrowable(final TemplateSource source, final Throwable cause) {
+if (cause instanceof RuntimeException) {
+return (RuntimeException) cause;
+} else if (cause instanceof Error) {
+throw (Error) cause;
+} else {
+return new HandlebarsException("Can't parse: " + source, cause);
+}
+}
+}

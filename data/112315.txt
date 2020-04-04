@@ -1,0 +1,24 @@
+package com.github.jknack.handlebars.io;
+import static org.apache.commons.lang3.Validate.notNull;
+import java.nio.charset.Charset;
+public class StringTemplateSource extends AbstractTemplateSource {
+private final String content;
+private final String filename;
+private final long lastModified;
+public StringTemplateSource(final String filename, final String content) {
+this.content = notNull(content, "The content is required.");
+this.filename = notNull(filename, "The filename is required.");
+this.lastModified = content.hashCode();
+}
+@Override public String content(final Charset charset) {
+return content;
+}
+@Override
+public String filename() {
+return filename;
+}
+@Override
+public long lastModified() {
+return lastModified;
+}
+}

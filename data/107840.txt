@@ -1,0 +1,14 @@
+package org.junit.internal;
+import static java.lang.Thread.currentThread;
+public class Classes {
+@Deprecated
+public Classes() {
+}
+public static Class<?> getClass(String className) throws ClassNotFoundException {
+return getClass(className, Classes.class);
+}
+public static Class<?> getClass(String className, Class<?> callingClass) throws ClassNotFoundException {
+ClassLoader classLoader = currentThread().getContextClassLoader();
+return Class.forName(className, true, classLoader == null ? callingClass.getClassLoader() : classLoader);
+}
+}

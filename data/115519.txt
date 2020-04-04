@@ -1,0 +1,72 @@
+package com.JUtils.base;
+import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
+public class ConvertUtils {
+public static int strToInt(String str, int defaultValue) {
+try {
+defaultValue = Integer.parseInt(str);
+} catch (Exception localException) {
+}
+return defaultValue;
+}
+public static long strToLong(String str, long defaultValue) {
+try {
+defaultValue = Long.parseLong(str);
+} catch (Exception localException) {
+}
+return defaultValue;
+}
+public static float strToFloat(String str, float defaultValue) {
+try {
+defaultValue = Float.parseFloat(str);
+} catch (Exception localException) {
+}
+return defaultValue;
+}
+public static double strToDouble(String str, double defaultValue) {
+try {
+defaultValue = Double.parseDouble(str);
+} catch (Exception localException) {
+}
+return defaultValue;
+}
+public static java.util.Date strToDate(String str,java.util.Date defaultValue) {
+return strToDate(str, "yyyy-MM-dd HH:mm:ss", defaultValue);
+}
+public static java.util.Date strToDate(String str, String format,java.util.Date defaultValue) {
+SimpleDateFormat fmt = new SimpleDateFormat(format);
+try {
+defaultValue = fmt.parse(str);
+} catch (Exception localException) {
+}
+return defaultValue;
+}
+public static String dateToStr(java.util.Date date, String defaultValue) {
+return dateToStr(date, "yyyy-MM-dd HH:mm:ss", defaultValue);
+}
+public static String dateToStr(java.util.Date date, String format, String defaultValue) {
+SimpleDateFormat sdf = new SimpleDateFormat(format);
+try {
+defaultValue = sdf.format(date);
+} catch (Exception localException) {
+}
+return defaultValue;
+}
+public static String strToStr(String str, String defaultValue) {
+if ((str != null) && (!(str.isEmpty())))
+defaultValue = str;
+return defaultValue;
+}
+public static java.sql.Date dateToSqlDate(java.util.Date date) {
+return new java.sql.Date(date.getTime());
+}
+public static java.util.Date sqlDateToDate(java.sql.Date date) {
+return new java.util.Date(date.getTime());
+}
+public static Timestamp dateToSqlTimestamp(java.util.Date date) {
+return new Timestamp(date.getTime());
+}
+public static java.util.Date qlTimestampToDate(Timestamp date) {
+return new java.util.Date(date.getTime());
+}
+}

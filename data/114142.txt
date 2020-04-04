@@ -1,0 +1,7 @@
+package org.apache.parquet.cli;
+import java.io.IOException;
+import java.util.List;
+public interface Command {
+int run() throws IOException;
+List<String> getExamples();
+}

@@ -1,0 +1,6 @@
+package lombok.javac.apt;
+import java.nio.charset.CharsetDecoder;
+import javax.tools.JavaFileObject;
+interface LombokFileObject extends JavaFileObject {
+CharsetDecoder getDecoder(boolean ignoreEncodingErrors);
+}

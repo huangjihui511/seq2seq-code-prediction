@@ -1,0 +1,5 @@
+package com.xkcoding.rbac.security.common;
+public interface IStatus {
+Integer getCode();
+String getMessage();
+}

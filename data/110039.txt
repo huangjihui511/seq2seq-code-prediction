@@ -1,0 +1,52 @@
+package com.google.cloud.tools.jib.cache;
+import com.google.cloud.tools.jib.api.DescriptorDigest;
+import com.google.cloud.tools.jib.blob.Blobs;
+import java.io.IOException;
+import org.hamcrest.CoreMatchers;
+import org.junit.Assert;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
+@RunWith(MockitoJUnitRunner.class)
+public class CachedLayerTest {
+@Mock private DescriptorDigest mockLayerDigest;
+@Mock private DescriptorDigest mockLayerDiffId;
+@Test
+public void testBuilder_fail() {
+try {
+CachedLayer.builder().build();
+Assert.fail("missing required");
+} catch (NullPointerException ex) {
+Assert.assertThat(ex.getMessage(), CoreMatchers.containsString("layerDigest"));
+}
+try {
+CachedLayer.builder().setLayerDigest(mockLayerDigest).build();
+Assert.fail("missing required");
+} catch (NullPointerException ex) {
+Assert.assertThat(ex.getMessage(), CoreMatchers.containsString("layerDiffId"));
+}
+try {
+CachedLayer.builder().setLayerDigest(mockLayerDigest).setLayerDiffId(mockLayerDiffId).build();
+Assert.fail("missing required");
+} catch (NullPointerException ex) {
+Assert.assertThat(ex.getMessage(), CoreMatchers.containsString("layerBlob"));
+}
+}
+@Test
+public void testBuilder_pass() throws IOException {
+CachedLayer.Builder cachedLayerBuilder =
+CachedLayer.builder()
+.setLayerDigest(mockLayerDigest)
+.setLayerDiffId(mockLayerDiffId)
+.setLayerSize(1337);
+Assert.assertFalse(cachedLayerBuilder.hasLayerBlob());
+cachedLayerBuilder.setLayerBlob(Blobs.from("layerBlob"));
+Assert.assertTrue(cachedLayerBuilder.hasLayerBlob());
+CachedLayer cachedLayer = cachedLayerBuilder.build();
+Assert.assertEquals(mockLayerDigest, cachedLayer.getDigest());
+Assert.assertEquals(mockLayerDiffId, cachedLayer.getDiffId());
+Assert.assertEquals(1337, cachedLayer.getSize());
+Assert.assertEquals("layerBlob", Blobs.writeToString(cachedLayer.getBlob()));
+}
+}

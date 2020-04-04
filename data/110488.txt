@@ -1,0 +1,9 @@
+package com.baomidou.mybatisplus.core;
+public class MybatisPlusVersion {
+private MybatisPlusVersion() {
+}
+public static String getVersion() {
+Package pkg = MybatisPlusVersion.class.getPackage();
+return (pkg != null ? pkg.getImplementationVersion() : null);
+}
+}

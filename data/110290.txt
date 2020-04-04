@@ -1,0 +1,187 @@
+package de.codecentric.boot.admin.client.registration;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import org.junit.Before;
+import org.junit.Test;
+import org.springframework.boot.actuate.autoconfigure.endpoint.web.WebEndpointProperties;
+import org.springframework.boot.actuate.autoconfigure.web.server.ManagementServerProperties;
+import org.springframework.boot.actuate.endpoint.EndpointId;
+import org.springframework.boot.actuate.endpoint.web.PathMappedEndpoints;
+import org.springframework.boot.autoconfigure.web.ServerProperties;
+import org.springframework.boot.web.context.WebServerApplicationContext;
+import org.springframework.boot.web.context.WebServerInitializedEvent;
+import org.springframework.boot.web.server.Ssl;
+import org.springframework.boot.web.server.WebServer;
+import de.codecentric.boot.admin.client.config.InstanceProperties;
+import static java.util.Collections.singletonMap;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.entry;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+public class DefaultApplicationFactoryTest {
+private InstanceProperties instanceProperties = new InstanceProperties();
+private ServerProperties server = new ServerProperties();
+private ManagementServerProperties management = new ManagementServerProperties();
+private PathMappedEndpoints pathMappedEndpoints = mock(PathMappedEndpoints.class);
+private WebEndpointProperties webEndpoint = new WebEndpointProperties();
+private DefaultApplicationFactory factory = new DefaultApplicationFactory(instanceProperties, management, server,
+pathMappedEndpoints, webEndpoint, () -> singletonMap("contributor", "test"));
+@Before
+public void setup() {
+instanceProperties.setName("test");
+}
+@Test
+public void test_mgmtPortPath() {
+webEndpoint.setBasePath("/admin");
+when(pathMappedEndpoints.getPath(EndpointId.of("health"))).thenReturn("/admin/alive");
+publishApplicationReadyEvent(factory, 8080, 8081);
+Application app = factory.createApplication();
+assertThat(app.getManagementUrl()).isEqualTo("http:
+assertThat(app.getHealthUrl()).isEqualTo("http:
+assertThat(app.getServiceUrl()).isEqualTo("http:
+}
+@Test
+public void test_default() {
+instanceProperties.setMetadata(singletonMap("instance", "test"));
+when(pathMappedEndpoints.getPath(EndpointId.of("health"))).thenReturn("/actuator/health");
+publishApplicationReadyEvent(factory, 8080, null);
+Application app = factory.createApplication();
+assertThat(app.getManagementUrl()).isEqualTo("http:
+assertThat(app.getHealthUrl()).isEqualTo("http:
+assertThat(app.getServiceUrl()).isEqualTo("http:
+assertThat(app.getMetadata()).containsExactly(entry("contributor", "test"), entry("instance", "test"));
+}
+@Test
+public void test_ssl() {
+server.setSsl(new Ssl());
+server.getSsl().setEnabled(true);
+when(pathMappedEndpoints.getPath(EndpointId.of("health"))).thenReturn("/actuator/health");
+publishApplicationReadyEvent(factory, 8080, null);
+Application app = factory.createApplication();
+assertThat(app.getManagementUrl()).isEqualTo("https:
+assertThat(app.getHealthUrl()).isEqualTo("https:
+assertThat(app.getServiceUrl()).isEqualTo("https:
+}
+@Test
+public void test_ssl_management() {
+management.setSsl(new Ssl());
+management.getSsl().setEnabled(true);
+when(pathMappedEndpoints.getPath(EndpointId.of("health"))).thenReturn("/actuator/alive");
+publishApplicationReadyEvent(factory, 8080, 9090);
+Application app = factory.createApplication();
+assertThat(app.getManagementUrl()).isEqualTo("https:
+assertThat(app.getHealthUrl()).isEqualTo("https:
+assertThat(app.getServiceUrl()).isEqualTo("http:
+}
+@Test
+public void test_preferIpAddress_serveraddress_missing() {
+instanceProperties.setPreferIp(true);
+when(pathMappedEndpoints.getPath(EndpointId.of("health"))).thenReturn("/application/alive");
+publishApplicationReadyEvent(factory, 8080, null);
+Application app = factory.createApplication();
+assertThat(app.getServiceUrl()).matches("http:
+}
+@Test
+public void test_preferIpAddress_managementaddress_missing() {
+instanceProperties.setPreferIp(true);
+when(pathMappedEndpoints.getPath(EndpointId.of("health"))).thenReturn("/application/alive");
+publishApplicationReadyEvent(factory, 8080, 8081);
+Application app = factory.createApplication();
+assertThat(app.getManagementUrl()).matches("http:
+}
+@Test
+public void test_preferIpAddress() throws UnknownHostException {
+instanceProperties.setPreferIp(true);
+server.setAddress(InetAddress.getByName("127.0.0.1"));
+management.setAddress(InetAddress.getByName("127.0.0.2"));
+when(pathMappedEndpoints.getPath(EndpointId.of("health"))).thenReturn("/actuator/health");
+publishApplicationReadyEvent(factory, 8080, 8081);
+Application app = factory.createApplication();
+assertThat(app.getManagementUrl()).isEqualTo("http:
+assertThat(app.getHealthUrl()).isEqualTo("http:
+assertThat(app.getServiceUrl()).isEqualTo("http:
+}
+@Test
+public void test_allcustom() {
+instanceProperties.setHealthUrl("http:
+instanceProperties.setManagementUrl("http:
+instanceProperties.setServiceUrl("http:
+Application app = factory.createApplication();
+assertThat(app.getServiceUrl()).isEqualTo("http:
+assertThat(app.getManagementUrl()).isEqualTo("http:
+assertThat(app.getHealthUrl()).isEqualTo("http:
+}
+@Test
+public void test_all_baseUrls() {
+instanceProperties.setManagementBaseUrl("http:
+instanceProperties.setServiceBaseUrl("http:
+webEndpoint.setBasePath("/admin");
+when(pathMappedEndpoints.getPath(EndpointId.of("health"))).thenReturn("/admin/health");
+Application app = factory.createApplication();
+assertThat(app.getServiceUrl()).isEqualTo("http:
+assertThat(app.getManagementUrl()).isEqualTo("http:
+assertThat(app.getHealthUrl()).isEqualTo("http:
+}
+@Test
+public void test_service_baseUrl() {
+instanceProperties.setServiceBaseUrl("http:
+webEndpoint.setBasePath("/admin");
+when(pathMappedEndpoints.getPath(EndpointId.of("health"))).thenReturn("/admin/health");
+Application app = factory.createApplication();
+assertThat(app.getServiceUrl()).isEqualTo("http:
+assertThat(app.getManagementUrl()).isEqualTo("http:
+assertThat(app.getHealthUrl()).isEqualTo("http:
+}
+@Test
+public void test_missingports() {
+assertThatThrownBy(() -> factory.createApplication()).isInstanceOf(IllegalStateException.class)
+.hasMessageContaining("service-base-url");
+}
+@Test
+public void test_service_path() {
+instanceProperties.setServiceBaseUrl("http:
+instanceProperties.setServicePath("app");
+webEndpoint.setBasePath("/admin");
+when(pathMappedEndpoints.getPath(EndpointId.of("health"))).thenReturn("/admin/health");
+Application app = factory.createApplication();
+assertThat(app.getServiceUrl()).isEqualTo("http:
+assertThat(app.getManagementUrl()).isEqualTo("http:
+assertThat(app.getHealthUrl()).isEqualTo("http:
+}
+@Test
+public void test_service_path_default() {
+assertThat(factory.getServicePath()).isEqualTo("/");
+}
+private String getHostname() {
+try {
+return InetAddress.getLocalHost().getCanonicalHostName();
+}
+catch (UnknownHostException ex) {
+throw new IllegalStateException(ex);
+}
+}
+private void publishApplicationReadyEvent(DefaultApplicationFactory factory, Integer serverport,
+Integer managementport) {
+factory.onWebServerInitialized(new TestWebServerInitializedEvent("server", serverport));
+factory.onWebServerInitialized(new TestWebServerInitializedEvent("management",
+(managementport != null) ? managementport : serverport));
+}
+private static final class TestWebServerInitializedEvent extends WebServerInitializedEvent {
+private final WebServer server = mock(WebServer.class);
+private final WebServerApplicationContext context = mock(WebServerApplicationContext.class);
+private TestWebServerInitializedEvent(String name, int port) {
+super(mock(WebServer.class));
+when(server.getPort()).thenReturn(port);
+when(context.getServerNamespace()).thenReturn(name);
+}
+@Override
+public WebServerApplicationContext getApplicationContext() {
+return context;
+}
+@Override
+public WebServer getWebServer() {
+return this.server;
+}
+}
+}

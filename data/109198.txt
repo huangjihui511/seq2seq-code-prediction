@@ -1,0 +1,8 @@
+package io.realm.examples.newsreader;
+import timber.log.Timber;
+public class DebugNewsReaderApplication extends NewsReaderApplication {
+@Override
+protected void initializeTimber() {
+Timber.plant(new Timber.DebugTree());
+}
+}

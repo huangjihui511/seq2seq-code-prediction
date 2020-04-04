@@ -1,0 +1,31 @@
+package org.apache.parquet.arrow.schema;
+import static org.apache.parquet.schema.Type.Repetition.REPEATED;
+import org.apache.parquet.schema.GroupType;
+import org.apache.parquet.schema.OriginalType;
+import org.apache.parquet.schema.Type;
+class List3Levels {
+private final GroupType list;
+private final GroupType repeated;
+private final Type element;
+public List3Levels(GroupType list) {
+if (list.getOriginalType() != OriginalType.LIST || list.getFields().size() != 1) {
+throw new IllegalArgumentException("invalid list type: " + list);
+}
+this.list = list;
+Type repeatedField = list.getFields().get(0);
+if (repeatedField.isPrimitive() || !repeatedField.isRepetition(REPEATED) || repeatedField.asGroupType().getFields().size() != 1) {
+throw new IllegalArgumentException("invalid list type: " + list);
+}
+this.repeated = repeatedField.asGroupType();
+this.element = repeated.getFields().get(0);
+}
+public GroupType getList() {
+return list;
+}
+public GroupType getRepeated() {
+return repeated;
+}
+public Type getElement() {
+return element;
+}
+}

@@ -1,0 +1,32 @@
+package org.gnucash.android.receivers;
+import android.appwidget.AppWidgetManager;
+import android.appwidget.AppWidgetProvider;
+import android.content.Context;
+import android.content.SharedPreferences;
+import android.content.SharedPreferences.Editor;
+import org.gnucash.android.db.adapter.BooksDbAdapter;
+import org.gnucash.android.ui.common.UxArgument;
+import org.gnucash.android.ui.homescreen.WidgetConfigurationActivity;
+import org.gnucash.android.ui.settings.PreferenceActivity;
+public class TransactionAppWidgetProvider extends AppWidgetProvider {
+@Override
+public void onUpdate(Context context, AppWidgetManager appWidgetManager,
+int[] appWidgetIds) {
+super.onUpdate(context, appWidgetManager, appWidgetIds);
+for (int appWidgetId : appWidgetIds) {
+WidgetConfigurationActivity.updateWidget(context, appWidgetId);
+}
+}
+@Override
+public void onEnabled(Context context) {
+super.onEnabled(context);
+WidgetConfigurationActivity.updateAllWidgets(context);
+}
+@Override
+public void onDeleted(Context context, int[] appWidgetIds) {
+super.onDeleted(context, appWidgetIds);
+for (int appWidgetId : appWidgetIds) {
+WidgetConfigurationActivity.removeWidgetConfiguration(context, appWidgetId);
+}
+}
+}

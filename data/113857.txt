@@ -1,0 +1,36 @@
+package psiprobe.beans.stats.collectors;
+import java.util.List;
+import javax.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import psiprobe.beans.JvmMemoryInfoAccessorBean;
+import psiprobe.beans.stats.listeners.StatsCollectionListener;
+import psiprobe.model.jmx.MemoryPool;
+import psiprobe.tools.TimeExpression;
+public class JvmMemoryStatsCollectorBean extends AbstractStatsCollectorBean {
+@Inject
+private JvmMemoryInfoAccessorBean jvmMemoryInfoAccessor;
+public JvmMemoryInfoAccessorBean getJvmMemoryInfoAccessor() {
+return jvmMemoryInfoAccessor;
+}
+public void setJvmMemoryInfoAccessor(JvmMemoryInfoAccessorBean jvmMemoryInfoAccessor) {
+this.jvmMemoryInfoAccessor = jvmMemoryInfoAccessor;
+}
+@Override
+public void collect() throws Exception {
+List<MemoryPool> pools = jvmMemoryInfoAccessor.getPools();
+long time = System.currentTimeMillis();
+for (MemoryPool pool : pools) {
+buildAbsoluteStats("memory.pool." + pool.getName(), pool.getUsed(), time);
+}
+}
+public void setMaxSeries(@Value("${psiprobe.beans.stats.collectors.memory.period}") long period,
+@Value("${psiprobe.beans.stats.collectors.memory.span}") long span) {
+super.setMaxSeries((int) TimeExpression.dataPoints(period, span));
+}
+@Autowired
+@Override
+public void setListeners(List<StatsCollectionListener> listeners) {
+super.setListeners(listeners);
+}
+}

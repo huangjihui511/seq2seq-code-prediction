@@ -1,0 +1,107 @@
+package com.graphhopper.jsprit.core.algorithm.acceptor;
+import com.graphhopper.jsprit.core.algorithm.VehicleRoutingAlgorithm;
+import com.graphhopper.jsprit.core.algorithm.listener.AlgorithmStartsListener;
+import com.graphhopper.jsprit.core.algorithm.listener.IterationStartsListener;
+import com.graphhopper.jsprit.core.problem.VehicleRoutingProblem;
+import com.graphhopper.jsprit.core.problem.solution.VehicleRoutingProblemSolution;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+public class SchrimpfAcceptance implements SolutionAcceptor, IterationStartsListener, AlgorithmStartsListener {
+private static Logger logger = LoggerFactory.getLogger(SchrimpfAcceptance.class.getName());
+private final double alpha;
+private int maxIterations = 1000;
+private int currentIteration = 0;
+private double initialThreshold = 0.0;
+private final int solutionMemory;
+public SchrimpfAcceptance(int solutionMemory, double alpha) {
+this.alpha = alpha;
+this.solutionMemory = solutionMemory;
+logger.debug("initialise {}", this);
+}
+@Override
+public boolean acceptSolution(Collection<VehicleRoutingProblemSolution> solutions, VehicleRoutingProblemSolution newSolution) {
+boolean solutionAccepted = false;
+if (solutions.size() < solutionMemory) {
+solutions.add(newSolution);
+solutionAccepted = true;
+} else {
+VehicleRoutingProblemSolution worst = null;
+double threshold = getThreshold(currentIteration);
+for (VehicleRoutingProblemSolution solutionInMemory : solutions) {
+if (worst == null) worst = solutionInMemory;
+else if (solutionInMemory.getCost() > worst.getCost()) worst = solutionInMemory;
+}
+if (worst == null) {
+solutions.add(newSolution);
+solutionAccepted = true;
+} else if (newSolution.getCost() < worst.getCost() + threshold) {
+solutions.remove(worst);
+solutions.add(newSolution);
+solutionAccepted = true;
+}
+}
+return solutionAccepted;
+}
+public boolean acceptSolution(VehicleRoutingProblemSolution solution, VehicleRoutingProblemSolution newSolution) {
+List<VehicleRoutingProblemSolution> solutions = new ArrayList<>();
+solutions.add(solution);
+boolean solutionAccepted = false;
+if (solutions.size() < solutionMemory) {
+solutions.add(newSolution);
+solutionAccepted = true;
+} else {
+VehicleRoutingProblemSolution worst = null;
+double threshold = getThreshold(currentIteration);
+for (VehicleRoutingProblemSolution solutionInMemory : solutions) {
+if (worst == null) worst = solutionInMemory;
+else if (solutionInMemory.getCost() > worst.getCost()) worst = solutionInMemory;
+}
+if (worst == null) {
+solutions.add(newSolution);
+solutionAccepted = true;
+} else if (newSolution.getCost() < worst.getCost() + threshold) {
+solutions.remove(worst);
+solutions.add(newSolution);
+solutionAccepted = true;
+}
+}
+return solutionAccepted;
+}
+@Override
+public String toString() {
+return "[name=SchrimpfAcceptance][alpha=" + alpha + "]";
+}
+private double getThreshold(int iteration) {
+double scheduleVariable = (double) iteration / (double) maxIterations;
+return initialThreshold * Math.exp(-1. * Math.log(2) * scheduleVariable / alpha);
+}
+@SuppressWarnings("UnusedDeclaration")
+public double getInitialThreshold() {
+return initialThreshold;
+}
+public void setInitialThreshold(double initialThreshold) {
+this.initialThreshold = initialThreshold;
+}
+public void setMaxIterations(int maxIteration) {
+this.maxIterations = maxIteration;
+}
+public void incIteration() {
+currentIteration++;
+}
+;
+@Override
+public void informAlgorithmStarts(VehicleRoutingProblem problem, VehicleRoutingAlgorithm algorithm, Collection<VehicleRoutingProblemSolution> solutions) {
+reset();
+this.maxIterations = algorithm.getMaxIterations();
+}
+private void reset() {
+currentIteration = 0;
+}
+@Override
+public void informIterationStarts(int i, VehicleRoutingProblem problem, Collection<VehicleRoutingProblemSolution> solutions) {
+currentIteration = i;
+}
+}

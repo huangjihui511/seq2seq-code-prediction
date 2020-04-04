@@ -1,0 +1,53 @@
+package com.example.appengine;
+import com.google.api.client.auth.oauth2.Credential;
+import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow;
+import com.google.api.client.http.GenericUrl;
+import com.google.api.client.http.HttpTransport;
+import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.api.client.json.JsonFactory;
+import com.google.api.client.json.jackson2.JacksonFactory;
+import com.google.api.client.util.store.MemoryDataStoreFactory;
+import com.google.api.services.oauth2.Oauth2;
+import com.google.api.services.oauth2.model.Userinfoplus;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+public class Utils {
+static final String APP_NAME = System.getenv("GAE_APPLICATION");
+private static final MemoryDataStoreFactory DATA_STORE_FACTORY =
+MemoryDataStoreFactory.getDefaultInstance();
+static final HttpTransport HTTP_TRANSPORT = new NetHttpTransport();
+static final JsonFactory JSON_FACTORY = JacksonFactory.getDefaultInstance();
+private static String CLIENT_ID = System.getenv("CLIENT_ID");
+private static String CLIENT_SECRET = System.getenv("CLIENT_SECRET");
+private static final List<String> SCOPES =
+Arrays.asList(
+"https:
+"https:
+static String getRedirectUri(HttpServletRequest req) {
+GenericUrl url = new GenericUrl(req.getRequestURL().toString());
+url.setRawPath("/oauth2callback");
+return url.build();
+}
+public static GoogleAuthorizationCodeFlow newFlow() throws IOException {
+return new GoogleAuthorizationCodeFlow.Builder(
+HTTP_TRANSPORT, JSON_FACTORY, CLIENT_ID, CLIENT_SECRET, SCOPES)
+.setDataStoreFactory(DATA_STORE_FACTORY)
+.setAccessType("offline")
+.build();
+}
+static String getUserId(HttpServletRequest req) throws ServletException, IOException {
+return req.getSession().getId();
+}
+public static String getUserInfo(Credential credential) throws IOException {
+Oauth2 oauth2Client =
+new Oauth2.Builder(HTTP_TRANSPORT, JSON_FACTORY, credential)
+.setApplicationName(APP_NAME)
+.build();
+Userinfoplus userInfo = oauth2Client.userinfo().get().execute();
+String username = userInfo.getGivenName();
+return username;
+}
+}

@@ -1,0 +1,8 @@
+package org.apache.zookeeper.graph.filterops;
+import org.apache.zookeeper.graph.FilterOp.*;
+public class SymbolArg extends Arg<String> {
+public SymbolArg(String value) {
+super(ArgType.SYMBOL);
+this.value = value;
+}
+};

@@ -1,0 +1,4 @@
+package tests;
+import com.google.auto.factory.AutoFactory;
+@AutoFactory
+final class SimpleClass {}

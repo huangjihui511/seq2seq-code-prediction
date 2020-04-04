@@ -1,0 +1,27 @@
+package io.ebean.config.dbplatform;
+import java.util.HashMap;
+import java.util.Map;
+class DbPlatformTypeLookup {
+private final Map<String, DbType> nameLookup = new HashMap<>();
+private final Map<Integer, DbType> idLookup = new HashMap<>();
+DbPlatformTypeLookup() {
+addAll();
+}
+DbType byName(String name) {
+return nameLookup.get(name.trim().toUpperCase());
+}
+DbType byId(int jdbcId) {
+return idLookup.get(jdbcId);
+}
+private void addAll() {
+add("FLOAT", DbType.REAL);
+add("VARCHAR2", DbType.VARCHAR);
+for (DbType type : DbType.values()) {
+add(type.name(), type);
+}
+}
+private void add(String name, DbType dbType) {
+nameLookup.put(name, dbType);
+idLookup.put(dbType.id(), dbType);
+}
+}

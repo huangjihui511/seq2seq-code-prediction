@@ -1,0 +1,3 @@
+package com.graphhopper.jsprit.core.algorithm.recreate;
+public interface Event {
+}

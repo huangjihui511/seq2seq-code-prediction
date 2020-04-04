@@ -1,0 +1,83 @@
+package org.spongepowered.mod.network;
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import com.google.common.collect.Sets;
+import io.netty.channel.ChannelHandler;
+import net.minecraftforge.fml.common.network.FMLEmbeddedChannel;
+import net.minecraftforge.fml.relauncher.Side;
+import org.spongepowered.api.Platform;
+import org.spongepowered.api.entity.living.player.Player;
+import org.spongepowered.api.network.ChannelBinding;
+import org.spongepowered.api.network.ChannelRegistrar;
+import org.spongepowered.api.network.Message;
+import org.spongepowered.api.network.MessageHandler;
+import org.spongepowered.api.plugin.PluginContainer;
+import java.util.Set;
+class SpongeIndexedMessageChannel extends SpongeModChannelBinding implements ChannelBinding.IndexedMessageChannel {
+private SpongeMessageCodec packetCodec;
+private final Set<Class<? extends Message>> knownClasses = Sets.newHashSet();
+public SpongeIndexedMessageChannel(ChannelRegistrar registrar, String channelName, PluginContainer owner) {
+super(registrar, channelName, owner);
+}
+@Override
+protected ChannelHandler[] getHandlers() {
+return new ChannelHandler[] {this.packetCodec = new SpongeMessageCodec()};
+}
+@Override
+public void registerMessage(Class<? extends Message> messageClass, int messageId) {
+checkValidState();
+checkArgument(!this.knownClasses.contains(checkNotNull(messageClass, "messageClass")), "Message class already registered");
+this.packetCodec.addDiscriminator(messageId, messageClass);
+this.knownClasses.add(messageClass);
+}
+@Override
+public <M extends Message> void registerMessage(Class<M> messageClass, int messageId, MessageHandler<M> handler) {
+checkNotNull(handler, "handler");
+registerMessage(messageClass, messageId);
+addHandlerForSide(Platform.Type.CLIENT, messageClass, handler);
+addHandlerForSide(Platform.Type.SERVER, messageClass, handler);
+}
+@Override
+public <M extends Message> void registerMessage(Class<M> messageClass, int messageId, Platform.Type side, MessageHandler<M> handler) {
+checkNotNull(handler, "handler");
+checkArgument(checkNotNull(side, "side").isKnown(), "Invalid side");
+registerMessage(messageClass, messageId);
+addHandlerForSide(side, messageClass, handler);
+}
+@Override
+public <M extends Message> void addHandler(Class<M> messageClass, Platform.Type side, MessageHandler<M> handler) {
+checkArgument(this.knownClasses.contains(checkNotNull(messageClass, "messageClass")), "Message class %s is not registered", messageClass);
+checkNotNull(handler, "handler");
+checkArgument(checkNotNull(side, "side").isKnown(), "Invalid side");
+addHandlerForSide(side, messageClass, handler);
+}
+@Override
+public <M extends Message> void addHandler(Class<M> messageClass, MessageHandler<M> handler) {
+checkArgument(this.knownClasses.contains(checkNotNull(messageClass, "messageClass")), "Message class %s is not registered", messageClass);
+checkNotNull(handler, "handler");
+addHandlerForSide(Platform.Type.CLIENT, messageClass, handler);
+addHandlerForSide(Platform.Type.SERVER, messageClass, handler);
+}
+private <M extends Message> void addHandlerForSide(Platform.Type side, Class<M> messageClass, MessageHandler<M> handler) {
+FMLEmbeddedChannel channel = this.channels.get(side.isClient() ? Side.CLIENT : Side.SERVER);
+String type = channel.findChannelHandlerNameForType(SpongeMessageCodec.class);
+SpongeMessageInboundHandler<M> channelHandler = new SpongeMessageInboundHandler<>(handler, messageClass, side);
+channel.pipeline().addAfter(type, handler.getClass().getName(), channelHandler);
+}
+private Message checkMessage(Message message) {
+checkArgument(this.knownClasses.contains(checkNotNull(message, "message").getClass()), "unknown message type");
+return message;
+}
+@Override
+public void sendTo(Player player, Message message) {
+super.sendTo(player, checkMessage(message));
+}
+@Override
+public void sendToServer(Message message) {
+super.sendToServer(checkMessage(message));
+}
+@Override
+public void sendToAll(Message message) {
+super.sendToAll(checkMessage(message));
+}
+}

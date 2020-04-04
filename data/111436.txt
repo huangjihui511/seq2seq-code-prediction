@@ -1,0 +1,231 @@
+package io.grpc;
+import static com.google.common.base.Preconditions.checkArgument;
+import com.google.common.base.MoreObjects;
+import com.google.common.base.Preconditions;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.Executor;
+import java.util.concurrent.TimeUnit;
+import javax.annotation.CheckReturnValue;
+import javax.annotation.Nullable;
+import javax.annotation.concurrent.Immutable;
+@Immutable
+@CheckReturnValue
+public final class CallOptions {
+public static final CallOptions DEFAULT = new CallOptions();
+@Nullable
+private Deadline deadline;
+@Nullable
+private Executor executor;
+@Nullable
+private String authority;
+@Nullable
+private CallCredentials credentials;
+@Nullable
+private String compressorName;
+private Object[][] customOptions = new Object[0][2];
+private List<ClientStreamTracer.Factory> streamTracerFactories = Collections.emptyList();
+@Nullable
+private Boolean waitForReady;
+@Nullable
+private Integer maxInboundMessageSize;
+@Nullable
+private Integer maxOutboundMessageSize;
+@ExperimentalApi("https:
+public CallOptions withAuthority(@Nullable String authority) {
+CallOptions newOptions = new CallOptions(this);
+newOptions.authority = authority;
+return newOptions;
+}
+public CallOptions withCallCredentials(@Nullable CallCredentials credentials) {
+CallOptions newOptions = new CallOptions(this);
+newOptions.credentials = credentials;
+return newOptions;
+}
+@ExperimentalApi("https:
+public CallOptions withCompression(@Nullable String compressorName) {
+CallOptions newOptions = new CallOptions(this);
+newOptions.compressorName = compressorName;
+return newOptions;
+}
+public CallOptions withDeadline(@Nullable Deadline deadline) {
+CallOptions newOptions = new CallOptions(this);
+newOptions.deadline = deadline;
+return newOptions;
+}
+public CallOptions withDeadlineAfter(long duration, TimeUnit unit) {
+return withDeadline(Deadline.after(duration, unit));
+}
+@Nullable
+public Deadline getDeadline() {
+return deadline;
+}
+public CallOptions withWaitForReady() {
+CallOptions newOptions = new CallOptions(this);
+newOptions.waitForReady = Boolean.TRUE;
+return newOptions;
+}
+public CallOptions withoutWaitForReady() {
+CallOptions newOptions = new CallOptions(this);
+newOptions.waitForReady = Boolean.FALSE;
+return newOptions;
+}
+@ExperimentalApi("https:
+@Nullable
+public String getCompressor() {
+return compressorName;
+}
+@Nullable
+@ExperimentalApi("https:
+public String getAuthority() {
+return authority;
+}
+@Nullable
+public CallCredentials getCredentials() {
+return credentials;
+}
+public CallOptions withExecutor(@Nullable Executor executor) {
+CallOptions newOptions = new CallOptions(this);
+newOptions.executor = executor;
+return newOptions;
+}
+@ExperimentalApi("https:
+public CallOptions withStreamTracerFactory(ClientStreamTracer.Factory factory) {
+CallOptions newOptions = new CallOptions(this);
+ArrayList<ClientStreamTracer.Factory> newList =
+new ArrayList<>(streamTracerFactories.size() + 1);
+newList.addAll(streamTracerFactories);
+newList.add(factory);
+newOptions.streamTracerFactories = Collections.unmodifiableList(newList);
+return newOptions;
+}
+@ExperimentalApi("https:
+public List<ClientStreamTracer.Factory> getStreamTracerFactories() {
+return streamTracerFactories;
+}
+public static final class Key<T> {
+private final String debugString;
+private final T defaultValue;
+private Key(String debugString, T defaultValue) {
+this.debugString = debugString;
+this.defaultValue = defaultValue;
+}
+public T getDefault() {
+return defaultValue;
+}
+@Override
+public String toString() {
+return debugString;
+}
+@ExperimentalApi("https:
+@Deprecated
+public static <T> Key<T> of(String debugString, T defaultValue) {
+Preconditions.checkNotNull(debugString, "debugString");
+return new Key<>(debugString, defaultValue);
+}
+public static <T> Key<T> create(String debugString) {
+Preconditions.checkNotNull(debugString, "debugString");
+return new Key<>(debugString, /*defaultValue=*/ null);
+}
+public static <T> Key<T> createWithDefault(String debugString, T defaultValue) {
+Preconditions.checkNotNull(debugString, "debugString");
+return new Key<>(debugString, defaultValue);
+}
+}
+public <T> CallOptions withOption(Key<T> key, T value) {
+Preconditions.checkNotNull(key, "key");
+Preconditions.checkNotNull(value, "value");
+CallOptions newOptions = new CallOptions(this);
+int existingIdx = -1;
+for (int i = 0; i < customOptions.length; i++) {
+if (key.equals(customOptions[i][0])) {
+existingIdx = i;
+break;
+}
+}
+newOptions.customOptions = new Object[customOptions.length + (existingIdx == -1 ? 1 : 0)][2];
+System.arraycopy(customOptions, 0, newOptions.customOptions, 0, customOptions.length);
+if (existingIdx == -1) {
+newOptions.customOptions[customOptions.length] = new Object[] {key, value};
+} else {
+newOptions.customOptions[existingIdx] = new Object[] {key, value};
+}
+return newOptions;
+}
+@ExperimentalApi("https:
+@SuppressWarnings("unchecked")
+public <T> T getOption(Key<T> key) {
+Preconditions.checkNotNull(key, "key");
+for (int i = 0; i < customOptions.length; i++) {
+if (key.equals(customOptions[i][0])) {
+return (T) customOptions[i][1];
+}
+}
+return key.defaultValue;
+}
+@Nullable
+public Executor getExecutor() {
+return executor;
+}
+private CallOptions() {
+}
+public boolean isWaitForReady() {
+return Boolean.TRUE.equals(waitForReady);
+}
+Boolean getWaitForReady() {
+return waitForReady;
+}
+@ExperimentalApi("https:
+public CallOptions withMaxInboundMessageSize(int maxSize) {
+checkArgument(maxSize >= 0, "invalid maxsize %s", maxSize);
+CallOptions newOptions = new CallOptions(this);
+newOptions.maxInboundMessageSize = maxSize;
+return newOptions;
+}
+@ExperimentalApi("https:
+public CallOptions withMaxOutboundMessageSize(int maxSize) {
+checkArgument(maxSize >= 0, "invalid maxsize %s", maxSize);
+CallOptions newOptions = new CallOptions(this);
+newOptions.maxOutboundMessageSize = maxSize;
+return newOptions;
+}
+@Nullable
+@ExperimentalApi("https:
+public Integer getMaxInboundMessageSize() {
+return maxInboundMessageSize;
+}
+@Nullable
+@ExperimentalApi("https:
+public Integer getMaxOutboundMessageSize() {
+return maxOutboundMessageSize;
+}
+private CallOptions(CallOptions other) {
+deadline = other.deadline;
+authority = other.authority;
+credentials = other.credentials;
+executor = other.executor;
+compressorName = other.compressorName;
+customOptions = other.customOptions;
+waitForReady = other.waitForReady;
+maxInboundMessageSize = other.maxInboundMessageSize;
+maxOutboundMessageSize = other.maxOutboundMessageSize;
+streamTracerFactories = other.streamTracerFactories;
+}
+@Override
+public String toString() {
+return MoreObjects.toStringHelper(this)
+.add("deadline", deadline)
+.add("authority", authority)
+.add("callCredentials", credentials)
+.add("executor", executor != null ? executor.getClass() : null)
+.add("compressorName", compressorName)
+.add("customOptions", Arrays.deepToString(customOptions))
+.add("waitForReady", isWaitForReady())
+.add("maxInboundMessageSize", maxInboundMessageSize)
+.add("maxOutboundMessageSize", maxOutboundMessageSize)
+.add("streamTracerFactories", streamTracerFactories)
+.toString();
+}
+}

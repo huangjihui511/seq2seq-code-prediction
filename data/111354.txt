@@ -1,0 +1,4 @@
+package com.facebook.example;
+@MyAnnotation
+public class Source {
+}

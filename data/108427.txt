@@ -1,0 +1,31 @@
+package com.alibaba.cloud.sentinel.datasource.config;
+import javax.validation.constraints.NotEmpty;
+import com.alibaba.cloud.sentinel.datasource.factorybean.ApolloDataSourceFactoryBean;
+public class ApolloDataSourceProperties extends AbstractDataSourceProperties {
+@NotEmpty
+private String namespaceName;
+@NotEmpty
+private String flowRulesKey;
+private String defaultFlowRuleValue;
+public ApolloDataSourceProperties() {
+super(ApolloDataSourceFactoryBean.class.getName());
+}
+public String getNamespaceName() {
+return namespaceName;
+}
+public void setNamespaceName(String namespaceName) {
+this.namespaceName = namespaceName;
+}
+public String getFlowRulesKey() {
+return flowRulesKey;
+}
+public void setFlowRulesKey(String flowRulesKey) {
+this.flowRulesKey = flowRulesKey;
+}
+public String getDefaultFlowRuleValue() {
+return defaultFlowRuleValue;
+}
+public void setDefaultFlowRuleValue(String defaultFlowRuleValue) {
+this.defaultFlowRuleValue = defaultFlowRuleValue;
+}
+}

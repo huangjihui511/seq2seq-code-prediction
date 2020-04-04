@@ -1,0 +1,27 @@
+package com.alibaba.csp.sentinel.transport.command.netty;
+import io.netty.channel.ChannelHandler;
+import io.netty.channel.ChannelPipeline;
+import io.netty.channel.socket.SocketChannel;
+import io.netty.handler.codec.http.HttpObjectAggregator;
+import io.netty.handler.codec.http.HttpRequestDecoder;
+import io.netty.handler.codec.http.HttpResponseEncoder;
+import org.junit.Test;
+import org.mockito.InOrder;
+import static org.mockito.Mockito.*;
+public class HttpServerInitializerTest {
+@Test
+public void testInitChannel() throws Exception {
+HttpServerInitializer httpServerInitializer = mock(HttpServerInitializer.class);
+SocketChannel socketChannel = mock(SocketChannel.class);
+ChannelPipeline channelPipeline = mock(ChannelPipeline.class);
+when(socketChannel.pipeline()).thenReturn(channelPipeline);
+doCallRealMethod().when(httpServerInitializer).initChannel(socketChannel);
+httpServerInitializer.initChannel(socketChannel);
+verify(channelPipeline, times(4)).addLast(any(ChannelHandler.class));
+InOrder inOrder = inOrder(channelPipeline);
+inOrder.verify(channelPipeline).addLast(any(HttpRequestDecoder.class));
+inOrder.verify(channelPipeline).addLast(any(HttpObjectAggregator.class));
+inOrder.verify(channelPipeline).addLast(any(HttpResponseEncoder.class));
+inOrder.verify(channelPipeline).addLast(any(HttpServerHandler.class));
+}
+}

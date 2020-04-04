@@ -1,0 +1,101 @@
+package org.pf4j.util;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Stack;
+public class DirectedGraph<V> {
+private Map<V, List<V>> neighbors = new HashMap<>();
+public void addVertex(V vertex) {
+if (containsVertex(vertex)) {
+return;
+}
+neighbors.put(vertex, new ArrayList<>());
+}
+public boolean containsVertex(V vertex) {
+return neighbors.containsKey(vertex);
+}
+public void removeVertex(V vertex) {
+neighbors.remove(vertex);
+}
+public void addEdge(V from, V to) {
+addVertex(from);
+addVertex(to);
+neighbors.get(from).add(to);
+}
+public void removeEdge(V from, V to) {
+if (!containsVertex(from)) {
+throw new IllegalArgumentException("Nonexistent vertex " + from);
+}
+if (!containsVertex(to)) {
+throw new IllegalArgumentException("Nonexistent vertex " + to);
+}
+neighbors.get(from).remove(to);
+}
+public List<V> getNeighbors(V vertex) {
+return containsVertex(vertex) ? neighbors.get(vertex) : new ArrayList<>();
+}
+public Map<V, Integer> outDegree() {
+Map<V, Integer> result = new HashMap<>();
+for (V vertex : neighbors.keySet()) {
+result.put(vertex, neighbors.get(vertex).size());
+}
+return result;
+}
+public Map<V, Integer> inDegree() {
+Map<V, Integer> result = new HashMap<>();
+for (V vertex : neighbors.keySet()) {
+result.put(vertex, 0); 
+}
+for (V from : neighbors.keySet()) {
+for (V to : neighbors.get(from)) {
+result.put(to, result.get(to) + 1); 
+}
+}
+return result;
+}
+public List<V> topologicalSort() {
+Map<V, Integer> degree = inDegree();
+Stack<V> zeroVertices = new Stack<>(); 
+for (V v : degree.keySet()) {
+if (degree.get(v) == 0) {
+zeroVertices.push(v);
+}
+}
+List<V> result = new ArrayList<>();
+while (!zeroVertices.isEmpty()) {
+V vertex = zeroVertices.pop(); 
+result.add(vertex); 
+for (V neighbor : neighbors.get(vertex)) {
+degree.put(neighbor, degree.get(neighbor) - 1);
+if (degree.get(neighbor) == 0) {
+zeroVertices.push(neighbor);
+}
+}
+}
+if (result.size() != neighbors.size()) {
+return null;
+}
+return result;
+}
+public List<V> reverseTopologicalSort() {
+List<V> list = topologicalSort();
+if (list == null) {
+return null;
+}
+Collections.reverse(list);
+return list;
+}
+public boolean isDag () {
+return topologicalSort() != null;
+}
+@Override
+public String toString() {
+StringBuilder sb = new StringBuilder();
+for (V vertex : neighbors.keySet()) {
+sb.append("\n ").append(vertex).append(" -> ").append(neighbors.get(vertex));
+}
+return sb.toString();
+}
+}

@@ -1,0 +1,9 @@
+package com.twelvemonkeys.servlet.jsp.taglib;
+import javax.servlet.jsp.JspException;
+public abstract class BodyReaderTag extends ExBodyTagSupport {
+public int doAfterBody() throws JspException {
+processBody(bodyContent.getString());
+return SKIP_BODY;
+}
+protected abstract void processBody(String pContent) throws JspException;
+}

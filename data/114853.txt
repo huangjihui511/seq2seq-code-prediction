@@ -1,0 +1,200 @@
+package com.google.api.client.xml;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import com.google.api.client.http.HttpHeaders;
+import com.google.api.client.http.xml.atom.AtomFeedParser;
+import com.google.api.client.util.Charsets;
+import com.google.api.client.util.Key;
+import com.google.api.client.xml.atom.AbstractAtomFeedParser;
+import com.google.api.client.xml.atom.Atom;
+import com.google.common.io.Resources;
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import java.io.StringReader;
+import java.net.URL;
+import java.util.List;
+import org.junit.Assert;
+import org.junit.Test;
+import org.xmlpull.v1.XmlPullParser;
+public class AtomTest {
+private static final String SAMPLE_FEED =
+"<?xml version=\"1.0\" encoding=\"utf-8\"?><feed "
++ "xmlns=\"http:
++ "=\"http:
++ "<name>John Doe</name>  </author>  <id>urn:uuid:60a76c80-d399-11d9-b93C-0003939e0af6"
++ "</id>  <entry>    <title>Atom-Powered Robots Run Amok</title>    <link href=\"http"
++ ":
++ "-80da344efa6a</id>    <updated>2003-12-13T18:30:02Z</updated>    <summary>Some text"
++ ".</summary>  </entry><entry>    <title>Atom-Powered Robots Run Amok!</title>    <link"
++ " href=\"http:
++ "-aaaa-80da344efa62</id>    <updated>2003-12-13T18:32:02Z</updated>    <summary>Some "
++ "other text.</summary>  </entry></feed>";
+@Test
+public void testSetSlugHeader() {
+HttpHeaders headers = new HttpHeaders();
+assertNull(headers.get("Slug"));
+subtestSetSlugHeader(headers, "value", "value");
+subtestSetSlugHeader(
+headers, " !\"#$&'()*+,-./:;<=>?@[\\]^_`{|}~", " !\"#$&'()*+,-./:;" + "<=>?@[\\]^_`{|}~");
+subtestSetSlugHeader(headers, "%D7%99%D7%A0%D7%99%D7%91", "יניב");
+subtestSetSlugHeader(headers, null, null);
+}
+@SuppressWarnings("unchecked")
+public void subtestSetSlugHeader(HttpHeaders headers, String expectedValue, String value) {
+Atom.setSlugHeader(headers, value);
+if (value == null) {
+assertNull(headers.get("Slug"));
+} else {
+Assert.assertArrayEquals(
+new String[] {expectedValue}, ((List<String>) headers.get("Slug")).toArray());
+}
+}
+@Test
+public void testAtomFeedUsingCustomizedParser() throws Exception {
+XmlPullParser parser = Xml.createParser();
+parser.setInput(new StringReader(SAMPLE_FEED));
+InputStream stream = new ByteArrayInputStream(SAMPLE_FEED.getBytes());
+XmlNamespaceDictionary namespaceDictionary = new XmlNamespaceDictionary();
+AbstractAtomFeedParser atomParser =
+new AtomFeedParser<Feed, FeedEntry>(
+namespaceDictionary, parser, stream, Feed.class, FeedEntry.class);
+Feed feed = (Feed) atomParser.parseFeed();
+assertEquals("John Doe", feed.author.name);
+assertEquals("urn:uuid:60a76c80-d399-11d9-b93C-0003939e0af6", feed.id);
+assertEquals("2003-12-13T18:31:02Z", feed.updated);
+assertEquals("Example Feed", feed.title);
+assertEquals("http:
+FeedEntry entry1 = (FeedEntry) atomParser.parseNextEntry();
+assertEquals("urn:uuid:1225c695-cfb8-4ebb-aaaa-80da344efa6a", entry1.id);
+assertEquals("2003-12-13T18:30:02Z", entry1.updated);
+assertEquals("Some text.", entry1.summary);
+assertEquals("Atom-Powered Robots Run Amok", entry1.title);
+assertEquals("http:
+FeedEntry entry2 = (FeedEntry) atomParser.parseNextEntry();
+assertEquals("urn:uuid:1225c695-cfb8-4ebb-aaaa-80da344efa62", entry2.id);
+assertEquals("2003-12-13T18:32:02Z", entry2.updated);
+assertEquals("Some other text.", entry2.summary);
+assertEquals("Atom-Powered Robots Run Amok!", entry2.title);
+assertEquals("http:
+FeedEntry entry3 = (FeedEntry) atomParser.parseNextEntry();
+assertNull(entry3);
+atomParser.close();
+}
+@Test
+public void testAtomFeedUsingStandardParser() throws Exception {
+Feed feed = new Feed();
+XmlPullParser parser = Xml.createParser();
+parser.setInput(new StringReader(SAMPLE_FEED));
+XmlNamespaceDictionary namespaceDictionary = new XmlNamespaceDictionary();
+Xml.parseElement(parser, feed, namespaceDictionary, null);
+assertNotNull(feed);
+assertEquals(2, feed.entry.length);
+assertEquals("John Doe", feed.author.name);
+assertEquals("urn:uuid:60a76c80-d399-11d9-b93C-0003939e0af6", feed.id);
+assertEquals("2003-12-13T18:31:02Z", feed.updated);
+assertEquals("Example Feed", feed.title);
+assertEquals("http:
+FeedEntry entry1 = feed.entry[0];
+assertEquals("urn:uuid:1225c695-cfb8-4ebb-aaaa-80da344efa6a", entry1.id);
+assertEquals("2003-12-13T18:30:02Z", entry1.updated);
+assertEquals("Some text.", entry1.summary);
+assertEquals("Atom-Powered Robots Run Amok", entry1.title);
+assertEquals("http:
+FeedEntry entry2 = feed.entry[1];
+assertEquals("urn:uuid:1225c695-cfb8-4ebb-aaaa-80da344efa62", entry2.id);
+assertEquals("2003-12-13T18:32:02Z", entry2.updated);
+assertEquals("Some other text.", entry2.summary);
+assertEquals("Atom-Powered Robots Run Amok!", entry2.title);
+assertEquals("http:
+}
+@Test
+public void testSampleFeedParser() throws Exception {
+XmlPullParser parser = Xml.createParser();
+URL url = Resources.getResource("sample-atom.xml");
+String read = Resources.toString(url, Charsets.UTF_8);
+parser.setInput(new StringReader(read));
+XmlNamespaceDictionary namespaceDictionary = new XmlNamespaceDictionary();
+AbstractAtomFeedParser atomParser =
+new AtomFeedParser<Feed, FeedEntry>(
+namespaceDictionary,
+parser,
+new ByteArrayInputStream(read.getBytes()),
+Feed.class,
+FeedEntry.class);
+Feed feed = (Feed) atomParser.parseFeed();
+assertNotNull(feed);
+FeedEntry entry = (FeedEntry) atomParser.parseNextEntry();
+assertNotNull(entry);
+assertNotNull(entry.id);
+assertNotNull(entry.title);
+assertNotNull(entry.summary);
+assertNotNull(entry.link);
+assertNotNull(entry.updated);
+assertNotNull(entry.content);
+assertEquals(5000, entry.content.length());
+entry = (FeedEntry) atomParser.parseNextEntry();
+assertNotNull(entry);
+assertNotNull(entry.id);
+assertNotNull(entry.title);
+assertNotNull(entry.summary);
+assertNotNull(entry.link);
+assertNotNull(entry.updated);
+assertNotNull(entry.content);
+assertEquals(
+"aäb cde fgh ijk lmn oöpoöp tuü vwx yz AÄBC DEF GHI JKL MNO ÖPQ RST UÜV WXYZ "
++ "!\"§ $%& /() =?* '<> #|; ²³~ @`´ ©«» ¼× {} aäb cde fgh ijk lmn oöp qrsß tuü vwx yz "
++ "AÄBC DEF GHI JKL MNO",
+entry.content);
+entry = (FeedEntry) atomParser.parseNextEntry();
+assertNotNull(entry);
+assertNotNull(entry.id);
+assertNotNull(entry.title);
+assertNotNull(entry.summary);
+assertNotNull(entry.link);
+assertNotNull(entry.updated);
+assertNull(entry.content);
+entry = (FeedEntry) atomParser.parseNextEntry();
+assertNotNull(entry);
+assertNotNull(entry.id);
+assertNotNull(entry.title);
+assertNotNull(entry.summary);
+assertNotNull(entry.link);
+assertNull(entry.updated);
+assertNotNull(entry.content);
+entry = (FeedEntry) atomParser.parseNextEntry();
+assertNotNull(entry);
+assertNotNull(entry.id);
+assertNotNull(entry.title);
+assertNull(entry.summary);
+assertNotNull(entry.link);
+assertNotNull(entry.updated);
+assertNotNull(entry.content);
+entry = (FeedEntry) atomParser.parseNextEntry();
+assertNull(entry);
+atomParser.close();
+}
+public static class Feed {
+@Key private String title;
+@Key private Link link;
+@Key private String updated;
+@Key private Author author;
+@Key private String id;
+@Key private FeedEntry[] entry;
+}
+public static class Author {
+@Key private String name;
+}
+public static class Link {
+@Key("@href")
+private String href;
+}
+public static class FeedEntry {
+@Key private String title;
+@Key private Link link;
+@Key private String updated;
+@Key private String summary;
+@Key private String id;
+@Key private String content;
+}
+}

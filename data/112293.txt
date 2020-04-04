@@ -1,0 +1,87 @@
+package com.github.jknack.handlebars.internal;
+import java.io.IOException;
+import java.io.Writer;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
+import com.github.jknack.handlebars.Context;
+import com.github.jknack.handlebars.Handlebars;
+import com.github.jknack.handlebars.TagType;
+import com.github.jknack.handlebars.Template;
+class TemplateList extends BaseTemplate implements Iterable<Template> {
+private final List<Template> nodes = new ArrayList<>();
+private final List<BaseTemplate> decorators = new ArrayList<>();
+private boolean decorate;
+public TemplateList(final Handlebars handlebars) {
+super(handlebars);
+}
+public boolean add(final Template child) {
+nodes.add(child);
+if (child instanceof VarDecorator || child instanceof BlockDecorator
+|| child instanceof Partial) {
+decorators.add((BaseTemplate) child);
+decorate = true;
+}
+return true;
+}
+@Override
+public void before(final Context context, final Writer writer) throws IOException {
+for (BaseTemplate node : decorators) {
+node.before(context, writer);
+}
+}
+@Override
+public void after(final Context context, final Writer writer) throws IOException {
+for (BaseTemplate node : decorators) {
+node.after(context, writer);
+}
+}
+@Override
+protected void merge(final Context context, final Writer writer)
+throws IOException {
+for (Template node : nodes) {
+node.apply(context, writer);
+}
+}
+@Override
+public final boolean decorate() {
+return decorate;
+}
+@Override
+public String text() {
+StringBuilder buffer = new StringBuilder();
+for (Template node : nodes) {
+buffer.append(node.text());
+}
+return buffer.toString();
+}
+@Override
+public Iterator<Template> iterator() {
+return nodes.iterator();
+}
+public int size() {
+return nodes.size();
+}
+@Override
+public List<String> collect(final TagType... tagType) {
+Set<String> tagNames = new LinkedHashSet<>();
+for (Template node : nodes) {
+tagNames.addAll(node.collect(tagType));
+}
+return new ArrayList<>(tagNames);
+}
+@Override
+public List<String> collectReferenceParameters() {
+Set<String> paramNames = new LinkedHashSet<>();
+for (Template node : nodes) {
+paramNames.addAll(node.collectReferenceParameters());
+}
+return new ArrayList<>(paramNames);
+}
+@Override
+public String toString() {
+return nodes.toString();
+}
+}

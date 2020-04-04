@@ -1,0 +1,25 @@
+package io.ebeaninternal.server.query;
+import io.ebeaninternal.server.deploy.DbReadContext;
+import io.ebeaninternal.server.deploy.DbSqlContext;
+import io.ebeaninternal.server.type.ScalarDataReader;
+import io.ebeaninternal.server.type.ScalarType;
+import java.util.List;
+public interface STreeProperty extends ScalarDataReader<Object> {
+String getName();
+String getFullBeanName();
+boolean isId();
+boolean isEmbedded();
+boolean isAggregation();
+default boolean isAggregationManyToOne() {
+return false;
+}
+boolean isFormula();
+String getEncryptKeyAsString();
+String getElPrefix();
+ScalarType<?> getScalarType();
+void buildRawSqlSelectChain(String prefix, List<String> selectChain);
+void load(SqlBeanLoad sqlBeanLoad);
+void loadIgnore(DbReadContext ctx);
+void appendSelect(DbSqlContext ctx, boolean subQuery);
+void appendFrom(DbSqlContext ctx, SqlJoinType joinType);
+}

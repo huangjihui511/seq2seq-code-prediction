@@ -1,0 +1,24 @@
+package com.datumbox.framework.core.common.text.extractors;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.Map;
+import java.util.Set;
+public class UniqueWordSequenceExtractor extends AbstractTextExtractor<UniqueWordSequenceExtractor.Parameters, Integer, String> {
+public static class Parameters extends AbstractTextExtractor.AbstractParameters {
+private static final long serialVersionUID = 1L;
+}
+public UniqueWordSequenceExtractor(Parameters parameters) {
+super(parameters);
+}
+@Override
+public Map<Integer, String> extract(final String text) {
+Set<String> tmpKwd = new LinkedHashSet<>(generateTokenizer().tokenize(text));
+Map<Integer, String> keywordSequence = new LinkedHashMap<>();
+int position = 0;
+for(String keyword : tmpKwd) {
+keywordSequence.put(position, keyword);
+++position;
+}
+return keywordSequence;
+}
+}

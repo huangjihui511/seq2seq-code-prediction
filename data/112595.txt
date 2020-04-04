@@ -1,0 +1,184 @@
+package org.jb2011.lnf.beautyeye.ch14_combox;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Insets;
+import java.awt.Point;
+import java.awt.Rectangle;
+import javax.swing.ComboBoxEditor;
+import javax.swing.JButton;
+import javax.swing.JComboBox;
+import javax.swing.JComponent;
+import javax.swing.JScrollPane;
+import javax.swing.ListCellRenderer;
+import javax.swing.LookAndFeel;
+import javax.swing.UIManager;
+import javax.swing.border.Border;
+import javax.swing.plaf.ComponentUI;
+import javax.swing.plaf.UIResource;
+import javax.swing.plaf.basic.BasicComboBoxEditor;
+import javax.swing.plaf.basic.BasicComboBoxUI;
+import javax.swing.plaf.basic.BasicComboPopup;
+import javax.swing.plaf.basic.ComboPopup;
+public class BEComboBoxUI extends BasicComboBoxUI
+implements org.jb2011.lnf.beautyeye.BeautyEyeLNFHelper.__UseParentPaintSurported
+{
+public static ComponentUI createUI(JComponent c)
+{
+return new BEComboBoxUI();
+}
+public boolean isUseParentPaint()
+{
+return comboBox != null
+&& ( !(comboBox.getBorder() instanceof UIResource)
+||!(comboBox.getBackground() instanceof UIResource));
+}
+@Override
+public void installUI( JComponent c )
+{
+super.installUI(c);
+popup.getList().setFixedCellHeight(-1);
+Container parent = popup.getList().getParent();  
+if (parent != null)
+{
+parent = parent.getParent();  
+if (parent != null && parent instanceof JScrollPane)
+}
+}
+public JComboBox getCombox()
+{
+return this.comboBox;
+}
+@Override
+protected JButton createArrowButton()
+{
+JButton button = new JButton()
+{
+public void setBorder(Border b){
+}
+public void paint(Graphics g){
+boolean isEnabled = isEnabled();
+boolean isPressed = getModel().isPressed();
+if(isEnabled)
+{
+if(isPressed)
+__Icon9Factory__.getInstance().getButtonArrow_pressed()
+.draw((Graphics2D)g, 0, 0, this.getWidth(), this.getHeight());
+else
+__Icon9Factory__.getInstance().getButtonArrow_normal()
+.draw((Graphics2D)g, 0, 0, this.getWidth(), this.getHeight());
+}
+else
+{
+__Icon9Factory__.getInstance().getButtonArrow_disable()
+.draw((Graphics2D)g, 0, 0, this.getWidth(), this.getHeight());
+}
+}
+public boolean isFocusTraversable(){
+return false;
+}
+public Dimension getPreferredSize() {
+return new Dimension(20, 20);
+}
+public Dimension getMinimumSize() {
+return new Dimension(5, 5);
+}
+public Dimension getMaximumSize() {
+return new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE);
+}
+};
+button.setName("ComboBox.arrowButton");
+return button;
+}
+@Override
+public void paint( Graphics g, JComponent c )
+{
+hasFocus = comboBox.hasFocus();
+{
+Rectangle r = rectangleForCurrentValue();
+paintCurrentValueBackground(g,r,hasFocus);
+if(!comboBox.isEditable())
+paintCurrentValue(g,r,hasFocus);
+}
+}
+public void paintCurrentValueBackground(Graphics g,Rectangle bounds,boolean hasFocus)
+{
+if(!isUseParentPaint())
+{
+if ( comboBox.isEnabled() )
+org.jb2011.lnf.beautyeye.ch6_textcoms.__Icon9Factory__.getInstance().getTextFieldBgNormal()
+.draw((Graphics2D)g, 0,0,comboBox.getWidth(),comboBox.getHeight());
+else
+org.jb2011.lnf.beautyeye.ch6_textcoms.__Icon9Factory__.getInstance().getTextFieldBgDisabled()
+.draw((Graphics2D)g, 0,0,comboBox.getWidth(),comboBox.getHeight());
+}
+else
+{
+super.paintCurrentValueBackground(g, bounds, hasFocus);
+}
+}
+protected ListCellRenderer createRenderer()
+{
+return new BEComboBoxRenderer.UIResource(this);
+}
+public Insets getInsets()
+{
+return super.getInsets();
+}
+protected ComboPopup createPopup() {
+return new BasicComboPopup( comboBox ){
+private int popupOffsetX = UIManager.getInt("ComboBox.popupOffsetX");
+private int popupOffsetY = UIManager.getInt("ComboBox.popupOffsetY");
+public void show() {
+setListSelection(comboBox.getSelectedIndex());
+Point location = getPopupLocation();
+show( comboBox
+);
+}
+private void setListSelection(int selectedIndex) {
+if ( selectedIndex == -1 ) {
+list.clearSelection();
+}
+else {
+list.setSelectedIndex( selectedIndex );
+list.ensureIndexIsVisible( selectedIndex );
+}
+}
+private Point getPopupLocation() {
+Dimension popupSize = comboBox.getSize();
+Insets insets = getInsets();
+popupSize.setSize(popupSize.width - (insets.right + insets.left),
+getPopupHeightForRowCount( comboBox.getMaximumRowCount()));
+Rectangle popupBounds = computePopupBounds( 0, comboBox.getBounds().height,
+popupSize.width, popupSize.height);
+Dimension scrollSize = popupBounds.getSize();
+Point popupLocation = popupBounds.getLocation();
+scroller.setMaximumSize( scrollSize );
+scroller.setPreferredSize( scrollSize );
+scroller.setMinimumSize( scrollSize );
+list.revalidate();
+return popupLocation;
+}
+};
+}
+protected ComboBoxEditor createEditor()
+{
+BasicComboBoxEditor.UIResource bcbe = new BasicComboBoxEditor.UIResource();
+if(bcbe != null)
+{
+Component c = bcbe.getEditorComponent();
+if(c != null)
+{
+((JComponent)c).setOpaque(false);
+Border border = (Border)UIManager.get("ComboBox.editorBorder");
+if (border != null)
+{
+((JComponent)c).setBorder(border);
+}
+}
+}
+return bcbe;
+}
+}

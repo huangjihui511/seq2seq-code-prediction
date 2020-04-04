@@ -1,0 +1,39 @@
+package lombok.eclipse.agent;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import lombok.Lombok;
+public class PatchDelegatePortal {
+static final String CLASS_SCOPE = "org.eclipse.jdt.internal.compiler.lookup.ClassScope";
+public static boolean handleDelegateForType(Object classScope) {
+try {
+return (Boolean) Reflection.handleDelegateForType.invoke(null, classScope);
+} catch (NoClassDefFoundError e) {
+return false;
+} catch (IllegalAccessException e) {
+throw Lombok.sneakyThrow(e);
+} catch (InvocationTargetException e) {
+throw Lombok.sneakyThrow(e.getCause());
+} catch (NullPointerException e) {
+if (!"false".equals(System.getProperty("lombok.debug.reflection", "false"))) {
+e.initCause(Reflection.problem);
+throw e;
+}
+return false;
+}
+}
+private static final class Reflection {
+public static final Method handleDelegateForType;
+public static final Throwable problem;
+static {
+Method m = null;
+Throwable problem_ = null;
+try {
+m = PatchDelegate.class.getMethod("handleDelegateForType", Class.forName(CLASS_SCOPE));
+} catch (Throwable t) {
+problem_ = t;
+}
+handleDelegateForType = m;
+problem = problem_;
+}
+}
+}

@@ -1,0 +1,8 @@
+package com.netflix.astyanax.model;
+import java.nio.ByteBuffer;
+public interface ByteBufferRange {
+ByteBuffer getStart();
+ByteBuffer getEnd();
+boolean isReversed();
+int getLimit();
+}

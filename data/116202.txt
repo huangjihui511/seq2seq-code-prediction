@@ -1,0 +1,5 @@
+package org.apache.struts2.action;
+import javax.servlet.http.HttpServletRequest;
+public interface ServletRequestAware {
+void withServletRequest(HttpServletRequest request);
+}

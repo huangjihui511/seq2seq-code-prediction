@@ -1,0 +1,45 @@
+package org.openrefine.wikidata.schema;
+import org.apache.commons.lang.Validate;
+import org.openrefine.wikidata.qa.QAWarning;
+import org.openrefine.wikidata.qa.QAWarningStore;
+import com.google.refine.model.Cell;
+import com.google.refine.model.Column;
+import com.google.refine.model.ColumnModel;
+import com.google.refine.model.Row;
+public class ExpressionContext {
+private String baseIRI;
+private int rowId;
+private Row row;
+private ColumnModel columnModel;
+private QAWarningStore warningStore;
+public ExpressionContext(String baseIRI, int rowId, Row row, ColumnModel columnModel, QAWarningStore warningStore) {
+Validate.notNull(baseIRI);
+this.baseIRI = baseIRI;
+this.rowId = rowId;
+Validate.notNull(row);
+this.row = row;
+Validate.notNull(columnModel);
+this.columnModel = columnModel;
+this.warningStore = warningStore;
+}
+public String getBaseIRI() {
+return baseIRI;
+}
+public Cell getCellByName(String name) {
+Column column = columnModel.getColumnByName(name);
+if (column != null) {
+int idx = column.getCellIndex();
+return row.getCell(idx);
+} else {
+return null;
+}
+}
+public int getRowId() {
+return rowId;
+}
+public void addWarning(QAWarning warning) {
+if (warningStore != null) {
+warningStore.addWarning(warning);
+}
+}
+}

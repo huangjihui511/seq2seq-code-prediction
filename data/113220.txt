@@ -1,0 +1,12 @@
+package org.pf4j;
+import java.nio.file.Files;
+import java.nio.file.Path;
+public class DefaultPluginLoader extends BasePluginLoader {
+public DefaultPluginLoader(PluginManager pluginManager) {
+super(pluginManager, new DefaultPluginClasspath());
+}
+@Override
+public boolean isApplicable(Path pluginPath) {
+return super.isApplicable(pluginPath) && Files.isDirectory(pluginPath);
+}
+}

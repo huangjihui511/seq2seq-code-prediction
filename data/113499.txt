@@ -1,0 +1,44 @@
+package com.pokegoapi.api.pokemon;
+import POGOProtos.Data.BuddyPokemonOuterClass.BuddyPokemon;
+import com.pokegoapi.api.PokemonGo;
+public class Buddy {
+private final PokemonGo api;
+private long id;
+private double lastKMAwarded;
+private double startKM;
+private Pokemon pokemon;
+private double buddyDistance;
+public Buddy(PokemonGo api, BuddyPokemon proto) {
+this.api = api;
+this.id = proto.getId();
+this.lastKMAwarded = proto.getLastKmAwarded();
+this.startKM = proto.getStartKmWalked();
+}
+public Pokemon getPokemon() {
+if (pokemon == null) {
+pokemon = api.inventories.pokebank.getPokemonById(this.id);
+buddyDistance = api.itemTemplates.getPokemonSettings(pokemon.getPokemonId()).getKmBuddyDistance();
+}
+return pokemon;
+}
+public double getBuddyDistance() {
+if (pokemon == null) {
+getPokemon();
+}
+return buddyDistance;
+}
+public double getLastReceiveKM() {
+return lastKMAwarded;
+}
+public double getStartKM() {
+return startKM;
+}
+public double getTargetKM() {
+return getLastReceiveKM() + buddyDistance;
+}
+public double getProgressKM() {
+double walked = api.playerProfile.getStats().getKmWalked();
+double startedKM = Math.max(getStartKM(), getLastReceiveKM());
+return walked - startedKM;
+}
+}

@@ -1,0 +1,4 @@
+package com.graphhopper.jsprit.core.algorithm.recreate.listener;
+import com.graphhopper.jsprit.core.algorithm.listener.SearchStrategyModuleListener;
+public interface InsertionListener extends SearchStrategyModuleListener {
+}

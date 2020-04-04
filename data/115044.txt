@@ -1,0 +1,69 @@
+package com.google.cloud.storage.storagetransfer.samples;
+import com.google.api.services.storagetransfer.v1.Storagetransfer;
+import com.google.api.services.storagetransfer.v1.model.Date;
+import com.google.api.services.storagetransfer.v1.model.GcsData;
+import com.google.api.services.storagetransfer.v1.model.ObjectConditions;
+import com.google.api.services.storagetransfer.v1.model.Schedule;
+import com.google.api.services.storagetransfer.v1.model.TimeOfDay;
+import com.google.api.services.storagetransfer.v1.model.TransferJob;
+import com.google.api.services.storagetransfer.v1.model.TransferOptions;
+import com.google.api.services.storagetransfer.v1.model.TransferSpec;
+import java.io.IOException;
+import java.io.PrintStream;
+public final class NearlineRequester {
+public static TransferJob createNearlineTransferJob(
+String projectId,
+String jobDescription,
+String gcsSourceBucket,
+String gcsNearlineSinkBucket,
+String startDate,
+String startTime)
+throws InstantiationException, IllegalAccessException, IOException {
+Date date = TransferJobUtils.createDate(startDate);
+TimeOfDay time = TransferJobUtils.createTimeOfDay(startTime);
+TransferJob transferJob =
+new TransferJob()
+.setDescription(jobDescription)
+.setProjectId(projectId)
+.setTransferSpec(
+new TransferSpec()
+.setGcsDataSource(new GcsData().setBucketName(gcsSourceBucket))
+.setGcsDataSink(new GcsData().setBucketName(gcsNearlineSinkBucket))
+.setObjectConditions(
+new ObjectConditions()
+.setMinTimeElapsedSinceLastModification("2592000s" /* 30 days */))
+.setTransferOptions(
+new TransferOptions()
+.setDeleteObjectsFromSourceAfterTransfer(true)))
+.setSchedule(
+new Schedule().setScheduleStartDate(date).setStartTimeOfDay(time))
+.setStatus("ENABLED");
+Storagetransfer client = TransferClientCreator.createStorageTransferClient();
+return client.transferJobs().create(transferJob).execute();
+}
+public static void run(PrintStream out)
+throws InstantiationException, IllegalAccessException, IOException {
+String projectId = TransferJobUtils.getPropertyOrFail("projectId");
+String jobDescription = TransferJobUtils.getPropertyOrFail("jobDescription");
+String gcsSourceBucket = TransferJobUtils.getPropertyOrFail("gcsSourceBucket");
+String gcsNearlineSinkBucket = TransferJobUtils.getPropertyOrFail("gcsNearlineSinkBucket");
+String startDate = TransferJobUtils.getPropertyOrFail("startDate");
+String startTime = TransferJobUtils.getPropertyOrFail("startTime");
+TransferJob responseT =
+createNearlineTransferJob(
+projectId,
+jobDescription,
+gcsSourceBucket,
+gcsNearlineSinkBucket,
+startDate,
+startTime);
+out.println("Return transferJob: " + responseT.toPrettyString());
+}
+public static void main(String[] args) {
+try {
+run(System.out);
+} catch (Exception e) {
+e.printStackTrace();
+}
+}
+}

@@ -1,0 +1,32 @@
+package io.vertx.core.cli.converters;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+public final class ConstructorBasedConverter<T> implements Converter<T> {
+private final Constructor<T> constructor;
+private ConstructorBasedConverter(Constructor<T> constructor) {
+this.constructor = constructor;
+}
+public static <T> ConstructorBasedConverter<T> getIfEligible(Class<T> clazz) {
+try {
+final Constructor<T> constructor = clazz.getConstructor(String.class);
+if (!constructor.isAccessible()) {
+constructor.setAccessible(true);
+}
+return new ConstructorBasedConverter<>(constructor);
+} catch (NoSuchMethodException e) {
+return null;
+}
+}
+@Override
+public T fromString(String input) throws IllegalArgumentException {
+try {
+return constructor.newInstance(input);
+} catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
+if (e.getCause() != null) {
+throw new IllegalArgumentException(e.getCause());
+} else {
+throw new IllegalArgumentException(e);
+}
+}
+}
+}

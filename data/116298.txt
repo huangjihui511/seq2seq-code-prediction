@@ -1,0 +1,68 @@
+package org.spongepowered.api.world.biome;
+import static com.google.common.base.Preconditions.checkNotNull;
+import com.google.common.base.MoreObjects;
+import org.spongepowered.api.block.BlockState;
+import org.spongepowered.api.util.weighted.SeededVariableAmount;
+import org.spongepowered.api.util.weighted.VariableAmount;
+import java.util.function.Function;
+public class GroundCoverLayer {
+private Function<Double, BlockState> block;
+private SeededVariableAmount<Double> depth;
+public GroundCoverLayer(BlockState block, SeededVariableAmount<Double> depth) {
+this((s) -> block, depth);
+}
+public GroundCoverLayer(Function<Double, BlockState> block, SeededVariableAmount<Double> depth) {
+this.block = checkNotNull(block, "block");
+this.depth = checkNotNull(depth, "depth");
+}
+public Function<Double, BlockState> getBlockState() {
+return this.block;
+}
+public void setBlockState(Function<Double, BlockState> block) {
+this.block = checkNotNull(block, "block");
+}
+public void setBlockState(BlockState block) {
+checkNotNull(block);
+this.block = (s) -> block;
+}
+public SeededVariableAmount<Double> getDepth() {
+return this.depth;
+}
+public SeededVariableAmount<Double> getDepth(int topYCoordinate) {
+return this.getDepth();
+}
+public void setDepth(SeededVariableAmount<Double> depth) {
+this.depth = checkNotNull(depth, "depth");
+}
+public void setDepth(VariableAmount depth) {
+this.depth = SeededVariableAmount.wrapped(checkNotNull(depth, "depth"));
+}
+public void setDepth(double depth) {
+this.depth = SeededVariableAmount.fixed(depth);
+}
+@Override
+public String toString() {
+return MoreObjects.toStringHelper(this)
+.add("block", this.block)
+.add("depth", this.depth)
+.toString();
+}
+@Override
+public boolean equals(Object obj) {
+if (this == obj) {
+return true;
+}
+if (!(obj instanceof GroundCoverLayer)) {
+return false;
+}
+GroundCoverLayer object = (GroundCoverLayer) obj;
+return this.depth.equals(object.depth) && this.block.equals(object.block);
+}
+@Override
+public int hashCode() {
+int result = 1;
+result = 37 * result + this.block.hashCode();
+result = 37 * result + this.depth.hashCode();
+return result;
+}
+}

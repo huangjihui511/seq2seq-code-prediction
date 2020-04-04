@@ -1,0 +1,12 @@
+package net.pms.image;
+import java.io.IOException;
+import javax.imageio.ImageIO;
+public class ImageIORuntimeException extends IOException {
+private static final long serialVersionUID = 1L;
+public ImageIORuntimeException(RuntimeException cause) {
+super(cause);
+}
+public ImageIORuntimeException(String message, RuntimeException cause) {
+super(message, cause);
+}
+}

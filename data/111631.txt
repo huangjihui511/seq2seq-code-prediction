@@ -1,0 +1,29 @@
+package io.github.bonigarcia.wdm;
+import static io.github.bonigarcia.wdm.DriverManagerType.CHROMIUM;
+import java.io.File;
+import java.util.Optional;
+public class ChromiumDriverManager extends ChromeDriverManager {
+@Override
+protected DriverManagerType getDriverManagerType() {
+return CHROMIUM;
+}
+@Override
+protected Optional<String> getBrowserVersion() {
+String[] programFilesEnvs = { "LOCALAPPDATA", getProgramFilesEnv(),
+getOtherProgramFilesEnv() };
+return getDefaultBrowserVersion(programFilesEnvs,
+"\\\\Chromium\\\\Application\\\\chrome.exe", "chromium-browser",
+"/Applications/Chromium.app/Contents/MacOS/Chromium",
+"--version", getDriverManagerType().toString());
+}
+protected boolean snapDriverExists() {
+String chromiumDriverSnapPath = config().getChromiumDriverSnapPath();
+File snapChromiumDriverPath = new File(chromiumDriverSnapPath);
+boolean existsSnap = snapChromiumDriverPath.exists();
+if (existsSnap) {
+log.debug("Found {} snap", getDriverManagerType());
+exportDriver(chromiumDriverSnapPath);
+}
+return existsSnap;
+}
+}

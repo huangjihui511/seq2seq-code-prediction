@@ -1,0 +1,9 @@
+package psiprobe;
+import org.springframework.http.HttpMethod;
+import org.springframework.web.servlet.mvc.ParameterizableViewController;
+public class PostParameterizableViewController extends ParameterizableViewController {
+public PostParameterizableViewController() {
+super();
+setSupportedMethods(HttpMethod.GET.name(), HttpMethod.POST.name(), HttpMethod.HEAD.name());
+}
+}

@@ -1,0 +1,128 @@
+package io.grpc;
+import com.google.common.base.Preconditions;
+import io.grpc.MethodDescriptor.Marshaller;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+public class ClientInterceptors {
+private ClientInterceptors() {}
+public static Channel interceptForward(Channel channel, ClientInterceptor... interceptors) {
+return interceptForward(channel, Arrays.asList(interceptors));
+}
+public static Channel interceptForward(Channel channel,
+List<? extends ClientInterceptor> interceptors) {
+List<? extends ClientInterceptor> copy = new ArrayList<>(interceptors);
+Collections.reverse(copy);
+return intercept(channel, copy);
+}
+public static Channel intercept(Channel channel, ClientInterceptor... interceptors) {
+return intercept(channel, Arrays.asList(interceptors));
+}
+public static Channel intercept(Channel channel, List<? extends ClientInterceptor> interceptors) {
+Preconditions.checkNotNull(channel, "channel");
+for (ClientInterceptor interceptor : interceptors) {
+channel = new InterceptorChannel(channel, interceptor);
+}
+return channel;
+}
+static <WReqT, WRespT> ClientInterceptor wrapClientInterceptor(
+final ClientInterceptor interceptor,
+final Marshaller<WReqT> reqMarshaller,
+final Marshaller<WRespT> respMarshaller) {
+return new ClientInterceptor() {
+@Override
+public <ReqT, RespT> ClientCall<ReqT, RespT> interceptCall(
+final MethodDescriptor<ReqT, RespT> method, CallOptions callOptions, Channel next) {
+final MethodDescriptor<WReqT, WRespT> wrappedMethod =
+method.toBuilder(reqMarshaller, respMarshaller).build();
+final ClientCall<WReqT, WRespT> wrappedCall =
+interceptor.interceptCall(wrappedMethod, callOptions, next);
+return new PartialForwardingClientCall<ReqT, RespT>() {
+@Override
+public void start(final Listener<RespT> responseListener, Metadata headers) {
+wrappedCall.start(new PartialForwardingClientCallListener<WRespT>() {
+@Override
+public void onMessage(WRespT wMessage) {
+InputStream bytes = respMarshaller.stream(wMessage);
+RespT message = method.getResponseMarshaller().parse(bytes);
+responseListener.onMessage(message);
+}
+@Override
+protected Listener<?> delegate() {
+return responseListener;
+}
+}, headers);
+}
+@Override
+public void sendMessage(ReqT message) {
+InputStream bytes = method.getRequestMarshaller().stream(message);
+WReqT wReq = reqMarshaller.parse(bytes);
+wrappedCall.sendMessage(wReq);
+}
+@Override
+protected ClientCall<?, ?> delegate() {
+return wrappedCall;
+}
+};
+}
+};
+}
+private static class InterceptorChannel extends Channel {
+private final Channel channel;
+private final ClientInterceptor interceptor;
+private InterceptorChannel(Channel channel, ClientInterceptor interceptor) {
+this.channel = channel;
+this.interceptor = Preconditions.checkNotNull(interceptor, "interceptor");
+}
+@Override
+public <ReqT, RespT> ClientCall<ReqT, RespT> newCall(
+MethodDescriptor<ReqT, RespT> method, CallOptions callOptions) {
+return interceptor.interceptCall(method, callOptions, channel);
+}
+@Override
+public String authority() {
+return channel.authority();
+}
+}
+private static final ClientCall<Object, Object> NOOP_CALL = new ClientCall<Object, Object>() {
+@Override
+public void start(Listener<Object> responseListener, Metadata headers) {}
+@Override
+public void request(int numMessages) {}
+@Override
+public void cancel(String message, Throwable cause) {}
+@Override
+public void halfClose() {}
+@Override
+public void sendMessage(Object message) {}
+@Override
+public boolean isReady() {
+return false;
+}
+};
+public abstract static class CheckedForwardingClientCall<ReqT, RespT>
+extends io.grpc.ForwardingClientCall<ReqT, RespT> {
+private ClientCall<ReqT, RespT> delegate;
+protected abstract void checkedStart(Listener<RespT> responseListener, Metadata headers)
+throws Exception;
+protected CheckedForwardingClientCall(ClientCall<ReqT, RespT> delegate) {
+this.delegate = delegate;
+}
+@Override
+protected final ClientCall<ReqT, RespT> delegate() {
+return delegate;
+}
+@Override
+@SuppressWarnings("unchecked")
+public final void start(Listener<RespT> responseListener, Metadata headers) {
+try {
+checkedStart(responseListener, headers);
+} catch (Exception e) {
+delegate = (ClientCall<ReqT, RespT>) NOOP_CALL;
+responseListener.onClose(Status.fromThrowable(e), new Metadata());
+}
+}
+}
+}

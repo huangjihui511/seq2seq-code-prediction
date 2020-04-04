@@ -1,0 +1,32 @@
+package org.springframework.integration.support.management;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+@SuppressWarnings("deprecation")
+public abstract class AbstractMessageHandlerMetrics implements ConfigurableMetrics {
+protected final Log logger = LogFactory.getLog(getClass()); 
+protected final String name; 
+private boolean fullStatsEnabled;
+public AbstractMessageHandlerMetrics(String name) {
+this.name = name;
+}
+public void setFullStatsEnabled(boolean fullStatsEnabled) {
+this.fullStatsEnabled = fullStatsEnabled;
+}
+protected boolean isFullStatsEnabled() {
+return this.fullStatsEnabled;
+}
+public abstract MetricsContext beforeHandle();
+public abstract void afterHandle(MetricsContext context, boolean success);
+public abstract void reset();
+public abstract long getHandleCountLong();
+public abstract int getHandleCount();
+public abstract int getErrorCount();
+public abstract long getErrorCountLong();
+public abstract double getMeanDuration();
+public abstract double getMinDuration();
+public abstract double getMaxDuration();
+public abstract double getStandardDeviationDuration();
+public abstract int getActiveCount();
+public abstract long getActiveCountLong();
+public abstract Statistics getDuration();
+}

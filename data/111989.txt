@@ -1,0 +1,5 @@
+package io.hawt.system;
+public final class HawtioProperty {
+public static final String FORCE_PROPERTIES = "forceProperties";
+public static final String SERVLET_PATH = "hawtioServletPath";
+}

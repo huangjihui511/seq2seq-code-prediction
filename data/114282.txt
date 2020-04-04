@@ -1,0 +1,257 @@
+package com.datumbox.framework.core.machinelearning.common.abstracts.algorithms;
+import com.datumbox.framework.common.Configuration;
+import com.datumbox.framework.common.dataobjects.AssociativeArray;
+import com.datumbox.framework.core.common.dataobjects.Dataframe;
+import com.datumbox.framework.core.common.dataobjects.Record;
+import com.datumbox.framework.common.storage.interfaces.BigMap;
+import com.datumbox.framework.common.storage.interfaces.StorageEngine;
+import com.datumbox.framework.common.storage.interfaces.StorageEngine.MapType;
+import com.datumbox.framework.common.storage.interfaces.StorageEngine.StorageHint;
+import com.datumbox.framework.core.common.utilities.MapMethods;
+import com.datumbox.framework.core.common.utilities.PHPMethods;
+import com.datumbox.framework.core.machinelearning.common.abstracts.AbstractTrainer;
+import com.datumbox.framework.core.machinelearning.common.abstracts.modelers.AbstractClusterer;
+import com.datumbox.framework.core.machinelearning.common.interfaces.PredictParallelizable;
+import com.datumbox.framework.core.statistics.descriptivestatistics.Descriptives;
+import com.datumbox.framework.core.statistics.sampling.SimpleRandomSampling;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+public abstract class AbstractDPMM<CL extends AbstractDPMM.AbstractCluster, MP extends AbstractDPMM.AbstractModelParameters, TP extends AbstractDPMM.AbstractTrainingParameters> extends AbstractClusterer<CL, MP, TP> implements PredictParallelizable {
+public static abstract class AbstractCluster extends AbstractClusterer.AbstractCluster {
+protected transient Map<Object, Integer> featureIds;
+protected AbstractCluster(Integer clusterId) {
+super(clusterId);
+}
+protected abstract Map<Object, Integer> getFeatureIds();
+protected abstract void setFeatureIds(Map<Object, Integer> featureIds);
+protected abstract void updateClusterParameters();
+protected abstract double posteriorLogPdf(Record r);
+@Override
+protected abstract void add(Record r);
+@Override
+protected abstract void remove(Record r);
+}
+public static abstract class AbstractModelParameters<CL extends AbstractDPMM.AbstractCluster> extends AbstractClusterer.AbstractModelParameters<CL> {
+private Integer d = 0;
+private int totalIterations;
+@BigMap(keyClass=Object.class, valueClass=Integer.class, mapType=MapType.HASHMAP, storageHint=StorageHint.IN_MEMORY, concurrent=false)
+private Map<Object, Integer> featureIds; 
+protected AbstractModelParameters(StorageEngine storageEngine) {
+super(storageEngine);
+}
+public Integer getD() {
+return d;
+}
+protected void setD(Integer d) {
+this.d = d;
+}
+public int getTotalIterations() {
+return totalIterations;
+}
+protected void setTotalIterations(int totalIterations) {
+this.totalIterations = totalIterations;
+}
+public Map<Object, Integer> getFeatureIds() {
+return featureIds;
+}
+protected void setFeatureIds(Map<Object, Integer> featureIds) {
+this.featureIds = featureIds;
+}
+}
+public static abstract class AbstractTrainingParameters extends AbstractClusterer.AbstractTrainingParameters {
+private double alpha;
+private int maxIterations = 1000;
+public enum Initialization {
+ONE_CLUSTER_PER_RECORD,
+RANDOM_ASSIGNMENT;
+}
+private Initialization initializationMethod = Initialization.ONE_CLUSTER_PER_RECORD;
+public double getAlpha() {
+return alpha;
+}
+public void setAlpha(double alpha) {
+this.alpha = alpha;
+}
+public int getMaxIterations() {
+return maxIterations;
+}
+public void setMaxIterations(int maxIterations) {
+this.maxIterations = maxIterations;
+}
+public Initialization getInitializationMethod() {
+return initializationMethod;
+}
+public void setInitializationMethod(Initialization initializationMethod) {
+this.initializationMethod = initializationMethod;
+}
+}
+protected AbstractDPMM(TP trainingParameters, Configuration configuration) {
+super(trainingParameters, configuration);
+}
+protected AbstractDPMM(String storageName, Configuration configuration) {
+super(storageName, configuration);
+}
+private boolean parallelized = true;
+@Override
+public boolean isParallelized() {
+return parallelized;
+}
+@Override
+public void setParallelized(boolean parallelized) {
+this.parallelized = parallelized;
+}
+@Override
+protected void _predict(Dataframe newData) {
+_predictDatasetParallel(newData, knowledgeBase.getStorageEngine(), knowledgeBase.getConfiguration().getConcurrencyConfiguration());
+}
+@Override
+public Prediction _predictRecord(Record r) {
+AbstractModelParameters modelParameters = knowledgeBase.getModelParameters();
+Map<Integer, CL> clusterMap = modelParameters.getClusterMap();
+AssociativeArray clusterScores = new AssociativeArray();
+for(Integer clusterId : clusterMap.keySet()) {
+CL c = getFromClusterMap(clusterId, clusterMap);
+double probability = c.posteriorLogPdf(r);
+clusterScores.put(clusterId, probability);
+}
+Descriptives.normalizeExp(clusterScores);
+return new Prediction(getSelectedClusterFromScores(clusterScores), clusterScores);
+}
+@Override
+protected void _fit(Dataframe trainingData) {
+AbstractModelParameters modelParameters = knowledgeBase.getModelParameters();
+modelParameters.setD(trainingData.xColumnSize());
+Set<Object> goldStandardClasses = modelParameters.getGoldStandardClasses();
+Map<Object, Integer> featureIds = modelParameters.getFeatureIds();
+int previousFeatureId = 0;
+for(Record r : trainingData) {
+Object theClass=r.getY();
+if(theClass!=null) {
+goldStandardClasses.add(theClass);
+}
+for(Map.Entry<Object, Object> entry : r.getX().entrySet()) {
+Object feature = entry.getKey();
+if(featureIds.putIfAbsent(feature, previousFeatureId) == null) {
+previousFeatureId++;
+}
+}
+}
+int totalIterations = collapsedGibbsSampling(trainingData);
+modelParameters.setTotalIterations(totalIterations);
+clearClusters();
+}
+private CL getFromClusterMap(int clusterId, Map<Integer, CL> clusterMap) {
+CL c = clusterMap.get(clusterId);
+if(c.getFeatureIds() == null) {
+c.setFeatureIds(knowledgeBase.getModelParameters().getFeatureIds()); 
+}
+return c;
+}
+private int collapsedGibbsSampling(Dataframe dataset) {
+AbstractModelParameters modelParameters = knowledgeBase.getModelParameters();
+Map<Integer, CL> clusterMap = modelParameters.getClusterMap();
+AbstractTrainingParameters trainingParameters = knowledgeBase.getTrainingParameters();
+double alpha = trainingParameters.getAlpha();
+Integer newClusterId = clusterMap.size(); 
+if(trainingParameters.getInitializationMethod()==AbstractTrainingParameters.Initialization.ONE_CLUSTER_PER_RECORD) {
+for(Map.Entry<Integer, Record> e : dataset.entries()) {
+Integer rId = e.getKey();
+Record r = e.getValue();
+CL cluster = createNewCluster(newClusterId);
+cluster.add(r);
+clusterMap.put(newClusterId, cluster);
+r = new Record(r.getX(), r.getY(), newClusterId, r.getYPredictedProbabilities());
+dataset._unsafe_set(rId, r);
+++newClusterId;
+}
+}
+else {
+int numberOfNewClusters = (int)(Math.max(alpha, 1)*Math.log(dataset.size())); 
+if(numberOfNewClusters<=0) {
+numberOfNewClusters=1;
+}
+for(int i=0;i<numberOfNewClusters;++i) {
+CL cluster = createNewCluster(newClusterId);
+clusterMap.put(newClusterId, cluster);
+++newClusterId;
+}
+int clusterMapSize = newClusterId;
+for(Map.Entry<Integer, Record> e : dataset.entries()) {
+Integer rId = e.getKey();
+Record r = e.getValue();
+Integer assignedClusterId = PHPMethods.mt_rand(0, clusterMapSize-1);
+r = new Record(r.getX(), r.getY(), assignedClusterId, r.getYPredictedProbabilities());
+dataset._unsafe_set(rId, r);
+CL c = getFromClusterMap(assignedClusterId, clusterMap);
+c.add(r);
+clusterMap.put(assignedClusterId, c);
+}
+}
+int n = clusterMap.size();
+int maxIterations = trainingParameters.getMaxIterations();
+boolean noChangeMade=false;
+int iteration=0;
+while(iteration<maxIterations && noChangeMade==false) {
+logger.debug("Iteration {}", iteration);
+noChangeMade=true;
+for(Map.Entry<Integer, Record> e : dataset.entries()) {
+Integer rId = e.getKey();
+Record r = e.getValue();
+Integer pointClusterId = (Integer) r.getYPredicted();
+CL ci = getFromClusterMap(pointClusterId, clusterMap);
+ci.remove(r);
+if(ci.size()==0) {
+clusterMap.remove(pointClusterId);
+}
+else {
+clusterMap.put(pointClusterId, ci);
+}
+AssociativeArray condProbCiGivenXiAndOtherCi = clusterProbabilities(r, n, clusterMap);
+CL cNew = createNewCluster(newClusterId);
+double priorLogPredictive = cNew.posteriorLogPdf(r);
+double probNewCluster = alpha/(alpha+n-1.0);
+condProbCiGivenXiAndOtherCi.put(newClusterId, priorLogPredictive+Math.log(probNewCluster));
+Descriptives.normalizeExp(condProbCiGivenXiAndOtherCi);
+Integer sampledClusterId = (Integer) SimpleRandomSampling.weightedSampling(condProbCiGivenXiAndOtherCi, 1, true).iterator().next();
+if(Objects.equals(sampledClusterId, newClusterId)) { 
+r = new Record(r.getX(), r.getY(), newClusterId, r.getYPredictedProbabilities());
+dataset._unsafe_set(rId, r);
+cNew.add(r);
+clusterMap.put(newClusterId, cNew);
+noChangeMade=false;
+++newClusterId;
+}
+else {
+if(!Objects.equals(pointClusterId, sampledClusterId)) { 
+r = new Record(r.getX(), r.getY(), sampledClusterId, r.getYPredictedProbabilities());
+dataset._unsafe_set(rId, r);
+noChangeMade=false;
+}
+CL c = getFromClusterMap(sampledClusterId, clusterMap);
+c.add(r); 
+clusterMap.put(sampledClusterId, c);
+}
+}
+++iteration;
+}
+return iteration;
+}
+private AssociativeArray clusterProbabilities(Record r, int n, Map<Integer, CL> clusterMap) {
+Map<Integer, Double> condProbCiGivenXiAndOtherCi = new HashMap<>();
+double alpha = knowledgeBase.getTrainingParameters().getAlpha();
+for(Integer clusterId : clusterMap.keySet()) {
+AbstractCluster ck = getFromClusterMap(clusterId, clusterMap);
+double marginalLogLikelihoodXi = ck.posteriorLogPdf(r);
+double mixingXi = ck.size()/(alpha+n-1.0);
+condProbCiGivenXiAndOtherCi.put(clusterId, marginalLogLikelihoodXi+Math.log(mixingXi)); 
+}
+return new AssociativeArray((Map)condProbCiGivenXiAndOtherCi);
+}
+private Object getSelectedClusterFromScores(AssociativeArray clusterScores) {
+Map.Entry<Object, Object> maxEntry = MapMethods.selectMaxKeyValue(clusterScores);
+return maxEntry.getKey();
+}
+protected abstract CL createNewCluster(Integer clusterId);
+}

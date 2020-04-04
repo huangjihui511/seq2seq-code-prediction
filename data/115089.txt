@@ -1,0 +1,21 @@
+package io.ebean.config;
+public enum TenantMode {
+NONE(false, true),
+DB(true, false),
+SCHEMA(true, false),
+CATALOG(true, false),
+PARTITION(false, true),
+DB_WITH_MASTER(true, true);
+final boolean dynamicDataSource;
+final boolean ddlEnabled;
+TenantMode(boolean dynamicDataSource, boolean ddlEnabled) {
+this.dynamicDataSource = dynamicDataSource;
+this.ddlEnabled = ddlEnabled;
+}
+public boolean isDynamicDataSource() {
+return dynamicDataSource;
+}
+public boolean isDdlEnabled() {
+return ddlEnabled;
+}
+}

@@ -1,0 +1,7 @@
+package net.openhft.ticker;
+public interface ITicker {
+long nanoTime();
+long ticks();
+long toNanos(long ticks);
+double toMicros(double ticks);
+}

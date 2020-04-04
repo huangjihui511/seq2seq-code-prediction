@@ -1,0 +1,27 @@
+package org.apache.flink.streaming.connectors.kafka;
+import org.apache.flink.api.common.typeutils.SimpleTypeSerializerSnapshot;
+public class FlinkKafkaProducer011 {
+public static class NextTransactionalIdHintSerializer {
+public static final class NextTransactionalIdHintSerializerSnapshot extends SimpleTypeSerializerSnapshot<FlinkKafkaProducer.NextTransactionalIdHint> {
+public NextTransactionalIdHintSerializerSnapshot() {
+super(FlinkKafkaProducer.NextTransactionalIdHintSerializer::new);
+}
+}
+}
+public static class ContextStateSerializer {
+public static final class ContextStateSerializerSnapshot extends SimpleTypeSerializerSnapshot<FlinkKafkaProducer.KafkaTransactionContext> {
+public ContextStateSerializerSnapshot() {
+super(FlinkKafkaProducer.ContextStateSerializer::new);
+}
+}
+}
+public static class TransactionStateSerializer {
+public static final class TransactionStateSerializerSnapshot extends SimpleTypeSerializerSnapshot<FlinkKafkaProducer.KafkaTransactionState> {
+public TransactionStateSerializerSnapshot() {
+super(FlinkKafkaProducer.TransactionStateSerializer::new);
+}
+}
+}
+public static class NextTransactionalIdHint extends FlinkKafkaProducer.NextTransactionalIdHint {
+}
+}

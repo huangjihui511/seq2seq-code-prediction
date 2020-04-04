@@ -1,0 +1,4 @@
+package io.kubernetes.client.extended.controller;
+public interface Controller extends Runnable {
+void shutdown();
+}

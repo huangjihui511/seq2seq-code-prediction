@@ -1,0 +1,36 @@
+package com.github.florent37.materialviewpager;
+import android.app.Activity;
+import android.content.Context;
+import android.support.v4.widget.NestedScrollView;
+import android.support.v7.widget.RecyclerView;
+import java.util.concurrent.ConcurrentHashMap;
+public class MaterialViewPagerHelper {
+private static ConcurrentHashMap<Object, MaterialViewPagerAnimator> hashMap = new ConcurrentHashMap<>();
+static void register(Context context, MaterialViewPagerAnimator animator) {
+hashMap.put(context, animator);
+}
+static void unregister(Context context) {
+if (context != null) {
+hashMap.remove(context);
+}
+}
+public static void registerRecyclerView(Context context, RecyclerView recyclerView) {
+if (context != null && hashMap.containsKey(context)) {
+final MaterialViewPagerAnimator animator = hashMap.get(context);
+if (animator != null) {
+animator.registerRecyclerView(recyclerView);
+}
+}
+}
+public static void registerScrollView(Context context, NestedScrollView mScrollView) {
+if (context != null && hashMap.containsKey(context)) {
+final MaterialViewPagerAnimator animator = hashMap.get(context);
+if (animator != null) {
+animator.registerScrollView(mScrollView);
+}
+}
+}
+public static MaterialViewPagerAnimator getAnimator(Context context) {
+return hashMap.get(context);
+}
+}

@@ -1,0 +1,259 @@
+package org.gnucash.android.model;
+import android.content.Context;
+import android.support.annotation.NonNull;
+import org.gnucash.android.R;
+import org.gnucash.android.app.GnuCashApplication;
+import org.joda.time.LocalDateTime;
+import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.Locale;
+import java.util.TimeZone;
+public class ScheduledAction extends BaseModel{
+private long mStartDate;
+private long mEndDate;
+private String mTag;
+private Recurrence mRecurrence;
+public enum ActionType {TRANSACTION, BACKUP}
+private long mLastRun = 0;
+private String mActionUID;
+private boolean mIsEnabled;
+private ActionType mActionType;
+private int mTotalFrequency = 0;
+private int mExecutionCount = 0;
+private boolean mAutoCreate = true;
+private boolean mAutoNotify = false;
+private int mAdvanceCreateDays = 0;
+private int mAdvanceNotifyDays = 0;
+private String mTemplateAccountUID;
+public ScheduledAction(ActionType actionType){
+mActionType = actionType;
+mEndDate = 0;
+mIsEnabled = true; 
+}
+public ActionType getActionType() {
+return mActionType;
+}
+public void setActionType(ActionType actionType) {
+this.mActionType = actionType;
+}
+public String getActionUID() {
+return mActionUID;
+}
+public void setActionUID(String actionUID) {
+this.mActionUID = actionUID;
+}
+public long getLastRunTime() {
+return mLastRun;
+}
+public long getTimeOfLastSchedule(){
+if (mExecutionCount == 0)
+return -1;
+LocalDateTime startTime = LocalDateTime.fromDateFields(new Date(mStartDate));
+int multiplier = mRecurrence.getMultiplier();
+int factor = (mExecutionCount-1) * multiplier;
+switch (mRecurrence.getPeriodType()){
+case HOUR:
+startTime = startTime.plusHours(factor);
+break;
+case DAY:
+startTime = startTime.plusDays(factor);
+break;
+case WEEK:
+startTime = startTime.plusWeeks(factor);
+break;
+case MONTH:
+startTime = startTime.plusMonths(factor);
+break;
+case YEAR:
+startTime = startTime.plusYears(factor);
+break;
+}
+return startTime.toDate().getTime();
+}
+public long computeNextCountBasedScheduledExecutionTime(){
+return computeNextScheduledExecutionTimeStartingAt(getTimeOfLastSchedule());
+}
+public long computeNextTimeBasedScheduledExecutionTime() {
+return computeNextScheduledExecutionTimeStartingAt(getLastRunTime());
+}
+private long computeNextScheduledExecutionTimeStartingAt(long startTime) {
+if (startTime <= 0){ 
+return mStartDate;
+}
+int multiplier = mRecurrence.getMultiplier();
+LocalDateTime nextScheduledExecution = LocalDateTime.fromDateFields(new Date(startTime));
+switch (mRecurrence.getPeriodType()) {
+case HOUR:
+nextScheduledExecution = nextScheduledExecution.plusHours(multiplier);
+break;
+case DAY:
+nextScheduledExecution = nextScheduledExecution.plusDays(multiplier);
+break;
+case WEEK:
+nextScheduledExecution = computeNextWeeklyExecutionStartingAt(nextScheduledExecution);
+break;
+case MONTH:
+nextScheduledExecution = nextScheduledExecution.plusMonths(multiplier);
+break;
+case YEAR:
+nextScheduledExecution = nextScheduledExecution.plusYears(multiplier);
+break;
+}
+return nextScheduledExecution.toDate().getTime();
+}
+@NonNull
+private LocalDateTime computeNextWeeklyExecutionStartingAt(LocalDateTime startTime) {
+if (mRecurrence.getByDays().isEmpty())
+return LocalDateTime.now().plusDays(1); 
+for (int dayOfWeek : mRecurrence.getByDays() ) {
+int jodaDayOfWeek = convertCalendarDayOfWeekToJoda(dayOfWeek);
+LocalDateTime candidateNextDueTime = startTime.withDayOfWeek(jodaDayOfWeek);
+if (candidateNextDueTime.isAfter(startTime))
+return candidateNextDueTime;
+}
+int firstScheduledDayOfWeek = convertCalendarDayOfWeekToJoda(mRecurrence.getByDays().get(0));
+return startTime.plusWeeks(mRecurrence.getMultiplier())
+.withDayOfWeek(firstScheduledDayOfWeek);
+}
+private int convertCalendarDayOfWeekToJoda(int calendarDayOfWeek) {
+Calendar cal = Calendar.getInstance();
+cal.set(Calendar.DAY_OF_WEEK, calendarDayOfWeek);
+return LocalDateTime.fromCalendarFields(cal).getDayOfWeek();
+}
+public void setLastRun(long nextRun) {
+this.mLastRun = nextRun;
+}
+public long getPeriod() {
+return mRecurrence.getPeriod();
+}
+public long getStartTime() {
+return mStartDate;
+}
+public void setStartTime(long startDate) {
+this.mStartDate = startDate;
+if (mRecurrence != null) {
+mRecurrence.setPeriodStart(new Timestamp(startDate));
+}
+}
+public long getEndTime() {
+return mEndDate;
+}
+public void setEndTime(long endDate) {
+this.mEndDate = endDate;
+if (mRecurrence != null){
+mRecurrence.setPeriodEnd(new Timestamp(mEndDate));
+}
+}
+public String getTag() {
+return mTag;
+}
+public void setTag(String tag) {
+this.mTag = tag;
+}
+public boolean isEnabled(){
+return mIsEnabled;
+}
+public void setEnabled(boolean enabled){
+this.mIsEnabled = enabled;
+}
+public int getTotalPlannedExecutionCount(){
+return mTotalFrequency;
+}
+public void setTotalPlannedExecutionCount(int plannedExecutions){
+this.mTotalFrequency = plannedExecutions;
+}
+public int getExecutionCount(){
+return mExecutionCount;
+}
+public void setExecutionCount(int executionCount){
+mExecutionCount = executionCount;
+}
+public boolean shouldAutoCreate() {
+return mAutoCreate;
+}
+public void setAutoCreate(boolean autoCreate) {
+this.mAutoCreate = autoCreate;
+}
+public boolean shouldAutoNotify() {
+return mAutoNotify;
+}
+public void setAutoNotify(boolean autoNotify) {
+this.mAutoNotify = autoNotify;
+}
+public int getAdvanceCreateDays() {
+return mAdvanceCreateDays;
+}
+public void setAdvanceCreateDays(int advanceCreateDays) {
+this.mAdvanceCreateDays = advanceCreateDays;
+}
+public int getAdvanceNotifyDays() {
+return mAdvanceNotifyDays;
+}
+public void setAdvanceNotifyDays(int advanceNotifyDays) {
+this.mAdvanceNotifyDays = advanceNotifyDays;
+}
+public String getTemplateAccountUID() {
+if (mTemplateAccountUID == null)
+return mTemplateAccountUID = generateUID();
+else
+return mTemplateAccountUID;
+}
+public void setTemplateAccountUID(String templateAccountUID) {
+this.mTemplateAccountUID = templateAccountUID;
+}
+public String getRepeatString(){
+StringBuilder ruleBuilder = new StringBuilder(mRecurrence.getRepeatString());
+Context context = GnuCashApplication.getAppContext();
+if (mEndDate <= 0 && mTotalFrequency > 0){
+ruleBuilder.append(", ").append(context.getString(R.string.repeat_x_times, mTotalFrequency));
+}
+return ruleBuilder.toString();
+}
+public String getRuleString(){
+String separator = ";";
+StringBuilder ruleBuilder = new StringBuilder(mRecurrence.getRuleString());
+if (mEndDate > 0){
+SimpleDateFormat df = new SimpleDateFormat("yyyyMMdd'T'HHmmss'Z'", Locale.US);
+df.setTimeZone(TimeZone.getTimeZone("UTC"));
+ruleBuilder.append("UNTIL=").append(df.format(new Date(mEndDate))).append(separator);
+} else if (mTotalFrequency > 0){
+ruleBuilder.append("COUNT=").append(mTotalFrequency).append(separator);
+}
+return ruleBuilder.toString();
+}
+public Recurrence getRecurrence() {
+return mRecurrence;
+}
+public void setRecurrence(PeriodType periodType, int ordinal){
+Recurrence recurrence = new Recurrence(periodType);
+recurrence.setMultiplier(ordinal);
+setRecurrence(recurrence);
+}
+public void setRecurrence(@NonNull Recurrence recurrence) {
+this.mRecurrence = recurrence;
+if (mStartDate > 0){
+mRecurrence.setPeriodStart(new Timestamp(mStartDate));
+} else {
+mStartDate = mRecurrence.getPeriodStart().getTime();
+}
+if (mEndDate > 0){
+mRecurrence.setPeriodEnd(new Timestamp(mEndDate));
+} else if (mRecurrence.getPeriodEnd() != null){
+mEndDate = mRecurrence.getPeriodEnd().getTime();
+}
+}
+@Deprecated
+public static ScheduledAction parseScheduledAction(Transaction transaction, long period){
+ScheduledAction scheduledAction = new ScheduledAction(ActionType.TRANSACTION);
+scheduledAction.mActionUID = transaction.getUID();
+Recurrence recurrence = Recurrence.fromLegacyPeriod(period);
+scheduledAction.setRecurrence(recurrence);
+return scheduledAction;
+}
+@Override
+public String toString() {
+return mActionType.name() + " - " + getRepeatString();
+}
+}

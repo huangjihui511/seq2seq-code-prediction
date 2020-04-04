@@ -1,0 +1,5 @@
+package com.facebook.example;
+import com.example.R;
+public class UsesR {
+private int layout_id = R.id.foobar;
+}

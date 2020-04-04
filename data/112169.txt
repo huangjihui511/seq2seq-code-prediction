@@ -1,0 +1,12 @@
+package org.menacheri.jetserver.app;
+import org.menacheri.jetserver.event.Event;
+import org.menacheri.jetserver.protocols.Protocol;
+public interface PlayerSession extends Session
+{
+public abstract Player getPlayer();
+public abstract GameRoom getGameRoom();
+public abstract void setGameRoom(GameRoom gameRoom);
+public Protocol getProtocol();
+public void setProtocol(Protocol protocol);
+public void sendToGameRoom(Event event);
+}

@@ -1,0 +1,28 @@
+package org.jb2011.lnf.beautyeye.ch16_tree;
+import java.awt.Color;
+import javax.swing.BorderFactory;
+import javax.swing.UIManager;
+import javax.swing.plaf.BorderUIResource;
+import javax.swing.plaf.ColorUIResource;
+import org.jb2011.lnf.beautyeye.BeautyEyeLNFHelper;
+public class __UI__
+{
+public static void uiImpl()
+{
+UIManager.put("Tree.background",new ColorUIResource(Color.white));
+UIManager.put("Tree.textBackground",new ColorUIResource(Color.white));
+UIManager.put("Tree.selectionForeground",new ColorUIResource(BeautyEyeLNFHelper.commonSelectionForegroundColor));
+UIManager.put("Tree.selectionBackground",new ColorUIResource(BeautyEyeLNFHelper.commonSelectionBackgroundColor));
+UIManager.put("Tree.foreground",new ColorUIResource(BeautyEyeLNFHelper.commonForegroundColor));
+UIManager.put("Tree.openIcon",__IconFactory__.getInstance().getTreeDefaultOpenIcon_16_16());
+UIManager.put("Tree.closedIcon",__IconFactory__.getInstance().getTreeDefaultClosedIcon_16_16());
+UIManager.put("Tree.leafIcon",__IconFactory__.getInstance().getTreeDefaultLeafIcon_16_16());
+UIManager.put("Tree.expandedIcon",__IconFactory__.getInstance().getTreeA());
+UIManager.put("Tree.collapsedIcon",__IconFactory__.getInstance().getTreeB());
+UIManager.put("Tree.paintLines", false);
+UIManager.put("Tree.rowHeight", 18);
+UIManager.put("Tree.textForeground", new ColorUIResource(70,70,70));
+UIManager.put("Tree.editorBorder"
+UIManager.put("TreeUI",org.jb2011.lnf.beautyeye.ch16_tree.BETreeUI.class.getName());
+}
+}

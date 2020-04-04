@@ -1,0 +1,59 @@
+package org.apache.zookeeper.inspector.gui.nodeviewer;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.Transferable;
+import java.awt.datatransfer.UnsupportedFlavorException;
+import java.io.IOException;
+import java.util.List;
+import javax.swing.JPanel;
+import org.apache.zookeeper.inspector.manager.ZooInspectorNodeManager;
+public abstract class ZooInspectorNodeViewer extends JPanel implements
+Transferable {
+public static final DataFlavor nodeViewerDataFlavor = new DataFlavor(
+ZooInspectorNodeViewer.class, "nodeviewer");
+public abstract void setZooInspectorManager(
+ZooInspectorNodeManager zooInspectorManager);
+public abstract void nodeSelectionChanged(List<String> selectedNodes);
+public abstract String getTitle();
+public Object getTransferData(DataFlavor flavor)
+throws UnsupportedFlavorException, IOException {
+if (flavor.equals(nodeViewerDataFlavor)) {
+return this.getClass().getCanonicalName();
+} else {
+return null;
+}
+}
+public DataFlavor[] getTransferDataFlavors() {
+return new DataFlavor[] { nodeViewerDataFlavor };
+}
+public boolean isDataFlavorSupported(DataFlavor flavor) {
+return flavor.equals(nodeViewerDataFlavor);
+}
+@Override
+public int hashCode() {
+final int prime = 31;
+int result = 1;
+result = prime * result
++ ((getTitle() == null) ? 0 : getTitle().hashCode());
+return result;
+}
+@Override
+public boolean equals(Object obj) {
+if (this == obj)
+return true;
+if (obj == null)
+return false;
+if (getClass() != obj.getClass())
+return false;
+ZooInspectorNodeViewer other = (ZooInspectorNodeViewer) obj;
+if (getClass().getCanonicalName() != other.getClass()
+.getCanonicalName()) {
+return false;
+}
+if (getTitle() == null) {
+if (other.getTitle() != null)
+return false;
+} else if (!getTitle().equals(other.getTitle()))
+return false;
+return true;
+}
+}

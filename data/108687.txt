@@ -1,0 +1,8 @@
+package com.xkcoding.websocket.socketio.payload;
+import lombok.Data;
+@Data
+public class SingleMessageRequest {
+private String fromUid;
+private String toUid;
+private String message;
+}

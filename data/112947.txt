@@ -1,0 +1,4 @@
+package io.kubernetes.client.extended.controller.builder;
+public class Constants {
+public static final int DEFAULT_WORKER_COUNT = 16;
+}

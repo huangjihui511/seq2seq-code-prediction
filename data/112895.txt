@@ -1,0 +1,17 @@
+package io.kubernetes.client.informer;
+public enum EventType {
+ADDED,
+MODIFIED,
+DELETED,
+ERROR;
+public static EventType getByType(String type) {
+if (type != null && type.length() > 0) {
+for (EventType eventType : EventType.values()) {
+if (eventType.name().equalsIgnoreCase(type)) {
+return eventType;
+}
+}
+}
+return null;
+}
+}

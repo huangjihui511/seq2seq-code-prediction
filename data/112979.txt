@@ -1,0 +1,186 @@
+package org.apache.pdfbox.multipdf;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import org.apache.pdfbox.cos.COSArray;
+import org.apache.pdfbox.cos.COSBase;
+import org.apache.pdfbox.cos.COSDictionary;
+import org.apache.pdfbox.cos.COSName;
+import org.apache.pdfbox.cos.COSObject;
+import org.apache.pdfbox.cos.COSStream;
+import org.apache.pdfbox.io.IOUtils;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.common.COSObjectable;
+class PDFCloneUtility
+{
+private final PDDocument destination;
+private final Map<Object,COSBase> clonedVersion = new HashMap<>();
+private final Set<COSBase> clonedValues = new HashSet<>();
+PDFCloneUtility(PDDocument dest)
+{
+this.destination = dest;
+}
+PDDocument getDestination()
+{
+return this.destination;
+}
+COSBase cloneForNewDocument( Object base ) throws IOException
+{
+if( base == null )
+{
+return null;
+}
+COSBase retval = clonedVersion.get(base);
+if( retval != null )
+{
+return retval;
+}
+if (base instanceof COSBase && clonedValues.contains(base))
+{
+return (COSBase) base;
+}
+if (base instanceof List)
+{
+COSArray array = new COSArray();
+List<?> list = (List<?>) base;
+for (Object obj : list)
+{
+array.add(cloneForNewDocument(obj));
+}
+retval = array;
+}
+else if( base instanceof COSObjectable && !(base instanceof COSBase) )
+{
+retval = cloneForNewDocument( ((COSObjectable)base).getCOSObject() );
+}
+else if( base instanceof COSObject )
+{
+COSObject object = (COSObject)base;
+retval = cloneForNewDocument( object.getObject() );
+}
+else if( base instanceof COSArray )
+{
+COSArray newArray = new COSArray();
+COSArray array = (COSArray)base;
+for( int i=0; i<array.size(); i++ )
+{
+newArray.add( cloneForNewDocument( array.get( i ) ) );
+}
+retval = newArray;
+}
+else if( base instanceof COSStream )
+{
+COSStream originalStream = (COSStream)base;
+COSStream stream = destination.getDocument().createCOSStream();
+try (OutputStream output = stream.createRawOutputStream();
+InputStream input = originalStream.createRawInputStream())
+{
+IOUtils.copy(input, output);
+}
+clonedVersion.put( base, stream );
+for( Map.Entry<COSName, COSBase> entry :  originalStream.entrySet() )
+{
+stream.setItem(entry.getKey(), cloneForNewDocument(entry.getValue()));
+}
+retval = stream;
+}
+else if( base instanceof COSDictionary )
+{
+COSDictionary dic = (COSDictionary)base;
+retval = new COSDictionary();
+clonedVersion.put( base, retval );
+for( Map.Entry<COSName, COSBase> entry : dic.entrySet() )
+{
+((COSDictionary)retval).setItem(
+entry.getKey(),
+cloneForNewDocument(entry.getValue()));
+}
+}
+else
+{
+retval = (COSBase)base;
+}
+clonedVersion.put( base, retval );
+clonedValues.add(retval);
+return retval;
+}
+void cloneMerge( final COSObjectable base, COSObjectable target) throws IOException
+{
+if( base == null )
+{
+return;
+}
+COSBase retval = clonedVersion.get( base );
+if( retval != null )
+{
+return;
+}
+if (!(base instanceof COSBase))
+{
+cloneMerge(base.getCOSObject(), target.getCOSObject());
+}
+else if( base instanceof COSObject )
+{
+if(target instanceof COSObject)
+{
+cloneMerge(((COSObject) base).getObject(),((COSObject) target).getObject() );
+}
+else if (target instanceof COSDictionary || target instanceof COSArray)
+{
+cloneMerge(((COSObject) base).getObject(), target);
+}
+}
+else if( base instanceof COSArray )
+{
+COSArray array = (COSArray)base;
+for( int i=0; i<array.size(); i++ )
+{
+((COSArray)target).add( cloneForNewDocument( array.get( i ) ) );
+}
+}
+else if( base instanceof COSStream )
+{
+COSStream originalStream = (COSStream)base;
+COSStream stream = destination.getDocument().createCOSStream();
+try (OutputStream output = stream.createOutputStream(originalStream.getFilters()))
+{
+IOUtils.copy(originalStream.createInputStream(), output);
+}
+clonedVersion.put( base, stream );
+for( Map.Entry<COSName, COSBase> entry : originalStream.entrySet() )
+{
+stream.setItem(entry.getKey(), cloneForNewDocument(entry.getValue()));
+}
+retval = stream;
+}
+else if( base instanceof COSDictionary )
+{
+COSDictionary dic = (COSDictionary)base;
+clonedVersion.put( base, retval );
+for( Map.Entry<COSName, COSBase> entry : dic.entrySet() )
+{
+COSName key = entry.getKey();
+COSBase value = entry.getValue();
+if (((COSDictionary)target).getItem(key) != null)
+{
+cloneMerge(value, ((COSDictionary)target).getItem(key));
+}
+else
+{
+((COSDictionary)target).setItem( key, cloneForNewDocument(value));
+}
+}
+}
+else
+{
+retval = (COSBase)base;
+}
+clonedVersion.put( base, retval );
+clonedValues.add(retval);
+}
+}

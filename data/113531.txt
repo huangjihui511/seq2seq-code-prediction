@@ -1,0 +1,7 @@
+package com.pokegoapi.api.listener;
+import com.pokegoapi.api.PokemonGo;
+import com.pokegoapi.api.map.MapObjects;
+public interface HeartbeatListener extends Listener {
+void onMapUpdate(PokemonGo api, MapObjects mapObjects);
+void onMapUpdateException(PokemonGo api, Exception exception);
+}

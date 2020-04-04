@@ -1,0 +1,9 @@
+package org.apache.flink.runtime.executiongraph.failover.flip1;
+public interface RestartBackoffTimeStrategy {
+boolean canRestart();
+long getBackoffTime();
+void notifyFailure(Throwable cause);
+interface Factory {
+RestartBackoffTimeStrategy create();
+}
+}

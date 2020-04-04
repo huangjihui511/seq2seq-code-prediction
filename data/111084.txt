@@ -1,0 +1,8 @@
+package org.apereo.cas.pm.impl.history;
+import org.apereo.cas.pm.PasswordHistoryService;
+import org.apereo.cas.util.DigestUtils;
+public abstract class BasePasswordHistoryService implements PasswordHistoryService {
+protected String encodePassword(final String password) {
+return DigestUtils.sha512(password);
+}
+}

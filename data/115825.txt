@@ -1,0 +1,46 @@
+package com.jeff.tianti.cms.dto;
+import com.jeff.tianti.common.dto.CommonQueryDTO;
+public class ColumnInfoQueryDTO extends CommonQueryDTO{
+private Boolean isRootColumnLike;
+private String rootColumnId;
+private Integer level;
+private String code;
+private Boolean isCodeLike;
+private String name;
+public Boolean getIsRootColumnLike() {
+return isRootColumnLike;
+}
+public void setIsRootColumnLike(Boolean isRootColumnLike) {
+this.isRootColumnLike = isRootColumnLike;
+}
+public String getRootColumnId() {
+return rootColumnId;
+}
+public void setRootColumnId(String rootColumnId) {
+this.rootColumnId = rootColumnId;
+}
+public Integer getLevel() {
+return level;
+}
+public void setLevel(Integer level) {
+this.level = level;
+}
+public String getCode() {
+return code;
+}
+public void setCode(String code) {
+this.code = code;
+}
+public Boolean getIsCodeLike() {
+return isCodeLike;
+}
+public void setIsCodeLike(Boolean isCodeLike) {
+this.isCodeLike = isCodeLike;
+}
+public String getName() {
+return name;
+}
+public void setName(String name) {
+this.name = name;
+}
+}

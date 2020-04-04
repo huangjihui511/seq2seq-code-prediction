@@ -1,0 +1,63 @@
+package com.datumbox.framework.core.common.text.analyzers;
+import com.datumbox.framework.core.common.utilities.PHPMethods;
+import com.datumbox.framework.core.common.text.StringCleaner;
+import com.datumbox.framework.core.common.text.extractors.NgramsExtractor;
+import com.datumbox.framework.core.common.text.parsers.HTMLParser;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
+public class TextSimilarity {
+public static double oliverSimilarity(String text1, String text2) {
+preprocessDocument(text1);
+preprocessDocument(text2);
+String smallerDoc=text1;
+String biggerDoc=text2;
+if(text1.length()>text2.length()) {
+smallerDoc=text2;
+biggerDoc=text1;
+}
+double p=PHPSimilarText.similarityPercentage(smallerDoc, biggerDoc);
+p/=100.0;
+return p;
+}
+public static double shinglerSimilarity(String text1, String text2, int w) {
+preprocessDocument(text1);
+preprocessDocument(text2);
+NgramsExtractor.Parameters parameters = new NgramsExtractor.Parameters();
+parameters.setMaxCombinations(w);
+parameters.setMaxDistanceBetweenKwds(0);
+parameters.setExaminationWindowLength(w);
+NgramsExtractor ngrams = new NgramsExtractor(parameters);
+Map<String, Double> keywords1 = ngrams.extract(text1);
+Map<String, Double> keywords2 = ngrams.extract(text2);
+filterKeywordCombinations(keywords1, w);
+filterKeywordCombinations(keywords2, w);
+double totalKeywords=0.0;
+double commonKeywords=0.0;
+Set<String> union = new HashSet<>(keywords1.keySet());
+union.addAll(keywords2.keySet());
+totalKeywords+=union.size();
+Set<String> intersect = new HashSet<>(keywords1.keySet());
+intersect.retainAll(keywords2.keySet());
+commonKeywords+=intersect.size();
+double resemblance=commonKeywords/totalKeywords;
+return resemblance;
+}
+private static String preprocessDocument(String text) {
+text=StringCleaner.tokenizeURLs(text);
+text=HTMLParser.extractText(text);
+text=StringCleaner.removeAccents(text);
+text=StringCleaner.removeExtraSpaces(text);
+return text;
+}
+private static void filterKeywordCombinations(Map<String, Double> keywords, int w) {
+Iterator<Map.Entry<String, Double>> it = keywords.entrySet().iterator();
+while(it.hasNext()) {
+Map.Entry<String, Double> entry = it.next();
+if(PHPMethods.substr_count(entry.getKey(), ' ')!=w-1) {
+it.remove();
+}
+}
+}
+}

@@ -1,0 +1,15 @@
+package net.pms.formats.audio;
+public class MP3 extends AudioBase {
+@Override
+public Identifier getIdentifier() {
+return Identifier.MP3;
+}
+@Override
+public String[] getSupportedExtensions() {
+return new String[] { "mp3" };
+}
+@Override
+public boolean transcodable() {
+return false;
+}
+}

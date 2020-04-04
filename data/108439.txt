@@ -1,0 +1,27 @@
+package org.graalvm.compiler.hotspot;
+import static jdk.vm.ci.hotspot.HotSpotJVMCICompilerFactory.CompilationLevelAdjustment.None;
+import org.graalvm.compiler.debug.GraalError;
+import jdk.vm.ci.hotspot.HotSpotJVMCICompilerFactory;
+import jdk.vm.ci.hotspot.HotSpotJVMCIRuntime;
+class IsGraalPredicate extends IsGraalPredicateBase {
+private final Module jvmciModule;
+private final Module graalModule;
+private Module compilerConfigurationModule;
+IsGraalPredicate() {
+jvmciModule = HotSpotJVMCICompilerFactory.class.getModule();
+graalModule = HotSpotGraalCompilerFactory.class.getModule();
+}
+@Override
+void onCompilerConfigurationFactorySelection(HotSpotJVMCIRuntime runtime, CompilerConfigurationFactory factory) {
+compilerConfigurationModule = factory.getClass().getModule();
+runtime.excludeFromJVMCICompilation(jvmciModule, graalModule, compilerConfigurationModule);
+}
+@Override
+boolean apply(Class<?> declaringClass) {
+throw GraalError.shouldNotReachHere();
+}
+@Override
+HotSpotJVMCICompilerFactory.CompilationLevelAdjustment getCompilationLevelAdjustment() {
+return None;
+}
+}

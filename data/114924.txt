@@ -1,0 +1,110 @@
+package it.unimi.dsi.fastutil.io;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.channels.FileChannel;
+public class FastBufferedOutputStream extends MeasurableOutputStream implements RepositionableStream {
+private static final boolean ASSERTS = false;
+public static final int DEFAULT_BUFFER_SIZE = 8 * 1024;
+protected byte buffer[];
+protected int pos;
+protected int avail;
+protected OutputStream os;
+private FileChannel fileChannel;
+private RepositionableStream repositionableStream;
+private MeasurableStream measurableStream;
+private static int ensureBufferSize(final int bufferSize) {
+if (bufferSize <= 0) throw new IllegalArgumentException("Illegal buffer size: " + bufferSize);
+return bufferSize;
+}
+public FastBufferedOutputStream(final OutputStream os, final byte[] buffer) {
+this.os = os;
+ensureBufferSize(buffer.length);
+this.buffer = buffer;
+avail = buffer.length;
+if (os instanceof RepositionableStream) repositionableStream = (RepositionableStream)os;
+if (os instanceof MeasurableStream) measurableStream = (MeasurableStream)os;
+if (repositionableStream == null) {
+try {
+fileChannel = (FileChannel)(os.getClass().getMethod("getChannel", new Class<?>[] {})).invoke(os);
+}
+catch(IllegalAccessException e) {}
+catch(IllegalArgumentException e) {}
+catch(NoSuchMethodException e) {}
+catch(java.lang.reflect.InvocationTargetException e) {}
+catch(ClassCastException e) {}
+}
+}
+public FastBufferedOutputStream(final OutputStream os, final int bufferSize) {
+this(os, new byte[ensureBufferSize(bufferSize)]);
+}
+public FastBufferedOutputStream(final OutputStream os) {
+this(os, DEFAULT_BUFFER_SIZE);
+}
+private void dumpBuffer(final boolean ifFull) throws IOException {
+if (! ifFull || avail == 0) {
+os.write(buffer, 0, pos);
+pos = 0;
+avail = buffer.length;
+}
+}
+@Override
+public void write(final int b) throws IOException {
+if (ASSERTS) assert avail > 0;
+avail--;
+buffer[pos++] = (byte)b;
+dumpBuffer(true);
+}
+@Override
+public void write(final byte b[], final int offset, final int length) throws IOException {
+if (length >= buffer.length) {
+dumpBuffer(false);
+os.write(b, offset, length);
+return;
+}
+if (length <= avail) {
+System.arraycopy(b, offset, buffer, pos, length);
+pos += length;
+avail -= length;
+dumpBuffer(true);
+return;
+}
+dumpBuffer(false);
+System.arraycopy(b, offset, buffer, 0, length);
+pos = length;
+avail -= length;
+}
+@Override
+public void flush() throws IOException {
+dumpBuffer(false);
+os.flush();
+}
+@Override
+public void close() throws IOException {
+if (os == null) return;
+flush();
+if (os != System.out) os.close();
+os = null;
+buffer = null;
+}
+@Override
+public long position() throws IOException {
+if (repositionableStream != null) return repositionableStream.position() + pos;
+else if (measurableStream != null) return measurableStream.position() + pos;
+else if (fileChannel != null) return fileChannel.position() + pos;
+else throw new UnsupportedOperationException("position() can only be called if the underlying byte stream implements the MeasurableStream or RepositionableStream interface or if the getChannel() method of the underlying byte stream exists and returns a FileChannel");
+}
+@Override
+public void position(final long newPosition) throws IOException {
+flush();
+if (repositionableStream != null) repositionableStream.position(newPosition);
+else if (fileChannel != null) fileChannel.position(newPosition);
+else throw new UnsupportedOperationException("position() can only be called if the underlying byte stream implements the RepositionableStream interface or if the getChannel() method of the underlying byte stream exists and returns a FileChannel");
+}
+@Override
+public long length() throws IOException {
+flush();
+if (measurableStream != null) return measurableStream.length();
+if (fileChannel != null) return fileChannel.size();
+throw new UnsupportedOperationException();
+}
+}

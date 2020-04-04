@@ -1,0 +1,51 @@
+package it.unimi.dsi.fastutil.io;
+import it.unimi.dsi.fastutil.bytes.ByteArrays;
+import java.io.IOException;
+public class FastByteArrayOutputStream extends MeasurableOutputStream implements RepositionableStream {
+public static final int DEFAULT_INITIAL_CAPACITY = 16;
+public byte[] array;
+public int length;
+private int position;
+public FastByteArrayOutputStream() {
+this(DEFAULT_INITIAL_CAPACITY);
+}
+public FastByteArrayOutputStream(final int initialCapacity) {
+array = new byte[initialCapacity];
+}
+public FastByteArrayOutputStream(final byte[] a) {
+array = a;
+}
+public void reset() {
+length = 0;
+position = 0;
+}
+public void trim() {
+array = ByteArrays.trim(array, length);
+}
+@Override
+public void write(final int b) {
+if (position >= array.length) array = ByteArrays.grow(array, position + 1, length);
+array[position++] = (byte)b;
+if (length < position) length = position;
+}
+@Override
+public void write(final byte[] b, final int off, final int len) throws IOException {
+ByteArrays.ensureOffsetLength(b, off, len);
+if (position + len > array.length) array = ByteArrays.grow(array, position + len, position);
+System.arraycopy(b, off, array, position, len);
+if (position + len > length) length = position += len;
+}
+@Override
+public void position(long newPosition) {
+if (position > Integer.MAX_VALUE) throw new IllegalArgumentException("Position too large: " + newPosition);
+position = (int)newPosition;
+}
+@Override
+public long position() {
+return position;
+}
+@Override
+public long length() throws IOException {
+return length;
+}
+}

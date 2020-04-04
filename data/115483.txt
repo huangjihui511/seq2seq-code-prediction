@@ -1,0 +1,272 @@
+package org.gnucash.android.model;
+import android.os.Parcel;
+import android.os.Parcelable;
+import android.support.annotation.NonNull;
+import org.gnucash.android.db.adapter.AccountsDbAdapter;
+import java.sql.Timestamp;
+public class Split extends BaseModel implements Parcelable{
+public static final char FLAG_RECONCILED = 'y';
+public static final char FLAG_NOT_RECONCILED = 'n';
+public static final char FLAG_CLEARED = 'c';
+private Money mValue;
+private Money mQuantity;
+private String mTransactionUID = "";
+private String mAccountUID;
+private TransactionType mSplitType = TransactionType.CREDIT;
+private String mMemo;
+private char mReconcileState = FLAG_NOT_RECONCILED;
+private Timestamp mReconcileDate = new Timestamp(System.currentTimeMillis());
+public Split(@NonNull Money value, @NonNull Money quantity, String accountUID){
+setQuantity(quantity);
+setValue(value);
+setAccountUID(accountUID);
+}
+public Split(@NonNull Money amount, String accountUID){
+this(amount, new Money(amount), accountUID);
+}
+public Split(Split sourceSplit, boolean generateUID){
+this.mMemo          = sourceSplit.mMemo;
+this.mAccountUID    = sourceSplit.mAccountUID;
+this.mSplitType     = sourceSplit.mSplitType;
+this.mTransactionUID = sourceSplit.mTransactionUID;
+this.mValue         = new Money(sourceSplit.mValue);
+this.mQuantity      = new Money(sourceSplit.mQuantity);
+if (generateUID){
+generateUID();
+} else {
+setUID(sourceSplit.getUID());
+}
+}
+public Money getValue() {
+return mValue;
+}
+public void setValue(Money value) {
+mValue = value.abs();
+}
+public Money getQuantity() {
+return mQuantity;
+}
+public void setQuantity(Money quantity) {
+this.mQuantity = quantity.abs();
+}
+public String getTransactionUID() {
+return mTransactionUID;
+}
+public void setTransactionUID(String transactionUID) {
+this.mTransactionUID = transactionUID;
+}
+public String getAccountUID() {
+return mAccountUID;
+}
+public void setAccountUID(String accountUID) {
+this.mAccountUID = accountUID;
+}
+public TransactionType getType() {
+return mSplitType;
+}
+public void setType(TransactionType splitType) {
+this.mSplitType = splitType;
+}
+public String getMemo() {
+return mMemo;
+}
+public void setMemo(String memo) {
+this.mMemo = memo;
+}
+public Split createPair(String accountUID){
+Split pair = new Split(mValue, accountUID);
+pair.setType(mSplitType.invert());
+pair.setMemo(mMemo);
+pair.setTransactionUID(mTransactionUID);
+pair.setQuantity(mQuantity);
+return pair;
+}
+protected Split clone() throws CloneNotSupportedException {
+super.clone();
+Split split = new Split(mValue, mAccountUID);
+split.setUID(getUID());
+split.setType(mSplitType);
+split.setMemo(mMemo);
+split.setTransactionUID(mTransactionUID);
+split.setQuantity(mQuantity);
+return split;
+}
+public boolean isPairOf(Split other) {
+return mValue.equals(other.mValue)
+&& mSplitType.invert().equals(other.mSplitType);
+}
+public Money getFormattedValue(){
+return getFormattedAmount(mValue, mAccountUID, mSplitType);
+}
+public Money getFormattedQuantity(){
+return getFormattedAmount(mQuantity, mAccountUID, mSplitType);
+}
+private static Money getFormattedAmount(Money amount, String accountUID, TransactionType
+splitType){
+boolean isDebitAccount = AccountsDbAdapter.getInstance().getAccountType(accountUID).hasDebitNormalBalance();
+Money absAmount = amount.abs();
+boolean isDebitSplit = splitType == TransactionType.DEBIT;
+if (isDebitAccount) {
+if (isDebitSplit) {
+return absAmount;
+} else {
+return absAmount.negate();
+}
+} else {
+if (isDebitSplit) {
+return absAmount.negate();
+} else {
+return absAmount;
+}
+}
+}
+public char getReconcileState() {
+return mReconcileState;
+}
+public boolean isReconciled(){
+return mReconcileState == FLAG_RECONCILED;
+}
+public void setReconcileState(char reconcileState) {
+this.mReconcileState = reconcileState;
+}
+public Timestamp getReconcileDate() {
+return mReconcileDate;
+}
+public void setReconcileDate(Timestamp reconcileDate) {
+this.mReconcileDate = reconcileDate;
+}
+@Override
+public String toString() {
+return mSplitType.name() + " of " + mValue.toString() + " in account: " + mAccountUID;
+}
+public String toCsv(){
+String sep = ";";
+String splitString = getUID() + sep + mValue.getNumerator() + sep + mValue.getDenominator()
++ sep + mValue.getCommodity().getCurrencyCode() + sep + mQuantity.getNumerator()
++ sep + mQuantity.getDenominator() + sep + mQuantity.getCommodity().getCurrencyCode()
++ sep + mTransactionUID + sep + mAccountUID + sep + mSplitType.name();
+if (mMemo != null){
+splitString = splitString + sep + mMemo;
+}
+return splitString;
+}
+public static Split parseSplit(String splitCsvString) {
+String[] tokens = splitCsvString.split(";");
+if (tokens.length < 8) { 
+Money amount = new Money(tokens[0], tokens[1]);
+Split split = new Split(amount, tokens[2]);
+split.setTransactionUID(tokens[3]);
+split.setType(TransactionType.valueOf(tokens[4]));
+if (tokens.length == 6) {
+split.setMemo(tokens[5]);
+}
+return split;
+} else {
+long valueNum = Long.parseLong(tokens[1]);
+long valueDenom = Long.parseLong(tokens[2]);
+String valueCurrencyCode = tokens[3];
+long quantityNum = Long.parseLong(tokens[4]);
+long quantityDenom = Long.parseLong(tokens[5]);
+String qtyCurrencyCode = tokens[6];
+Money value = new Money(valueNum, valueDenom, valueCurrencyCode);
+Money quantity = new Money(quantityNum, quantityDenom, qtyCurrencyCode);
+Split split = new Split(value, tokens[8]);
+split.setUID(tokens[0]);
+split.setQuantity(quantity);
+split.setTransactionUID(tokens[7]);
+split.setType(TransactionType.valueOf(tokens[9]));
+if (tokens.length == 11) {
+split.setMemo(tokens[10]);
+}
+return split;
+}
+}
+@SuppressWarnings("SimplifiableIfStatement")
+public boolean isEquivalentTo(Split split){
+if (this == split) return true;
+if (super.equals(split)) return true;
+if (mReconcileState != split.mReconcileState) return false;
+if (!mValue.equals(split.mValue)) return false;
+if (!mQuantity.equals(split.mQuantity)) return false;
+if (!mTransactionUID.equals(split.mTransactionUID)) return false;
+if (!mAccountUID.equals(split.mAccountUID)) return false;
+if (mSplitType != split.mSplitType) return false;
+return mMemo != null ? mMemo.equals(split.mMemo) : split.mMemo == null;
+}
+@SuppressWarnings("SimplifiableIfStatement")
+@Override
+public boolean equals(Object o) {
+if (this == o) return true;
+if (o == null || getClass() != o.getClass()) return false;
+if (!super.equals(o)) return false;
+Split split = (Split) o;
+if (mReconcileState != split.mReconcileState) return false;
+if (!mValue.equals(split.mValue)) return false;
+if (!mQuantity.equals(split.mQuantity)) return false;
+if (!mTransactionUID.equals(split.mTransactionUID)) return false;
+if (!mAccountUID.equals(split.mAccountUID)) return false;
+if (mSplitType != split.mSplitType) return false;
+return mMemo != null ? mMemo.equals(split.mMemo) : split.mMemo == null;
+}
+@Override
+public int hashCode() {
+int result = super.hashCode();
+result = 31 * result + mValue.hashCode();
+result = 31 * result + mQuantity.hashCode();
+result = 31 * result + mTransactionUID.hashCode();
+result = 31 * result + mAccountUID.hashCode();
+result = 31 * result + mSplitType.hashCode();
+result = 31 * result + (mMemo != null ? mMemo.hashCode() : 0);
+result = 31 * result + (int) mReconcileState;
+return result;
+}
+@Override
+public int describeContents() {
+return 0;
+}
+@Override
+public void writeToParcel(Parcel dest, int flags) {
+dest.writeString(getUID());
+dest.writeString(mAccountUID);
+dest.writeString(mTransactionUID);
+dest.writeString(mSplitType.name());
+dest.writeLong(mValue.getNumerator());
+dest.writeLong(mValue.getDenominator());
+dest.writeString(mValue.getCommodity().getCurrencyCode());
+dest.writeLong(mQuantity.getNumerator());
+dest.writeLong(mQuantity.getDenominator());
+dest.writeString(mQuantity.getCommodity().getCurrencyCode());
+dest.writeString(mMemo == null ? "" : mMemo);
+dest.writeString(String.valueOf(mReconcileState));
+dest.writeString(mReconcileDate.toString());
+}
+private Split(Parcel source){
+setUID(source.readString());
+mAccountUID = source.readString();
+mTransactionUID = source.readString();
+mSplitType = TransactionType.valueOf(source.readString());
+long valueNum = source.readLong();
+long valueDenom = source.readLong();
+String valueCurrency = source.readString();
+mValue = new Money(valueNum, valueDenom, valueCurrency).abs();
+long qtyNum = source.readLong();
+long qtyDenom = source.readLong();
+String qtyCurrency = source.readString();
+mQuantity = new Money(qtyNum, qtyDenom, qtyCurrency).abs();
+String memo = source.readString();
+mMemo = memo.isEmpty() ? null : memo;
+mReconcileState = source.readString().charAt(0);
+mReconcileDate = Timestamp.valueOf(source.readString());
+}
+public static final Parcelable.Creator<Split> CREATOR
+= new Parcelable.Creator<Split>() {
+@Override
+public Split createFromParcel(Parcel source) {
+return new Split(source);
+}
+@Override
+public Split[] newArray(int size) {
+return new Split[size];
+}
+};
+}

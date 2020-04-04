@@ -1,0 +1,29 @@
+package com.github.benmanes.caffeine;
+import static org.junit.Assert.assertEquals;
+import static org.ops4j.pax.exam.CoreOptions.bundle;
+import static org.ops4j.pax.exam.CoreOptions.junitBundles;
+import static org.ops4j.pax.exam.CoreOptions.options;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.ops4j.pax.exam.Configuration;
+import org.ops4j.pax.exam.Option;
+import org.ops4j.pax.exam.junit.PaxExam;
+import org.ops4j.pax.exam.spi.reactors.ExamReactorStrategy;
+import org.ops4j.pax.exam.spi.reactors.PerMethod;
+import com.github.benmanes.caffeine.cache.Caffeine;
+import com.github.benmanes.caffeine.cache.LoadingCache;
+@RunWith(PaxExam.class)
+@ExamReactorStrategy(PerMethod.class)
+public final class OSGiTest {
+@Configuration
+public Option[] config() {
+return options(
+junitBundles(),
+bundle("file:" + System.getProperty("caffeine.osgi.jar")));
+}
+@Test
+public void sanity() {
+LoadingCache<Integer, Integer> cache = Caffeine.newBuilder().build(k -> -k);
+assertEquals(-1, cache.get(1).intValue());
+}
+}

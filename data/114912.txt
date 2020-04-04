@@ -1,0 +1,29 @@
+package it.unimi.dsi.fastutil;
+import java.util.function.IntToLongFunction;
+import java.util.function.IntUnaryOperator;
+import it.unimi.dsi.fastutil.bytes.Byte2CharFunction;
+import it.unimi.dsi.fastutil.ints.Int2IntFunction;
+import it.unimi.dsi.fastutil.ints.Int2LongFunction;
+@FunctionalInterface
+public interface Function<K,V> extends java.util.function.Function<K,V> {
+@Override
+default V apply(final K key) {
+return get(key);
+}
+default V put(final K key, final V value) {
+throw new UnsupportedOperationException();
+}
+V get(Object key);
+default boolean containsKey(final Object key) {
+return true;
+}
+default V remove(final Object key) {
+throw new UnsupportedOperationException();
+}
+default int size() {
+return -1;
+}
+default void clear() {
+throw new UnsupportedOperationException();
+}
+}

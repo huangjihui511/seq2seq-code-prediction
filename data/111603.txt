@@ -1,0 +1,20 @@
+package io.github.bonigarcia.wdm.test;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.htmlunit.HtmlUnitDriver;
+import io.github.bonigarcia.wdm.WebDriverManager;
+import io.github.bonigarcia.wdm.base.BrowserTestParent;
+public class HtmlUnitTest extends BrowserTestParent {
+private static Class<? extends WebDriver> webDriverClass;
+@BeforeClass
+public static void setupClass() {
+webDriverClass = HtmlUnitDriver.class;
+WebDriverManager.getInstance(webDriverClass).setup();
+}
+@Before
+public void htmlUnitTest()
+throws InstantiationException, IllegalAccessException {
+driver = webDriverClass.newInstance();
+}
+}

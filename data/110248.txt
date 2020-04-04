@@ -1,0 +1,12 @@
+package tests;
+import com.google.auto.factory.AutoFactory;
+import com.google.auto.factory.Provided;
+class FactoryImplementingGenericInterfaceExtension {
+@AutoFactory(implementing = MyFactory.class)
+FactoryImplementingGenericInterfaceExtension(@Provided String s, Integer i) {}
+interface MyFactory
+extends GenericFactory<FactoryImplementingGenericInterfaceExtension, Integer> {}
+interface GenericFactory<T, S> {
+T make(S arg);
+}
+}

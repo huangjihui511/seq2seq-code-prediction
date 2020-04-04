@@ -1,0 +1,165 @@
+package com.alibaba.csp.sentinel.transport.command.netty;
+import com.alibaba.csp.sentinel.Constants;
+import com.alibaba.csp.sentinel.config.SentinelConfig;
+import com.alibaba.csp.sentinel.init.InitExecutor;
+import com.alibaba.csp.sentinel.slots.block.RuleConstant;
+import com.alibaba.csp.sentinel.slots.block.flow.FlowRule;
+import com.alibaba.csp.sentinel.slots.block.flow.FlowRuleManager;
+import com.alibaba.csp.sentinel.transport.CommandCenter;
+import com.alibaba.csp.sentinel.transport.command.NettyHttpCommandCenter;
+import com.alibaba.csp.sentinel.transport.command.handler.MultipleSlashNameCommandTestHandler;
+import com.alibaba.fastjson.JSON;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
+import io.netty.channel.embedded.EmbeddedChannel;
+import io.netty.handler.codec.http.*;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
+import java.lang.reflect.Field;
+import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
+import static io.netty.handler.codec.http.HttpResponseStatus.BAD_REQUEST;
+import static io.netty.handler.codec.http.HttpResponseStatus.OK;
+import static org.junit.Assert.assertEquals;
+public class HttpServerHandlerTest {
+private static String CRLF = "\r\n";
+private static String SENTINEL_CHARSET_NAME = SentinelConfig.charset();
+private static Charset SENTINEL_CHARSET = Charset.forName(SENTINEL_CHARSET_NAME);
+private static EmbeddedChannel embeddedChannel;
+@BeforeClass
+public static void beforeClass() throws Exception {
+Field[] declaredFields = InitExecutor.class.getDeclaredFields();
+for (Field declaredField : declaredFields) {
+if (declaredField.getName().equals("initialized")) {
+declaredField.setAccessible(true);
+((AtomicBoolean)declaredField.get(InitExecutor.class)).set(true);
+}
+}
+CommandCenter commandCenter = new NettyHttpCommandCenter();
+commandCenter.beforeStart();
+}
+@Before
+public void before() {
+HttpRequestDecoder httpRequestDecoder = new HttpRequestDecoder();
+HttpObjectAggregator httpObjectAggregator = new HttpObjectAggregator(1024 * 1024);
+HttpResponseEncoder httpResponseEncoder = new HttpResponseEncoder();
+HttpServerHandler httpServerHandler = new HttpServerHandler();
+embeddedChannel = new EmbeddedChannel(httpRequestDecoder, httpObjectAggregator, httpResponseEncoder, httpServerHandler);
+FlowRuleManager.loadRules(Collections.EMPTY_LIST);
+}
+@Test
+public void testInvalidCommand() {
+String httpRequestStr = "GET / HTTP/1.1" + CRLF
++ "Host: localhost:8719" + CRLF
++ CRLF;
+String expectedBody = "Invalid command";
+processError(httpRequestStr, expectedBody);
+}
+@Test
+public void testUnknownCommand() {
+String httpRequestStr = "GET /aaa HTTP/1.1" + CRLF
++ "Host: localhost:8719" + CRLF
++ CRLF;
+String expectedBody = String.format("Unknown command \"%s\"", "aaa");
+processError(httpRequestStr, expectedBody);
+}
+@Test
+public void testVersionCommand() {
+String httpRequestStr = "GET /version HTTP/1.1" + CRLF
++ "Host: localhost:8719" + CRLF
++ CRLF;
+String expectedBody = Constants.SENTINEL_VERSION;
+processSuccess(httpRequestStr, expectedBody);
+}
+@Test
+public void testFetchActiveRuleCommandInvalidType() {
+String httpRequestStr = "GET /getRules HTTP/1.1" + CRLF
++ "Host: localhost:8719" + CRLF
++ CRLF;
+String expectedBody = "invalid type";
+processFailed(httpRequestStr, expectedBody);
+}
+@Test
+public void testFetchActiveRuleCommandEmptyRule() {
+String httpRequestStr = "GET /getRules?type=flow HTTP/1.1" + CRLF
++ "Host: localhost:8719" + CRLF
++ CRLF;
+String expectedBody = "[]";
+processSuccess(httpRequestStr, expectedBody);
+}
+@Test
+public void testFetchActiveRuleCommandSomeFlowRules() {
+List<FlowRule> rules = new ArrayList<FlowRule>();
+FlowRule rule1 = new FlowRule();
+rule1.setResource("key");
+rule1.setCount(20);
+rule1.setGrade(RuleConstant.FLOW_GRADE_QPS);
+rule1.setLimitApp("default");
+rules.add(rule1);
+FlowRuleManager.loadRules(rules);
+String httpRequestStr = "GET /getRules?type=flow HTTP/1.1" + CRLF
++ "Host: localhost:8719" + CRLF
++ CRLF;
+String expectedBody = "[{\"clusterMode\":false,\"controlBehavior\":0,\"count\":20.0"
++ ",\"grade\":1,\"limitApp\":\"default\",\"maxQueueingTimeMs\":500"
++ ",\"resource\":\"key\",\"strategy\":0,\"warmUpPeriodSec\":10}]";
+String expectedBody = JSON.toJSONString(rules);
+processSuccess(httpRequestStr, expectedBody);
+}
+@Test
+public void testMultipleSlashNameCommand() {
+String httpRequestStr = "GET /aa/bb/cc HTTP/1.1" + CRLF
++ "Host: localhost:8719" + CRLF
++ CRLF;
+String expectedBody = "MultipleSlashNameCommandTestHandler result";
+processSuccess(httpRequestStr, expectedBody);
+}
+private void processError(String httpRequestStr, String expectedBody) {
+processError(httpRequestStr, BAD_REQUEST, expectedBody);
+}
+private void processError(String httpRequestStr, HttpResponseStatus status, String expectedBody) {
+String httpResponseStr = processResponse(httpRequestStr);
+assertErrorStatusAndBody(status, expectedBody, httpResponseStr);
+}
+private void processSuccess(String httpRequestStr, String expectedBody) {
+process(httpRequestStr, OK, expectedBody);
+}
+private void processFailed(String httpRequestStr, String expectedBody) {
+process(httpRequestStr, BAD_REQUEST, expectedBody);
+}
+private void process(String httpRequestStr, HttpResponseStatus status, String expectedBody) {
+String responseStr = processResponse(httpRequestStr);
+assertStatusAndBody(status, expectedBody, responseStr);
+}
+private String processResponse(String httpRequestStr) {
+embeddedChannel.writeInbound(Unpooled.wrappedBuffer(httpRequestStr.getBytes(SENTINEL_CHARSET)));
+StringBuilder sb = new StringBuilder();
+ByteBuf byteBuf;
+while ((byteBuf = embeddedChannel.readOutbound()) != null) {
+sb.append(byteBuf.toString(SENTINEL_CHARSET));
+}
+return sb.toString();
+}
+private void assertErrorStatusAndBody(HttpResponseStatus status, String expectedBody, String httpResponseStr) {
+StringBuilder text = new StringBuilder();
+text.append(HttpVersion.HTTP_1_1.toString()).append(' ').append(status.toString()).append(CRLF);
+text.append("Content-Type: text/plain; charset=").append(SENTINEL_CHARSET_NAME).append(CRLF);
+text.append(CRLF);
+text.append(expectedBody);
+assertEquals(text.toString(), httpResponseStr);
+}
+private void assertStatusAndBody(HttpResponseStatus status, String expectedBody, String httpResponseStr) {
+StringBuilder text = new StringBuilder();
+text.append(HttpVersion.HTTP_1_1.toString()).append(' ').append(status.toString()).append(CRLF);
+text.append("Content-Type: text/plain; charset=").append(SENTINEL_CHARSET_NAME).append(CRLF);
+text.append("content-length: " + expectedBody.length()).append(CRLF);
+text.append("connection: close").append(CRLF);
+text.append(CRLF);
+text.append(expectedBody);
+assertEquals(text.toString(), httpResponseStr);
+}
+}

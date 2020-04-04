@@ -1,0 +1,195 @@
+package org.apache.pdfbox.pdmodel.graphics.color;
+import java.awt.Point;
+import java.awt.image.BufferedImage;
+import java.awt.image.DataBuffer;
+import java.awt.image.Raster;
+import java.awt.image.WritableRaster;
+import java.io.IOException;
+import org.apache.pdfbox.cos.COSArray;
+import org.apache.pdfbox.cos.COSBase;
+import org.apache.pdfbox.cos.COSInteger;
+import org.apache.pdfbox.cos.COSName;
+import org.apache.pdfbox.cos.COSNumber;
+import org.apache.pdfbox.cos.COSStream;
+import org.apache.pdfbox.cos.COSString;
+import org.apache.pdfbox.pdmodel.PDResources;
+import org.apache.pdfbox.pdmodel.common.PDStream;
+public final class PDIndexed extends PDSpecialColorSpace
+{
+private final PDColor initialColor = new PDColor(new float[] { 0 }, this);
+private PDColorSpace baseColorSpace = null;
+private byte[] lookupData;
+private float[][] colorTable;
+private int actualMaxIndex;
+private int[][] rgbColorTable;
+public PDIndexed()
+{
+array = new COSArray();
+array.add(COSName.INDEXED);
+array.add(COSName.DEVICERGB);
+array.add(COSInteger.get(255));
+array.add(org.apache.pdfbox.cos.COSNull.NULL);
+}
+public PDIndexed(COSArray indexedArray) throws IOException
+{
+this(indexedArray, null);
+}
+public PDIndexed(COSArray indexedArray, PDResources resources) throws IOException
+{
+array = indexedArray;
+baseColorSpace = PDColorSpace.create(array.get(1), resources);
+readColorTable();
+initRgbColorTable();
+}
+@Override
+public String getName()
+{
+return COSName.INDEXED.getName();
+}
+@Override
+public int getNumberOfComponents()
+{
+return 1;
+}
+@Override
+public float[] getDefaultDecode(int bitsPerComponent)
+{
+return new float[] { 0, (float)Math.pow(2, bitsPerComponent) - 1 };
+}
+@Override
+public PDColor getInitialColor()
+{
+return initialColor;
+}
+private void initRgbColorTable() throws IOException
+{
+int numBaseComponents = baseColorSpace.getNumberOfComponents();
+WritableRaster baseRaster;
+try
+{
+baseRaster = Raster.createBandedRaster(DataBuffer.TYPE_BYTE,
+actualMaxIndex + 1, 1, numBaseComponents, new Point(0, 0));
+}
+catch (IllegalArgumentException ex)
+{
+throw new IOException(ex);
+}
+int[] base = new int[numBaseComponents];
+for (int i = 0, n = actualMaxIndex; i <= n; i++)
+{
+for (int c = 0; c < numBaseComponents; c++)
+{
+base[c] = (int)(colorTable[i][c] * 255f);
+}
+baseRaster.setPixel(i, 0, base);
+}
+BufferedImage rgbImage = baseColorSpace.toRGBImage(baseRaster);
+WritableRaster rgbRaster = rgbImage.getRaster();
+rgbColorTable = new int[actualMaxIndex + 1][3];
+int[] nil = null;
+for (int i = 0, n = actualMaxIndex; i <= n; i++)
+{
+rgbColorTable[i] = rgbRaster.getPixel(i, 0, nil);
+}
+}
+@Override
+public float[] toRGB(float[] value)
+{
+if (value.length > 1)
+{
+throw new IllegalArgumentException("Indexed color spaces must have one color value");
+}
+int index = Math.round(value[0]);
+index = Math.max(index, 0);
+index = Math.min(index, actualMaxIndex);
+int[] rgb = rgbColorTable[index];
+return new float[] { rgb[0] / 255f, rgb[1] / 255f, rgb[2] / 255f };
+}
+@Override
+public BufferedImage toRGBImage(WritableRaster raster) throws IOException
+{
+int width = raster.getWidth();
+int height = raster.getHeight();
+BufferedImage rgbImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+WritableRaster rgbRaster = rgbImage.getRaster();
+int[] src = new int[1];
+for (int y = 0; y < height; y++)
+{
+for (int x = 0; x < width; x++)
+{
+raster.getPixel(x, y, src);
+int index = Math.min(src[0], actualMaxIndex);
+rgbRaster.setPixel(x, y, rgbColorTable[index]);
+}
+}
+return rgbImage;
+}
+public PDColorSpace getBaseColorSpace()
+{
+return baseColorSpace;
+}
+private int getHival()
+{
+return ((COSNumber) array.getObject(2)).intValue();
+}
+private byte[] getLookupData() throws IOException
+{
+if (lookupData == null)
+{
+COSBase lookupTable = array.getObject(3);
+if (lookupTable instanceof COSString)
+{
+lookupData = ((COSString) lookupTable).getBytes();
+}
+else if (lookupTable instanceof COSStream)
+{
+lookupData = new PDStream((COSStream)lookupTable).toByteArray();
+}
+else if (lookupTable == null)
+{
+lookupData = new byte[0];
+}
+else
+{
+throw new IOException("Error: Unknown type for lookup table " + lookupTable);
+}
+}
+return lookupData;
+}
+private void readColorTable() throws IOException
+{
+byte[] lookupData = getLookupData();
+int maxIndex = Math.min(getHival(), 255);
+int numComponents = baseColorSpace.getNumberOfComponents();
+if (lookupData.length / numComponents < maxIndex + 1)
+{
+maxIndex = lookupData.length / numComponents - 1;
+}
+actualMaxIndex = maxIndex;  
+colorTable = new float[maxIndex + 1][numComponents];
+for (int i = 0, offset = 0; i <= maxIndex; i++)
+{
+for (int c = 0; c < numComponents; c++)
+{
+colorTable[i][c] = (lookupData[offset] & 0xff) / 255f;
+offset++;
+}
+}
+}
+public void setBaseColorSpace(PDColorSpace base)
+{
+array.set(1, base.getCOSObject());
+baseColorSpace = base;
+}
+public void setHighValue(int high)
+{
+array.set(2, high);
+}
+@Override
+public String toString()
+{
+return "Indexed{base:" + baseColorSpace + " " +
+"hival:" + getHival() + " " +
+"lookup:(" + colorTable.length + " entries)}";
+}
+}

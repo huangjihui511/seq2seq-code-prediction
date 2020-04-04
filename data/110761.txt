@@ -1,0 +1,6 @@
+package org.apache.zookeeper.inspector.manager;
+import java.util.Map;
+public interface NodeListener {
+public void processEvent(String nodePath, String eventType,
+Map<String, String> eventInfo);
+}

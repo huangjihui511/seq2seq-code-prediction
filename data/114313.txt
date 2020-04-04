@@ -1,0 +1,29 @@
+package mobi.hsz.idea.gitignore.util;
+import com.intellij.concurrency.JobScheduler;
+import com.intellij.openapi.project.DumbAwareRunnable;
+import org.jetbrains.annotations.Nullable;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
+public abstract class Debounced<T> implements DumbAwareRunnable {
+@Nullable
+private ScheduledFuture<?> timer;
+private final int delay;
+public Debounced(int delay) {
+this.delay = delay;
+}
+@Override
+public final void run() {
+run(null);
+}
+public final void run(@Nullable final T argument) {
+if (timer != null) {
+timer.cancel(false);
+}
+timer = JobScheduler.getScheduler().schedule(
+(DumbAwareRunnable) () -> task(argument),
+delay,
+TimeUnit.MILLISECONDS
+);
+}
+protected abstract void task(@Nullable T argument);
+}

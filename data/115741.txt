@@ -1,0 +1,36 @@
+package org.springframework.integration.support.json;
+import java.lang.reflect.Type;
+import java.util.HashMap;
+import java.util.Map;
+import org.springframework.integration.IntegrationMessageHeaderAccessor;
+import org.springframework.integration.mapping.InboundMessageMapper;
+import org.springframework.util.Assert;
+public abstract class AbstractJsonInboundMessageMapper<P> implements InboundMessageMapper<String> {
+protected static final String MESSAGE_FORMAT_ERROR = "JSON message is invalid.  Expected a message in the format of either " +
+"{\"headers\":{...},\"payload\":{...}} or {\"payload\":{...}.\"headers\":{...}} but was ";
+protected static final Map<String, Class<?>> DEFAULT_HEADER_TYPES = new HashMap<String, Class<?>>();
+static {
+DEFAULT_HEADER_TYPES.put(IntegrationMessageHeaderAccessor.PRIORITY, Integer.class);
+DEFAULT_HEADER_TYPES.put(IntegrationMessageHeaderAccessor.EXPIRATION_DATE, Long.class);
+DEFAULT_HEADER_TYPES.put(IntegrationMessageHeaderAccessor.SEQUENCE_SIZE, Integer.class);
+DEFAULT_HEADER_TYPES.put(IntegrationMessageHeaderAccessor.SEQUENCE_NUMBER, Integer.class);
+}
+protected final Type payloadType; 
+protected final Map<String, Class<?>> headerTypes = DEFAULT_HEADER_TYPES; 
+private boolean mapToPayload = false;
+public AbstractJsonInboundMessageMapper(Type payloadType) {
+Assert.notNull(payloadType, "payloadType must not be null");
+this.payloadType = payloadType;
+}
+public void setHeaderTypes(Map<String, Class<?>> headerTypes) {
+this.headerTypes.putAll(headerTypes);
+}
+public void setMapToPayload(boolean mapToPayload) {
+this.mapToPayload = mapToPayload;
+}
+public boolean isMapToPayload() {
+return this.mapToPayload;
+}
+protected abstract Object readPayload(P parser, String jsonMessage);
+protected abstract Map<String, Object> readHeaders(P parser, String jsonMessage);
+}

@@ -1,0 +1,12 @@
+package io.hawt.util.introspect.support;
+import java.util.SortedSet;
+import java.util.TreeSet;
+public class CacheValue {
+private SortedSet<String> classNames = new TreeSet<String>();
+public SortedSet<String> getClassNames() {
+return classNames;
+}
+public void setClassNames(SortedSet<String> classNames) {
+this.classNames = classNames;
+}
+}

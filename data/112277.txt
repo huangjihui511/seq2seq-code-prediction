@@ -1,0 +1,10 @@
+package com.github.jknack.handlebars;
+import java.util.List;
+public interface PathExpression {
+interface Chain {
+Object next(ValueResolver resolver, Context context, Object data);
+List<PathExpression> path();
+}
+Object eval(ValueResolver resolver, Context context, Object data, Chain chain);
+boolean local();
+}

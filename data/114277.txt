@@ -1,0 +1,331 @@
+package com.datumbox.framework.core.machinelearning.clustering;
+import com.datumbox.framework.common.Configuration;
+import com.datumbox.framework.common.concurrency.ForkJoinStream;
+import com.datumbox.framework.common.concurrency.StreamMethods;
+import com.datumbox.framework.common.dataobjects.AssociativeArray;
+import com.datumbox.framework.core.common.dataobjects.Dataframe;
+import com.datumbox.framework.core.common.dataobjects.Record;
+import com.datumbox.framework.common.storage.interfaces.StorageEngine;
+import com.datumbox.framework.common.storage.interfaces.StorageEngine.MapType;
+import com.datumbox.framework.common.storage.interfaces.StorageEngine.StorageHint;
+import com.datumbox.framework.core.common.utilities.MapMethods;
+import com.datumbox.framework.core.machinelearning.common.abstracts.AbstractTrainer;
+import com.datumbox.framework.core.machinelearning.common.abstracts.modelers.AbstractClusterer;
+import com.datumbox.framework.core.machinelearning.common.interfaces.PredictParallelizable;
+import com.datumbox.framework.core.machinelearning.common.interfaces.TrainParallelizable;
+import com.datumbox.framework.core.mathematics.distances.Distance;
+import com.datumbox.framework.core.statistics.descriptivestatistics.Descriptives;
+import java.util.*;
+public class HierarchicalAgglomerative extends AbstractClusterer<HierarchicalAgglomerative.Cluster, HierarchicalAgglomerative.ModelParameters, HierarchicalAgglomerative.TrainingParameters> implements PredictParallelizable, TrainParallelizable {
+public static class Cluster extends AbstractClusterer.AbstractCluster {
+private static final long serialVersionUID = 1L;
+private Record centroid;
+private boolean active = true;
+private final AssociativeArray xi_sum;
+protected Cluster(int clusterId) {
+super(clusterId);
+centroid = new Record(new AssociativeArray(), null);
+xi_sum = new AssociativeArray();
+}
+public Record getCentroid() {
+return centroid;
+}
+protected void merge(Cluster c) {
+xi_sum.addValues(c.xi_sum);
+size += c.size;
+}
+protected boolean updateClusterParameters() {
+boolean changed=false;
+AssociativeArray centoidValues = xi_sum.copy();
+if(size>0) {
+centoidValues.multiplyValues(1.0/size);
+}
+if(!centroid.getX().equals(centoidValues)) {
+changed=true;
+centroid = new Record(centoidValues, centroid.getY());
+}
+return changed;
+}
+protected boolean isActive() {
+return active;
+}
+protected void setActive(boolean active) {
+this.active = active;
+}
+@Override
+protected void add(Record r) {
+size++;
+xi_sum.addValues(r.getX());
+}
+@Override
+protected void remove(Record r) {
+throw new UnsupportedOperationException("Remove operation is not supported.");
+}
+@Override
+protected void clear() {
+xi_sum.clear();
+}
+}
+public static class ModelParameters extends AbstractClusterer.AbstractModelParameters<HierarchicalAgglomerative.Cluster> {
+private static final long serialVersionUID = 1L;
+protected ModelParameters(StorageEngine storageEngine) {
+super(storageEngine);
+}
+}
+public static class TrainingParameters extends AbstractClusterer.AbstractTrainingParameters {
+private static final long serialVersionUID = 1L;
+public enum Linkage {
+AVERAGE,
+SINGLE,
+COMPLETE;
+}
+public enum Distance {
+EUCLIDIAN,
+MANHATTAN,
+MAXIMUM;
+}
+private Linkage linkageMethod = Linkage.COMPLETE;
+private Distance distanceMethod = Distance.EUCLIDIAN;
+private double maxDistanceThreshold = Double.MAX_VALUE;
+private double minClustersThreshold = 2;
+public Linkage getLinkageMethod() {
+return linkageMethod;
+}
+public void setLinkageMethod(Linkage linkageMethod) {
+this.linkageMethod = linkageMethod;
+}
+public Distance getDistanceMethod() {
+return distanceMethod;
+}
+public void setDistanceMethod(Distance distanceMethod) {
+this.distanceMethod = distanceMethod;
+}
+public double getMaxDistanceThreshold() {
+return maxDistanceThreshold;
+}
+public void setMaxDistanceThreshold(double maxDistanceThreshold) {
+this.maxDistanceThreshold = maxDistanceThreshold;
+}
+public double getMinClustersThreshold() {
+return minClustersThreshold;
+}
+public void setMinClustersThreshold(double minClustersThreshold) {
+this.minClustersThreshold = minClustersThreshold;
+}
+}
+protected HierarchicalAgglomerative(TrainingParameters trainingParameters, Configuration configuration) {
+super(trainingParameters, configuration);
+streamExecutor = new ForkJoinStream(knowledgeBase.getConfiguration().getConcurrencyConfiguration());
+}
+protected HierarchicalAgglomerative(String storageName, Configuration configuration) {
+super(storageName, configuration);
+streamExecutor = new ForkJoinStream(knowledgeBase.getConfiguration().getConcurrencyConfiguration());
+}
+private boolean parallelized = true;
+protected final ForkJoinStream streamExecutor;
+@Override
+public boolean isParallelized() {
+return parallelized;
+}
+@Override
+public void setParallelized(boolean parallelized) {
+this.parallelized = parallelized;
+}
+@Override
+protected void _predict(Dataframe newData) {
+_predictDatasetParallel(newData, knowledgeBase.getStorageEngine(), knowledgeBase.getConfiguration().getConcurrencyConfiguration());
+}
+@Override
+public Prediction _predictRecord(Record r) {
+ModelParameters modelParameters = knowledgeBase.getModelParameters();
+Map<Integer, Cluster> clusterMap = modelParameters.getClusterMap();
+AssociativeArray clusterDistances = new AssociativeArray();
+for(Map.Entry<Integer, Cluster> e : clusterMap.entrySet()) {
+Integer clusterId = e.getKey();
+Cluster c = e.getValue();
+double distance = calculateDistance(r, c.getCentroid());
+clusterDistances.put(clusterId, distance);
+}
+Descriptives.normalize(clusterDistances);
+return new Prediction(getSelectedClusterFromDistances(clusterDistances), clusterDistances);
+}
+@Override
+protected void _fit(Dataframe trainingData) {
+ModelParameters modelParameters = knowledgeBase.getModelParameters();
+Set<Object> goldStandardClasses = modelParameters.getGoldStandardClasses();
+for(Record r : trainingData) {
+Object theClass=r.getY();
+if(theClass!=null) {
+goldStandardClasses.add(theClass);
+}
+}
+calculateClusters(trainingData);
+clearClusters();
+}
+private double calculateDistance(Record r1, Record r2) {
+TrainingParameters trainingParameters = knowledgeBase.getTrainingParameters();
+double distance;
+TrainingParameters.Distance distanceMethod = trainingParameters.getDistanceMethod();
+if(distanceMethod==TrainingParameters.Distance.EUCLIDIAN) {
+distance = Distance.euclidean(r1.getX(), r2.getX());
+}
+else if(distanceMethod==TrainingParameters.Distance.MANHATTAN) {
+distance = Distance.manhattan(r1.getX(), r2.getX());
+}
+else if(distanceMethod==TrainingParameters.Distance.MAXIMUM) {
+distance = Distance.maximum(r1.getX(), r2.getX());
+}
+else {
+throw new IllegalArgumentException("Unsupported Distance method.");
+}
+return distance;
+}
+private Object getSelectedClusterFromDistances(AssociativeArray clusterDistances) {
+Map.Entry<Object, Object> minEntry = MapMethods.selectMinKeyValue(clusterDistances);
+return minEntry.getKey();
+}
+private void calculateClusters(Dataframe trainingData) {
+ModelParameters modelParameters = knowledgeBase.getModelParameters();
+TrainingParameters trainingParameters = knowledgeBase.getTrainingParameters();
+Map<Integer, Cluster> clusterMap = modelParameters.getClusterMap();
+StorageEngine storageEngine = knowledgeBase.getStorageEngine();
+Map<List<Object>, Double> tmp_distanceArray = storageEngine.getBigMap("tmp_distanceArray", (Class<List<Object>>)(Class<?>)List.class, Double.class, MapType.HASHMAP, StorageHint.IN_CACHE, true, true); 
+Map<Integer, Integer> tmp_minClusterDistanceId = storageEngine.getBigMap("tmp_minClusterDistanceId", Integer.class, Integer.class, MapType.HASHMAP, StorageHint.IN_CACHE, true, true); 
+Integer clusterId = 0;
+for(Record r : trainingData.values()) {
+Cluster c = new Cluster(clusterId);
+c.add(r);
+c.updateClusterParameters();
+clusterMap.put(clusterId, c);
+++clusterId;
+}
+streamExecutor.forEach(StreamMethods.stream(clusterMap.entrySet().stream(), isParallelized()), entry1 -> {
+Integer clusterId1 = entry1.getKey();
+Cluster c1 = entry1.getValue();
+for(Map.Entry<Integer, Cluster> entry2 : clusterMap.entrySet()) {
+Integer clusterId2 = entry2.getKey();
+Cluster c2 = entry2.getValue();
+double distance = Double.MAX_VALUE;
+if(!Objects.equals(clusterId1, clusterId2)) {
+distance = calculateDistance(c1.getCentroid(), c2.getCentroid());
+}
+tmp_distanceArray.put(Arrays.asList(clusterId1, clusterId2), distance);
+tmp_distanceArray.put(Arrays.asList(clusterId2, clusterId1), distance);
+Integer minDistanceId = tmp_minClusterDistanceId.get(clusterId1);
+if(minDistanceId==null || distance < tmp_distanceArray.get(Arrays.asList(clusterId1, minDistanceId))) {
+tmp_minClusterDistanceId.put(clusterId1, clusterId2);
+}
+}
+});
+boolean continueMerging = true;
+while(continueMerging) {
+continueMerging = mergeClosest(tmp_minClusterDistanceId, tmp_distanceArray);
+int activeClusters = 0;
+for(Cluster c : clusterMap.values()) {
+if(c.isActive()) {
+++activeClusters;
+}
+}
+if(activeClusters<=trainingParameters.getMinClustersThreshold()) {
+continueMerging = false;
+}
+}
+Iterator<Map.Entry<Integer, Cluster>> it = clusterMap.entrySet().iterator();
+while(it.hasNext()) {
+Map.Entry<Integer, Cluster> entry = it.next();
+Integer cId = entry.getKey();
+Cluster cluster = entry.getValue();
+if(cluster.isActive()) {
+cluster.updateClusterParameters();
+clusterMap.put(cId, cluster);
+}
+else {
+it.remove(); 
+}
+}
+storageEngine.dropBigMap("tmp_distanceArray", tmp_distanceArray);
+storageEngine.dropBigMap("tmp_minClusterDistanceId", tmp_minClusterDistanceId);
+}
+private boolean mergeClosest(Map<Integer, Integer> minClusterDistanceId, Map<List<Object>, Double> distanceArray) {
+ModelParameters modelParameters = knowledgeBase.getModelParameters();
+TrainingParameters trainingParameters = knowledgeBase.getTrainingParameters();
+Map<Integer, Cluster> clusterMap = modelParameters.getClusterMap();
+Integer minClusterId = null;
+double minDistance = Double.MAX_VALUE;
+for(Map.Entry<Integer, Cluster> entry : clusterMap.entrySet()) {
+Integer clusterId = entry.getKey();
+if(entry.getValue().isActive()==false) {
+continue; 
+}
+double distance = distanceArray.get(Arrays.asList(clusterId, minClusterDistanceId.get(clusterId)));
+if(distance<minDistance) {
+minClusterId = clusterId;
+minDistance = distance;
+}
+}
+if(minDistance>=trainingParameters.getMaxDistanceThreshold()) {
+return false;
+}
+final Integer clusterThatMergesId = minClusterId;
+final Integer clusterToBeMergedId = minClusterDistanceId.get(clusterThatMergesId);
+Cluster c1 = clusterMap.get(clusterThatMergesId);
+Cluster c2 = clusterMap.get(clusterToBeMergedId);
+double c1Size = c1.size();
+double c2Size = c2.size();
+c1.merge(c2);
+clusterMap.put(clusterThatMergesId, c1);
+c2.setActive(false); 
+clusterMap.put(clusterToBeMergedId, c2);
+TrainingParameters.Linkage linkageMethod = trainingParameters.getLinkageMethod();
+streamExecutor.forEach(StreamMethods.stream(clusterMap.entrySet().stream(), isParallelized()), entry -> {
+Integer clusterId = entry.getKey();
+Cluster ci = entry.getValue();
+if(ci.isActive()) { 
+double distance;
+if(Objects.equals(clusterThatMergesId, clusterId)) {
+distance = Double.MAX_VALUE;
+}
+else if(linkageMethod==TrainingParameters.Linkage.SINGLE) {
+double c1ciDistance = distanceArray.get(Arrays.asList(clusterThatMergesId, clusterId));
+double c2ciDistance = distanceArray.get(Arrays.asList(clusterToBeMergedId, clusterId));
+distance = Math.min(c1ciDistance, c2ciDistance);
+}
+else if(linkageMethod==TrainingParameters.Linkage.COMPLETE) {
+double c1ciDistance = distanceArray.get(Arrays.asList(clusterThatMergesId, clusterId));
+double c2ciDistance = distanceArray.get(Arrays.asList(clusterToBeMergedId, clusterId));
+distance = Math.max(c1ciDistance, c2ciDistance);
+}
+else if(linkageMethod==TrainingParameters.Linkage.AVERAGE) {
+double c1ciDistance = distanceArray.get(Arrays.asList(clusterThatMergesId, clusterId));
+double c2ciDistance = distanceArray.get(Arrays.asList(clusterToBeMergedId, clusterId));
+distance = (c1ciDistance*c1Size + c2ciDistance*c2Size)/(c1Size+c2Size);
+}
+else {
+distance = calculateDistance(c1.getCentroid(), ci.getCentroid());
+}
+distanceArray.put(Arrays.asList(clusterThatMergesId, clusterId), distance);
+distanceArray.put(Arrays.asList(clusterId, clusterThatMergesId), distance);
+}
+});
+streamExecutor.forEach(StreamMethods.stream(clusterMap.entrySet().stream(), isParallelized()), entry1 -> {
+Integer id1 = entry1.getKey();
+if (entry1.getValue().isActive()) { 
+Integer minDistanceId = minClusterDistanceId.get(id1);
+if (Objects.equals(minDistanceId, clusterThatMergesId) || Objects.equals(minDistanceId, clusterToBeMergedId)) {
+Integer newMinDistanceId = id1;
+for(Map.Entry<Integer, Cluster> entry2 : clusterMap.entrySet()) {
+Integer id2 = entry2.getKey();
+if(entry2.getValue().isActive()==false) {
+continue; 
+}
+if(distanceArray.get(Arrays.asList(id1, id2)) < distanceArray.get(Arrays.asList(id1, newMinDistanceId)) ){
+newMinDistanceId = id2;
+}
+}
+minClusterDistanceId.put(id1, newMinDistanceId);
+}
+}
+});
+return true;
+}
+}

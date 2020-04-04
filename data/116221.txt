@@ -1,0 +1,7 @@
+package org.apache.struts2.osgi.interceptor;
+import org.osgi.framework.BundleContext;
+@Deprecated
+public interface BundleContextAware {
+@Deprecated
+void setBundleContext(BundleContext bundleContext);
+}

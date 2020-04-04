@@ -1,0 +1,6 @@
+package io.hawt.web.proxy;
+public interface ProxyAddress {
+String getFullProxyUrl();
+String getUserName();
+String getPassword();
+}

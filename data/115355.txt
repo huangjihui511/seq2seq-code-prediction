@@ -1,0 +1,16 @@
+package io.flutter.settings;
+public class FlutterUIConfig {
+private static final FlutterUIConfig INSTANCE = new FlutterUIConfig();
+private boolean ignoreOutOfDateFlutterSdks;
+private FlutterUIConfig() {
+}
+public static FlutterUIConfig getInstance() {
+return INSTANCE;
+}
+public boolean shouldIgnoreOutOfDateFlutterSdks() {
+return ignoreOutOfDateFlutterSdks;
+}
+public void setIgnoreOutOfDateFlutterSdks() {
+ignoreOutOfDateFlutterSdks = true;
+}
+}

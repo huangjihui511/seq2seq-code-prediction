@@ -1,0 +1,34 @@
+package org.deeplearning4j.models.embeddings.wordvectors;
+import org.deeplearning4j.models.embeddings.WeightLookupTable;
+import org.deeplearning4j.models.embeddings.reader.ModelUtils;
+import org.deeplearning4j.models.word2vec.wordstore.VocabCache;
+import org.deeplearning4j.nn.weights.embeddings.EmbeddingInitializer;
+import org.nd4j.linalg.api.ndarray.INDArray;
+import java.io.Serializable;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+public interface WordVectors extends Serializable, EmbeddingInitializer {
+String getUNK();
+void setUNK(String newUNK);
+boolean hasWord(String word);
+Collection<String> wordsNearest(INDArray words, int top);
+Collection<String> wordsNearestSum(INDArray words, int top);
+Collection<String> wordsNearestSum(String word, int n);
+Collection<String> wordsNearestSum(Collection<String> positive, Collection<String> negative, int top);
+Map<String, Double> accuracy(List<String> questions);
+int indexOf(String word);
+List<String> similarWordsInVocabTo(String word, double accuracy);
+double[] getWordVector(String word);
+INDArray getWordVectorMatrixNormalized(String word);
+INDArray getWordVectorMatrix(String word);
+INDArray getWordVectors(Collection<String> labels);
+INDArray getWordVectorsMean(Collection<String> labels);
+Collection<String> wordsNearest(Collection<String> positive, Collection<String> negative, int top);
+Collection<String> wordsNearest(String word, int n);
+double similarity(String word, String word2);
+VocabCache vocab();
+WeightLookupTable lookupTable();
+void setModelUtils(ModelUtils utils);
+boolean outOfVocabularySupported();
+}

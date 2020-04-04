@@ -1,0 +1,13 @@
+package com.example.activity;
+import android.app.Activity;
+import android.os.Bundle;
+import com.example.R;
+import com.example.Utils;
+public class ExampleActivity extends Activity {
+@Override
+public void onCreate(Bundle savedInstanceState) {
+super.onCreate(savedInstanceState);
+String str = getString(R.string.app_name);
+setTitle(Utils.capitalize(str));
+}
+}

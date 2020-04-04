@@ -1,0 +1,33 @@
+package io.realm.examples.newsreader.model.network;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.TreeNode;
+import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.JsonDeserializer;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import java.io.IOException;
+import java.util.List;
+import io.realm.RealmList;
+import io.realm.examples.newsreader.model.entity.NYTimesMultimedium;
+public class RealmListNYTimesMultimediumDeserializer extends JsonDeserializer<List<NYTimesMultimedium>> {
+private ObjectMapper objectMapper;
+public RealmListNYTimesMultimediumDeserializer() {
+objectMapper = new ObjectMapper();
+}
+@Override
+public List<NYTimesMultimedium> deserialize(JsonParser parser, DeserializationContext context) throws IOException {
+RealmList<NYTimesMultimedium> list = new RealmList<>();
+TreeNode treeNode = parser.getCodec().readTree(parser);
+if (!(treeNode instanceof ArrayNode)) {
+return list;
+}
+ArrayNode arrayNode = (ArrayNode) treeNode;
+for (JsonNode node : arrayNode) {
+NYTimesMultimedium nyTimesMultimedium =
+objectMapper.treeToValue(node, NYTimesMultimedium.class);
+list.add(nyTimesMultimedium);
+}
+return list;
+}
+}

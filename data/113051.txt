@@ -1,0 +1,18 @@
+package org.apache.fontbox.ttf.gsub;
+import org.apache.fontbox.ttf.CmapLookup;
+import org.apache.fontbox.ttf.model.GsubData;
+import org.apache.fontbox.ttf.model.Language;
+public class GsubWorkerFactory
+{
+public GsubWorker getGsubWorker(CmapLookup cmapLookup, GsubData gsubData)
+{
+switch (gsubData.getLanguage())
+{
+case BENGALI:
+return new GsubWorkerForBengali(cmapLookup, gsubData);
+default:
+throw new UnsupportedOperationException(
+"The language " + gsubData.getLanguage() + " is not yet supported");
+}
+}
+}

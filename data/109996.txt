@@ -1,0 +1,64 @@
+package com.google.cloud.tools.jib.api;
+import com.google.common.annotations.VisibleForTesting;
+import java.util.Objects;
+public class LogEvent implements JibEvent {
+public enum Level {
+ERROR,
+WARN,
+LIFECYCLE,
+PROGRESS,
+INFO,
+DEBUG
+}
+public static LogEvent error(String message) {
+return new LogEvent(Level.ERROR, message);
+}
+public static LogEvent lifecycle(String message) {
+return new LogEvent(Level.LIFECYCLE, message);
+}
+public static LogEvent progress(String message) {
+return new LogEvent(Level.PROGRESS, message);
+}
+public static LogEvent warn(String message) {
+return new LogEvent(Level.WARN, message);
+}
+public static LogEvent info(String message) {
+return new LogEvent(Level.INFO, message);
+}
+public static LogEvent debug(String message) {
+return new LogEvent(Level.DEBUG, message);
+}
+private final Level level;
+private final String message;
+private LogEvent(Level level, String message) {
+this.level = level;
+this.message = message;
+}
+public Level getLevel() {
+return level;
+}
+public String getMessage() {
+return message;
+}
+@VisibleForTesting
+@Override
+public boolean equals(Object other) {
+if (other == this) {
+return true;
+}
+if (!(other instanceof LogEvent)) {
+return false;
+}
+LogEvent otherLogEvent = (LogEvent) other;
+return level == otherLogEvent.level && message.equals(otherLogEvent.message);
+}
+@VisibleForTesting
+@Override
+public int hashCode() {
+return Objects.hash(level, message);
+}
+@Override
+public String toString() {
+return "LogEvent [level=" + level + ", message=" + message + "]";
+}
+}

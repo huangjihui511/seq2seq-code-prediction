@@ -1,0 +1,16 @@
+package com.graphhopper.jsprit.core.algorithm.recreate;
+import com.graphhopper.jsprit.core.problem.job.Job;
+class Scorer {
+static double score(Job unassignedJob, InsertionData best, InsertionData secondBest, ScoringFunction scoringFunction){
+if (best == null) {
+throw new IllegalStateException("cannot insert job " + unassignedJob.getId());
+}
+double score;
+if (secondBest == null) { 
+score = (11 - unassignedJob.getPriority()) * (Integer.MAX_VALUE - best.getInsertionCost()) + scoringFunction.score(best, unassignedJob);
+} else {
+score = (11 - unassignedJob.getPriority()) * (secondBest.getInsertionCost() - best.getInsertionCost()) + scoringFunction.score(best, unassignedJob);
+}
+return score;
+}
+}

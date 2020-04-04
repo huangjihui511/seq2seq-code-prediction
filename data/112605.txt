@@ -1,0 +1,177 @@
+package org.jb2011.lnf.beautyeye.ch17_split;
+import java.awt.BasicStroke;
+import java.awt.Color;
+import java.awt.Cursor;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Stroke;
+import javax.swing.JButton;
+import javax.swing.JSplitPane;
+import javax.swing.UIManager;
+import javax.swing.border.Border;
+import javax.swing.plaf.basic.BasicSplitPaneDivider;
+import javax.swing.plaf.basic.BasicSplitPaneUI;
+import org.jb2011.lnf.beautyeye.utils.BEUtils;
+import sun.swing.DefaultLookup;
+public class BESplitPaneDivider extends BasicSplitPaneDivider
+{
+private int oneTouchSize;
+protected final Color TOUCH_BUTTON_COLOR = new Color(58,135,173);
+public BESplitPaneDivider(BasicSplitPaneUI ui)
+{
+super(ui);
+oneTouchSize = DefaultLookup.getInt(ui.getSplitPane(), ui,
+"SplitPane.oneTouchButtonSize", ONE_TOUCH_SIZE);
+}
+public void paint(Graphics g)
+{
+Color bgColor = (splitPane.hasFocus()) ?
+UIManager.getColor("SplitPane.shadow") :getBackground();
+Dimension size = getSize();
+Graphics2D g2=((Graphics2D)g);
+BEUtils.setAntiAliasing((Graphics2D)g, true);
+if(bgColor != null)
+{
+int orient = this.splitPane.getOrientation();
+if(orient==JSplitPane.HORIZONTAL_SPLIT)
+{
+int halfWidth=size.width/2;
+int halfHeight=size.height/2;
+Stroke oldStroke = ((Graphics2D)g).getStroke();
+Stroke sroke = new BasicStroke(1, BasicStroke.CAP_BUTT,
+((Graphics2D)g).setStroke(sroke);
+g.setColor(TOUCH_DECRATED_BUTTON_COLOR);
+g.drawLine(halfWidth+0, 0, halfWidth+0, size.height);
+g.setColor(TOUCH_DECRATED_BUTTON_HILIGHT_COLOR);
+g.drawLine(halfWidth+1, 0, halfWidth+1, size.height);
+((Graphics2D)g).setStroke(oldStroke);
+int decratedButton_w = TOUCH_DECRATED_BUTTON_W;
+int decratedButton_h= TOUCH_DECRATED_BUTTON_H;
+int diverTouchStartX = halfWidth - decratedButton_w/2 ;
+__Icon9Factory__.getInstance().getSplitTouchBg1()
+.draw((Graphics2D)g, diverTouchStartX, halfHeight - decratedButton_h/2
+, decratedButton_w, decratedButton_h);
+}
+else
+{
+int halfHeight = size.height/2;
+int halfWidth = size.width/2;
+Stroke oldStroke = ((Graphics2D)g).getStroke();
+Stroke sroke = new BasicStroke(1, BasicStroke.CAP_BUTT,
+((Graphics2D)g).setStroke(sroke);
+g.setColor(TOUCH_DECRATED_BUTTON_COLOR);
+g.drawLine(0, halfHeight +0, size.width, halfHeight +0);
+g.setColor(TOUCH_DECRATED_BUTTON_HILIGHT_COLOR);
+g.drawLine(0, halfHeight +1, size.width, halfHeight +1);
+((Graphics2D)g).setStroke(oldStroke);
+int decratedButton_w = TOUCH_DECRATED_BUTTON_W;
+int decratedButton_h= TOUCH_DECRATED_BUTTON_H;
+int diverTouchStartY = halfHeight - decratedButton_w/2;
+__Icon9Factory__.getInstance().getSplitTouchBg1()
+.draw((Graphics2D)g, halfWidth - decratedButton_h, diverTouchStartY
+, decratedButton_h, decratedButton_w);
+}
+BEUtils.setAntiAliasing((Graphics2D)g, false);
+}
+super.paint(g);
+}
+protected JButton createLeftOneTouchButton()
+{
+JButton b = new JButton()
+{
+public void setBorder(Border b)
+{
+}
+public void paint(Graphics g)
+{
+if (splitPane != null)
+{
+int[] xs = new int[3];
+int[] ys = new int[3];
+int blockSize;
+g.setColor(this.getBackground());
+g.fillRect(0, 0, this.getWidth(), this.getHeight());
+g.setColor(TOUCH_BUTTON_COLOR);
+BEUtils.setAntiAliasing((Graphics2D)g, true);
+if (orientation == JSplitPane.VERTICAL_SPLIT)
+{
+blockSize = Math.min(getHeight(), oneTouchSize);
+xs[0] = blockSize;
+xs[1] = 0;
+xs[2] = blockSize << 1;
+ys[0] = 0;
+ys[1] = ys[2] = blockSize;
+g.drawPolygon(xs, ys, 3); 
+}
+else
+{
+blockSize = Math.min(getWidth(), oneTouchSize);
+xs[0] = xs[2] = blockSize;
+xs[1] = 0;
+ys[0] = 0;
+ys[1] = blockSize;
+ys[2] = blockSize << 1;
+}
+g.fillPolygon(xs, ys, 3);
+BEUtils.setAntiAliasing((Graphics2D)g, false);
+}
+}
+public boolean isFocusTraversable()
+{
+return false;
+}
+};
+b.setMinimumSize(new Dimension(oneTouchSize, oneTouchSize));
+b.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+b.setFocusPainted(false);
+b.setBorderPainted(false);
+b.setRequestFocusEnabled(false);
+return b;
+}
+protected JButton createRightOneTouchButton() {
+JButton b = new JButton() {
+public void setBorder(Border border) {
+}
+public void paint(Graphics g) {
+if (splitPane != null) {
+int[]          xs = new int[3];
+int[]          ys = new int[3];
+int            blockSize;
+g.setColor(this.getBackground());
+g.fillRect(0, 0, this.getWidth(),
+this.getHeight());
+BEUtils.setAntiAliasing((Graphics2D)g, true);
+if (orientation == JSplitPane.VERTICAL_SPLIT) {
+blockSize = Math.min(getHeight(), oneTouchSize);
+xs[0] = blockSize;
+xs[1] = blockSize << 1;
+xs[2] = 0;
+ys[0] = blockSize;
+ys[1] = ys[2] = 0;
+}
+else {
+blockSize = Math.min(getWidth(), oneTouchSize);
+xs[0] = xs[2] = 0;
+xs[1] = blockSize;
+ys[0] = 0;
+ys[1] = blockSize;
+ys[2] = blockSize << 1;
+}
+g.setColor(TOUCH_BUTTON_COLOR);
+g.fillPolygon(xs, ys, 3);
+BEUtils.setAntiAliasing((Graphics2D)g, false);
+}
+}
+public boolean isFocusTraversable() {
+return false;
+}
+};
+b.setMinimumSize(new Dimension(oneTouchSize, oneTouchSize));
+b.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+b.setFocusPainted(false);
+b.setBorderPainted(false);
+b.setRequestFocusEnabled(false);
+return b;
+}
+}

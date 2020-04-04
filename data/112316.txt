@@ -1,0 +1,15 @@
+package com.github.jknack.handlebars.io;
+import java.io.IOException;
+import java.nio.charset.Charset;
+public interface TemplateLoader {
+String DEFAULT_PREFIX = "/";
+String DEFAULT_SUFFIX = ".hbs";
+TemplateSource sourceAt(final String location) throws IOException;
+String resolve(final String location);
+String getPrefix();
+String getSuffix();
+void setPrefix(final String prefix);
+void setSuffix(final String suffix);
+void setCharset(Charset charset);
+Charset getCharset();
+}

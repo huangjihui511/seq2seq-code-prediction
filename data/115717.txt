@@ -1,0 +1,16 @@
+package com.graphhopper.jsprit.core.algorithm.recreate;
+import com.graphhopper.jsprit.core.algorithm.recreate.listener.VehicleSwitchedListener;
+import com.graphhopper.jsprit.core.problem.solution.route.VehicleRoute;
+import com.graphhopper.jsprit.core.problem.vehicle.Vehicle;
+import com.graphhopper.jsprit.core.problem.vehicle.VehicleFleetManager;
+public class VehicleSwitched implements VehicleSwitchedListener {
+private VehicleFleetManager fleetManager;
+public VehicleSwitched(VehicleFleetManager fleetManager) {
+this.fleetManager = fleetManager;
+}
+@Override
+public void vehicleSwitched(VehicleRoute vehicleRoute, Vehicle oldVehicle, Vehicle newVehicle) {
+fleetManager.unlock(oldVehicle);
+fleetManager.lock(newVehicle);
+}
+}

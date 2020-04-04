@@ -1,0 +1,6 @@
+package com.datumbox.framework.development.interfaces;
+public interface Feature {
+public boolean isActivated();
+@Override
+public String toString();
+}

@@ -1,0 +1,31 @@
+package com.twelvemonkeys.servlet.jsp.droplet;
+import com.twelvemonkeys.servlet.jsp.droplet.taglib.IncludeTag;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.jsp.PageContext;
+import java.io.IOException;
+public abstract class Droplet extends HttpServlet implements JspFragment {
+public abstract void service(PageContext pPageContext)
+throws ServletException, IOException;
+public void serviceParameter(String pParameter, PageContext pPageContext) throws ServletException, IOException {
+Object param = pPageContext.getRequest().getAttribute(pParameter);
+if (param != null) {
+if (param instanceof Param) {
+((Param) param).service(pPageContext);
+}
+else {
+pPageContext.getOut().print(param);
+}
+}
+else {
+Object obj = pPageContext.getRequest().getParameter(pParameter);
+pPageContext.getOut().print((obj != null) ? obj : "");
+}
+}
+final public void service(HttpServletRequest pRequest, HttpServletResponse pResponse) throws ServletException, IOException {
+PageContext pageContext = (PageContext) pRequest.getAttribute(IncludeTag.PAGE_CONTEXT);
+service(pageContext);
+}
+}

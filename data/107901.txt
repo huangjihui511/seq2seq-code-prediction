@@ -1,0 +1,25 @@
+package org.apache.zookeeper.server.jersey.cfg;
+import java.util.HashSet;
+import java.util.Set;
+public class HostPortSet {
+private Set<HostPort> hostPortSet = new HashSet<HostPort>();
+private String original;
+public HostPortSet(String hostPortList) {
+original = hostPortList;
+int chrootStart = hostPortList.indexOf('/');
+String hostPortPairs;
+if (chrootStart != -1) {
+hostPortPairs = hostPortList.substring(0, chrootStart);
+} else {
+hostPortPairs = hostPortList;
+}
+String[] parts = hostPortPairs.split(",");
+for(String p : parts) {
+hostPortSet.add(new HostPort(p));
+}
+}
+@Override
+public String toString() {
+return original;
+}
+}

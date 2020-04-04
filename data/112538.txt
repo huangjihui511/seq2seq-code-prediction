@@ -1,0 +1,142 @@
+package com.sun.swingset3.demos.button;
+import java.awt.Color;
+import java.awt.FlowLayout;
+import java.awt.GridLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.net.URISyntaxException;
+import javax.swing.BorderFactory;
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
+import com.sun.swingset3.DemoProperties;
+import com.sun.swingset3.demos.JHyperlink;
+@DemoProperties(
+value = "JButton Demo",
+category = "Controls",
+description = "Demonstrates the many uses of JButton, Swing's push button component.",
+sourceFiles = {
+"com/sun/swingset3/demos/button/ButtonDemo.java",
+"com/sun/swingset3/demos/JHyperlink.java",
+"com/sun/swingset3/demos/button/resources/ButtonDemo.html",
+"com/sun/swingset3/demos/button/resources/images/blogs.png",
+"com/sun/swingset3/demos/button/resources/images/ButtonDemo.gif",
+"com/sun/swingset3/demos/button/resources/images/document-print.png",
+"com/sun/swingset3/demos/button/resources/images/earth_day.gif",
+"com/sun/swingset3/demos/button/resources/images/earth_night.gif",
+"com/sun/swingset3/demos/button/resources/images/edit-find.png",
+"com/sun/swingset3/demos/button/resources/images/redbutton.png",
+"com/sun/swingset3/demos/button/resources/images/redbutton_dark.png",
+"com/sun/swingset3/demos/button/resources/images/redbutton_glow.png"
+}
+)
+public class ButtonDemo extends JPanel {
+public ButtonDemo() {
+setToolTipText("Demonstrates JButton, Swing's push button component.");
+initComponents();
+setOpaque(false);
+}
+protected void initComponents() {
+setLayout(new GridLayout(0, 1));
+add(createSimpleButtonPanel());
+add(createCreativeButtonPanel());
+}
+protected JPanel createSimpleButtonPanel() {
+JPanel panel = new JPanel();
+panel.setLayout(new FlowLayout(FlowLayout.CENTER, 20, 8));
+panel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEmptyBorder(),
+"Simple Buttons"));
+final JButton simpleButton = new JButton("Do it");
+simpleButton.setToolTipText("simple button");
+simpleButton.addActionListener(new ActionListener() {
+public void actionPerformed(ActionEvent event) {
+simpleButton.setText("Do it again");
+SwingUtilities.getWindowAncestor(simpleButton).validate();
+}
+});
+simpleButton.putClientProperty("snippetKey", "Create simple button");
+panel.add(simpleButton);
+JButton button = new JButton(new ImageIcon(getClass().
+getResource("resources/images/document-print.png")));
+button.setToolTipText("image button");
+button.putClientProperty("snippetKey", "Create image button");
+panel.add(button);
+button = new JButton("Find",
+new ImageIcon(getClass().
+getResource("resources/images/edit-find.png")));
+button.setToolTipText("button with text and image");
+button.setHorizontalTextPosition(JButton.LEADING);
+button.setIconTextGap(6);
+button.putClientProperty("snippetKey", "Create button with text and image");
+panel.add(button);
+button = new JButton("Go");
+button.setBackground(Color.green);
+button.setContentAreaFilled(true);
+button.setOpaque(false);
+button.setToolTipText("button with background color");
+button.putClientProperty("snippetKey", "Create button with background color");
+panel.add(button);
+return panel;
+}
+protected JPanel createCreativeButtonPanel() {
+JPanel panel = new JPanel();
+panel.setLayout(new FlowLayout(FlowLayout.CENTER, 16, 8));
+panel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEmptyBorder(),
+"More Interesting Buttons"));
+JButton button = new JButton();
+button.setText("Connect");
+button.setIcon(new ImageIcon(getClass().getResource("resources/images/earth_day.gif")));
+button.setPressedIcon(new ImageIcon(getClass().getResource("resources/images/earth_night.gif")));
+button.setBorderPainted(false);
+button.setContentAreaFilled(false);
+button.setVerticalTextPosition(JButton.BOTTOM);
+button.setHorizontalTextPosition(JButton.CENTER);
+button.setIconTextGap(0);
+button.setToolTipText("button with no border");
+button.putClientProperty("snippetKey", "Create button with no border");
+panel.add(button);
+button = new JButton();
+button.setBorderPainted(false);
+button.setContentAreaFilled(false);
+button.setIcon(new ImageIcon(getClass().getResource("resources/images/redbutton.png")));
+button.setRolloverEnabled(true);
+button.setRolloverIcon(new ImageIcon(getClass().getResource("resources/images/redbutton_glow.png")));
+button.setPressedIcon(new ImageIcon(getClass().getResource("resources/images/redbutton_dark.png")));
+button.setToolTipText("button with rollover image");
+button.putClientProperty("snippetKey", "Create image button with rollover image");
+panel.add(button);
+JHyperlink hyperlink;
+try {
+hyperlink = new JHyperlink("Get More Info", "http:
+} catch (URISyntaxException use) {
+use.printStackTrace();
+hyperlink = new JHyperlink("Get More Info");
+}
+hyperlink.putClientProperty("snippetKey", "Create HTML hyperlink");
+panel.add(hyperlink);
+try {
+hyperlink = new JHyperlink(
+new ImageIcon(getClass().getResource("resources/images/blogs.png")),
+"http:
+} catch (URISyntaxException use) {
+use.printStackTrace();
+}
+button.putClientProperty("snippetKey", "Create HTML image hyperlink");
+panel.add(hyperlink);
+return panel;
+}
+public static void main(String args[]) {
+final ButtonDemo buttonDemo = new ButtonDemo();
+javax.swing.SwingUtilities.invokeLater(new Runnable() {
+public void run() {
+JFrame frame = new JFrame("JButton Demo");
+frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+frame.add(buttonDemo);
+frame.pack();
+frame.setVisible(true);
+}
+});
+}
+}

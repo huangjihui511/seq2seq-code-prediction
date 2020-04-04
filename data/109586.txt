@@ -1,0 +1,64 @@
+package org.wltea.analyzer.core;
+import org.wltea.analyzer.cfg.Configuration;
+import java.io.IOException;
+import java.io.Reader;
+import java.util.ArrayList;
+import java.util.List;
+public final class IKSegmenter {
+private Reader input;
+private AnalyzeContext context;
+private List<ISegmenter> segmenters;
+private IKArbitrator arbitrator;
+private Configuration configuration;
+public IKSegmenter(Reader input ,Configuration configuration){
+this.input = input;
+this.configuration = configuration;
+this.init();
+}
+private void init(){
+this.context = new AnalyzeContext(configuration);
+this.segmenters = this.loadSegmenters();
+this.arbitrator = new IKArbitrator();
+}
+private List<ISegmenter> loadSegmenters(){
+List<ISegmenter> segmenters = new ArrayList<ISegmenter>(4);
+segmenters.add(new LetterSegmenter());
+segmenters.add(new CN_QuantifierSegmenter());
+segmenters.add(new CJKSegmenter());
+return segmenters;
+}
+public synchronized Lexeme next()throws IOException{
+Lexeme l = null;
+while((l = context.getNextLexeme()) == null ){
+int available = context.fillBuffer(this.input);
+if(available <= 0){
+context.reset();
+return null;
+}else{
+context.initCursor();
+do{
+for(ISegmenter segmenter : segmenters){
+segmenter.analyze(context);
+}
+if(context.needRefillBuffer()){
+break;
+}
+}while(context.moveCursor());
+for(ISegmenter segmenter : segmenters){
+segmenter.reset();
+}
+}
+this.arbitrator.process(context, configuration.isUseSmart());
+context.outputToResult();
+context.markBufferOffset();
+}
+return l;
+}
+public synchronized void reset(Reader input) {
+this.input = input;
+context.reset();
+for(ISegmenter segmenter : segmenters){
+segmenter.reset();
+}
+}
+}

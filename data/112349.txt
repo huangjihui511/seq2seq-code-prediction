@@ -1,0 +1,312 @@
+package io.jooby;
+public final class SneakyThrows {
+private SneakyThrows() {
+}
+public interface Predicate<V> extends java.util.function.Predicate<V> {
+boolean tryTest(V v) throws Exception;
+@Override default boolean test(V v) {
+try {
+return tryTest(v);
+} catch (Exception x) {
+throw propagate(x);
+}
+}
+}
+public interface Predicate2<V1, V2> extends java.util.function.BiPredicate<V1, V2> {
+boolean tryTest(V1 v1, V2 v2) throws Exception;
+@Override default boolean test(V1 v1, V2 v2) {
+try {
+return tryTest(v1, v2);
+} catch (Exception x) {
+throw propagate(x);
+}
+}
+}
+@FunctionalInterface
+public interface Runnable extends java.lang.Runnable {
+void tryRun() throws Exception;
+@Override default void run() {
+try {
+tryRun();
+} catch (Exception x) {
+throw propagate(x);
+}
+}
+}
+@FunctionalInterface
+public interface Supplier<V> extends java.util.function.Supplier<V> {
+V tryGet() throws Exception;
+@Override default V get() {
+try {
+return tryGet();
+} catch (Exception x) {
+throw propagate(x);
+}
+}
+}
+@FunctionalInterface
+public interface Consumer<V> extends java.util.function.Consumer<V> {
+void tryAccept(V value) throws Exception;
+@Override default void accept(V v) {
+try {
+tryAccept(v);
+} catch (Exception x) {
+throw propagate(x);
+}
+}
+}
+@FunctionalInterface
+public interface Consumer2<V1, V2> extends java.util.function.BiConsumer<V1, V2> {
+void tryAccept(V1 v1, V2 v2) throws Exception;
+default void accept(V1 v1, V2 v2) {
+try {
+tryAccept(v1, v2);
+} catch (Exception x) {
+throw propagate(x);
+}
+}
+}
+@FunctionalInterface
+public interface Consumer3<V1, V2, V3> {
+void tryAccept(V1 v1, V2 v2, V3 v3) throws Exception;
+default void accept(V1 v1, V2 v2, V3 v3) {
+try {
+tryAccept(v1, v2, v3);
+} catch (Exception x) {
+throw propagate(x);
+}
+}
+}
+@FunctionalInterface
+public interface Consumer4<V1, V2, V3, V4> {
+void tryAccept(V1 v1, V2 v2, V3 v3, V4 v4) throws Exception;
+default void accept(V1 v1, V2 v2, V3 v3, V4 v4) {
+try {
+tryAccept(v1, v2, v3, v4);
+} catch (Exception x) {
+throw propagate(x);
+}
+}
+}
+@FunctionalInterface
+public interface Consumer5<V1, V2, V3, V4, V5> {
+void tryAccept(V1 v1, V2 v2, V3 v3, V4 v4, V5 v5) throws Exception;
+default void accept(V1 v1, V2 v2, V3 v3, V4 v4, V5 v5) {
+try {
+tryAccept(v1, v2, v3, v4, v5);
+} catch (Exception x) {
+throw propagate(x);
+}
+}
+}
+@FunctionalInterface
+public interface Consumer6<V1, V2, V3, V4, V5, V6> {
+void tryAccept(V1 v1, V2 v2, V3 v3, V4 v4, V5 v5, V6 v6) throws Exception;
+default void accept(V1 v1, V2 v2, V3 v3, V4 v4, V5 v5, V6 v6) {
+try {
+tryAccept(v1, v2, v3, v4, v5, v6);
+} catch (Exception x) {
+throw propagate(x);
+}
+}
+}
+@FunctionalInterface
+public interface Consumer7<V1, V2, V3, V4, V5, V6, V7> {
+void tryAccept(V1 v1, V2 v2, V3 v3, V4 v4, V5 v5, V6 v6, V7 v7) throws Exception;
+default void accept(V1 v1, V2 v2, V3 v3, V4 v4, V5 v5, V6 v6, V7 v7) {
+try {
+tryAccept(v1, v2, v3, v4, v5, v6, v7);
+} catch (Exception x) {
+throw propagate(x);
+}
+}
+}
+@FunctionalInterface
+public interface Consumer8<V1, V2, V3, V4, V5, V6, V7, V8> {
+void tryAccept(V1 v1, V2 v2, V3 v3, V4 v4, V5 v5, V6 v6, V7 v7, V8 v8) throws Exception;
+default void accept(V1 v1, V2 v2, V3 v3, V4 v4, V5 v5, V6 v6, V7 v7, V8 v8) {
+try {
+tryAccept(v1, v2, v3, v4, v5, v6, v7, v8);
+} catch (Exception x) {
+throw propagate(x);
+}
+}
+}
+@FunctionalInterface
+public interface Function<V, R> extends java.util.function.Function<V, R> {
+R tryApply(V value) throws Exception;
+@Override default R apply(V v) {
+try {
+return tryApply(v);
+} catch (Exception x) {
+throw propagate(x);
+}
+}
+}
+@FunctionalInterface
+public interface Function2<V1, V2, R> extends java.util.function.BiFunction<V1, V2, R> {
+R tryApply(V1 v1, V2 v2) throws Exception;
+@Override default R apply(V1 v1, V2 v2) {
+try {
+return tryApply(v1, v2);
+} catch (Exception x) {
+throw propagate(x);
+}
+}
+}
+@FunctionalInterface
+public interface Function3<V1, V2, V3, R> {
+R tryApply(V1 v1, V2 v2, V3 v3) throws Exception;
+default R apply(V1 v1, V2 v2, V3 v3) {
+try {
+return tryApply(v1, v2, v3);
+} catch (Exception x) {
+throw propagate(x);
+}
+}
+}
+@FunctionalInterface
+public interface Function4<V1, V2, V3, V4, R> {
+R tryApply(V1 v1, V2 v2, V3 v3, V4 v4) throws Exception;
+default R apply(V1 v1, V2 v2, V3 v3, V4 v4) {
+try {
+return tryApply(v1, v2, v3, v4);
+} catch (Exception x) {
+throw propagate(x);
+}
+}
+}
+@FunctionalInterface
+public interface Function5<V1, V2, V3, V4, V5, R> {
+R tryApply(V1 v1, V2 v2, V3 v3, V4 v4, V5 v5) throws Exception;
+default R apply(V1 v1, V2 v2, V3 v3, V4 v4, V5 v5) {
+try {
+return tryApply(v1, v2, v3, v4, v5);
+} catch (Exception x) {
+throw propagate(x);
+}
+}
+}
+@FunctionalInterface
+public interface Function6<V1, V2, V3, V4, V5, V6, R> {
+R tryApply(V1 v1, V2 v2, V3 v3, V4 v4, V5 v5, V6 v6) throws Exception;
+default R apply(V1 v1, V2 v2, V3 v3, V4 v4, V5 v5, V6 v6) {
+try {
+return tryApply(v1, v2, v3, v4, v5, v6);
+} catch (Exception x) {
+throw propagate(x);
+}
+}
+}
+@FunctionalInterface
+public interface Function7<V1, V2, V3, V4, V5, V6, V7, R> {
+R tryApply(V1 v1, V2 v2, V3 v3, V4 v4, V5 v5, V6 v6, V7 v7) throws Exception;
+default R apply(V1 v1, V2 v2, V3 v3, V4 v4, V5 v5, V6 v6, V7 v7) {
+try {
+return tryApply(v1, v2, v3, v4, v5, v6, v7);
+} catch (Exception x) {
+throw propagate(x);
+}
+}
+}
+@FunctionalInterface
+public interface Function8<V1, V2, V3, V4, V5, V6, V7, V8, R> {
+R tryApply(V1 v1, V2 v2, V3 v3, V4 v4, V5 v5, V6 v6, V7 v7, V8 v8) throws Exception;
+default R apply(V1 v1, V2 v2, V3 v3, V4 v4, V5 v5, V6 v6, V7 v7, V8 v8) {
+try {
+return tryApply(v1, v2, v3, v4, v5, v6, v7, v8);
+} catch (Exception x) {
+throw propagate(x);
+}
+}
+}
+public static <V> Predicate<V> throwingPredicate(Predicate<V> predicate) {
+return predicate;
+}
+public static <V1, V2> Predicate2<V1, V2> throwingPredicate(Predicate2<V1, V2> predicate) {
+return predicate;
+}
+public static Runnable throwingRunnable(Runnable action) {
+return action;
+}
+public static <V> Supplier<V> throwingSupplier(Supplier<V> fn) {
+return fn;
+}
+public static <V, R> Function<V, R> throwingFunction(Function<V, R> fn) {
+return fn;
+}
+public static <V1, V2, R> Function2<V1, V2, R> throwingFunction(Function2<V1, V2, R> fn) {
+return fn;
+}
+public static <V1, V2, V3, R> Function3<V1, V2, V3, R> throwingFunction(
+Function3<V1, V2, V3, R> fn) {
+return fn;
+}
+public static <V1, V2, V3, V4, R> Function4<V1, V2, V3, V4, R> throwingFunction(
+Function4<V1, V2, V3, V4, R> fn) {
+return fn;
+}
+public static <V1, V2, V3, V4, V5, R> Function5<V1, V2, V3, V4, V5, R> throwingFunction(
+Function5<V1, V2, V3, V4, V5, R> fn) {
+return fn;
+}
+public static <V1, V2, V3, V4, V5, V6, R> Function6<V1, V2, V3, V4, V5, V6, R> throwingFunction(
+Function6<V1, V2, V3, V4, V5, V6, R> fn) {
+return fn;
+}
+public static <V1, V2, V3, V4, V5, V6, V7, R> Function7<V1, V2, V3, V4, V5, V6, V7, R> throwingFunction(
+Function7<V1, V2, V3, V4, V5, V6, V7, R> fn) {
+return fn;
+}
+public static <V1, V2, V3, V4, V5, V6, V7, V8, R> Function8<V1, V2, V3, V4, V5, V6, V7, V8, R> throwingFunction(
+Function8<V1, V2, V3, V4, V5, V6, V7, V8, R> fn) {
+return fn;
+}
+public static <V> Consumer<V> throwingConsumer(Consumer<V> action) {
+return action;
+}
+public static <V1, V2> Consumer2<V1, V2> throwingConsumer(Consumer2<V1, V2> action) {
+return action;
+}
+public static <V1, V2, V3> Consumer3<V1, V2, V3> throwingConsumer(
+Consumer3<V1, V2, V3> action) {
+return action;
+}
+public static <V1, V2, V3, V4> Consumer4<V1, V2, V3, V4> throwingConsumer(
+Consumer4<V1, V2, V3, V4> action) {
+return action;
+}
+public static <V1, V2, V3, V4, V5> Consumer5<V1, V2, V3, V4, V5> throwingConsumer(
+Consumer5<V1, V2, V3, V4, V5> action) {
+return action;
+}
+public static <V1, V2, V3, V4, V5, V6> Consumer6<V1, V2, V3, V4, V5, V6> throwingConsumer(
+Consumer6<V1, V2, V3, V4, V5, V6> action) {
+return action;
+}
+public static <V1, V2, V3, V4, V5, V6, V7> Consumer7<V1, V2, V3, V4, V5, V6, V7> throwingConsumer(
+Consumer7<V1, V2, V3, V4, V5, V6, V7> action) {
+return action;
+}
+public static <V1, V2, V3, V4, V5, V6, V7, V8> Consumer8<V1, V2, V3, V4, V5, V6, V7, V8> throwingConsumer(
+Consumer8<V1, V2, V3, V4, V5, V6, V7, V8> action) {
+return action;
+}
+public static RuntimeException propagate(final Throwable x) {
+if (x == null) {
+throw new NullPointerException("x");
+}
+sneakyThrow0(x);
+return null;
+}
+public static boolean isFatal(Throwable x) {
+return x instanceof InterruptedException
+|| x instanceof LinkageError
+|| x instanceof ThreadDeath
+|| x instanceof VirtualMachineError;
+}
+@SuppressWarnings("unchecked")
+private static <E extends Throwable> void sneakyThrow0(final Throwable x) throws E {
+throw (E) x;
+}
+}

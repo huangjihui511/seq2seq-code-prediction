@@ -1,0 +1,13 @@
+package org.jupiter.example;
+import org.jupiter.rpc.ServiceProviderImpl;
+@ServiceProviderImpl(version = "1.0.0.daily")
+public class ExceptionServiceTestImpl implements ExceptionServiceTest {
+@Override
+public String hello(int i) throws IllegalArgumentException {
+if (i > 0) {
+throw new IllegalArgumentException("Expected exception");
+} else {
+throw new UnsupportedOperationException("Unexpected exception");
+}
+}
+}

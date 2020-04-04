@@ -1,0 +1,29 @@
+package org.spongepowered.mod.event;
+import com.google.common.collect.Maps;
+import net.minecraftforge.fml.common.LoaderState;
+import org.spongepowered.api.GameState;
+import java.util.Map;
+public class StateRegistry {
+private static Map<LoaderState, GameState> stateMap = Maps.newHashMap();
+static {
+register(LoaderState.CONSTRUCTING, GameState.CONSTRUCTION);
+register(LoaderState.PREINITIALIZATION, GameState.PRE_INITIALIZATION);
+register(LoaderState.INITIALIZATION, GameState.INITIALIZATION);
+register(LoaderState.POSTINITIALIZATION, GameState.POST_INITIALIZATION);
+register(LoaderState.AVAILABLE, GameState.LOAD_COMPLETE);
+register(LoaderState.SERVER_ABOUT_TO_START, GameState.SERVER_ABOUT_TO_START);
+register(LoaderState.SERVER_STARTING, GameState.SERVER_STARTING);
+register(LoaderState.SERVER_STARTED, GameState.SERVER_STARTED);
+register(LoaderState.SERVER_STOPPING, GameState.SERVER_STOPPING);
+register(LoaderState.SERVER_STOPPED, GameState.SERVER_STOPPED);
+register(LoaderState.NOINIT, GameState.CONSTRUCTION);
+register(LoaderState.LOADING, GameState.CONSTRUCTION);
+register(LoaderState.ERRORED, GameState.SERVER_STOPPED);
+}
+private static void register(LoaderState state, GameState gameState) {
+stateMap.put(state, gameState);
+}
+public static GameState getState(LoaderState state) {
+return stateMap.get(state);
+}
+}

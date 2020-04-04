@@ -1,0 +1,58 @@
+package org.jb2011.lnf.beautyeye;
+import javax.swing.UIDefaults;
+import javax.swing.UIManager;
+import javax.swing.plaf.metal.MetalLookAndFeel;
+public class BeautyEyeLookAndFeelCross extends MetalLookAndFeel
+{
+static{
+BeautyEyeLookAndFeelWin.initLookAndFeelDecorated();
+}
+public BeautyEyeLookAndFeelCross()
+{
+super();
+UIManager.put("swing.boldMetal", Boolean.FALSE);
+UIManager.put("TabbedPane.contentOpaque", Boolean.FALSE);
+UIManager.put("TabbedPane.tabsOpaque", Boolean.FALSE);
+BeautyEyeLNFHelper.implLNF();
+org.jb2011.lnf.beautyeye.ch20_filechooser.__UI__.uiImpl_cross();
+}
+@Override
+public String getName()
+{
+return "BeautyEyeCross";
+}
+@Override
+public String getID()
+{
+return "BeautyEyeCross";
+}
+@Override
+public String getDescription()
+{
+return "BeautyEye cross-platform L&F developed by Jack Jiang(jb2011@163.com).";
+}
+@Override
+public boolean getSupportsWindowDecorations()
+{
+return true;
+}
+@Override
+public boolean isNativeLookAndFeel()
+{
+return false;
+}
+@Override
+public boolean isSupportedLookAndFeel()
+{
+return true;
+}
+protected void initComponentDefaults(UIDefaults table)
+{
+super.initComponentDefaults(table);
+initOtherResourceBundle(table);
+}
+protected void initOtherResourceBundle(UIDefaults table)
+{
+table.addResourceBundle( "org.jb2011.lnf.beautyeye.resources.beautyeye" );
+}
+}

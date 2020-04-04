@@ -1,0 +1,11 @@
+package net.pms.formats.subtitle;
+import net.pms.formats.Format;
+public abstract class SubtitleBase extends Format {
+public SubtitleBase() {
+type = SUBTITLE;
+}
+@Override
+public boolean transcodable() {
+return false;
+}
+}

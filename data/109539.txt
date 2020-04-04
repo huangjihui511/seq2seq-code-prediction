@@ -1,0 +1,16 @@
+package permissions.dispatcher.processor.base;
+import org.hamcrest.core.SubstringMatcher;
+final class StringEquals extends SubstringMatcher {
+StringEquals(String substring) {
+super(substring);
+}
+@Override
+protected boolean evalSubstringOf(String string) {
+string = string.substring(string.indexOf(':') + 2);
+return substring != null && substring.equals(string);
+}
+@Override
+protected String relationship() {
+return "equals";
+}
+}

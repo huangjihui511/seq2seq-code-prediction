@@ -1,0 +1,7 @@
+package io.hawt.log.log4j;
+import io.hawt.log.support.LogQuerySupportMBean;
+import org.apache.log4j.spi.LoggingEvent;
+public interface Log4jLogQueryMBean extends LogQuerySupportMBean {
+void reconnectAppender();
+public void logMessage(LoggingEvent record);
+}

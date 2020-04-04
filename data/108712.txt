@@ -1,0 +1,95 @@
+package com.xkcoding.elasticsearch.repository;
+import cn.hutool.core.date.DateUtil;
+import cn.hutool.json.JSONUtil;
+import com.google.common.collect.Lists;
+import com.xkcoding.elasticsearch.SpringBootDemoElasticsearchApplicationTests;
+import com.xkcoding.elasticsearch.model.Person;
+import lombok.extern.slf4j.Slf4j;
+import org.elasticsearch.index.query.MatchQueryBuilder;
+import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.search.aggregations.AggregationBuilders;
+import org.elasticsearch.search.aggregations.bucket.terms.StringTerms;
+import org.elasticsearch.search.aggregations.metrics.avg.InternalAvg;
+import org.elasticsearch.search.sort.SortBuilders;
+import org.elasticsearch.search.sort.SortOrder;
+import org.junit.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.elasticsearch.core.aggregation.AggregatedPage;
+import org.springframework.data.elasticsearch.core.query.FetchSourceFilter;
+import org.springframework.data.elasticsearch.core.query.NativeSearchQueryBuilder;
+import java.util.List;
+@Slf4j
+public class PersonRepositoryTest extends SpringBootDemoElasticsearchApplicationTests {
+@Autowired
+private PersonRepository repo;
+@Test
+public void save() {
+Person save = repo.save(person);
+log.info("【save】= {}", save);
+}
+@Test
+public void saveList() {
+List<Person> personList = Lists.newArrayList();
+Iterable<Person> people = repo.saveAll(personList);
+log.info("【people】= {}", people);
+}
+@Test
+public void update() {
+repo.findById(1L).ifPresent(person -> {
+Person save = repo.save(person);
+log.info("【save】= {}", save);
+});
+}
+@Test
+public void delete() {
+repo.deleteById(1L);
+repo.findById(2L).ifPresent(person -> repo.delete(person));
+repo.deleteAll(repo.findAll());
+}
+@Test
+public void select() {
+repo.findAll(Sort.by(Sort.Direction.DESC, "birthday"))
+}
+@Test
+public void customSelectRangeOfAge() {
+}
+@Test
+public void advanceSelect() {
+log.info("【queryBuilder】= {}", queryBuilder.toString());
+repo.search(queryBuilder).forEach(person -> log.info("【person】= {}", person));
+}
+@Test
+public void customAdvanceSelect() {
+NativeSearchQueryBuilder queryBuilder = new NativeSearchQueryBuilder();
+queryBuilder.withSort(SortBuilders.fieldSort("age").order(SortOrder.DESC));
+queryBuilder.withPageable(PageRequest.of(0, 2));
+Page<Person> people = repo.search(queryBuilder.build());
+}
+@Test
+public void agg() {
+NativeSearchQueryBuilder queryBuilder = new NativeSearchQueryBuilder();
+queryBuilder.withSourceFilter(new FetchSourceFilter(new String[]{""}, null));
+queryBuilder.addAggregation(AggregationBuilders.avg("avg").field("age"));
+log.info("【queryBuilder】= {}", JSONUtil.toJsonStr(queryBuilder.build()));
+AggregatedPage<Person> people = (AggregatedPage<Person>) repo.search(queryBuilder.build());
+double avgAge = ((InternalAvg) people.getAggregation("avg")).getValue();
+log.info("【avgAge】= {}", avgAge);
+}
+@Test
+public void advanceAgg() {
+NativeSearchQueryBuilder queryBuilder = new NativeSearchQueryBuilder();
+queryBuilder.withSourceFilter(new FetchSourceFilter(new String[]{""}, null));
+queryBuilder.addAggregation(AggregationBuilders.terms("country").field("country")
+.subAggregation(AggregationBuilders.avg("avg").field("age")));
+log.info("【queryBuilder】= {}", JSONUtil.toJsonStr(queryBuilder.build()));
+AggregatedPage<Person> people = (AggregatedPage<Person>) repo.search(queryBuilder.build());
+StringTerms country = (StringTerms) people.getAggregation("country");
+List<StringTerms.Bucket> buckets = country.getBuckets();
+for (StringTerms.Bucket bucket : buckets) {
+InternalAvg avg = (InternalAvg) bucket.getAggregations().asMap().get("avg");
+}
+}
+}

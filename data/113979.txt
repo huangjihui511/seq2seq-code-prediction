@@ -1,0 +1,15 @@
+package org.spongepowered.mod.bridge.registry;
+import net.minecraft.util.ResourceLocation;
+import net.minecraftforge.fml.common.registry.VillagerRegistry;
+import org.spongepowered.common.entity.SpongeProfession;
+import java.util.List;
+import java.util.Optional;
+import javax.annotation.Nullable;
+public interface VillagerProfessionBridge_Forge {
+String forgeBridge$getId();
+String forgeBridge$getProfessionName();
+Optional<SpongeProfession> forgeBridge$getSpongeProfession();
+void forgeBridge$setSpongeProfession(@Nullable SpongeProfession profession);
+List<VillagerRegistry.VillagerCareer> forgeBridge$getCareers();
+ResourceLocation forgeBridge$getName();
+}

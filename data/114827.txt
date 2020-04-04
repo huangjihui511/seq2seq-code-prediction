@@ -1,0 +1,134 @@
+package com.google.api.client.findbugs;
+import com.google.api.client.util.Beta;
+import edu.umd.cs.findbugs.BugInstance;
+import edu.umd.cs.findbugs.BugReporter;
+import edu.umd.cs.findbugs.bcel.OpcodeStackDetector;
+import org.apache.bcel.Repository;
+import org.apache.bcel.classfile.AnnotationEntry;
+import org.apache.bcel.classfile.ConstantClass;
+import org.apache.bcel.classfile.Field;
+import org.apache.bcel.classfile.JavaClass;
+import org.apache.bcel.classfile.Method;
+public class BetaDetector extends OpcodeStackDetector {
+private static final String BETA_ANNOTATION = "Lcom/google/api/client/util/Beta;";
+private static final String BETA_METHOD_USAGE = "BETA_METHOD_USAGE";
+private static final String BETA_FIELD_USAGE = "BETA_FIELD_USAGE";
+private static final String BETA_CLASS_USAGE = "BETA_CLASS_USAGE";
+private final BugReporter bugReporter;
+public BetaDetector(BugReporter bugReporter) {
+this.bugReporter = bugReporter;
+}
+@Override
+public void sawOpcode(int seen) {
+switch (seen) {
+case INVOKEINTERFACE:
+case INVOKESTATIC:
+case INVOKESPECIAL:
+case INVOKEVIRTUAL:
+checkMethod(getNameConstantOperand(), getSigConstantOperand());
+break;
+case GETFIELD:
+case GETFIELD_QUICK:
+case GETFIELD_QUICK_W:
+case PUTFIELD:
+case PUTFIELD_QUICK:
+case PUTFIELD_QUICK_W:
+case GETSTATIC:
+case GETSTATIC_QUICK:
+case GETSTATIC2_QUICK:
+case PUTSTATIC:
+case PUTSTATIC_QUICK:
+case PUTSTATIC2_QUICK:
+checkField(getNameConstantOperand());
+break;
+case LDC:
+case LDC_W:
+case LDC2_W:
+if (getConstantRefOperand() instanceof ConstantClass) {
+checkClass();
+}
+break;
+default:
+}
+}
+private static boolean isBeta(AnnotationEntry[] annotationEntries) {
+for (AnnotationEntry annotation : annotationEntries) {
+if (BETA_ANNOTATION.equals(annotation.getAnnotationType())) {
+return true;
+}
+}
+return false;
+}
+private JavaClass checkClass() {
+try {
+JavaClass javaClass = Repository.lookupClass(getClassConstantOperand());
+boolean isGoogleClass = javaClass.getClassName().startsWith("com.google.api.client");
+if (!isGoogleClass) {
+return null;
+}
+if (javaClass.getClassName().equals(getDottedClassName())) {
+return null;
+}
+if (isBeta(getThisClass().getAnnotationEntries())
+|| (getMethod() != null && isBeta(getMethod().getAnnotationEntries()))) {
+return null;
+}
+if (isBeta(javaClass.getAnnotationEntries())) {
+bugReporter.reportBug(createBugInstance(BETA_CLASS_USAGE).addClass(javaClass));
+return null;
+}
+return javaClass;
+} catch (ClassNotFoundException e) {
+bugReporter.reportMissingClass(e);
+return null;
+}
+}
+private JavaClass getSuperclass(JavaClass javaClass) {
+try {
+return javaClass.getSuperClass();
+} catch (ClassNotFoundException e) {
+bugReporter.reportMissingClass(e);
+return null;
+}
+}
+private void checkMethod(String methodName, String signature) {
+JavaClass javaClass = checkClass();
+if (javaClass == null) {
+return;
+}
+for (JavaClass current = javaClass; current != null; current = getSuperclass(current)) {
+for (Method method : current.getMethods()) {
+if (methodName.equals(method.getName()) && signature.equals(method.getSignature())) {
+if (isBeta(method.getAnnotationEntries())) {
+bugReporter.reportBug(createBugInstance(BETA_METHOD_USAGE).addCalledMethod(this));
+}
+return;
+}
+}
+}
+if (!javaClass.isAbstract()) {
+bugReporter.logError(
+"Can't locate method " + javaClass.getClassName() + "." + methodName + signature);
+}
+}
+private void checkField(String fieldName) {
+JavaClass javaClass = checkClass();
+if (javaClass == null) {
+return;
+}
+for (JavaClass current = javaClass; current != null; current = getSuperclass(current)) {
+for (Field field : current.getFields()) {
+if (fieldName.equals(field.getName())) {
+if (isBeta(field.getAnnotationEntries())) {
+bugReporter.reportBug(createBugInstance(BETA_FIELD_USAGE).addReferencedField(this));
+}
+return;
+}
+}
+}
+bugReporter.logError("Can't locate field " + javaClass.getClassName() + "." + fieldName);
+}
+private BugInstance createBugInstance(String type) {
+return new BugInstance(this, type, NORMAL_PRIORITY).addClassAndMethod(this).addSourceLine(this);
+}
+}

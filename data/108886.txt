@@ -1,0 +1,26 @@
+package the.bytecode.club.bytecodeviewer.util;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.HashMap;
+import org.objectweb.asm.tree.ClassNode;
+public class FileContainer {
+public FileContainer(File f) {
+this.file = f;
+this.name = LazyNameUtil.applyNameChanges(f.getName());
+}
+public FileContainer(File f, String name) {
+this.file = f;
+this.name = LazyNameUtil.applyNameChanges(name);
+}
+public File file;
+public String name;
+public File APKToolContents = null;
+public HashMap<String, byte[]> files = new HashMap<>();
+public ArrayList<ClassNode> classes = new ArrayList<>();
+public ClassNode getClassNode(String name) {
+for (ClassNode c : classes)
+if (c.name.equals(name))
+return c;
+return null;
+}
+}

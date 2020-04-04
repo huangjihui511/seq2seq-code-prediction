@@ -1,0 +1,49 @@
+package org.gnucash.android.model;
+import org.gnucash.android.util.TimestampHelper;
+import java.sql.Timestamp;
+import java.util.UUID;
+public abstract class BaseModel {
+private String mUID;
+protected Timestamp mCreatedTimestamp;
+protected Timestamp mModifiedTimestamp;
+public BaseModel(){
+mCreatedTimestamp = TimestampHelper.getTimestampFromNow();
+mModifiedTimestamp = TimestampHelper.getTimestampFromNow();
+}
+public static String generateUID(){
+return UUID.randomUUID().toString().replaceAll("-", "");
+}
+public String getUID() {
+if (mUID == null)
+{
+mUID = generateUID();
+}
+return mUID;
+}
+public void setUID(String uid) {
+this.mUID = uid;
+}
+public Timestamp getCreatedTimestamp() {
+return mCreatedTimestamp;
+}
+public void setCreatedTimestamp(Timestamp createdTimestamp) {
+this.mCreatedTimestamp = createdTimestamp;
+}
+public Timestamp getModifiedTimestamp() {
+return mModifiedTimestamp;
+}
+public void setModifiedTimestamp(Timestamp modifiedTimestamp) {
+this.mModifiedTimestamp = modifiedTimestamp;
+}
+@Override
+public boolean equals(Object o) {
+if (this == o) return true;
+if (!(o instanceof BaseModel)) return false;
+BaseModel baseModel = (BaseModel) o;
+return getUID().equals(baseModel.getUID());
+}
+@Override
+public int hashCode() {
+return getUID().hashCode();
+}
+}

@@ -1,0 +1,39 @@
+package org.menacheri.jetclient.app;
+import java.util.List;
+import org.menacheri.jetclient.communication.MessageSender;
+import org.menacheri.jetclient.communication.ReconnectPolicy;
+import org.menacheri.jetclient.communication.MessageSender.Fast;
+import org.menacheri.jetclient.communication.MessageSender.Reliable;
+import org.menacheri.jetclient.event.Events;
+import org.menacheri.jetclient.event.Event;
+import org.menacheri.jetclient.event.EventDispatcher;
+import org.menacheri.jetclient.event.EventHandler;
+import org.menacheri.jetclient.util.LoginHelper;
+public interface Session
+{
+Object getId();
+void setId(Object id);
+void setAttribute(String key, Object value);
+Object getAttribute(String key);
+void removeAttribute(String key);
+void onEvent(Event event);
+EventDispatcher getEventDispatcher();
+boolean isWriteable();
+void setWriteable(boolean writeable);
+boolean isUDPEnabled();
+void setUDPEnabled(boolean isEnabled);
+boolean isShuttingDown();
+long getCreationTime();
+long getLastReadWriteTime();
+void addHandler(EventHandler eventHandler);
+void removeHandler(EventHandler eventHandler);
+List<EventHandler> getEventHandlers(int eventType);
+void close();
+void setUdpMessageSender(Fast udpMessageSender);
+Fast getUdpMessageSender();
+void setTcpMessageSender(Reliable tcpMessageSender);
+Reliable getTcpMessageSender();
+void reconnect(LoginHelper loginHelper);
+void setReconnectPolicy(ReconnectPolicy reconnectPolicy);
+ReconnectPolicy getReconnectPolicy();
+}

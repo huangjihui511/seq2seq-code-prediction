@@ -1,0 +1,475 @@
+package org.jsoup.integration;
+import org.jsoup.Connection;
+import org.jsoup.Jsoup;
+import org.jsoup.UnsupportedMimeTypeException;
+import org.jsoup.helper.W3CDom;
+import org.jsoup.internal.StringUtil;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.FormElement;
+import org.jsoup.parser.HtmlTreeBuilder;
+import org.jsoup.parser.Parser;
+import org.jsoup.parser.XmlTreeBuilder;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.net.ConnectException;
+import java.net.InetSocketAddress;
+import java.net.Proxy;
+import java.net.URL;
+import java.util.List;
+import static org.junit.jupiter.api.Assertions.*;
+Tests the URL connection. Not enabled by default, so tests don't require network connection.
+@author Jonathan Hedley, jonathan@hedley.net */
+@Disabled 
+public class UrlConnectTest {
+private static final String WEBSITE_WITH_INVALID_CERTIFICATE = "https:
+private static final String WEBSITE_WITH_SNI = "https:
+public static String browserUa = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/49.0.2623.112 Safari/537.36";
+@Test
+public void fetchBaidu() throws IOException {
+Connection.Response res = Jsoup.connect("http:
+Document doc = res.parse();
+assertEquals("GBK", doc.outputSettings().charset().displayName());
+assertEquals("GBK", res.charset());
+assert(res.hasCookie("BAIDUID"));
+assertEquals("text/html;charset=gbk", res.contentType());
+}
+@Test
+public void exceptOnUnknownContentType() {
+String url = "http:
+boolean threw = false;
+try {
+Document doc = Jsoup.parse(new URL(url), 3000);
+} catch (UnsupportedMimeTypeException e) {
+threw = true;
+assertEquals("org.jsoup.UnsupportedMimeTypeException: Unhandled content type. Must be text/*, application/xml, or application/xhtml+xml. Mimetype=image/png, URL=http:
+assertEquals(url, e.getUrl());
+assertEquals("image/png", e.getMimeType());
+} catch (IOException e) {
+}
+assertTrue(threw);
+}
+@Test
+public void ignoresContentTypeIfSoConfigured() throws IOException {
+Document doc = Jsoup.connect("https:
+assertEquals("", doc.title()); 
+}
+private static String ihVal(String key, Document doc) {
+return doc.select("th:contains("+key+") + td").first().text();
+}
+@Test
+public void followsTempRedirect() throws IOException {
+Connection con = Jsoup.connect("http:
+Document doc = con.get();
+assertTrue(doc.title().contains("jsoup"));
+}
+@Test
+public void followsNewTempRedirect() throws IOException {
+Connection con = Jsoup.connect("http:
+Document doc = con.get();
+assertTrue(doc.title().contains("jsoup"));
+assertEquals("https:
+}
+@Test
+public void postRedirectsFetchWithGet() throws IOException {
+Connection con = Jsoup.connect("http:
+.data("Argument", "Riposte")
+.method(Connection.Method.POST);
+Connection.Response res = con.execute();
+assertEquals("https:
+assertEquals(Connection.Method.GET, res.method());
+}
+@Test
+public void followsRedirectToHttps() throws IOException {
+Connection con = Jsoup.connect("http:
+con.data("id", "5");
+Document doc = con.get();
+assertTrue(doc.title().contains("Google"));
+}
+@Test
+public void followsRelativeRedirect() throws IOException {
+Connection con = Jsoup.connect("http:
+Document doc = con.post();
+assertTrue(doc.title().contains("HTML Tidy Online"));
+}
+@Test
+public void followsRelativeDotRedirect() throws IOException {
+Connection con = Jsoup.connect("http:
+Document doc = con.post();
+assertTrue(doc.title().contains("OK"));
+assertEquals(doc.location(), "http:
+}
+@Test
+public void followsRelativeDotRedirect2() throws IOException {
+Connection con = Jsoup.connect("http:
+.timeout(10000);
+Document doc = con.post();
+assertEquals(doc.location(), "http:
+}
+@Test
+public void followsRedirectsWithWithespaces() throws IOException {
+Connection con = Jsoup.connect("http:
+Document doc = con.get();
+assertTrue(doc.title().contains("Google"));
+}
+@Test
+public void gracefullyHandleBrokenLocationRedirect() throws IOException {
+Connection con = Jsoup.connect("http:
+con.get(); 
+assertTrue(true);
+}
+@Test
+public void ignores500tExceptionIfSoConfigured() throws IOException {
+Connection con = Jsoup.connect("http:
+Connection.Response res = con.execute();
+Document doc = res.parse();
+assertEquals(500, res.statusCode());
+assertEquals("Application Error", res.statusMessage());
+assertEquals("Woops", doc.select("h1").first().text());
+}
+@Test
+public void ignores500WithNoContentExceptionIfSoConfigured() throws IOException {
+Connection con = Jsoup.connect("http:
+Connection.Response res = con.execute();
+Document doc = res.parse();
+assertEquals(500, res.statusCode());
+assertEquals("Application Error", res.statusMessage());
+}
+@Test
+public void ignores200WithNoContentExceptionIfSoConfigured() throws IOException {
+Connection con = Jsoup.connect("http:
+Connection.Response res = con.execute();
+Document doc = res.parse();
+assertEquals(200, res.statusCode());
+assertEquals("All Good", res.statusMessage());
+}
+@Test
+public void handles200WithNoContent() throws IOException {
+Connection con = Jsoup
+.connect("http:
+.userAgent(browserUa);
+Connection.Response res = con.execute();
+Document doc = res.parse();
+assertEquals(200, res.statusCode());
+con = Jsoup
+.connect("http:
+.parser(Parser.xmlParser())
+.userAgent(browserUa);
+res = con.execute();
+doc = res.parse();
+assertEquals(200, res.statusCode());
+}
+@Test
+public void doesntRedirectIfSoConfigured() throws IOException {
+Connection con = Jsoup.connect("http:
+Connection.Response res = con.execute();
+assertEquals(302, res.statusCode());
+assertEquals("http:
+}
+@Test
+public void redirectsResponseCookieToNextResponse() throws IOException {
+Connection con = Jsoup.connect("http:
+Connection.Response res = con.execute();
+assertEquals("asdfg123", res.cookie("token")); 
+Document doc = res.parse();
+assertEquals("token=asdfg123; uid=jhy", ihVal("HTTP_COOKIE", doc)); 
+}
+@Test
+public void maximumRedirects() {
+boolean threw = false;
+try {
+Document doc = Jsoup.connect("http:
+} catch (IOException e) {
+assertTrue(e.getMessage().contains("Too many redirects"));
+threw = true;
+}
+assertTrue(threw);
+}
+@Test
+public void handlesDodgyCharset() throws IOException {
+String url = "http:
+Connection.Response res = Jsoup.connect(url).execute();
+assertEquals("text/html; charset=UFT8", res.header("Content-Type")); 
+assertNull(res.charset()); 
+Document doc = res.parse(); 
+assertTrue(doc.text().contains("Hello!"));
+assertEquals("UTF-8", res.charset()); 
+}
+@Test
+public void maxBodySize() throws IOException {
+String url = "http:
+Connection.Response defaultRes = Jsoup.connect(url).execute();
+Connection.Response smallRes = Jsoup.connect(url).maxBodySize(50 * 1024).execute(); 
+Connection.Response mediumRes = Jsoup.connect(url).maxBodySize(200 * 1024).execute(); 
+Connection.Response largeRes = Jsoup.connect(url).maxBodySize(300 * 1024).execute(); 
+Connection.Response unlimitedRes = Jsoup.connect(url).maxBodySize(0).execute();
+int actualDocText = 269541;
+assertEquals(actualDocText, defaultRes.parse().text().length());
+assertEquals(49165, smallRes.parse().text().length());
+assertEquals(196577, mediumRes.parse().text().length());
+assertEquals(actualDocText, largeRes.parse().text().length());
+assertEquals(actualDocText, unlimitedRes.parse().text().length());
+}
+@Test
+public void testUnsafeFail() throws Exception {
+String url = WEBSITE_WITH_INVALID_CERTIFICATE;
+assertThrows(IOException.class, () -> Jsoup.connect(url).execute());
+}
+@Test
+public void testSNIFail() throws Exception {
+assertThrows(IOException.class, () -> Jsoup.connect(WEBSITE_WITH_SNI).execute());
+}
+@Test
+public void shouldWorkForCharsetInExtraAttribute() throws IOException {
+Connection.Response res = Jsoup.connect("https:
+Document doc = res.parse(); 
+assertEquals("ISO-8859-1", res.charset());
+}
+@Test
+public void shouldSelectFirstCharsetOnWeirdMultileCharsetsInMetaTags() throws IOException {
+Connection.Response res = Jsoup.connect("http:
+res.parse(); 
+assertEquals("ISO-8859-1", res.charset());
+}
+@Test
+public void shouldParseBrokenHtml5MetaCharsetTagCorrectly() throws IOException {
+Connection.Response res = Jsoup.connect("http:
+res.parse(); 
+assertEquals("UTF-8", res.charset());
+}
+@Test
+public void shouldEmptyMetaCharsetCorrectly() throws IOException {
+Connection.Response res = Jsoup.connect("http:
+res.parse(); 
+assertEquals("UTF-8", res.charset());
+}
+@Test
+public void shouldWorkForDuplicateCharsetInTag() throws IOException {
+Connection.Response res = Jsoup.connect("http:
+Document doc = res.parse(); 
+assertEquals("ISO-8859-1", res.charset());
+}
+@Test
+public void baseHrefCorrectAfterHttpEquiv() throws IOException {
+Connection.Response res = Jsoup.connect("http:
+Document doc = res.parse();
+assertEquals("http:
+}
+@Test
+public void postHtmlFile() throws IOException {
+Document index = Jsoup.connect("http:
+FormElement form = index.select("[name=tidy]").forms().get(0);
+Connection post = form.submit();
+File uploadFile = ParseTest.getFile("/htmltests/google-ipod.html");
+FileInputStream stream = new FileInputStream(uploadFile);
+Connection.KeyVal fileData = post.data("_file");
+fileData.value("check.html");
+fileData.inputStream(stream);
+Connection.Response res;
+try {
+res = post.execute();
+} finally {
+stream.close();
+}
+Document out = res.parse();
+assertTrue(out.text().contains("HTML Tidy Complete"));
+}
+@Test
+public void handles201Created() throws IOException {
+Document doc = Jsoup.connect("http:
+assertEquals("https:
+}
+@Test
+public void fetchToW3c() throws IOException {
+String url = "https:
+Document doc = Jsoup.connect(url).get();
+W3CDom dom = new W3CDom();
+org.w3c.dom.Document wDoc = dom.fromJsoup(doc);
+assertEquals(url, wDoc.getDocumentURI());
+String html = dom.asString(wDoc);
+assertTrue(html.contains("jsoup"));
+}
+@Test
+public void fetchHandlesXml() throws IOException {
+String xmlUrl = "http:
+Connection con = Jsoup.connect(xmlUrl);
+Document doc = con.get();
+Connection.Request req = con.request();
+assertTrue(req.parser().getTreeBuilder() instanceof XmlTreeBuilder);
+assertEquals("<xml> <link> one </link> <table> Two </table> </xml>", StringUtil.normaliseWhitespace(doc.outerHtml()));
+}
+@Test
+public void fetchHandlesXmlAsHtmlWhenParserSet() throws IOException {
+String xmlUrl = "http:
+Connection con = Jsoup.connect(xmlUrl).parser(Parser.htmlParser());
+Document doc = con.get();
+Connection.Request req = con.request();
+assertTrue(req.parser().getTreeBuilder() instanceof HtmlTreeBuilder);
+assertEquals("<html> <head></head> <body> <xml> <link>one <table> Two </table> </xml> </body> </html>", StringUtil.normaliseWhitespace(doc.outerHtml()));
+}
+@Test
+public void combinesSameHeadersWithComma() throws IOException {
+String url = "http:
+Connection con = Jsoup.connect(url);
+con.get();
+Connection.Response res = con.response();
+assertEquals("text/html", res.header("Content-Type"));
+assertEquals("no-cache, no-store", res.header("Cache-Control"));
+List<String> header = res.headers("Cache-Control");
+assertEquals(2, header.size());
+assertEquals("no-cache", header.get(0));
+assertEquals("no-store", header.get(1));
+}
+@Test
+public void sendHeadRequest() throws IOException {
+String url = "http:
+Connection con = Jsoup.connect(url).method(Connection.Method.HEAD);
+final Connection.Response response = con.execute();
+assertEquals("text/xml", response.header("Content-Type"));
+assertEquals("", response.body()); 
+Document doc = response.parse();
+assertEquals("", doc.text());
+}
+Proxy tests. Assumes local proxy running on 8888, without system propery set (so that specifying it is required).
+@Test
+public void fetchViaHttpProxy() throws IOException {
+String url = "https:
+Proxy proxy = new Proxy(Proxy.Type.HTTP, InetSocketAddress.createUnresolved("localhost", 8888));
+Document doc = Jsoup.connect(url).proxy(proxy).get();
+assertTrue(doc.title().contains("jsoup"));
+}
+@Test
+public void fetchViaHttpProxySetByArgument() throws IOException {
+String url = "https:
+Document doc = Jsoup.connect(url).proxy("localhost", 8888).get();
+assertTrue(doc.title().contains("jsoup"));
+}
+@Test
+public void invalidProxyFails() {
+boolean caught = false;
+String url = "https:
+try {
+Document doc = Jsoup.connect(url).proxy("localhost", 8889).get();
+} catch (IOException e) {
+caught = e instanceof ConnectException;
+}
+assertTrue(caught);
+}
+@Test
+public void proxyGetAndSet() throws IOException {
+String url = "https:
+Proxy proxy = new Proxy(Proxy.Type.HTTP, InetSocketAddress.createUnresolved("localhost", 8889)); 
+final Connection con = Jsoup.connect(url).proxy(proxy);
+assert con.request().proxy() == proxy;
+con.request().proxy(null); 
+Document doc = con.get();
+assertTrue(doc.title().contains("jsoup")); 
+}
+@Test
+public void throwsIfRequestBodyForGet() throws IOException {
+boolean caught = false;
+String url = "https:
+try {
+Document doc = Jsoup.connect(url).requestBody("fail").get();
+} catch (IllegalArgumentException e) {
+caught = true;
+}
+assertTrue(caught);
+}
+@Test
+public void canSpecifyResponseCharset() throws IOException {
+String noCharsetUrl = "http:
+String charsetUrl = "http:
+Connection.Response res1 = Jsoup.connect(charsetUrl).execute();
+assertNull(res1.charset()); 
+final Document doc1 = res1.parse();
+assertEquals("windows-1252", doc1.charset().displayName()); 
+assertEquals("Cost is €100", doc1.select("p").text());
+assertTrue(doc1.text().contains("€"));
+Connection.Response res2 = Jsoup.connect(noCharsetUrl).execute();
+assertNull(res2.charset()); 
+final Document doc2 = res2.parse();
+assertEquals("UTF-8", doc2.charset().displayName()); 
+assertEquals("Cost is �100", doc2.select("p").text());
+assertTrue(doc2.text().contains("�"));
+Connection.Response res3 = Jsoup.connect(noCharsetUrl).execute();
+assertNull(res3.charset()); 
+res3.charset("windows-1252");
+assertEquals("windows-1252", res3.charset()); 
+final Document doc3 = res3.parse();
+assertEquals("windows-1252", doc3.charset().displayName()); 
+assertEquals("Cost is €100", doc3.select("p").text());
+assertTrue(doc3.text().contains("€"));
+}
+@Test
+public void handlesUnescapedRedirects() throws IOException {
+String url = "http:
+String urlEscaped = "http:
+Connection.Response res = Jsoup.connect(url).execute();
+Document doc = res.parse();
+assertEquals(doc.body().text(), "\uD83D\uDCA9!");
+assertEquals(doc.location(), urlEscaped);
+Connection.Response res2 = Jsoup.connect(url).followRedirects(false).execute();
+assertEquals("/tools/test\uD83D\uDCA9.html", res2.header("Location"));
+}
+@Test public void handlesEscapesInRedirecct() throws IOException {
+Document doc = Jsoup.connect("http:
+assertEquals("http:
+doc = Jsoup.connect("http:
+assertEquals("http:
+}
+@Test
+public void handlesUt8fInUrl() throws IOException {
+String url = "http:
+String urlEscaped = "http:
+Connection.Response res = Jsoup.connect(url).execute();
+Document doc = res.parse();
+assertEquals("\uD83D\uDCA9!", doc.body().text());
+assertEquals(urlEscaped, doc.location());
+}
+@Test
+public void inWildUtfRedirect() throws IOException {
+Connection.Response res = Jsoup.connect("http:
+Document doc = res.parse();
+assertEquals(
+"http:
+doc.location()
+);
+}
+@Test
+public void inWildUtfRedirect2() throws IOException {
+Connection.Response res = Jsoup.connect("https:
+Document doc = res.parse();
+assertEquals(
+"https:
+doc.location()
+);
+}
+@Test public void handlesEscapedRedirectUrls() throws IOException {
+String url = "http:
+Connection.Response res = Jsoup.connect(url)
+.proxy("localhost", 8888)
+.execute();
+Document doc = res.parse();
+assertEquals(200, res.statusCode());
+}
+@Test public void handlesUnicodeInQuery() throws IOException {
+Document doc = Jsoup.connect("https:
+assertEquals("gąska - Szukaj w Google", doc.title());
+doc = Jsoup.connect("http:
+assertEquals("Index of /archiv/TV/A/%23No.Title", doc.title());
+}
+@Test public void handlesSuperDeepPage() throws IOException {
+long start = System.currentTimeMillis();
+String url = "http:
+Document doc = Jsoup.connect(url).get();
+assertEquals("M2J | Sv.stargate Wiki | FANDOM powered by Wikia", doc.title());
+assertEquals(110160, doc.select("dd").size());
+assertTrue(System.currentTimeMillis() - start < 1000);
+}
+@Test public void handles966() throws IOException {
+Document doc = Jsoup.connect("http:
+}
+}

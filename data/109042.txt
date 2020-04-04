@@ -1,0 +1,24 @@
+package io.vertx.core.net.impl;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLEngine;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+class DefaultJDKCipherSuite {
+private static final List<String> DEFAULT_JDK_CIPHER_SUITE;
+static {
+ArrayList<String> suite = new ArrayList<>();
+try {
+SSLContext context = SSLContext.getInstance("TLS");
+context.init(null, null, null);
+SSLEngine engine = context.createSSLEngine();
+Collections.addAll(suite, engine.getEnabledCipherSuites());
+} catch (Throwable e) {
+suite = null;
+}
+DEFAULT_JDK_CIPHER_SUITE = suite != null ? Collections.unmodifiableList(suite) : null;
+}
+static List<String> get() {
+return DEFAULT_JDK_CIPHER_SUITE;
+}
+}

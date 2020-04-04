@@ -1,0 +1,51 @@
+package org.wltea.analyzer.core;
+import org.wltea.analyzer.dic.Dictionary;
+import org.wltea.analyzer.dic.Hit;
+import java.util.LinkedList;
+import java.util.List;
+class CJKSegmenter implements ISegmenter {
+static final String SEGMENTER_NAME = "CJK_SEGMENTER";
+private List<Hit> tmpHits;
+CJKSegmenter(){
+this.tmpHits = new LinkedList<Hit>();
+}
+public void analyze(AnalyzeContext context) {
+if(CharacterUtil.CHAR_USELESS != context.getCurrentCharType()){
+if(!this.tmpHits.isEmpty()){
+Hit[] tmpArray = this.tmpHits.toArray(new Hit[this.tmpHits.size()]);
+for(Hit hit : tmpArray){
+hit = Dictionary.getSingleton().matchWithHit(context.getSegmentBuff(), context.getCursor() , hit);
+if(hit.isMatch()){
+Lexeme newLexeme = new Lexeme(context.getBufferOffset() , hit.getBegin() , context.getCursor() - hit.getBegin() + 1 , Lexeme.TYPE_CNWORD);
+context.addLexeme(newLexeme);
+this.tmpHits.remove(hit);
+}
+}else if(hit.isUnmatch()){
+this.tmpHits.remove(hit);
+}
+}
+}
+Hit singleCharHit = Dictionary.getSingleton().matchInMainDict(context.getSegmentBuff(), context.getCursor(), 1);
+Lexeme newLexeme = new Lexeme(context.getBufferOffset() , context.getCursor() , 1 , Lexeme.TYPE_CNWORD);
+context.addLexeme(newLexeme);
+if(singleCharHit.isPrefix()){
+this.tmpHits.add(singleCharHit);
+}
+this.tmpHits.add(singleCharHit);
+}
+}else{
+this.tmpHits.clear();
+}
+if(context.isBufferConsumed()){
+this.tmpHits.clear();
+}
+if(this.tmpHits.size() == 0){
+context.unlockBuffer(SEGMENTER_NAME);
+}else{
+context.lockBuffer(SEGMENTER_NAME);
+}
+}
+public void reset() {
+this.tmpHits.clear();
+}
+}

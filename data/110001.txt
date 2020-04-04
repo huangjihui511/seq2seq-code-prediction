@@ -1,0 +1,8 @@
+package com.google.cloud.tools.jib.plugins.common.logging;
+import com.google.cloud.tools.jib.api.LogEvent;
+import com.google.cloud.tools.jib.api.LogEvent.Level;
+import java.util.List;
+public interface ConsoleLogger {
+void log(LogEvent.Level logLevel, String message);
+void setFooter(List<String> footerLines);
+}

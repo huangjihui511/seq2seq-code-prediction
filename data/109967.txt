@@ -1,0 +1,38 @@
+package com.google.cloud.tools.jib.filesystem;
+import com.google.common.collect.ImmutableList;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.NotDirectoryException;
+import java.nio.file.Path;
+import java.util.function.Predicate;
+import java.util.stream.Stream;
+public class DirectoryWalker {
+private final Path rootDir;
+private Predicate<Path> pathFilter = path -> true;
+public DirectoryWalker(Path rootDir) throws NotDirectoryException {
+if (!Files.isDirectory(rootDir)) {
+throw new NotDirectoryException(rootDir + " is not a directory");
+}
+this.rootDir = rootDir;
+}
+public DirectoryWalker filter(Predicate<Path> pathFilter) {
+this.pathFilter = this.pathFilter.and(pathFilter);
+return this;
+}
+public DirectoryWalker filterRoot() {
+filter(path -> !path.equals(rootDir));
+return this;
+}
+public ImmutableList<Path> walk(PathConsumer pathConsumer) throws IOException {
+ImmutableList<Path> files = walk();
+for (Path path : files) {
+pathConsumer.accept(path);
+}
+return files;
+}
+public ImmutableList<Path> walk() throws IOException {
+try (Stream<Path> fileStream = Files.walk(rootDir)) {
+return fileStream.filter(pathFilter).sorted().collect(ImmutableList.toImmutableList());
+}
+}
+}

@@ -1,0 +1,26 @@
+package org.apache.struts2.oval.interceptor;
+import com.opensymphony.xwork2.ActionSupport;
+import net.sf.oval.constraint.NotNull;
+import net.sf.oval.configuration.annotation.IsInvariant;
+public class ValidationInMethods extends ActionSupport {
+@IsInvariant
+@NotNull
+public String getName() {
+return null;
+}
+@IsInvariant
+@NotNull
+public Boolean isThereAnyMeaningInLife() {
+return null;
+}
+@IsInvariant
+@NotNull
+public String getTheManingOfLife() {
+return null;
+}
+@IsInvariant
+@NotNull
+public String SisyphusHasTheAnswer() {
+return null;
+}
+}

@@ -1,0 +1,77 @@
+package org.apache.pdfbox.pdmodel.interactive.annotation;
+import org.apache.pdfbox.cos.COSArray;
+import org.apache.pdfbox.cos.COSBase;
+import org.apache.pdfbox.cos.COSDictionary;
+import org.apache.pdfbox.cos.COSFloat;
+import org.apache.pdfbox.cos.COSName;
+import org.apache.pdfbox.pdmodel.common.PDRectangle;
+import org.apache.pdfbox.pdmodel.graphics.color.PDColor;
+public abstract class PDAnnotationSquareCircle extends PDAnnotationMarkup
+{
+protected PDAnnotationSquareCircle(String subType)
+{
+setSubtype(subType);
+}
+protected PDAnnotationSquareCircle(COSDictionary dict)
+{
+super(dict);
+}
+@Override
+public abstract void constructAppearances();
+public void setInteriorColor(PDColor ic)
+{
+getCOSObject().setItem(COSName.IC, ic.toCOSArray());
+}
+public PDColor getInteriorColor()
+{
+return getColor(COSName.IC);
+}
+public void setBorderEffect(PDBorderEffectDictionary be)
+{
+getCOSObject().setItem(COSName.BE, be);
+}
+public PDBorderEffectDictionary getBorderEffect()
+{
+COSBase base = getCOSObject().getDictionaryObject(COSName.BE);
+if (base instanceof COSDictionary)
+{
+return new PDBorderEffectDictionary((COSDictionary) base);
+}
+return null;
+}
+public void setRectDifference(PDRectangle rd)
+{
+getCOSObject().setItem(COSName.RD, rd);
+}
+public PDRectangle getRectDifference()
+{
+COSBase base = getCOSObject().getDictionaryObject(COSName.RD);
+if (base instanceof COSArray)
+{
+return new PDRectangle((COSArray) base);
+}
+return null;
+}
+public void setRectDifferences(float difference)
+{
+setRectDifferences(difference, difference, difference, difference);
+}
+public void setRectDifferences(float differenceLeft, float differenceTop, float differenceRight, float differenceBottom)
+{
+COSArray margins = new COSArray();
+margins.add(new COSFloat(differenceLeft));
+margins.add(new COSFloat(differenceTop));
+margins.add(new COSFloat(differenceRight));
+margins.add(new COSFloat(differenceBottom));
+getCOSObject().setItem(COSName.RD, margins);
+}
+public float[] getRectDifferences()
+{
+COSBase margin = getCOSObject().getItem(COSName.RD);
+if (margin instanceof COSArray)
+{
+return ((COSArray) margin).toFloatArray();
+}
+return new float[]{};
+}
+}

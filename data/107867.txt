@@ -1,0 +1,18 @@
+package org.apache.zookeeper.graph;
+public class Log4JEntry extends LogEntry {
+public Log4JEntry(long timestamp, int node, String entry) {
+super(timestamp);
+setAttribute("log-text", entry);
+setAttribute("node", new Integer(node));
+}
+public String getEntry() {
+return (String) getAttribute("log-text");
+}
+public String toString() {
+return "" + getTimestamp() + "::::" + getNode() + "::::" + getEntry();
+}
+public int getNode() {
+return (Integer) getAttribute("node");
+}
+public Type getType() { return LogEntry.Type.LOG4J; }
+}

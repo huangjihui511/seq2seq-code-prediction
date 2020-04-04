@@ -1,0 +1,93 @@
+package com.twelvemonkeys.sql;
+import com.twelvemonkeys.lang.SystemUtil;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.sql.Connection;
+import java.sql.DatabaseMetaData;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.util.Properties;
+public class DatabaseConnection {
+public final static String DEFAULT_DRIVER = "NO_DRIVER";
+public final static String DEFAULT_URL = "NO_URL";
+protected static String mDriver = null;
+protected static String mUrl = null;
+protected static Properties mConfig = null;
+protected static Log mLog = null;
+protected static boolean mInitialized = false;
+private static DatabaseConnection sInstance = new DatabaseConnection();
+private DatabaseConnection() {
+init();
+}
+protected static DatabaseConnection getInstance() {
+if (sInstance == null) {
+sInstance = new DatabaseConnection();
+sInstance.init();
+}
+return sInstance;
+}
+protected synchronized void init() {
+if (mInitialized) {
+throw new IllegalStateException("init() may only be called once!");
+}
+mInitialized = true;
+try {
+mConfig = SystemUtil.loadProperties(DatabaseConnection.class);
+}
+catch (FileNotFoundException fnf) {
+}
+catch (IOException ioe) {
+new Log(this).logError(ioe);
+}
+finally {
+if (mConfig == null) {
+mConfig = new Properties();
+}
+}
+mLog = new Log(this, mConfig);
+mDriver = mConfig.getProperty("driver", DEFAULT_DRIVER);
+mUrl = mConfig.getProperty("url", DEFAULT_URL);
+}
+public static Connection getConnection() {
+return getConnection(null, null, getInstance().mUrl);
+}
+public static Connection getConnection(String pUser,
+String pPassword,
+String pURL) {
+return getInstance().getConnectionInstance(pUser, pPassword, pURL);
+}
+protected Connection getConnectionInstance(String pUser,
+String pPassword,
+String pURL) {
+Properties props = (Properties) mConfig.clone();
+if (pUser != null) {
+props.put("user", pUser);
+}
+if (pPassword != null) {
+props.put("password", pPassword);
+}
+try {
+if (!DEFAULT_DRIVER.equals(mDriver)) {
+Class.forName(mDriver).newInstance();
+}
+Connection conn = DriverManager.getConnection(pURL, props);
+if (mLog.getLogDebug()) {
+DatabaseMetaData dma = conn.getMetaData();
+mLog.logDebug("Connected to " + dma.getURL());
+mLog.logDebug("Driver       " + dma.getDriverName());
+mLog.logDebug("Version      " + dma.getDriverVersion());
+}
+return conn;
+}
+catch (Exception e) {
+mLog.logError(e.getMessage());
+if (e instanceof SQLException) {
+SQLException sqle = (SQLException) e;
+while ((sqle = sqle.getNextException()) != null) {
+mLog.logWarning(sqle);
+}
+}
+}
+return null;
+}
+}

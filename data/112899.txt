@@ -1,0 +1,9 @@
+package io.kubernetes.client.informer;
+public interface SharedInformer<ApiType> {
+void addEventHandler(ResourceEventHandler<ApiType> handler);
+void addEventHandlerWithResyncPeriod(ResourceEventHandler<ApiType> handler, long resyncPeriod);
+void run();
+void stop();
+boolean hasSynced();
+String lastSyncResourceVersion();
+}

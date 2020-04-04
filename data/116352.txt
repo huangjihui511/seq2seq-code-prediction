@@ -1,0 +1,44 @@
+package org.spongepowered.api.data;
+import static org.spongepowered.api.data.DataQuery.of;
+public final class Queries {
+public static final DataQuery CONTENT_VERSION = of("ContentVersion");
+public static final DataQuery TYPE_CLASS = of("TypeClass");
+public static final DataQuery ORIGINAL = of("Original");
+public static final DataQuery DEFAULT_REPLACEMENT = of("DefaultReplacement");
+public static final DataQuery CUSTOM_REPLACEMENT = of("CustomReplacement");
+public static final DataQuery VALID = of("IsValid");
+public static final DataQuery WEIGHTED_SERIALIZABLE = of("DataSerializable");
+public static final DataQuery WEIGHTED_SERIALIZABLE_WEIGHT = of("Weight");
+public static final DataQuery ENCHANTMENT_ID = of("Enchantment");
+public static final DataQuery LEVEL = of("Level");
+public static final DataQuery WEIGHTED_ITEM_QUANTITY = of("Quantity");
+public static final DataQuery WORLD_NAME = of("WorldName");
+public static final DataQuery WORLD_ID = of("WorldUuid");
+public static final DataQuery CHUNK_X = of("ChunkX");
+public static final DataQuery CHUNK_Y = of("ChunkY");
+public static final DataQuery CHUNK_Z = of("ChunkZ");
+public static final DataQuery BLOCK_TYPE = of("BlockType");
+public static final DataQuery POSITION_X = of("X");
+public static final DataQuery POSITION_Y = of("Y");
+public static final DataQuery POSITION_Z = of("Z");
+public static final DataQuery VARIABLE_CHANCE = of("Chance");
+public static final DataQuery VARIABLE_BASE = of("Base");
+public static final DataQuery VARIABLE_VARIANCE = of("Variance");
+public static final DataQuery VARIABLE_AMOUNT = of("Amount");
+public static final DataQuery COLOR_RED = of("Red");
+public static final DataQuery COLOR_BLUE = of("Blue");
+public static final DataQuery COLOR_GREEN = of("Green");
+public static final DataQuery CREATOR_ID = of("Creator");
+public static final DataQuery NOTIFIER_ID = of("Notifier");
+public static final DataQuery JSON = of("JSON");
+public static final DataQuery TEXT_TITLE = of("TextTitle");
+public static final DataQuery TEXT_AUTHOR = of("TextAuthor");
+public static final DataQuery TEXT_PAGE_LIST = of("TextPageList");
+public static final DataQuery FORCED_SPAWN = of("ForcedSpawn");
+public static final DataQuery UUID_LEAST = of("UuidLeast");
+public static final DataQuery UUID_MOST = of("UuidMost");
+public static final DataQuery POSITION = of("Pos");
+private Queries() {
+throw new AssertionError("You should not be attempting to instantiate this class.");
+}
+}

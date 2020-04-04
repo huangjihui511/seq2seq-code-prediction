@@ -1,0 +1,54 @@
+package io.ebean.bean;
+import java.lang.ref.WeakReference;
+import java.util.LinkedHashSet;
+import java.util.Set;
+public final class NodeUsageCollector {
+private final ObjectGraphNode node;
+private final WeakReference<NodeUsageListener> managerRef;
+private final Set<String> used = new LinkedHashSet<>();
+private boolean modified;
+private String loadProperty;
+public NodeUsageCollector(ObjectGraphNode node, WeakReference<NodeUsageListener> managerRef) {
+this.node = node;
+this.managerRef = managerRef;
+}
+public void setModified() {
+modified = true;
+}
+public void addUsed(String property) {
+used.add(property);
+}
+public void setLoadProperty(String loadProperty) {
+this.loadProperty = loadProperty;
+}
+private void publishUsageInfo() {
+NodeUsageListener manager = managerRef.get();
+if (manager != null) {
+manager.collectNodeUsage(this);
+}
+}
+@Override
+protected void finalize() throws Throwable {
+publishUsageInfo();
+super.finalize();
+}
+public ObjectGraphNode getNode() {
+return node;
+}
+public boolean isEmpty() {
+return used.isEmpty();
+}
+public Set<String> getUsed() {
+return used;
+}
+public boolean isModified() {
+return modified;
+}
+public String getLoadProperty() {
+return loadProperty;
+}
+@Override
+public String toString() {
+return node + " read:" + used + " modified:" + modified;
+}
+}

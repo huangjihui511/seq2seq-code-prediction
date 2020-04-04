@@ -1,0 +1,5 @@
+package com.codeborne.selenide.logevents;
+public interface LogEventListener {
+void afterEvent(LogEvent currentLog);
+void beforeEvent(LogEvent currentLog);
+}

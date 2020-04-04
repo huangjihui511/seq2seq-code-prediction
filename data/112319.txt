@@ -1,0 +1,85 @@
+package com.github.jknack.handlebars.io;
+import static org.apache.commons.lang3.Validate.notEmpty;
+import static org.apache.commons.lang3.Validate.notNull;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.net.JarURLConnection;
+import java.net.URL;
+import java.net.URLConnection;
+import java.nio.charset.Charset;
+import com.github.jknack.handlebars.Handlebars;
+public class URLTemplateSource extends AbstractTemplateSource {
+private URL resource;
+private Long lastModified;
+private String filename;
+public URLTemplateSource(final String filename, final URL resource) {
+this.filename = notEmpty(filename, "The filename is required.");
+this.resource = notNull(resource, "A resource is required.");
+}
+@Override public String content(final Charset charset) throws IOException {
+Reader reader = null;
+final int bufferSize = 1024;
+try {
+reader = reader(charset);
+char[] cbuf = new char[bufferSize];
+StringBuilder sb = new StringBuilder(bufferSize);
+int len;
+while ((len = reader.read(cbuf, 0, bufferSize)) != -1) {
+sb.append(cbuf, 0, len);
+}
+return sb.toString();
+} finally {
+if (reader != null) {
+reader.close();
+}
+}
+}
+@Override
+public String filename() {
+return filename;
+}
+@Override
+public long lastModified() {
+synchronized (this) {
+if (lastModified == null) {
+lastModified = lastModified(resource);
+}
+return lastModified;
+}
+}
+protected Reader reader(final Charset charset) throws IOException {
+return new InputStreamReader(resource.openStream(), charset);
+}
+private long lastModified(final URL resource) {
+URLConnection uc = null;
+try {
+uc = resource.openConnection();
+if (uc instanceof JarURLConnection) {
+URL jarURL = ((JarURLConnection) uc).getJarFileURL();
+if (jarURL.getProtocol().equals("file")) {
+uc = null;
+String file = jarURL.getFile();
+return new File(file).lastModified();
+}
+}
+return uc.getLastModified();
+} catch (IOException ex) {
+Handlebars.warn("Can't get last modified date of: %s", resource);
+return -1;
+} finally {
+try {
+if (uc != null) {
+InputStream is = uc.getInputStream();
+if (is != null) {
+is.close();
+}
+}
+} catch (IOException e) {
+Handlebars.warn("Can't close: %s", resource);
+}
+}
+}
+}

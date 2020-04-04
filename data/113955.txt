@@ -1,0 +1,44 @@
+package org.spongepowered.mod.test.integration.regression;
+import com.flowpowered.math.vector.Vector3d;
+import org.hamcrest.Matchers;
+import org.junit.Assert;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.spongepowered.api.data.type.HandTypes;
+import org.spongepowered.api.event.block.ChangeBlockEvent;
+import org.spongepowered.api.event.cause.EventContextKeys;
+import org.spongepowered.api.item.ItemTypes;
+import org.spongepowered.api.item.inventory.ItemStack;
+import org.spongepowered.common.test.RegressionTest;
+import org.spongepowered.mctester.internal.BaseTest;
+import org.spongepowered.mctester.internal.event.StandaloneEventListener;
+import org.spongepowered.mctester.api.junit.MinecraftRunner;
+import org.spongepowered.mctester.junit.TestUtils;
+import java.util.Optional;
+@RegressionTest(ghIssue = "https:
+@RunWith(MinecraftRunner.class)
+public class BreakBlockUsedItem extends BaseTest {
+public BreakBlockUsedItem(TestUtils testUtils) {
+super(testUtils);
+}
+@Test
+public void testCauseHasUsedItem() throws Throwable {
+ItemStack stack = ItemStack.of(ItemTypes.IRON_INGOT, 1);
+Vector3d position = this.testUtils.runOnMainThread(() -> {
+this.testUtils.getThePlayer().setItemInHand(HandTypes.MAIN_HAND, stack);
+return this.testUtils.getThePlayer().getPosition().add(0, -1, 1);
+});
+this.testUtils.waitForInventoryPropagation();
+this.client.lookAt(position);
+final boolean[] gotPlayerEvent = new boolean[1];
+this.testUtils.listenOneShot(() -> this.client.leftClick(), new StandaloneEventListener<>(ChangeBlockEvent.Break.class, (event) -> {
+if (event.getTransactions().stream().map(t -> t.getOriginal().getPosition()).noneMatch(p -> p.equals(position.toInt()))) {
+return;
+}
+gotPlayerEvent[0] = true;
+Assert.assertThat("Cause doesn't contain EventConextKeys.USED_ITEM", event.getCause().getContext().get(EventContextKeys.USED_ITEM),
+Matchers.equalTo(Optional.of(stack.createSnapshot())));
+}));
+Assert.assertTrue("ChangeBlockEvent.Break was not fired!", gotPlayerEvent[0]);
+}
+}

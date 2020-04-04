@@ -1,0 +1,18 @@
+package com.google.api.client.http.javanet;
+import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.Proxy;
+import java.net.URL;
+public class DefaultConnectionFactory implements ConnectionFactory {
+private final Proxy proxy;
+public DefaultConnectionFactory() {
+this(null);
+}
+public DefaultConnectionFactory(Proxy proxy) {
+this.proxy = proxy;
+}
+@Override
+public HttpURLConnection openConnection(URL url) throws IOException {
+return (HttpURLConnection) (proxy == null ? url.openConnection() : url.openConnection(proxy));
+}
+}

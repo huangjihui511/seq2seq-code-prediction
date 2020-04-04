@@ -1,0 +1,12 @@
+package com.google.cloud.tools.jib.registry;
+import com.google.cloud.tools.jib.api.RegistryException;
+public class RegistryCredentialsNotSentException extends RegistryException {
+RegistryCredentialsNotSentException(String registry, String repository) {
+super(
+"Required credentials for "
++ registry
++ "/"
++ repository
++ " were not sent because the connection was over HTTP");
+}
+}

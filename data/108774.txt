@@ -1,0 +1,38 @@
+package cn.hutool.setting.dialect;
+import cn.hutool.core.io.FileUtil;
+import cn.hutool.core.io.resource.NoResourceException;
+import cn.hutool.core.util.StrUtil;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+public class PropsUtil {
+private static Map<String, Props> propsMap = new ConcurrentHashMap<>();
+private static final Object lock = new Object();
+public static Props get(String name) {
+Props props = propsMap.get(name);
+if (null == props) {
+synchronized (lock) {
+props = propsMap.get(name);
+if (null == props) {
+String filePath = name;
+String extName = FileUtil.extName(filePath);
+if (StrUtil.isEmpty(extName)) {
+filePath = filePath + "." + Props.EXT_NAME;
+}
+props = new Props(filePath);
+propsMap.put(name, props);
+}
+}
+}
+return props;
+}
+public static Props getFirstFound(String... names) {
+Props props;
+for (String name : names) {
+try {
+return get(name);
+} catch (NoResourceException e) {
+}
+}
+return null;
+}
+}

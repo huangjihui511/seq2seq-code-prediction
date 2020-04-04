@@ -1,0 +1,36 @@
+package psiprobe.controllers.connectors;
+import java.util.List;
+import javax.inject.Inject;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import org.springframework.web.bind.ServletRequestUtils;
+import org.springframework.web.servlet.ModelAndView;
+import psiprobe.beans.ContainerListenerBean;
+import psiprobe.controllers.AbstractTomcatContainerController;
+import psiprobe.model.Connector;
+public class BaseGetConnectorController extends AbstractTomcatContainerController {
+@Inject
+private ContainerListenerBean containerListenerBean;
+public ContainerListenerBean getContainerListenerBean() {
+return containerListenerBean;
+}
+public void setContainerListenerBean(ContainerListenerBean containerListenerBean) {
+this.containerListenerBean = containerListenerBean;
+}
+@Override
+protected ModelAndView handleRequestInternal(HttpServletRequest request,
+HttpServletResponse response) throws Exception {
+String connectorName = ServletRequestUtils.getStringParameter(request, "cn", null);
+Connector connector = null;
+if (connectorName != null) {
+List<Connector> connectors = containerListenerBean.getConnectors(false);
+for (Connector conn : connectors) {
+if (connectorName.equals(conn.getProtocolHandler())) {
+connector = conn;
+break;
+}
+}
+}
+return new ModelAndView(getViewName(), "connector", connector);
+}
+}

@@ -1,0 +1,10 @@
+package org.fusesource.mqtt.client;
+import org.fusesource.hawtbuf.Buffer;
+import org.fusesource.hawtbuf.UTF8Buffer;
+@Deprecated
+public interface Listener {
+public void onConnected();
+public void onDisconnected();
+public void onPublish(UTF8Buffer topic, Buffer body, Runnable ack);
+public void onFailure(Throwable value);
+}

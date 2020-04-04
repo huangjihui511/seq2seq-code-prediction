@@ -1,0 +1,40 @@
+package org.gnucash.android.export.csv;
+import android.support.annotation.NonNull;
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.io.Writer;
+public class CsvWriter extends BufferedWriter {
+private String separator = ",";
+public CsvWriter(Writer writer){
+super(writer);
+}
+public CsvWriter(Writer writer, String separator){
+super(writer);
+this.separator = separator;
+}
+@Override
+public void write(@NonNull String str) throws IOException {
+this.write(str, 0, str.length());
+}
+public void writeToken(String token) throws IOException {
+if (token == null || token.isEmpty()){
+write(separator);
+} else {
+token = escape(token);
+write(token + separator);
+}
+}
+@NonNull
+private String escape(@NonNull String token) {
+if (token.contains(separator)){
+return "\"" + token + "\"";
+}
+return token;
+}
+public void writeEndToken(String token) throws IOException {
+if (token != null && !token.isEmpty()) {
+write(escape(token));
+}
+this.newLine();
+}
+}

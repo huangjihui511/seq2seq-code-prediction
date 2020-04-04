@@ -1,0 +1,8 @@
+package io.ebean;
+public enum LikeType {
+RAW,
+STARTS_WITH,
+ENDS_WITH,
+CONTAINS,
+EQUAL_TO
+}

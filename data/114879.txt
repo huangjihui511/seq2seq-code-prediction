@@ -1,0 +1,6 @@
+package com.google.api.client.http;
+import java.io.IOException;
+public interface HttpUnsuccessfulResponseHandler {
+boolean handleResponse(HttpRequest request, HttpResponse response, boolean supportsRetry)
+throws IOException;
+}

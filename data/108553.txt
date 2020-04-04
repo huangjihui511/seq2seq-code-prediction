@@ -1,0 +1,35 @@
+package org.deeplearning4j.arbiter.optimize.api.saving;
+import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
+import org.deeplearning4j.arbiter.optimize.api.OptimizationResult;
+import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
+@NoArgsConstructor
+public class InMemoryResultSaver implements ResultSaver {
+@Override
+public ResultReference saveModel(OptimizationResult result, Object modelResult) throws IOException {
+return new InMemoryResult(result, modelResult);
+}
+@Override
+public List<Class<?>> getSupportedCandidateTypes() {
+return Collections.<Class<?>>singletonList(Object.class);
+}
+@Override
+public List<Class<?>> getSupportedModelTypes() {
+return Collections.<Class<?>>singletonList(Object.class);
+}
+@AllArgsConstructor
+private static class InMemoryResult implements ResultReference {
+private OptimizationResult result;
+private Object modelResult;
+@Override
+public OptimizationResult getResult() throws IOException {
+return result;
+}
+@Override
+public Object getResultModel() throws IOException {
+return modelResult;
+}
+}
+}

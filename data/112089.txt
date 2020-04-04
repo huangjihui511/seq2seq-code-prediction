@@ -1,0 +1,15 @@
+package org.springframework.data.mongodb.config;
+import static org.assertj.core.api.Assertions.*;
+import org.junit.jupiter.api.Test;
+import com.mongodb.WriteConcern;
+public class StringToWriteConcernConverterUnitTests {
+StringToWriteConcernConverter converter = new StringToWriteConcernConverter();
+@Test 
+public void createsWellKnownConstantsCorrectly() {
+assertThat(converter.convert("ACKNOWLEDGED")).isEqualTo(WriteConcern.ACKNOWLEDGED);
+}
+@Test
+public void createsWriteConcernForUnknownValue() {
+assertThat(converter.convert("-1")).isEqualTo(new WriteConcern("-1"));
+}
+}

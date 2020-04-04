@@ -1,0 +1,54 @@
+package com.twelvemonkeys.servlet.jsp.droplet.taglib;
+import com.twelvemonkeys.servlet.jsp.droplet.JspFragment;
+import com.twelvemonkeys.servlet.jsp.taglib.ExTagSupport;
+import javax.servlet.ServletException;
+import javax.servlet.jsp.JspException;
+import javax.servlet.jsp.JspWriter;
+import javax.servlet.jsp.PageContext;
+import java.io.IOException;
+public class ValueOfTag extends ExTagSupport {
+private String parameterName;
+private Object parameterValue;
+public void setName(String pName) {
+parameterName = pName;
+}
+public void setParam(String pName) {
+parameterName = pName;
+}
+public int doStartTag() throws JspException {
+try {
+if (parameterExists()) {
+if (parameterValue instanceof JspFragment) {
+((JspFragment) parameterValue).service(pageContext);
+log("Service subpage " + pageContext.getServletContext().getRealPath(((Oparam) parameterValue).getName()));
+pageContext.include(((Oparam) parameterValue).getName());
+}
+else {
+JspWriter writer = pageContext.getOut();
+writer.print(parameterValue);
+}
+return SKIP_BODY;
+}
+else {
+return EVAL_BODY_INCLUDE;
+}
+}
+catch (ServletException se) {
+log(se.getMessage(), se);
+throw new JspException(se);
+}
+catch (IOException ioe) {
+String msg = "Caught an IOException in ValueOfTag.doStartTag()\n"
++ ioe.toString();
+log(msg, ioe);
+throw new JspException(msg);
+}
+}
+private boolean parameterExists() {
+parameterValue = pageContext.getAttribute(parameterName, PageContext.REQUEST_SCOPE);
+if (parameterValue == null) {
+parameterValue = pageContext.getRequest().getParameter(parameterName);
+}
+return (parameterValue != null);
+}
+}

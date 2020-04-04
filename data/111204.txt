@@ -1,0 +1,14 @@
+package com.github.benmanes.caffeine.cache.node;
+public class Finalize extends NodeRule {
+@Override
+protected boolean applies() {
+return true;
+}
+@Override
+protected void execute() {
+context.nodeSubtype
+.addMethod(context.constructorDefault.build())
+.addMethod(context.constructorByKey.build())
+.addMethod(context.constructorByKeyRef.build());
+}
+}

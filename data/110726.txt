@@ -1,0 +1,56 @@
+package org.apache.zookeeper.server.jersey.resources;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
+import javax.ws.rs.ext.ExceptionMapper;
+import javax.ws.rs.ext.Provider;
+import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.server.jersey.jaxb.ZError;
+@Provider
+public class KeeperExceptionMapper implements ExceptionMapper<KeeperException> {
+private UriInfo ui;
+public KeeperExceptionMapper(@Context UriInfo ui) {
+this.ui = ui;
+}
+public Response toResponse(KeeperException e) {
+Response.Status status;
+String message;
+String path = e.getPath();
+switch(e.code()) {
+case AUTHFAILED:
+status = Response.Status.UNAUTHORIZED;
+message = path + " not authorized";
+break;
+case BADARGUMENTS:
+status = Response.Status.BAD_REQUEST;
+message = path + " bad arguments";
+break;
+case BADVERSION:
+status = Response.Status.PRECONDITION_FAILED;
+message = path + " bad version";
+break;
+case INVALIDACL:
+status = Response.Status.BAD_REQUEST;
+message = path + " invalid acl";
+break;
+case NODEEXISTS:
+status = Response.Status.CONFLICT;
+message = path + " already exists";
+break;
+case NONODE:
+status = Response.Status.NOT_FOUND;
+message = path + " not found";
+break;
+case NOTEMPTY:
+status = Response.Status.CONFLICT;
+message = path + " not empty";
+break;
+default:
+status = Response.Status.fromStatusCode(502); 
+message = "Error processing request for " + path
++ " : " + e.getMessage();
+}
+return Response.status(status).entity(
+new ZError(ui.getRequestUri().toString(), message)).build();
+}
+}

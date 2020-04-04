@@ -1,0 +1,6 @@
+package com.github.jknack.handlebars.internal;
+import java.io.IOException;
+import com.github.jknack.handlebars.Context;
+public interface Param {
+Object apply(Context context) throws IOException;
+}

@@ -1,0 +1,375 @@
+package io.vertx.core.cli.impl;
+import io.vertx.core.cli.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
+public class DefaultParser {
+protected String token;
+protected Option current;
+protected List<Option> expectedOpts;
+private DefaultCommandLine commandLine;
+private boolean skipParsing;
+private CLI cli;
+static String stripLeadingHyphens(String str) {
+if (str == null) {
+return null;
+}
+if (str.startsWith("--")) {
+return str.substring(2, str.length());
+} else if (str.startsWith("-")) {
+return str.substring(1, str.length());
+}
+return str;
+}
+static String stripLeadingAndTrailingQuotes(String str) {
+int length = str.length();
+if (length > 1 && str.startsWith("\"") && str.endsWith("\"") && str.substring(1, length - 1).indexOf('"') == -1) {
+str = str.substring(1, length - 1);
+}
+return str;
+}
+public CommandLine parse(CLI cli, List<String> cla)
+throws CLIException {
+return parse(cli, cla, true);
+}
+public CommandLine parse(CLI cli, List<String> cla, boolean validate)
+throws CLIException {
+commandLine = (DefaultCommandLine) CommandLine.create(cli);
+current = null;
+skipParsing = false;
+this.cli = cli;
+int current = 0;
+for (Argument argument : cli.getArguments()) {
+if (argument.getIndex() == -1) {
+argument.setIndex(current);
+current++;
+} else {
+current = argument.getIndex() + 1;
+}
+}
+cli.getArguments().sort((o1, o2) -> {
+if (o1.getIndex() == o2.getIndex()) {
+return 1;
+}
+return Integer.valueOf(o1.getIndex()).compareTo(o2.getIndex());
+});
+cli.getOptions().stream().forEach(Option::ensureValidity);
+cli.getArguments().stream().forEach(Argument::ensureValidity);
+expectedOpts = getRequiredOptions();
+if (cla != null) {
+cla.forEach(this::visit);
+}
+try {
+checkRequiredValues();
+checkRequiredOptions();
+validate();
+commandLine.setValidity(true);
+} catch (CLIException e) {
+if (validate  && ! commandLine.isAskingForHelp()) {
+throw  e;
+} else {
+commandLine.setValidity(false);
+}
+}
+return commandLine;
+}
+protected void validate() throws CLIException {
+boolean multiValue = false;
+List<Integer> usedIndexes = new ArrayList<>();
+for (Argument argument : cli.getArguments()) {
+if (usedIndexes.contains(argument.getIndex())) {
+throw new CLIException("Only one argument can use the index " + argument.getIndex());
+}
+usedIndexes.add(argument.getIndex());
+if (multiValue) {
+throw new CLIException("Only the last argument can be multi-valued");
+}
+multiValue = argument.isMultiValued();
+}
+Iterator<Argument> iterator = cli.getArguments().iterator();
+Argument current = null;
+if (iterator.hasNext()) {
+current = iterator.next();
+}
+for (String v : commandLine.allArguments()) {
+if (current != null) {
+commandLine.setRawValue(current, v);
+if (!current.isMultiValued()) {
+if (iterator.hasNext()) {
+current = iterator.next();
+} else {
+current = null;
+}
+}
+}
+}
+for (Argument arg : cli.getArguments()) {
+if (arg.isRequired() && !commandLine.isArgumentAssigned(arg)) {
+throw new MissingValueException(arg);
+}
+}
+}
+private List<Option> getRequiredOptions() {
+return cli.getOptions().stream().filter(Option::isRequired).collect(Collectors.toList());
+}
+private void checkRequiredOptions() throws MissingOptionException {
+if (!expectedOpts.isEmpty()) {
+throw new MissingOptionException(expectedOpts);
+}
+}
+private void checkRequiredValues() throws MissingValueException {
+if (current != null) {
+if (current.acceptValue() && !commandLine.isOptionAssigned(current) && !current.isFlag()) {
+throw new MissingValueException(current);
+}
+}
+}
+private void visit(String token) throws CLIException {
+this.token = token;
+if (skipParsing) {
+commandLine.addArgumentValue(token);
+} else if (token.equals("--")) {
+skipParsing = true;
+} else if (current != null && current.acceptValue() && isValue(token)) {
+commandLine.addRawValue(current, stripLeadingAndTrailingQuotes(token));
+} else if (token.startsWith("--")) {
+handleLongOption(token);
+} else if (token.startsWith("-") && !"-".equals(token)) {
+handleShortAndLongOption(token);
+} else {
+handleArgument(token);
+}
+if (current != null && !commandLine.acceptMoreValues(current)) {
+current = null;
+}
+}
+private boolean isValue(String token) {
+return !isOption(token) || isNegativeNumber(token);
+}
+@SuppressWarnings("ResultOfMethodCallIgnored")
+private boolean isNegativeNumber(String token) {
+try {
+Double.parseDouble(token);
+return true;
+} catch (NumberFormatException e) {
+return false;
+}
+}
+private boolean isOption(String token) {
+return isLongOption(token) || isShortOption(token);
+}
+private boolean isShortOption(String token) {
+return token.startsWith("-") && token.length() >= 2 && hasOptionWithShortName(token.substring(1, 2));
+}
+private boolean isLongOption(String token) {
+if (!token.startsWith("-") || token.length() == 1) {
+return false;
+}
+int pos = token.indexOf("=");
+String t = pos == -1 ? token : token.substring(0, pos);
+if (!getMatchingOptions(t).isEmpty()) {
+return true;
+} else if (getLongPrefix(token) != null && !token.startsWith("--")) {
+return true;
+}
+return false;
+}
+private void handleArgument(String token) {
+commandLine.addArgumentValue(token);
+}
+private void handleLongOption(String token) throws CLIException {
+if (token.indexOf('=') == -1) {
+handleLongOptionWithoutEqual(token);
+} else {
+handleLongOptionWithEqual(token);
+}
+}
+private void handleLongOptionWithoutEqual(String token) throws CLIException {
+List<Option> matchingOpts = getMatchingOptions(token);
+if (matchingOpts.isEmpty()) {
+handleArgument(token);
+} else if (matchingOpts.size() > 1) {
+throw new AmbiguousOptionException(token, matchingOpts);
+} else {
+final Option option = matchingOpts.get(0);
+handleOption(option);
+}
+}
+private void handleLongOptionWithEqual(String token) throws CLIException {
+int pos = token.indexOf('=');
+String value = token.substring(pos + 1);
+String opt = token.substring(0, pos);
+List<Option> matchingOpts = getMatchingOptions(opt);
+if (matchingOpts.isEmpty()) {
+handleArgument(token);
+} else if (matchingOpts.size() > 1) {
+throw new AmbiguousOptionException(opt, matchingOpts);
+} else {
+Option option = matchingOpts.get(0);
+if (commandLine.acceptMoreValues(option)) {
+handleOption(option);
+commandLine.addRawValue(option, value);
+current = null;
+} else {
+throw new InvalidValueException(option, value);
+}
+}
+}
+private void handleShortAndLongOption(String token) throws CLIException {
+String t = stripLeadingHyphens(token);
+int pos = t.indexOf('=');
+if (t.length() == 1) {
+if (hasOptionWithShortName(t)) {
+handleOption(getOption(t));
+} else {
+handleArgument(token);
+}
+} else if (pos == -1) {
+if (hasOptionWithShortName(t)) {
+handleOption(getOption(t));
+} else if (!getMatchingOptions(t).isEmpty()) {
+handleLongOptionWithoutEqual(token);
+} else {
+String opt = getLongPrefix(t);
+if (opt != null) {
+if (commandLine.acceptMoreValues(getOption(opt))) {
+handleOption(getOption(opt));
+commandLine.addRawValue(getOption(opt), t.substring(opt.length()));
+current = null;
+} else {
+throw new InvalidValueException(getOption(opt), t.substring(opt.length()));
+}
+} else if (isAValidShortOption(t)) {
+String strip = t.substring(0, 1);
+Option option = getOption(strip);
+handleOption(option);
+commandLine.addRawValue(current, t.substring(1));
+current = null;
+} else {
+handleConcatenatedOptions(token);
+}
+}
+} else {
+String opt = t.substring(0, pos);
+String value = t.substring(pos + 1);
+if (opt.length() == 1) {
+Option option = getOption(opt);
+if (option != null) {
+if (commandLine.acceptMoreValues(option)) {
+handleOption(option);
+commandLine.addRawValue(option, value);
+current = null;
+} else {
+throw new InvalidValueException(option, value);
+}
+} else {
+handleArgument(token);
+}
+} else if (isAValidShortOption(opt) && !hasOptionWithLongName(opt)) {
+handleOption(getOption(opt.substring(0, 1)));
+commandLine.addRawValue(current, opt.substring(1) + "=" + value);
+current = null;
+} else {
+handleLongOptionWithEqual(token);
+}
+}
+}
+private String getLongPrefix(String token) {
+String t = stripLeadingHyphens(token);
+int i;
+String opt = null;
+for (i = t.length() - 2; i > 1; i--) {
+String prefix = t.substring(0, i);
+if (hasOptionWithLongName(prefix)) {
+opt = prefix;
+break;
+}
+}
+return opt;
+}
+private boolean hasOptionWithLongName(String name) {
+for (Option option : cli.getOptions()) {
+if (name.equals(option.getLongName())) {
+return true;
+}
+}
+return false;
+}
+private boolean hasOptionWithShortName(String name) {
+for (Option option : cli.getOptions()) {
+if (name.equals(option.getShortName())) {
+return true;
+}
+}
+return false;
+}
+private void handleOption(Option option) throws CLIException {
+checkRequiredValues();
+updateRequiredOptions(option);
+commandLine.setSeenInCommandLine(option);
+if (commandLine.acceptMoreValues(option)) {
+current = option;
+} else {
+current = null;
+}
+}
+private void updateRequiredOptions(Option option) {
+if (option.isRequired()) {
+expectedOpts.remove(option);
+}
+}
+public Option getOption(String opt) {
+opt = stripLeadingHyphens(opt);
+for (Option option : cli.getOptions()) {
+if (opt.equals(option.getShortName()) || opt.equalsIgnoreCase(option.getLongName())) {
+return option;
+}
+}
+return null;
+}
+private boolean isAValidShortOption(String token) {
+String opt = token.substring(0, 1);
+Option option = getOption(opt);
+return option != null && commandLine.acceptMoreValues(option);
+}
+public List<Option> getMatchingOptions(String opt) {
+Objects.requireNonNull(opt);
+opt = stripLeadingHyphens(opt);
+List<Option> matching = new ArrayList<>();
+final List<Option> options = cli.getOptions();
+for (Option option : options) {
+if (opt.equals(option.getLongName())) {
+return Collections.singletonList(option);
+}
+}
+for (Option option : options) {
+if (opt.equalsIgnoreCase(option.getLongName())) {
+matching.add(option);
+}
+}
+for (Option option : options) {
+if (option.getLongName() != null && option.getLongName().startsWith(opt)) {
+matching.add(option);
+}
+}
+return matching;
+}
+protected void handleConcatenatedOptions(String token) throws CLIException {
+for (int i = 1; i < token.length(); i++) {
+String ch = String.valueOf(token.charAt(i));
+if (hasOptionWithShortName(ch)) {
+handleOption(getOption(ch));
+if (current != null && token.length() != i + 1) {
+commandLine.addRawValue(current, token.substring(i + 1));
+break;
+}
+} else {
+handleArgument(token);
+break;
+}
+}
+}
+}

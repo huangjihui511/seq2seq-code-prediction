@@ -1,0 +1,103 @@
+package io.ebeaninternal.api;
+import io.ebeaninternal.server.transaction.TransactionScopeManager;
+import io.ebeaninternal.server.util.ArrayStack;
+import javax.persistence.PersistenceException;
+public class ScopedTransaction extends SpiTransactionProxy {
+private final TransactionScopeManager manager;
+private final ArrayStack<ScopeTrans> stack = new ArrayStack<>();
+private ScopeTrans current;
+private boolean scopeCleared;
+public ScopedTransaction(TransactionScopeManager manager) {
+this.manager = manager;
+}
+@Override
+public String toString() {
+return "ScopedTransaction[" + current + "]";
+}
+public void push(ScopeTrans scopeTrans) {
+if (current != null) {
+stack.push(current);
+}
+current = scopeTrans;
+transaction = scopeTrans.getTransaction();
+}
+public void complete(Object returnOrThrowable, int opCode) {
+current.complete(returnOrThrowable, opCode);
+pop();
+}
+public void complete() {
+try {
+current.complete();
+} finally {
+pop();
+}
+}
+private void clearScopeOnce() {
+if (!scopeCleared) {
+manager.clear();
+scopeCleared = true;
+}
+}
+private boolean clearScope() {
+if (stack.isEmpty()) {
+clearScopeOnce();
+return true;
+}
+return false;
+}
+private void pop() {
+if (!clearScope()) {
+current = stack.pop();
+transaction = current.getTransaction();
+}
+}
+@Override
+public void end() throws PersistenceException {
+try {
+current.end();
+} finally {
+pop();
+}
+}
+@Override
+public void close() {
+end();
+}
+@Override
+public void commit() {
+try {
+current.commitTransaction();
+} finally {
+clearScope();
+}
+}
+@Override
+public void rollback() throws PersistenceException {
+try {
+current.rollback(null);
+} finally {
+clearScope();
+}
+}
+@Override
+public void rollback(Throwable e) throws PersistenceException {
+try {
+current.rollback(e);
+} finally {
+clearScope();
+}
+}
+@Override
+public void setRollbackOnly() {
+current.setRollbackOnly();
+}
+public SpiTransaction current() {
+return transaction;
+}
+public Error caughtError(Error e) {
+return current.caughtError(e);
+}
+public Exception caughtThrowable(Exception e) {
+return current.caughtThrowable(e);
+}
+}

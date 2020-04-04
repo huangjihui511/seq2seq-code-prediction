@@ -1,0 +1,18 @@
+package com.google.cloud.tools.jib.image.json;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.JsonDeserializer;
+import com.google.cloud.tools.jib.api.DescriptorDigest;
+import java.io.IOException;
+import java.security.DigestException;
+public class DescriptorDigestDeserializer extends JsonDeserializer<DescriptorDigest> {
+@Override
+public DescriptorDigest deserialize(JsonParser jsonParser, DeserializationContext ignored)
+throws IOException {
+try {
+return DescriptorDigest.fromDigest(jsonParser.getValueAsString());
+} catch (DigestException ex) {
+throw new IOException(ex);
+}
+}
+}

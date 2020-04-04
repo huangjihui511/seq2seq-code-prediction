@@ -1,0 +1,4 @@
+package de.codecentric.boot.admin.client.registration;
+public interface ApplicationFactory {
+Application createApplication();
+}

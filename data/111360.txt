@@ -1,0 +1,4 @@
+package com.facebook.example;
+public class NeedsB {
+private B myB;
+}

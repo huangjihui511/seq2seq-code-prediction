@@ -1,0 +1,4 @@
+package io.ebean.cache;
+public interface ServerCacheNotify {
+void notify(ServerCacheNotification notification);
+}

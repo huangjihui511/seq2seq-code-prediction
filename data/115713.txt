@@ -1,0 +1,30 @@
+package com.graphhopper.jsprit.core.algorithm.recreate;
+import com.graphhopper.jsprit.core.algorithm.recreate.listener.InsertionStartsListener;
+import com.graphhopper.jsprit.core.algorithm.recreate.listener.JobInsertedListener;
+import com.graphhopper.jsprit.core.problem.job.Job;
+import com.graphhopper.jsprit.core.problem.solution.route.VehicleRoute;
+import java.util.Collection;
+class SolutionCompletenessRatio implements InsertionStartsListener, JobInsertedListener {
+protected double solutionCompletenessRatio = 0.5;
+private final int nuOfJobs;
+private int nuOfJobsToRecreate;
+public SolutionCompletenessRatio(int nuOfJobs) {
+this.nuOfJobs = nuOfJobs;
+}
+public void setSolutionCompletenessRatio(double ratio) {
+solutionCompletenessRatio = ratio;
+}
+public double getSolutionCompletenessRatio() {
+return solutionCompletenessRatio;
+}
+@Override
+public void informInsertionStarts(Collection<VehicleRoute> routes, Collection<Job> unassignedJobs) {
+this.nuOfJobsToRecreate = unassignedJobs.size();
+solutionCompletenessRatio = (1 - ((double) nuOfJobsToRecreate / (double) nuOfJobs));
+}
+@Override
+public void informJobInserted(Job job2insert, VehicleRoute inRoute, double additionalCosts, double additionalTime) {
+nuOfJobsToRecreate--;
+solutionCompletenessRatio = (1 - ((double) nuOfJobsToRecreate / (double) nuOfJobs));
+}
+}

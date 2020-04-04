@@ -1,0 +1,5 @@
+package org.apache.struts2.osgi.action;
+import org.osgi.framework.BundleContext;
+public interface BundleContextAware {
+void withBundleContext(BundleContext bundleContext);
+}

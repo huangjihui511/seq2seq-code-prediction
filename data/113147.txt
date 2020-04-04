@@ -1,0 +1,34 @@
+package org.msgpack.value;
+import org.msgpack.core.MessagePacker;
+import java.io.IOException;
+public interface Value
+{
+ValueType getValueType();
+ImmutableValue immutableValue();
+boolean isNilValue();
+boolean isBooleanValue();
+boolean isNumberValue();
+boolean isIntegerValue();
+boolean isFloatValue();
+boolean isRawValue();
+boolean isBinaryValue();
+boolean isStringValue();
+boolean isArrayValue();
+boolean isMapValue();
+boolean isExtensionValue();
+NilValue asNilValue();
+BooleanValue asBooleanValue();
+NumberValue asNumberValue();
+IntegerValue asIntegerValue();
+FloatValue asFloatValue();
+RawValue asRawValue();
+BinaryValue asBinaryValue();
+StringValue asStringValue();
+ArrayValue asArrayValue();
+MapValue asMapValue();
+ExtensionValue asExtensionValue();
+void writeTo(MessagePacker pk)
+throws IOException;
+boolean equals(Object obj);
+String toJson();
+}

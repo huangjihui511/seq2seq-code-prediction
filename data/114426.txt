@@ -1,0 +1,22 @@
+package com.oreilly.springdata.hadoop.streaming;
+import org.springframework.util.Assert;
+import org.springframework.util.StringUtils;
+public enum FileExistsMode {
+FAIL,
+IGNORE,
+REPLACE;
+public static FileExistsMode getForString(String fileExistsModeAsString) {
+Assert.hasText(fileExistsModeAsString,
+"'fileExistsModeAsString' must neither be null nor empty.");
+final FileExistsMode[] fileExistsModeValues = FileExistsMode.values();
+for (FileExistsMode fileExistsMode : fileExistsModeValues) {
+if (fileExistsModeAsString.equalsIgnoreCase(fileExistsMode.name())) {
+return fileExistsMode;
+}
+}
+throw new IllegalArgumentException("Invalid fileExistsMode '"
++ fileExistsModeAsString
++ "'. The (case-insensitive) supported values are: "
++ StringUtils.arrayToCommaDelimitedString(fileExistsModeValues));
+}
+}

@@ -1,0 +1,97 @@
+package org.springframework.data.mongodb.gridfs;
+import java.io.InputStream;
+import java.util.function.Supplier;
+import org.bson.Document;
+import org.bson.types.ObjectId;
+import org.springframework.data.util.Lazy;
+import org.springframework.lang.Nullable;
+import org.springframework.util.Assert;
+import org.springframework.util.StreamUtils;
+import com.mongodb.client.gridfs.model.GridFSFile;
+public class GridFsUpload<ID> implements GridFsObject<ID, InputStream> {
+private final @Nullable ID id;
+private final Lazy<InputStream> dataStream;
+private final String filename;
+private final Options options;
+private GridFsUpload(@Nullable ID id, Lazy<InputStream> dataStream, String filename, Options options) {
+Assert.notNull(dataStream, "Data Stream must not be null");
+Assert.notNull(filename, "Filename must not be null");
+Assert.notNull(options, "Options must not be null");
+this.id = id;
+this.dataStream = dataStream;
+this.filename = filename;
+this.options = options;
+}
+@Override
+@Nullable
+public ID getFileId() {
+return id;
+}
+@Override
+public String getFilename() {
+return filename;
+}
+@Override
+public InputStream getContent() {
+return dataStream.orElse(StreamUtils.emptyInput());
+}
+@Override
+public Options getOptions() {
+return options;
+}
+public static GridFsUploadBuilder<ObjectId> fromStream(InputStream stream) {
+return new GridFsUploadBuilder<ObjectId>().content(stream);
+}
+public static class GridFsUploadBuilder<T> {
+private Object id;
+private Lazy<InputStream> dataStream;
+private String filename;
+private Options options = Options.none();
+private GridFsUploadBuilder() {}
+public GridFsUploadBuilder<T> content(InputStream stream) {
+Assert.notNull(stream, "InputStream must not be null");
+return content(() -> stream);
+}
+public GridFsUploadBuilder<T> content(Supplier<InputStream> stream) {
+Assert.notNull(stream, "InputStream Supplier must not be null");
+this.dataStream = Lazy.of(stream);
+return this;
+}
+public <T1> GridFsUploadBuilder<T1> id(T1 id) {
+this.id = id;
+return (GridFsUploadBuilder<T1>) this;
+}
+public GridFsUploadBuilder<T> filename(String filename) {
+this.filename = filename;
+return this;
+}
+public GridFsUploadBuilder<T> options(Options options) {
+Assert.notNull(options, "Options must not be null");
+this.options = options;
+return this;
+}
+public GridFsUploadBuilder<T> metadata(Document metadata) {
+this.options = this.options.metadata(metadata);
+return this;
+}
+public GridFsUploadBuilder<T> chunkSize(int chunkSize) {
+this.options = this.options.chunkSize(chunkSize);
+return this;
+}
+public GridFsUploadBuilder<T> gridFsFile(GridFSFile gridFSFile) {
+Assert.notNull(gridFSFile, "GridFSFile must not be null");
+this.id = gridFSFile.getId();
+this.filename = gridFSFile.getFilename();
+this.options = this.options.metadata(gridFSFile.getMetadata());
+this.options = this.options.chunkSize(gridFSFile.getChunkSize());
+return this;
+}
+public GridFsUploadBuilder<T> contentType(String contentType) {
+this.options = this.options.contentType(contentType);
+return this;
+}
+public GridFsUpload<T> build() {
+return new GridFsUpload(id, dataStream, filename, options);
+}
+}
+}

@@ -1,0 +1,22 @@
+package br.com.leonardoz.patterns.divideconquer;
+import java.util.List;
+import java.util.concurrent.RecursiveTask;
+public class ParallelDivideAndConquer {
+private final static int THRESHOLD = 10; 
+public static class Task extends RecursiveTask<Integer> {
+private static final long serialVersionUID = 1L;
+private List<Integer> somethingToDivideAndConquer;
+public Task(List<Integer> somethingToDivideAndConquer) {
+this.somethingToDivideAndConquer = somethingToDivideAndConquer;
+}
+@Override
+protected Integer compute() {
+var size = somethingToDivideAndConquer.size();
+if (size < THRESHOLD) {
+return 1;
+} else {
+return 2;
+}
+}
+}
+}

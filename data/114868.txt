@@ -1,0 +1,64 @@
+package com.google.api.client.http;
+import com.google.api.client.util.BackOff;
+import com.google.api.client.util.BackOffUtils;
+import com.google.api.client.util.Beta;
+import com.google.api.client.util.Preconditions;
+import com.google.api.client.util.Sleeper;
+import java.io.IOException;
+@Beta
+public class HttpBackOffUnsuccessfulResponseHandler implements HttpUnsuccessfulResponseHandler {
+private final BackOff backOff;
+private BackOffRequired backOffRequired = BackOffRequired.ON_SERVER_ERROR;
+private Sleeper sleeper = Sleeper.DEFAULT;
+public HttpBackOffUnsuccessfulResponseHandler(BackOff backOff) {
+this.backOff = Preconditions.checkNotNull(backOff);
+}
+public final BackOff getBackOff() {
+return backOff;
+}
+public final BackOffRequired getBackOffRequired() {
+return backOffRequired;
+}
+public HttpBackOffUnsuccessfulResponseHandler setBackOffRequired(
+BackOffRequired backOffRequired) {
+this.backOffRequired = Preconditions.checkNotNull(backOffRequired);
+return this;
+}
+public final Sleeper getSleeper() {
+return sleeper;
+}
+public HttpBackOffUnsuccessfulResponseHandler setSleeper(Sleeper sleeper) {
+this.sleeper = Preconditions.checkNotNull(sleeper);
+return this;
+}
+@Override
+public boolean handleResponse(HttpRequest request, HttpResponse response, boolean supportsRetry)
+throws IOException {
+if (!supportsRetry) {
+return false;
+}
+if (backOffRequired.isRequired(response)) {
+try {
+return BackOffUtils.next(sleeper, backOff);
+} catch (InterruptedException exception) {
+}
+}
+return false;
+}
+@Beta
+public interface BackOffRequired {
+boolean isRequired(HttpResponse response);
+BackOffRequired ALWAYS =
+new BackOffRequired() {
+public boolean isRequired(HttpResponse response) {
+return true;
+}
+};
+BackOffRequired ON_SERVER_ERROR =
+new BackOffRequired() {
+public boolean isRequired(HttpResponse response) {
+return response.getStatusCode() / 100 == 5;
+}
+};
+}
+}

@@ -1,0 +1,21 @@
+package com.graphhopper.jsprit.core.algorithm.recreate;
+import com.graphhopper.jsprit.core.problem.misc.JobInsertionContext;
+import com.graphhopper.jsprit.core.problem.solution.route.activity.TourActivity;
+public interface ActivityInsertionCostsCalculator {
+public class ActivityInsertionCosts {
+private double additionalCosts;
+private double additionalTime;
+public ActivityInsertionCosts(double additionalCosts, double additionalTime) {
+super();
+this.additionalCosts = additionalCosts;
+this.additionalTime = additionalTime;
+}
+public double getAdditionalCosts() {
+return additionalCosts;
+}
+public double getAdditionalTime() {
+return additionalTime;
+}
+}
+public double getCosts(JobInsertionContext iContext, TourActivity prevAct, TourActivity nextAct, TourActivity newAct, double depTimeAtPrevAct);
+}

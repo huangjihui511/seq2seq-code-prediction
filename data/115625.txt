@@ -1,0 +1,8 @@
+package com.netflix.astyanax.query;
+import java.util.SortedMap;
+import com.netflix.astyanax.connectionpool.exceptions.ConnectionException;
+public interface CheckpointManager {
+void trackCheckpoint(String startToken, String checkpointToken) throws Exception;
+String getCheckpoint(String startToken) throws Exception ;
+SortedMap<String, String> getCheckpoints() throws Exception;
+}

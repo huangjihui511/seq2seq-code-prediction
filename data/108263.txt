@@ -1,0 +1,10 @@
+package org.apache.flink.runtime.state.metainfo;
+import org.apache.flink.core.memory.DataOutputView;
+import javax.annotation.Nonnull;
+import java.io.IOException;
+@FunctionalInterface
+public interface StateMetaInfoWriter {
+void writeStateMetaInfoSnapshot(
+@Nonnull StateMetaInfoSnapshot snapshot,
+@Nonnull DataOutputView outputView) throws IOException;
+}

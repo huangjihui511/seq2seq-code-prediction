@@ -1,0 +1,14 @@
+package com.twelvemonkeys.util;
+import java.awt.geom.Rectangle2D;
+import java.io.Serializable;
+public class Rectangle2DKey extends TypedMap.AbstractKey implements Serializable {
+public Rectangle2DKey() {
+super();
+}
+public Rectangle2DKey(String pName) {
+super(pName);
+}
+public boolean isCompatibleValue(Object pValue) {
+return pValue instanceof Rectangle2D;
+}
+}

@@ -1,0 +1,23 @@
+package net.glowstone.util;
+public final class TickUtil {
+public static final short TICKS_PER_SECOND = 20;
+public static final short TICKS_PER_MINUTE = TICKS_PER_SECOND * 60;
+public static final int TICKS_PER_HOUR = TICKS_PER_MINUTE * 60;
+public static final int TICKS_PER_DAY = 24000;
+public static final int TICKS_PER_HALF_DAY = TICKS_PER_DAY / 2;
+public static final int TICKS_PER_WEEK = 7 * TICKS_PER_DAY;
+private TickUtil() {
+}
+public static int secondsToTicks(int seconds) {
+return TICKS_PER_SECOND * seconds;
+}
+public static long secondsToTicks(long seconds) {
+return TICKS_PER_SECOND * seconds;
+}
+public static int minutesToTicks(int minutes) {
+return TICKS_PER_MINUTE * minutes;
+}
+public static int minutesToTicks(double minutes) {
+return (int) (TICKS_PER_MINUTE * minutes);
+}
+}

@@ -1,0 +1,35 @@
+package br.com.leonardoz.features.collections;
+import java.util.Vector;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+public class UsingSynchronizedCollections {
+public static void insertIfAbsent(Vector<Long> list, Long value) {
+synchronized (list) {
+var contains = list.contains(value);
+if (!contains) {
+list.add(value);
+System.out.println("Value added: " + value);
+}
+}
+}
+public static void insertIfAbsentUnsafe(Vector<Long> list, Long value) {
+var contains = list.contains(value);
+if (!contains) {
+list.add(value);
+System.out.println("Value added: " + value);
+}
+}
+public static void main(String[] args) throws InterruptedException {
+var executor = Executors.newCachedThreadPool();
+var vector = new Vector<Long>();
+Runnable insertIfAbsent = () -> {
+long millis = System.currentTimeMillis() / 1000;
+insertIfAbsent(vector, millis);
+};
+for (int i = 0; i < 10001; i++) {
+executor.execute(insertIfAbsent);
+}
+executor.shutdown();
+executor.awaitTermination(4000, TimeUnit.SECONDS);
+}
+}

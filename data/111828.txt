@@ -1,0 +1,6 @@
+package org.jupiter.example;
+import org.jupiter.rpc.ServiceProvider;
+@ServiceProvider(group = "test")
+public interface ExceptionServiceTest {
+String hello(int i) throws IllegalArgumentException;
+}

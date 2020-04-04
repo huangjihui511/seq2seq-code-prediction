@@ -1,0 +1,24 @@
+package mobi.hsz.idea.gitignore.actions;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.Presentation;
+import mobi.hsz.idea.gitignore.IgnoreBundle;
+import mobi.hsz.idea.gitignore.settings.IgnoreSettings;
+import mobi.hsz.idea.gitignore.util.Icons;
+import org.jetbrains.annotations.NotNull;
+public class HideIgnoredFilesAction extends AnAction {
+public static final IgnoreSettings SETTINGS = IgnoreSettings.getInstance();
+public HideIgnoredFilesAction() {
+super(getText(), "", Icons.IGNORE);
+}
+private static String getText() {
+final boolean hideIgnoredFiles = SETTINGS.isHideIgnoredFiles();
+return IgnoreBundle.message(hideIgnoredFiles ? "action.showIgnoredVisibility" : "action.hideIgnoredVisibility");
+}
+@Override
+public void actionPerformed(@NotNull AnActionEvent e) {
+SETTINGS.setHideIgnoredFiles(!SETTINGS.isHideIgnoredFiles());
+final Presentation presentation = this.getTemplatePresentation();
+presentation.setText(getText());
+}
+}

@@ -1,0 +1,4 @@
+package io.ebean.bean;
+public interface NodeUsageListener {
+void collectNodeUsage(NodeUsageCollector collector);
+}

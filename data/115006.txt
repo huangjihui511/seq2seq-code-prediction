@@ -1,0 +1,128 @@
+package com.google.samples;
+import com.google.api.services.jobs.v3.CloudTalentSolution;
+import com.google.api.services.jobs.v3.model.ApplicationInfo;
+import com.google.api.services.jobs.v3.model.Company;
+import com.google.api.services.jobs.v3.model.CustomAttribute;
+import com.google.api.services.jobs.v3.model.Job;
+import com.google.api.services.jobs.v3.model.JobQuery;
+import com.google.api.services.jobs.v3.model.RequestMetadata;
+import com.google.api.services.jobs.v3.model.SearchJobsRequest;
+import com.google.api.services.jobs.v3.model.SearchJobsResponse;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Random;
+;
+public final class CustomAttributeSample {
+private static final String DEFAULT_PROJECT_ID =
+"projects/" + System.getenv("GOOGLE_CLOUD_PROJECT");
+private static CloudTalentSolution talentSolutionClient = JobServiceQuickstart
+.getTalentSolutionClient();
+public static Job generateJobWithACustomAttribute(String companyName) {
+String requisitionId =
+"jobWithACustomAttribute:" + String.valueOf(new Random().nextLong());
+ApplicationInfo applicationInfo =
+new ApplicationInfo().setUris(Arrays.asList("http:
+Map<String, CustomAttribute> customAttributes = new HashMap<>();
+customAttributes.put(
+"someFieldName1",
+new CustomAttribute()
+.setStringValues(Arrays.asList("value1"))
+.setFilterable(Boolean.TRUE));
+customAttributes
+.put("someFieldName2",
+new CustomAttribute().setLongValues(Arrays.asList(256L)).setFilterable(true));
+Job job =
+new Job()
+.setCompanyName(companyName)
+.setRequisitionId(requisitionId)
+.setTitle("Software Engineer")
+.setApplicationInfo(applicationInfo)
+.setDescription("Design, develop, test, deploy, maintain and improve software.")
+.setCustomAttributes(customAttributes);
+System.out.println("Job generated: " + job);
+return job;
+}
+public static void filtersOnStringValueCustomAttribute() throws IOException {
+RequestMetadata requestMetadata =
+new RequestMetadata()
+.setUserId("HashedUserId")
+.setSessionId("HashedSessionID")
+.setDomain(
+"www.google.com");
+String customAttributeFilter = "NOT EMPTY(someFieldName1)";
+JobQuery jobQuery = new JobQuery()
+.setCustomAttributeFilter(customAttributeFilter);
+SearchJobsRequest searchJobsRequest =
+new SearchJobsRequest()
+.setJobQuery(jobQuery)
+.setRequestMetadata(requestMetadata)
+.setJobView("JOB_VIEW_FULL");
+SearchJobsResponse response =
+talentSolutionClient
+.projects()
+.jobs()
+.search(DEFAULT_PROJECT_ID, searchJobsRequest)
+.execute();
+System.out.println(response);
+}
+public static void filtersOnLongValueCustomAttribute() throws IOException {
+RequestMetadata requestMetadata =
+new RequestMetadata()
+.setUserId("HashedUserId")
+.setSessionId("HashedSessionID")
+.setDomain("www.google.com");
+String customAttributeFilter = "(255 <= someFieldName2) AND (someFieldName2 <= 257)";
+JobQuery jobQuery = new JobQuery()
+.setCustomAttributeFilter(customAttributeFilter);
+SearchJobsRequest searchJobsRequest =
+new SearchJobsRequest()
+.setJobQuery(jobQuery)
+.setJobView("JOB_VIEW_FULL")
+.setRequestMetadata(requestMetadata);
+SearchJobsResponse response =
+talentSolutionClient
+.projects()
+.jobs()
+.search(DEFAULT_PROJECT_ID, searchJobsRequest)
+.execute();
+System.out.println(response);
+}
+public static void filtersOnMultiCustomAttributes() throws IOException {
+RequestMetadata requestMetadata =
+new RequestMetadata()
+.setUserId("HashedUserId")
+.setSessionId("HashedSessionID")
+.setDomain(
+"www.google.com");
+String customAttributeFilter = "(someFieldName1 = \"value1\") "
++ "AND ((255 <= someFieldName2) OR (someFieldName2 <= 213))";
+JobQuery jobQuery = new JobQuery()
+.setCustomAttributeFilter(customAttributeFilter);
+SearchJobsRequest searchJobsRequest =
+new SearchJobsRequest()
+.setJobQuery(jobQuery)
+.setRequestMetadata(requestMetadata)
+.setJobView("JOB_VIEW_FULL");
+SearchJobsResponse response =
+talentSolutionClient
+.projects()
+.jobs()
+.search(DEFAULT_PROJECT_ID, searchJobsRequest)
+.execute();
+System.out.println(response);
+}
+public static void main(String... args) throws Exception {
+Company companyToBeCreated = BasicCompanySample.generateCompany();
+String companyName = BasicCompanySample.createCompany(companyToBeCreated).getName();
+Job jobToBeCreated = generateJobWithACustomAttribute(companyName);
+final String jobName = BasicJobSample.createJob(jobToBeCreated).getName();
+Thread.sleep(10000);
+filtersOnStringValueCustomAttribute();
+filtersOnLongValueCustomAttribute();
+filtersOnMultiCustomAttributes();
+BasicJobSample.deleteJob(jobName);
+BasicCompanySample.deleteCompany(companyName);
+}
+}

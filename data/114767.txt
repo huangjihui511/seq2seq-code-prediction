@@ -1,0 +1,47 @@
+package spider;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.net.URL;
+import java.net.URLConnection;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import bean.Imooc;
+public class Spider {
+public static String getSource(String url){
+BufferedReader reader=null;
+String result = "";
+try {
+URL realUrl = new URL(url);
+URLConnection conn = realUrl.openConnection();
+reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+String line="";
+while((line=reader.readLine())!=null){
+result+=line;
+}
+if(reader!=null)
+reader.close();
+} catch (Exception e) {
+e.printStackTrace();
+}
+return result;
+}
+public static void main(String[] args) {
+String url = "http:
+String regex = "class=\"content\".+?href=\"(.+?)\".+?</a>";
+String result = getSource(url);
+List<String> wendaUrl = getImoocPage(result,regex);
+System.out.println(wendaUrl);
+}
+public static List<String> getImoocPage(String quesSource,String regex){
+Pattern pattern = Pattern.compile(regex);
+Matcher matcher = pattern.matcher(quesSource);
+List<String> quesUrl = new ArrayList<String>();
+while(matcher.find()){
+String url = "http:
+quesUrl.add(url);
+}
+return quesUrl;
+}
+}

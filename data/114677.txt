@@ -1,0 +1,30 @@
+package com.twelvemonkeys.util;
+import java.io.InputStream;
+import java.io.IOException;
+import java.io.File;
+import java.io.FileInputStream;
+import java.net.MalformedURLException;
+import java.net.URL;
+final class FileResource extends AbstractResource {
+public FileResource(Object pResourceId, File pFile) {
+super(pResourceId, pFile);
+}
+private File getFile() {
+return (File) wrappedResource;
+}
+public URL asURL() {
+try {
+return getFile().toURL();
+}
+catch (MalformedURLException e) {
+throw new IllegalStateException("The file \"" + getFile().getAbsolutePath()
++ "\" is not parseable as an URL: " + e.getMessage());
+}
+}
+public InputStream asStream() throws IOException {
+return new FileInputStream(getFile());
+}
+public long lastModified() {
+return getFile().lastModified();
+}
+}

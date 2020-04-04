@@ -1,0 +1,13 @@
+package tests;
+import javax.annotation.processing.Generated;
+import javax.inject.Inject;
+@Generated(
+value = "com.google.auto.factory.processor.AutoFactoryProcessor",
+comments = "https:
+)
+final class CustomNamedFactory {
+@Inject CustomNamedFactory() {}
+SimpleClassCustomName create() {
+return new SimpleClassCustomName();
+}
+}

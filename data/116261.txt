@@ -1,0 +1,11 @@
+package org.apache.struts2.osgi.interceptor;
+import java.util.List;
+public class SomeAction implements ServiceAware<Object> {
+private List<Object> services;
+public List<Object> getServices() {
+return services;
+}
+public void setServices(List<Object> services) {
+this.services = services;
+}
+}

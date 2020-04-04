@@ -1,0 +1,8 @@
+package org.apache.parquet.avro;
+import org.apache.avro.generic.GenericData;
+public class GenericDataSupplier implements AvroDataSupplier {
+@Override
+public GenericData get() {
+return GenericData.get();
+}
+}

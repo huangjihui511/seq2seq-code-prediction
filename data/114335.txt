@@ -1,0 +1,9 @@
+package mobi.hsz.idea.gitignore.file.type.kind;
+import mobi.hsz.idea.gitignore.file.type.IgnoreFileType;
+import mobi.hsz.idea.gitignore.lang.kind.ESLintLanguage;
+public class ESLintFileType extends IgnoreFileType {
+public static final ESLintFileType INSTANCE = new ESLintFileType();
+private ESLintFileType() {
+super(ESLintLanguage.INSTANCE);
+}
+}

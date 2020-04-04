@@ -1,0 +1,16 @@
+package org.apache.fontbox.ttf.table.common;
+public abstract class CoverageTable
+{
+private final int coverageFormat;
+public CoverageTable(int coverageFormat)
+{
+this.coverageFormat = coverageFormat;
+}
+public abstract int getCoverageIndex(int gid);
+public abstract int getGlyphId(int index);
+public abstract int getSize();
+public int getCoverageFormat()
+{
+return coverageFormat;
+}
+}

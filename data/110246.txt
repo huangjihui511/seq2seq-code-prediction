@@ -1,0 +1,11 @@
+package tests;
+import com.google.auto.factory.AutoFactory;
+import tests.FactoryExtendingAbstractClassWithMultipleConstructors.AbstractFactory;
+@AutoFactory(extending = AbstractFactory.class)
+final class FactoryExtendingAbstractClassWithMultipleConstructors {
+static abstract class AbstractFactory {
+protected AbstractFactory(Object obj) {}
+protected AbstractFactory() {}
+abstract FactoryExtendingAbstractClassWithMultipleConstructors newInstance();
+}
+}

@@ -1,0 +1,20 @@
+package io.ebean;
+public enum CacheMode {
+OFF(false, false),
+ON(true, true),
+AUTO(true, true),
+PUT(false, true),
+GET(true, false);
+private final boolean get;
+private final boolean put;
+CacheMode(boolean get, boolean put) {
+this.get = get;
+this.put = put;
+}
+public boolean isGet() {
+return get;
+}
+public boolean isPut() {
+return put;
+}
+}

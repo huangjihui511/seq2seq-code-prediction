@@ -1,0 +1,6 @@
+package com.jeff.tianti.util;
+public class Constants {
+public static final String HEAD_NAME = "head_name";
+public static final String MENU_NAME = "menu_name";
+public static final String ROLE_INSTITUTION = "role_institution";
+}

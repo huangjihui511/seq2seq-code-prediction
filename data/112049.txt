@@ -1,0 +1,251 @@
+package org.springframework.data.mongodb.core.aggregation;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import org.springframework.data.mongodb.core.aggregation.AccumulatorOperators.Sum;
+import org.springframework.util.Assert;
+public class SetOperators {
+public static SetOperatorFactory arrayAsSet(String fieldReference) {
+return new SetOperatorFactory(fieldReference);
+}
+public static SetOperatorFactory arrayAsSet(AggregationExpression expression) {
+return new SetOperatorFactory(expression);
+}
+public static class SetOperatorFactory {
+private final String fieldReference;
+private final AggregationExpression expression;
+public SetOperatorFactory(String fieldReference) {
+Assert.notNull(fieldReference, "FieldReference must not be null!");
+this.fieldReference = fieldReference;
+this.expression = null;
+}
+public SetOperatorFactory(AggregationExpression expression) {
+Assert.notNull(expression, "Expression must not be null!");
+this.fieldReference = null;
+this.expression = expression;
+}
+public SetEquals isEqualTo(String... arrayReferences) {
+return createSetEquals().isEqualTo(arrayReferences);
+}
+public SetEquals isEqualTo(AggregationExpression... expressions) {
+return createSetEquals().isEqualTo(expressions);
+}
+private SetEquals createSetEquals() {
+return usesFieldRef() ? SetEquals.arrayAsSet(fieldReference) : SetEquals.arrayAsSet(expression);
+}
+public SetIntersection intersects(String... arrayReferences) {
+return createSetIntersection().intersects(arrayReferences);
+}
+public SetIntersection intersects(AggregationExpression... expressions) {
+return createSetIntersection().intersects(expressions);
+}
+private SetIntersection createSetIntersection() {
+return usesFieldRef() ? SetIntersection.arrayAsSet(fieldReference) : SetIntersection.arrayAsSet(expression);
+}
+public SetUnion union(String... arrayReferences) {
+return createSetUnion().union(arrayReferences);
+}
+public SetUnion union(AggregationExpression... expressions) {
+return createSetUnion().union(expressions);
+}
+private SetUnion createSetUnion() {
+return usesFieldRef() ? SetUnion.arrayAsSet(fieldReference) : SetUnion.arrayAsSet(expression);
+}
+public SetDifference differenceTo(String arrayReference) {
+return createSetDifference().differenceTo(arrayReference);
+}
+public SetDifference differenceTo(AggregationExpression expression) {
+return createSetDifference().differenceTo(expression);
+}
+private SetDifference createSetDifference() {
+return usesFieldRef() ? SetDifference.arrayAsSet(fieldReference) : SetDifference.arrayAsSet(expression);
+}
+public SetIsSubset isSubsetOf(String arrayReference) {
+return createSetIsSubset().isSubsetOf(arrayReference);
+}
+public SetIsSubset isSubsetOf(AggregationExpression expression) {
+return createSetIsSubset().isSubsetOf(expression);
+}
+private SetIsSubset createSetIsSubset() {
+return usesFieldRef() ? SetIsSubset.arrayAsSet(fieldReference) : SetIsSubset.arrayAsSet(expression);
+}
+public AnyElementTrue anyElementTrue() {
+return usesFieldRef() ? AnyElementTrue.arrayAsSet(fieldReference) : AnyElementTrue.arrayAsSet(expression);
+}
+public AllElementsTrue allElementsTrue() {
+return usesFieldRef() ? AllElementsTrue.arrayAsSet(fieldReference) : AllElementsTrue.arrayAsSet(expression);
+}
+private boolean usesFieldRef() {
+return this.fieldReference != null;
+}
+}
+public static class SetEquals extends AbstractAggregationExpression {
+private SetEquals(List<?> arrays) {
+super(arrays);
+}
+@Override
+protected String getMongoMethod() {
+return "$setEquals";
+}
+public static SetEquals arrayAsSet(String arrayReference) {
+Assert.notNull(arrayReference, "ArrayReference must not be null!");
+return new SetEquals(asFields(arrayReference));
+}
+public static SetEquals arrayAsSet(AggregationExpression expression) {
+Assert.notNull(expression, "Expression must not be null!");
+return new SetEquals(Collections.singletonList(expression));
+}
+public SetEquals isEqualTo(String... arrayReferences) {
+Assert.notNull(arrayReferences, "ArrayReferences must not be null!");
+return new SetEquals(append(Fields.fields(arrayReferences).asList()));
+}
+public SetEquals isEqualTo(AggregationExpression... expressions) {
+Assert.notNull(expressions, "Expressions must not be null!");
+return new SetEquals(append(Arrays.asList(expressions)));
+}
+public SetEquals isEqualTo(Object[] array) {
+Assert.notNull(array, "Array must not be null!");
+return new SetEquals(append(array));
+}
+}
+public static class SetIntersection extends AbstractAggregationExpression {
+private SetIntersection(List<?> arrays) {
+super(arrays);
+}
+@Override
+protected String getMongoMethod() {
+return "$setIntersection";
+}
+public static SetIntersection arrayAsSet(String arrayReference) {
+Assert.notNull(arrayReference, "ArrayReference must not be null!");
+return new SetIntersection(asFields(arrayReference));
+}
+public static SetIntersection arrayAsSet(AggregationExpression expression) {
+Assert.notNull(expression, "Expression must not be null!");
+return new SetIntersection(Collections.singletonList(expression));
+}
+public SetIntersection intersects(String... arrayReferences) {
+Assert.notNull(arrayReferences, "ArrayReferences must not be null!");
+return new SetIntersection(append(asFields(arrayReferences)));
+}
+public SetIntersection intersects(AggregationExpression... expressions) {
+Assert.notNull(expressions, "Expressions must not be null!");
+return new SetIntersection(append(Arrays.asList(expressions)));
+}
+}
+public static class SetUnion extends AbstractAggregationExpression {
+private SetUnion(Object value) {
+super(value);
+}
+@Override
+protected String getMongoMethod() {
+return "$setUnion";
+}
+public static SetUnion arrayAsSet(String arrayReference) {
+Assert.notNull(arrayReference, "ArrayReference must not be null!");
+return new SetUnion(asFields(arrayReference));
+}
+public static SetUnion arrayAsSet(AggregationExpression expression) {
+Assert.notNull(expression, "Expression must not be null!");
+return new SetUnion(Collections.singletonList(expression));
+}
+public SetUnion union(String... arrayReferences) {
+Assert.notNull(arrayReferences, "ArrayReferences must not be null!");
+return new SetUnion(append(asFields(arrayReferences)));
+}
+public SetUnion union(AggregationExpression... expressions) {
+Assert.notNull(expressions, "Expressions must not be null!");
+return new SetUnion(append(Arrays.asList(expressions)));
+}
+}
+public static class SetDifference extends AbstractAggregationExpression {
+private SetDifference(Object value) {
+super(value);
+}
+@Override
+protected String getMongoMethod() {
+return "$setDifference";
+}
+public static SetDifference arrayAsSet(String arrayReference) {
+Assert.notNull(arrayReference, "ArrayReference must not be null!");
+return new SetDifference(asFields(arrayReference));
+}
+public static SetDifference arrayAsSet(AggregationExpression expression) {
+Assert.notNull(expression, "Expression must not be null!");
+return new SetDifference(Collections.singletonList(expression));
+}
+public SetDifference differenceTo(String arrayReference) {
+Assert.notNull(arrayReference, "ArrayReference must not be null!");
+return new SetDifference(append(Fields.field(arrayReference)));
+}
+public SetDifference differenceTo(AggregationExpression expression) {
+Assert.notNull(expression, "Expression must not be null!");
+return new SetDifference(append(expression));
+}
+}
+public static class SetIsSubset extends AbstractAggregationExpression {
+private SetIsSubset(Object value) {
+super(value);
+}
+@Override
+protected String getMongoMethod() {
+return "$setIsSubset";
+}
+public static SetIsSubset arrayAsSet(String arrayReference) {
+Assert.notNull(arrayReference, "ArrayReference must not be null!");
+return new SetIsSubset(asFields(arrayReference));
+}
+public static SetIsSubset arrayAsSet(AggregationExpression expression) {
+Assert.notNull(expression, "Expression must not be null!");
+return new SetIsSubset(Collections.singletonList(expression));
+}
+public SetIsSubset isSubsetOf(String arrayReference) {
+Assert.notNull(arrayReference, "ArrayReference must not be null!");
+return new SetIsSubset(append(Fields.field(arrayReference)));
+}
+public SetIsSubset isSubsetOf(AggregationExpression expression) {
+Assert.notNull(expression, "Expression must not be null!");
+return new SetIsSubset(append(expression));
+}
+}
+public static class AnyElementTrue extends AbstractAggregationExpression {
+private AnyElementTrue(Object value) {
+super(value);
+}
+@Override
+protected String getMongoMethod() {
+return "$anyElementTrue";
+}
+public static AnyElementTrue arrayAsSet(String arrayReference) {
+Assert.notNull(arrayReference, "ArrayReference must not be null!");
+return new AnyElementTrue(asFields(arrayReference));
+}
+public static AnyElementTrue arrayAsSet(AggregationExpression expression) {
+Assert.notNull(expression, "Expression must not be null!");
+return new AnyElementTrue(Collections.singletonList(expression));
+}
+public AnyElementTrue anyElementTrue() {
+return this;
+}
+}
+public static class AllElementsTrue extends AbstractAggregationExpression {
+private AllElementsTrue(Object value) {
+super(value);
+}
+@Override
+protected String getMongoMethod() {
+return "$allElementsTrue";
+}
+public static AllElementsTrue arrayAsSet(String arrayReference) {
+Assert.notNull(arrayReference, "ArrayReference must not be null!");
+return new AllElementsTrue(asFields(arrayReference));
+}
+public static AllElementsTrue arrayAsSet(AggregationExpression expression) {
+Assert.notNull(expression, "Expression must not be null!");
+return new AllElementsTrue(Collections.singletonList(expression));
+}
+public AllElementsTrue allElementsTrue() {
+return this;
+}
+}
+}

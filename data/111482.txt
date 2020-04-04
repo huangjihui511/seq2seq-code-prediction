@@ -1,0 +1,75 @@
+package io.grpc.alts.internal;
+import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import javax.annotation.Nonnull;
+public final class TsiPeer {
+private final List<Property<?>> properties;
+public TsiPeer(List<Property<?>> properties) {
+this.properties = Collections.unmodifiableList(properties);
+}
+public List<Property<?>> getProperties() {
+return properties;
+}
+public Property<?> getProperty(String name) {
+for (Property<?> property : properties) {
+if (property.getName().equals(name)) {
+return property;
+}
+}
+return null;
+}
+@Override
+public String toString() {
+return new ArrayList<>(properties).toString();
+}
+public abstract static class Property<T> {
+private final String name;
+private final T value;
+public Property(@Nonnull String name, @Nonnull T value) {
+this.name = name;
+this.value = value;
+}
+public final T getValue() {
+return value;
+}
+public final String getName() {
+return name;
+}
+@Override
+public String toString() {
+return String.format("%s=%s", name, value);
+}
+}
+public static final class BooleanProperty extends Property<Boolean> {
+public BooleanProperty(@Nonnull String name, boolean value) {
+super(name, value);
+}
+}
+public static final class SignedInt64Property extends Property<Long> {
+public SignedInt64Property(@Nonnull String name, @Nonnull Long value) {
+super(name, value);
+}
+}
+public static final class UnsignedInt64Property extends Property<BigInteger> {
+public UnsignedInt64Property(@Nonnull String name, @Nonnull BigInteger value) {
+super(name, value);
+}
+}
+public static final class DoubleProperty extends Property<Double> {
+public DoubleProperty(@Nonnull String name, @Nonnull Double value) {
+super(name, value);
+}
+}
+public static final class StringProperty extends Property<String> {
+public StringProperty(@Nonnull String name, @Nonnull String value) {
+super(name, value);
+}
+}
+public static final class PropertyList extends Property<List<Property<?>>> {
+public PropertyList(@Nonnull String name, @Nonnull List<Property<?>> value) {
+super(name, value);
+}
+}
+}

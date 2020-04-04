@@ -1,0 +1,108 @@
+package com.twelvemonkeys.sql;
+public abstract class JDBCHelper {
+private static JDBCHelper[] sHelpers = new JDBCHelper[DatabaseProduct.enumSize()];
+static {
+DatabaseProduct product = DatabaseProduct.resolve(System.getProperty("com.twelvemonkeys.sql.databaseProduct", "Generic"));
+sHelpers[0] = createInstance(product);
+}
+private JDBCHelper() {
+}
+private static JDBCHelper createInstance(DatabaseProduct pProduct) {
+if (pProduct == DatabaseProduct.GENERIC) {
+return new GenericHelper();
+}
+else if (pProduct == DatabaseProduct.CACHE) {
+return new CacheHelper();
+}
+else if (pProduct == DatabaseProduct.DB2) {
+return new DB2Helper();
+}
+else if (pProduct == DatabaseProduct.MSSQL) {
+return new MSSQLHelper();
+}
+else if (pProduct == DatabaseProduct.ORACLE) {
+return new OracleHelper();
+}
+else if (pProduct == DatabaseProduct.POSTGRES) {
+return new PostgreSQLHelper();
+}
+else if (pProduct == DatabaseProduct.SYBASE) {
+return new SybaseHelper();
+}
+else {
+throw new IllegalArgumentException("Unknown database product, try any of the known products, or \"generic\"");
+}
+}
+public final static JDBCHelper getInstance() {
+return sHelpers[0];
+}
+public final static JDBCHelper getInstance(DatabaseProduct pProuct) {
+JDBCHelper helper = sHelpers[pProuct.id()];
+if (helper == null) {
+synchronized (sHelpers) {
+helper = sHelpers[pProuct.id()];
+if (helper == null) {
+helper = createInstance(pProuct);
+sHelpers[pProuct.id()] = helper;
+}
+}
+}
+return helper;
+}
+public String getDefaultDriverName() {
+return "";
+}
+public String getDefaultURL() {
+return "jdbc:{$DRIVER}:
+}
+static class GenericHelper extends JDBCHelper {
+}
+static class CacheHelper extends JDBCHelper {
+public String getDefaultDriverName() {
+return "com.intersys.jdbc.CacheDriver";
+}
+public String getDefaultURL() {
+return "jdbc:Cache:
+}
+}
+static class DB2Helper extends JDBCHelper {
+public String getDefaultDriverName() {
+return "COM.ibm.db2.jdbc.net.DB2Driver";
+}
+public String getDefaultURL() {
+return "jdbc:db2:{$DATABASE}";
+}
+}
+static class MSSQLHelper extends JDBCHelper {
+public String getDefaultDriverName() {
+return "com.microsoft.jdbc.sqlserver.SQLServerDriver";
+}
+public String getDefaultURL() {
+return "jdbc:microsoft:sqlserver:
+}
+}
+static class OracleHelper extends JDBCHelper {
+public String getDefaultDriverName() {
+return "oracle.jdbc.driver.OracleDriver";
+}
+public String getDefaultURL() {
+return "jdbc:oracle:thin:@localhost:1521:{$DATABASE}";
+}
+}
+static class PostgreSQLHelper extends JDBCHelper {
+public String getDefaultDriverName() {
+return "org.postgresql.Driver";
+}
+public String getDefaultURL() {
+return "jdbc:postgresql:
+}
+}
+static class SybaseHelper extends JDBCHelper {
+public String getDefaultDriverName() {
+return "com.sybase.jdbc2.jdbc.SybDriver";
+}
+public String getDefaultURL() {
+return "jdbc:sybase:Tds:localhost:4100/";
+}
+}
+}

@@ -1,0 +1,17 @@
+package lombok.installer.eclipse;
+import java.util.Collections;
+import lombok.installer.IdeLocationProvider;
+import org.mangosdk.spi.ProviderFor;
+@ProviderFor(IdeLocationProvider.class)
+public class JbdsLocationProvider extends EclipseProductLocationProvider {
+private static final EclipseProductDescriptor JBDS = new StandardProductDescriptor(
+"JBoss Developer Studio",
+"jbdevstudio",
+"studio",
+JbdsLocationProvider.class.getResource("jbds.png"),
+Collections.<String>emptySet()
+);
+public JbdsLocationProvider() {
+super(JBDS);
+}
+}

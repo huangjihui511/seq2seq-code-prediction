@@ -1,0 +1,32 @@
+package com.google.api.client.http.xml;
+import com.google.api.client.http.AbstractHttpContent;
+import com.google.api.client.http.HttpMediaType;
+import com.google.api.client.util.Beta;
+import com.google.api.client.util.Preconditions;
+import com.google.api.client.xml.Xml;
+import com.google.api.client.xml.XmlNamespaceDictionary;
+import java.io.IOException;
+import java.io.OutputStream;
+import org.xmlpull.v1.XmlSerializer;
+@Beta
+public abstract class AbstractXmlHttpContent extends AbstractHttpContent {
+protected AbstractXmlHttpContent(XmlNamespaceDictionary namespaceDictionary) {
+super(new HttpMediaType(Xml.MEDIA_TYPE));
+this.namespaceDictionary = Preconditions.checkNotNull(namespaceDictionary);
+}
+private final XmlNamespaceDictionary namespaceDictionary;
+public final void writeTo(OutputStream out) throws IOException {
+XmlSerializer serializer = Xml.createSerializer();
+serializer.setOutput(out, getCharset().name());
+writeTo(serializer);
+}
+@Override
+public AbstractXmlHttpContent setMediaType(HttpMediaType mediaType) {
+super.setMediaType(mediaType);
+return this;
+}
+public final XmlNamespaceDictionary getNamespaceDictionary() {
+return namespaceDictionary;
+}
+protected abstract void writeTo(XmlSerializer serializer) throws IOException;
+}

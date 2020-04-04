@@ -1,0 +1,17 @@
+package org.fusesource.mqtt.codec;
+import java.net.ProtocolException;
+import static org.fusesource.mqtt.codec.MessageSupport.*;
+public class PUBCOMP extends MessageSupport.AckBase implements Message {
+public static final byte TYPE = 7;
+public byte messageType() {
+return TYPE;
+}
+@Override
+public PUBCOMP decode(MQTTFrame frame) throws ProtocolException {
+return (PUBCOMP) super.decode(frame);
+}
+@Override
+public PUBCOMP messageId(short messageId) {
+return (PUBCOMP) super.messageId(messageId);
+}
+}

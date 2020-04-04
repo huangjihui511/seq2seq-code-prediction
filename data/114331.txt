@@ -1,0 +1,9 @@
+package mobi.hsz.idea.gitignore.file.type.kind;
+import mobi.hsz.idea.gitignore.file.type.IgnoreFileType;
+import mobi.hsz.idea.gitignore.lang.kind.CloudFoundryLanguage;
+public class CloudFoundryFileType extends IgnoreFileType {
+public static final CloudFoundryFileType INSTANCE = new CloudFoundryFileType();
+private CloudFoundryFileType() {
+super(CloudFoundryLanguage.INSTANCE);
+}
+}

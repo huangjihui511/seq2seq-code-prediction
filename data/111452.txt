@@ -1,0 +1,77 @@
+package io.grpc;
+import static junit.framework.TestCase.assertFalse;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.mockingDetails;
+import static org.mockito.Mockito.verify;
+import com.google.common.base.Defaults;
+import com.google.common.base.MoreObjects;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+import java.util.Collection;
+import javax.annotation.Nullable;
+public final class ForwardingTestUtil {
+public static <T> void testMethodsForwarded(
+Class<T> delegateClass,
+T mockDelegate,
+T forwarder,
+Collection<Method> skippedMethods) throws Exception {
+testMethodsForwarded(
+delegateClass, mockDelegate, forwarder, skippedMethods,
+new ArgumentProvider() {
+@Override
+public Object get(Method method, int argPos, Class<?> clazz) {
+return null;
+}
+});
+}
+public static <T> void testMethodsForwarded(
+Class<T> delegateClass,
+T mockDelegate,
+T forwarder,
+Collection<Method> skippedMethods,
+ArgumentProvider argProvider) throws Exception {
+assertTrue(mockingDetails(mockDelegate).isMock());
+assertFalse(mockingDetails(forwarder).isMock());
+for (Method method : delegateClass.getDeclaredMethods()) {
+if (Modifier.isStatic(method.getModifiers())
+|| Modifier.isPrivate(method.getModifiers())
+|| skippedMethods.contains(method)) {
+continue;
+}
+Class<?>[] argTypes = method.getParameterTypes();
+Object[] args = new Object[argTypes.length];
+for (int i = 0; i < argTypes.length; i++) {
+if ((args[i] = argProvider.get(method, i, argTypes[i])) == null) {
+args[i] = Defaults.defaultValue(argTypes[i]);
+}
+}
+method.invoke(forwarder, args);
+try {
+method.invoke(verify(mockDelegate), args);
+} catch (InvocationTargetException e) {
+AssertionError ae =
+new AssertionError(String.format("Method was not forwarded: %s", method));
+ae.initCause(e);
+throw ae;
+}
+}
+boolean skipToString = false;
+for (Method method : skippedMethods) {
+if (method.getName().equals("toString")) {
+skipToString = true;
+break;
+}
+}
+if (!skipToString) {
+String actual = forwarder.toString();
+String expected =
+MoreObjects.toStringHelper(forwarder).add("delegate", mockDelegate).toString();
+assertEquals("Method toString() was not forwarded properly", expected, actual);
+}
+}
+public interface ArgumentProvider {
+@Nullable Object get(Method method, int argPos, Class<?> clazz);
+}
+}

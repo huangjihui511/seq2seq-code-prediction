@@ -1,0 +1,11 @@
+package io.realm.examples.intro.model;
+import io.realm.RealmModel;
+import io.realm.RealmResults;
+import io.realm.annotations.LinkingObjects;
+import io.realm.annotations.RealmClass;
+@RealmClass
+public class Dog implements RealmModel {
+public String name;
+@LinkingObjects("dog")
+public final RealmResults<Person> owners = null;
+}

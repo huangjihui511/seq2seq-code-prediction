@@ -1,0 +1,30 @@
+package com.twelvemonkeys.lang;
+public final class MathUtil {
+private MathUtil() {
+}
+public static double ln(final double pArg) {
+return Math.log(pArg);
+}
+public static double log(final double pArg) {
+return Math.log10(pArg);
+}
+private final static double LN_2 = Math.log(2);
+public static double log2(final double pArg) {
+return Math.log(pArg) / LN_2;
+}
+public static double log(final double pArg, final double pBase) {
+return Math.log(pArg) / Math.log(pBase);
+}
+public static long abs(final long pNumber) {
+if (pNumber == Long.MIN_VALUE) {
+throw new ArithmeticException("long overflow: 9223372036854775808");
+}
+return (pNumber < 0) ? -pNumber : pNumber;
+}
+public static int abs(final int pNumber) {
+if (pNumber == Integer.MIN_VALUE) {
+throw new ArithmeticException("int overflow: 2147483648");
+}
+return (pNumber < 0) ? -pNumber : pNumber;
+}
+}

@@ -1,0 +1,21 @@
+package mobi.hsz.idea.gitignore.lang.kind;
+import mobi.hsz.idea.gitignore.file.type.IgnoreFileType;
+import mobi.hsz.idea.gitignore.file.type.kind.PrettierFileType;
+import mobi.hsz.idea.gitignore.lang.IgnoreLanguage;
+import mobi.hsz.idea.gitignore.util.Icons;
+import org.jetbrains.annotations.NotNull;
+public class PrettierLanguage extends IgnoreLanguage {
+public static final PrettierLanguage INSTANCE = new PrettierLanguage();
+private PrettierLanguage() {
+super("Prettier", "prettierignore", null, Icons.PRETTIER);
+}
+@NotNull
+@Override
+public IgnoreFileType getFileType() {
+return PrettierFileType.INSTANCE;
+}
+@Override
+public boolean isVCS() {
+return false;
+}
+}

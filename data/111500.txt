@@ -1,0 +1,26 @@
+package io.grpc;
+import java.util.concurrent.Executor;
+@Deprecated
+@ExperimentalApi("https:
+public abstract class CallCredentials2 extends CallCredentials {
+@ExperimentalApi("https:
+public abstract void applyRequestMetadata(
+RequestInfo requestInfo, Executor appExecutor, MetadataApplier applier);
+@Override
+public final void applyRequestMetadata(
+RequestInfo requestInfo, Executor appExecutor,
+final CallCredentials.MetadataApplier applier) {
+applyRequestMetadata(requestInfo, appExecutor, new MetadataApplier() {
+@Override
+public void apply(Metadata headers) {
+applier.apply(headers);
+}
+@Override
+public void fail(Status status) {
+applier.fail(status);
+}
+});
+}
+@ExperimentalApi("https:
+public abstract static class MetadataApplier extends CallCredentials.MetadataApplier {}
+}

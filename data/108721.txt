@@ -1,0 +1,25 @@
+package com.xkcoding.rbac.security.common;
+import lombok.Getter;
+@Getter
+public enum Status implements IStatus {
+private Integer code;
+private String message;
+Status(Integer code, String message) {
+this.code = code;
+this.message = message;
+}
+public static Status fromCode(Integer code) {
+Status[] statuses = Status.values();
+for (Status status : statuses) {
+if (status.getCode()
+.equals(code)) {
+return status;
+}
+}
+return SUCCESS;
+}
+@Override
+public String toString() {
+return String.format(" Status:{code=%s, message=%s} ", getCode(), getMessage());
+}
+}

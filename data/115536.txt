@@ -1,0 +1,147 @@
+package com.JUtils.excel;
+import java.io.File;
+import java.io.FileInputStream;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.ss.util.NumberToTextConverter;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import com.JUtils.date.DateUtils;
+import com.JUtils.date.DateFormatUtils;
+public class ExcelReadHelper {
+@SuppressWarnings("rawtypes")
+public static List<Object> excelRead(File file,String[] properties,Class obj) throws Exception{
+Workbook book = null;
+try {
+} catch (Exception e) {
+}
+return getExcelContent(book,properties,obj);
+}
+@SuppressWarnings("rawtypes")
+public static List<Object> excelRead(String filePath,String[] properties,Class obj) throws Exception{
+File file = new File(filePath);
+if(!file.exists()){
+}
+return excelRead(file, properties, obj);
+}
+@SuppressWarnings("rawtypes")
+private static List<Object> getExcelContent(Workbook book, String[] properties,
+Class obj) throws Exception {
+Map<String, Method> methodMap = getObjectSetterMethod(obj);
+Map<String, Field> fieldMap = getObjectField(obj);
+for(int numSheet = 0 ; numSheet < book.getNumberOfSheets(); numSheet++){
+Sheet sheet = book.getSheetAt(numSheet);
+continue;
+}
+Row row = sheet.getRow(numRow);
+if(row == null){
+continue;
+}
+resultList.add(getObject(row,properties,methodMap,fieldMap,obj));
+}
+}
+return resultList;
+}
+@SuppressWarnings("rawtypes")
+private static Object getObject(Row row, String[] properties,
+Map<String, Method> methodMap,Map<String, Field> fieldMap,Class obj) throws Exception {
+Object object = obj.newInstance();
+for(int numCell = 0 ; numCell < row.getLastCellNum() ; numCell++){
+Cell cell = row.getCell(numCell);
+if(cell == null){
+continue;
+}
+String cellValue = getValue(cell);
+String property = properties[numCell].toLowerCase();
+setObjectPropertyValue(object,field,method,cellValue);
+}
+return object;
+}
+private static void setObjectPropertyValue(Object obj, Field field,
+Method method, String value) throws Exception {
+Object[] oo = new Object[1];
+String type = field.getType().getName();
+if ("java.lang.String".equals(type) || "String".equals(type)) {
+oo[0] = value;
+} else if ("java.lang.Integer".equals(type) || "java.lang.int".equals(type) || "Integer".equals(type) || "int".equals(type)) {
+if (value.length() > 0)
+oo[0] = Integer.valueOf(value);
+} else if ("java.lang.Float".equals(type) || "java.lang.float".equals(type)  || "Float".equals(type) || "float".equals(type)) {
+if (value.length() > 0)
+oo[0] = Float.valueOf(value);
+} else if ("java.lang.Double".equals(type)  || "java.lang.double".equals(type) || "Double".equals(type) || "double".equals(type)) {
+if (value.length() > 0)
+oo[0] = Double.valueOf(value);
+} else if ("java.math.BigDecimal".equals(type)  || "BigDecimal".equals(type)) {
+if (value.length() > 0)
+oo[0] = new BigDecimal(value);
+} else if ("java.util.Date".equals(type)  || "Date".equals(type)) {
+if(value.length() == 19 || value.length() == 14){
+oo[0] = DateUtils.string2Date(value, "yyyyMMddHH24mmss");
+}
+oo[0] = DateUtils.string2Date(value, "yyyyMMdd");
+}
+}
+} else if ("java.sql.Timestamp".equals(type)) {
+if (value.length() > 0)
+oo[0] = DateFormatUtils.formatDate(value, "yyyyMMddHH24mmss");
+} else if ("java.lang.Boolean".equals(type)  || "Boolean".equals(type)) {
+if (value.length() > 0)
+oo[0] = Boolean.valueOf(value);
+} else if ("java.lang.Long".equals(type) || "java.lang.long".equals(type)  || "Long".equals(type) || "long".equals(type)) {
+if (value.length() > 0)
+oo[0] = Long.valueOf(value);
+}
+try {
+method.invoke(obj, oo);
+} catch (Exception e) {
+e.printStackTrace();
+throw e;
+}
+}
+@SuppressWarnings("static-access")
+private static String getValue(Cell cell) {
+if (cell.getCellType() == cell.CELL_TYPE_BOOLEAN) {
+return String.valueOf(cell.getBooleanCellValue());
+} else if (cell.getCellType() == cell.CELL_TYPE_NUMERIC) {
+return NumberToTextConverter.toText(cell.getNumericCellValue());
+} else {
+return String.valueOf(cell.getStringCellValue());
+}
+}
+@SuppressWarnings("rawtypes")
+private static Map<String, Method> getObjectSetterMethod(Class object) {
+Map<String, Method> methodMap = new HashMap<String, Method>();
+for(Field field : fields){
+String attri = field.getName();
+for(Method method : methods){
+String meth = method.getName();
+if(meth != null && "set".equals(meth.substring(0, 3)) &&
+Modifier.isPublic(method.getModifiers()) &&
+("set"+Character.toUpperCase(attri.charAt(0))+attri.substring(1)).equals(meth)){
+break;
+}
+}
+}
+return methodMap;
+}
+@SuppressWarnings("rawtypes")
+private static Map<String, Field> getObjectField(Class object) {
+Map<String, Field> fieldMap = new HashMap<String,Field>();
+for(Field field : fields){
+String attri = field.getName();
+fieldMap.put(attri.toLowerCase(), field);
+}
+return fieldMap;
+}
+}

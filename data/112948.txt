@@ -1,0 +1,4 @@
+package io.kubernetes.client.extended.controller.reconciler;
+public interface Reconciler {
+Result reconcile(Request request);
+}

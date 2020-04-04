@@ -1,0 +1,81 @@
+package com.jeff.tianti.cms.entity;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.Table;
+import com.jeff.tianti.common.entity.BaseEntity;
+@Entity
+@Table(name = "cms_column_info")
+public class ColumnInfo extends BaseEntity{
+private static final long serialVersionUID = 8427391463279205799L;
+public static final Integer CHANNEL_PC = 0;
+public static final Integer CHANNEL_H5 = 1;
+public static final Integer LEVEL_ROOT = 0;
+public static final Integer LEVEL_LEAF = 1;
+private String code;
+private String icon;
+private String name;
+private Integer level;
+private String path;
+private ColumnInfo parent;
+private Integer channel;
+private Integer orderNo;
+@Column(length = 20)
+public String getCode() {
+return code;
+}
+public void setCode(String code) {
+this.code = code;
+}
+@Column(length = 128)
+public String getIcon() {
+return icon;
+}
+public void setIcon(String icon) {
+this.icon = icon;
+}
+@Column(length = 32)
+public String getName() {
+return name;
+}
+public void setName(String name) {
+this.name = name;
+}
+@Column(name = "level")
+public Integer getLevel() {
+return level;
+}
+public void setLevel(Integer level) {
+this.level = level;
+}
+@Column(length = 512)
+public String getPath() {
+return path;
+}
+public void setPath(String path) {
+this.path = path;
+}
+@ManyToOne
+@JoinColumn(name = "parent_id")
+public ColumnInfo getParent() {
+return parent;
+}
+public void setParent(ColumnInfo parent) {
+this.parent = parent;
+}
+@Column(name = "channel")
+public Integer getChannel() {
+return channel;
+}
+public void setChannel(Integer channel) {
+this.channel = channel;
+}
+@Column(name = "order_no")
+public Integer getOrderNo() {
+return orderNo;
+}
+public void setOrderNo(Integer orderNo) {
+this.orderNo = orderNo;
+}
+}

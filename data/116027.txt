@@ -1,0 +1,20 @@
+package org.apache.rocketmq.spring.starter;
+import lombok.Data;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+@SuppressWarnings("WeakerAccess")
+@ConfigurationProperties(prefix = "spring.rocketmq")
+@Data
+public class RocketMQProperties {
+private String nameServer;
+private Producer producer;
+@Data
+public static class Producer {
+private String group;
+private int sendMsgTimeout = 3000;
+private int compressMsgBodyOverHowmuch = 1024 * 4;
+private int retryTimesWhenSendFailed = 2;
+private int retryTimesWhenSendAsyncFailed = 2;
+private boolean retryAnotherBrokerWhenNotStoreOk = false;
+private int maxMessageSize = 1024 * 1024 * 4; 
+}
+}

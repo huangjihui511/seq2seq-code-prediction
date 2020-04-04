@@ -1,0 +1,27 @@
+package com.netflix.astyanax.model;
+import java.nio.ByteBuffer;
+import java.util.Collection;
+import java.util.Date;
+import java.util.UUID;
+import com.netflix.astyanax.Serializer;
+public interface ColumnList<C> extends Iterable<Column<C>> {
+Collection<C> getColumnNames();
+Column<C> getColumnByName(C columnName);
+String getStringValue(C columnName, String defaultValue);
+String getCompressedStringValue(C columnName, String defaultValue);
+Integer getIntegerValue(C columnName, Integer defaultValue);
+Double getDoubleValue(C columnName, Double defaultValue);
+Long getLongValue(C columnName, Long defaultValue);
+byte[] getByteArrayValue(C columnName, byte[] defaultValue);
+Boolean getBooleanValue(C columnName, Boolean defaultValue);
+ByteBuffer getByteBufferValue(C columnName, ByteBuffer defaultValue);
+<T> T getValue(C columnName, Serializer<T> serializer, T defaultValue);
+Date getDateValue(C columnName, Date defaultValue);
+UUID getUUIDValue(C columnName, UUID defaultValue);
+Column<C> getColumnByIndex(int idx);
+<C2> Column<C2> getSuperColumn(C columnName, Serializer<C2> colSer);
+<C2> Column<C2> getSuperColumn(int idx, Serializer<C2> colSer);
+boolean isEmpty();
+int size();
+boolean isSuperColumn();
+}

@@ -1,0 +1,5 @@
+package tests;
+import com.google.auto.factory.AutoFactory;
+import java.util.concurrent.TimeUnit;
+@AutoFactory(extending = TimeUnit.class)
+final class InterfaceSupertype {}

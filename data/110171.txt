@@ -1,0 +1,18 @@
+package com.google.auto.value.processor;
+import com.google.common.collect.ImmutableSet;
+import com.google.escapevelocity.Template;
+import java.util.Map;
+@SuppressWarnings("unused") 
+class AutoOneOfTemplateVars extends AutoValueOrOneOfTemplateVars {
+ImmutableSet<AutoOneOfProcessor.Property> props;
+String generatedClass;
+String kindType;
+String kindGetter;
+Map<String, String> propertyToKind;
+Boolean serializable;
+private static final Template TEMPLATE = parsedTemplateForResource("autooneof.vm");
+@Override
+Template parsedTemplate() {
+return TEMPLATE;
+}
+}

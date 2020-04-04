@@ -1,0 +1,4 @@
+package io.ebean.bean;
+public interface PreGetterCallback {
+void preGetterTrigger(int propertyIndex);
+}

@@ -1,0 +1,42 @@
+package psiprobe.controllers.cluster;
+import javax.inject.Inject;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import org.springframework.web.servlet.ModelAndView;
+import psiprobe.TomcatContainer;
+import psiprobe.beans.ClusterWrapperBean;
+import psiprobe.controllers.AbstractTomcatContainerController;
+import psiprobe.model.jmx.Cluster;
+public class BaseClusterStatsController extends AbstractTomcatContainerController {
+@Inject
+private ClusterWrapperBean clusterWrapper;
+private boolean loadMembers = true;
+private long collectionPeriod;
+public ClusterWrapperBean getClusterWrapper() {
+return clusterWrapper;
+}
+public void setClusterWrapper(ClusterWrapperBean clusterWrapper) {
+this.clusterWrapper = clusterWrapper;
+}
+public boolean isLoadMembers() {
+return loadMembers;
+}
+public void setLoadMembers(boolean loadMembers) {
+this.loadMembers = loadMembers;
+}
+public long getCollectionPeriod() {
+return collectionPeriod;
+}
+public void setCollectionPeriod(long collectionPeriod) {
+this.collectionPeriod = collectionPeriod;
+}
+@Override
+protected ModelAndView handleRequestInternal(HttpServletRequest request,
+HttpServletResponse response) throws Exception {
+TomcatContainer container = getContainerWrapper().getTomcatContainer();
+Cluster cluster = getClusterWrapper().getCluster(container.getName(), container.getHostName(),
+isLoadMembers());
+return new ModelAndView(getViewName()).addObject("cluster", cluster)
+.addObject("collectionPeriod", getCollectionPeriod());
+}
+}

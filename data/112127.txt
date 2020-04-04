@@ -1,0 +1,18 @@
+package org.menacheri.jetclient.app.impl;
+import org.menacheri.jetclient.app.Player;
+import org.menacheri.jetclient.app.PlayerSession;
+import org.menacheri.jetclient.event.Event;
+public class DefaultPlayerSession extends DefaultSession implements PlayerSession
+{
+final protected Player player;
+protected DefaultPlayerSession(SessionBuilder sessionBuilder, Player player)
+{
+super(sessionBuilder);
+this.player = player;
+}
+@Override
+public Player getPlayer()
+{
+return player;
+}
+}

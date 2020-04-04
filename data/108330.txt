@@ -1,0 +1,8 @@
+package org.apache.flink.client.deployment;
+public class StandaloneClusterId {
+private static final StandaloneClusterId INSTANCE = new StandaloneClusterId();
+private StandaloneClusterId() {}
+public static StandaloneClusterId getInstance() {
+return INSTANCE;
+}
+}

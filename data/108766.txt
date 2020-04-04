@@ -1,0 +1,248 @@
+package cn.hutool.core.collection;
+import cn.hutool.core.lang.Filter;
+import cn.hutool.core.map.MapUtil;
+import cn.hutool.core.util.ArrayUtil;
+import cn.hutool.core.util.ReflectUtil;
+import cn.hutool.core.util.StrUtil;
+import java.util.*;
+import java.util.Map.Entry;
+public class IterUtil {
+public static boolean isEmpty(Iterable<?> iterable) {
+return null == iterable || isEmpty(iterable.iterator());
+}
+public static boolean isEmpty(Iterator<?> Iterator) {
+return null == Iterator || false == Iterator.hasNext();
+}
+public static boolean isNotEmpty(Iterable<?> iterable) {
+return null != iterable && isNotEmpty(iterable.iterator());
+}
+public static boolean isNotEmpty(Iterator<?> Iterator) {
+return null != Iterator && Iterator.hasNext();
+}
+public static boolean hasNull(Iterable<?> iter) {
+return hasNull(null == iter ? null : iter.iterator());
+}
+public static boolean hasNull(Iterator<?> iter) {
+if (null == iter) {
+return true;
+}
+while (iter.hasNext()) {
+if (null == iter.next()) {
+return true;
+}
+}
+return false;
+}
+public static boolean isAllNull(Iterable<?> iter) {
+return isAllNull(null == iter ? null : iter.iterator());
+}
+public static boolean isAllNull(Iterator<?> iter) {
+if (null == iter) {
+return true;
+}
+while (iter.hasNext()) {
+if (null != iter.next()) {
+return false;
+}
+}
+return true;
+}
+public static <T> Map<T, Integer> countMap(Iterable<T> iter) {
+return countMap(null == iter ? null : iter.iterator());
+}
+public static <T> Map<T, Integer> countMap(Iterator<T> iter) {
+final HashMap<T, Integer> countMap = new HashMap<>();
+if (null != iter) {
+Integer count;
+T t;
+while (iter.hasNext()) {
+t = iter.next();
+count = countMap.get(t);
+if (null == count) {
+countMap.put(t, 1);
+} else {
+countMap.put(t, count + 1);
+}
+}
+}
+return countMap;
+}
+public static <K, V> Map<K, V> fieldValueMap(Iterable<V> iter, String fieldName) {
+return fieldValueMap(null == iter ? null : iter.iterator(), fieldName);
+}
+@SuppressWarnings("unchecked")
+public static <K, V> Map<K, V> fieldValueMap(Iterator<V> iter, String fieldName) {
+final Map<K, V> result = new HashMap<>();
+if (null != iter) {
+V value;
+while (iter.hasNext()) {
+value = iter.next();
+result.put((K) ReflectUtil.getFieldValue(value, fieldName), value);
+}
+}
+return result;
+}
+public static <K, V> Map<K, V> fieldValueAsMap(Iterable<?> iterable, String fieldNameForKey, String fieldNameForValue) {
+return fieldValueAsMap(null == iterable ? null : iterable.iterator(), fieldNameForKey, fieldNameForValue);
+}
+@SuppressWarnings("unchecked")
+public static <K, V> Map<K, V> fieldValueAsMap(Iterator<?> iter, String fieldNameForKey, String fieldNameForValue) {
+final Map<K, V> result = new HashMap<>();
+if (null != iter) {
+Object value;
+while (iter.hasNext()) {
+value = iter.next();
+result.put((K) ReflectUtil.getFieldValue(value, fieldNameForKey), (V) ReflectUtil.getFieldValue(value, fieldNameForValue));
+}
+}
+return result;
+}
+public static <V> List<Object> fieldValueList(Iterable<V> iterable, String fieldName) {
+return fieldValueList(null == iterable ? null : iterable.iterator(), fieldName);
+}
+public static <V> List<Object> fieldValueList(Iterator<V> iter, String fieldName) {
+final List<Object> result = new ArrayList<>();
+if (null != iter) {
+V value;
+while (iter.hasNext()) {
+value = iter.next();
+result.add(ReflectUtil.getFieldValue(value, fieldName));
+}
+}
+return result;
+}
+public static <T> String join(Iterable<T> iterable, CharSequence conjunction) {
+if (null == iterable) {
+return null;
+}
+return join(iterable.iterator(), conjunction);
+}
+public static <T> String join(Iterable<T> iterable, CharSequence conjunction, String prefix, String suffix) {
+if (null == iterable) {
+return null;
+}
+return join(iterable.iterator(), conjunction, prefix, suffix);
+}
+public static <T> String join(Iterator<T> iterator, CharSequence conjunction) {
+return join(iterator, conjunction, null, null);
+}
+public static <T> String join(Iterator<T> iterator, CharSequence conjunction, String prefix, String suffix) {
+if (null == iterator) {
+return null;
+}
+final StringBuilder sb = new StringBuilder();
+boolean isFirst = true;
+T item;
+while (iterator.hasNext()) {
+if (isFirst) {
+isFirst = false;
+} else {
+sb.append(conjunction);
+}
+item = iterator.next();
+if (ArrayUtil.isArray(item)) {
+sb.append(ArrayUtil.join(ArrayUtil.wrap(item), conjunction, prefix, suffix));
+} else if (item instanceof Iterable<?>) {
+sb.append(join((Iterable<?>) item, conjunction, prefix, suffix));
+} else if (item instanceof Iterator<?>) {
+sb.append(join((Iterator<?>) item, conjunction, prefix, suffix));
+} else {
+sb.append(StrUtil.wrap(String.valueOf(item), prefix, suffix));
+}
+}
+return sb.toString();
+}
+public static <K, V> HashMap<K, V> toMap(Iterable<Entry<K, V>> entryIter) {
+final HashMap<K, V> map = new HashMap<>();
+if (isNotEmpty(entryIter)) {
+for (Entry<K, V> entry : entryIter) {
+map.put(entry.getKey(), entry.getValue());
+}
+}
+return map;
+}
+public static <K, V> Map<K, V> toMap(Iterable<K> keys, Iterable<V> values) {
+return toMap(keys, values, false);
+}
+public static <K, V> Map<K, V> toMap(Iterable<K> keys, Iterable<V> values, boolean isOrder) {
+return toMap(null == keys ? null : keys.iterator(), null == values ? null : values.iterator(), isOrder);
+}
+public static <K, V> Map<K, V> toMap(Iterator<K> keys, Iterator<V> values) {
+return toMap(keys, values, false);
+}
+public static <K, V> Map<K, V> toMap(Iterator<K> keys, Iterator<V> values, boolean isOrder) {
+final Map<K, V> resultMap = MapUtil.newHashMap(isOrder);
+if (isNotEmpty(keys)) {
+while (keys.hasNext()) {
+resultMap.put(keys.next(), (null != values && values.hasNext()) ? values.next() : null);
+}
+}
+return resultMap;
+}
+public static <E> List<E> toList(Iterable<E> iter) {
+if(null == iter) {
+return null;
+}
+return toList(iter.iterator());
+}
+public static <E> List<E> toList(Iterator<E> iter) {
+final List<E> list = new ArrayList<>();
+while (iter.hasNext()) {
+list.add(iter.next());
+}
+return list;
+}
+public static <E> Iterator<E> asIterator(Enumeration<E> e) {
+return new EnumerationIter<>(e);
+}
+public static <E> Iterable<E> asIterable(final Iterator<E> iter) {
+return () -> iter;
+}
+public static <T> T getFirst(Iterable<T> iterable) {
+if (null == iterable) {
+return null;
+}
+return getFirst(iterable.iterator());
+}
+public static <T> T getFirst(Iterator<T> iterator) {
+if (null != iterator && iterator.hasNext()) {
+return iterator.next();
+}
+return null;
+}
+public static Class<?> getElementType(Iterable<?> iterable) {
+if (null != iterable) {
+final Iterator<?> iterator = iterable.iterator();
+return getElementType(iterator);
+}
+return null;
+}
+public static Class<?> getElementType(Iterator<?> iterator) {
+final Iterator<?> iter2 = new CopiedIter<>(iterator);
+if (iter2.hasNext()) {
+final Object t = iter2.next();
+if (null != t) {
+return t.getClass();
+}
+}
+return null;
+}
+public static <T extends Iterable<E>, E> T filter(T iter, Filter<E> filter) {
+if(null == iter) {
+return null;
+}
+filter(iter.iterator(), filter);
+return iter;
+}
+public static <E> Iterator<E> filter(Iterator<E> iter, Filter<E> filter) {
+if (null == iter || null == filter) {
+return iter;
+}
+while(iter.hasNext()) {
+if(false == filter.accept(iter.next())) {
+iter.remove();
+}
+}
+return iter;
+}
+}

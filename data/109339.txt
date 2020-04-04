@@ -1,0 +1,9 @@
+package org.mockito.internal.configuration.injection.filter;
+public interface OngoingInjector {
+Object thenInject();
+OngoingInjector nop = new OngoingInjector() {
+public Object thenInject() {
+return null;
+}
+};
+}

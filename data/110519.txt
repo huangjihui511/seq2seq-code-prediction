@@ -1,0 +1,5 @@
+package com.baomidou.mybatisplus.core.parser;
+import org.apache.ibatis.reflection.MetaObject;
+public interface ISqlParserFilter {
+boolean doFilter(MetaObject metaObject);
+}

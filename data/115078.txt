@@ -1,0 +1,9 @@
+package io.ebeaninternal.server.query;
+import io.ebean.bean.EntityBean;
+import io.ebeaninternal.server.type.ScalarDataReader;
+public interface STreePropertyAssocOne extends STreePropertyAssoc {
+boolean isAssocId();
+ScalarDataReader<?> getIdReader();
+boolean hasForeignKey();
+EntityBean getValueAsEntityBean(EntityBean parentBean);
+}

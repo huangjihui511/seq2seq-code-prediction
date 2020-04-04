@@ -1,0 +1,14 @@
+package org.apache.flink.runtime.rpc.exceptions;
+import org.apache.flink.runtime.rpc.FencedRpcEndpoint;
+public class FencingTokenException extends RpcException {
+private static final long serialVersionUID = -500634972988881467L;
+public FencingTokenException(String message) {
+super(message);
+}
+public FencingTokenException(String message, Throwable cause) {
+super(message, cause);
+}
+public FencingTokenException(Throwable cause) {
+super(cause);
+}
+}

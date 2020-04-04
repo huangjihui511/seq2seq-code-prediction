@@ -1,0 +1,9 @@
+package org.apereo.cas.web.flow;
+import org.apereo.cas.authentication.AuthenticationServiceSelectionPlan;
+import org.apereo.cas.services.ServicesManager;
+public class ServiceAuthorizationCheckAction extends BaseServiceAuthorizationCheckAction {
+public ServiceAuthorizationCheckAction(final ServicesManager servicesManager,
+final AuthenticationServiceSelectionPlan authenticationRequestServiceSelectionStrategies) {
+super(servicesManager, authenticationRequestServiceSelectionStrategies);
+}
+}

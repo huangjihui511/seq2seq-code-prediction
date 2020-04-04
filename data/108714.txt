@@ -1,0 +1,14 @@
+package com.xkcoding.websocket.payload.server;
+import com.google.common.collect.Lists;
+import com.xkcoding.websocket.model.server.Cpu;
+import com.xkcoding.websocket.payload.KV;
+import lombok.Data;
+import java.util.List;
+@Data
+public class CpuVO {
+List<KV> data = Lists.newArrayList();
+public static CpuVO create(Cpu cpu) {
+CpuVO vo = new CpuVO();
+return vo;
+}
+}

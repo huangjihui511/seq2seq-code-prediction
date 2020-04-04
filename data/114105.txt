@@ -1,0 +1,6 @@
+package org.apache.parquet.format.event;
+import org.apache.thrift.TException;
+import org.apache.thrift.protocol.TProtocol;
+public interface FieldConsumer {
+public void consumeField(TProtocol protocol, EventBasedThriftReader eventBasedThriftReader, short id, byte type) throws TException;
+}

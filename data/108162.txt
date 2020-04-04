@@ -1,0 +1,194 @@
+package org.antlr.mojo.antlr4;
+import org.antlr.runtime.tree.Tree;
+import org.antlr.v4.Tool;
+import org.antlr.v4.misc.Graph;
+import org.antlr.v4.parse.ANTLRParser;
+import org.antlr.v4.tool.ast.GrammarAST;
+import org.antlr.v4.tool.ast.GrammarRootAST;
+import org.apache.maven.plugin.logging.Log;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.util.AbstractMap;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+class GrammarDependencies {
+private final Graph<String> graph = new Graph<String>();
+private final File sourceDirectory;
+private final File libDirectory;
+private final File statusFile;
+private final String packageName;
+private final Map<File, Map.Entry<byte[], Collection<String>>> grammars;
+private final Log log;
+public GrammarDependencies(File sourceDirectory, File libDirectory,
+List<String> arguments, File status, Log log) {
+this.log = log;
+this.sourceDirectory = sourceDirectory;
+this.libDirectory = libDirectory;
+this.statusFile = status;
+this.grammars = loadStatus(status);
+this.packageName = getPackage(arguments);
+}
+private String getPackage(List<String> arguments) {
+int index = (arguments != null) ? arguments.indexOf("-package") : -1;
+return (index > -1)
+? (arguments.get(index + 1).replace('.', File.separatorChar) +
+File.separatorChar)
+: null;
+}
+public void save() throws IOException {
+if (!grammars.isEmpty()) {
+log.debug("Persisting grammars dependency status: " + statusFile);
+ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(
+statusFile));
+try {
+out.writeObject(grammars);
+} finally {
+out.close();
+}
+}
+}
+public GrammarDependencies analyze(Set<File> grammarFiles,
+Set<File> importGrammarFiles, Tool tool) throws IOException {
+log.debug("Analysing grammar dependencies " + sourceDirectory);
+Collection<File> grammarsAndTokens = new HashSet<File>();
+grammarsAndTokens.addAll(importGrammarFiles);
+grammarsAndTokens.addAll(grammarFiles);
+for (File grammarFile : grammarsAndTokens) {
+if (!grammarFile.getName().endsWith(".tokens"))
+analyse(grammarFile, grammarsAndTokens, tool);
+}
+for (File grammarFile : grammarFiles) {
+Collection<String> usages = findUsages(getRelativePath(grammarFile));
+if (!usages.isEmpty()) {
+grammars.put(grammarFile,
+new AbstractMap.SimpleImmutableEntry<byte[], Collection<String>>(
+MojoUtils.checksum(grammarFile), usages));
+log.debug(" " + getRelativePath(grammarFile) + " used by " + usages);
+}
+}
+for (File grammarFile : importGrammarFiles) {
+Collection<String> usages = findUsages(grammarFile.getName());
+if (!usages.isEmpty()) {
+grammars.put(grammarFile,
+new AbstractMap.SimpleImmutableEntry<byte[], Collection<String>>(
+MojoUtils.checksum(grammarFile), usages));
+log.debug(" " + grammarFile.getName() + " imported by " + usages);
+}
+}
+return this;
+}
+public boolean isDependencyChanged(File grammarFile) throws IOException {
+String grammarPath = getRelativePath(grammarFile);
+for (Map.Entry<File, Map.Entry<byte[], Collection<String>>> e : grammars.entrySet()) {
+File depGrammarFile = e.getKey();
+byte[] checksum = e.getValue().getKey();
+Collection<String> usages = e.getValue().getValue();
+if (usages.contains(grammarPath)) {
+if (!depGrammarFile.exists() || !Arrays.equals(MojoUtils.checksum(depGrammarFile), checksum)) {
+log.debug(" " + grammarPath + ": dependency " +
+depGrammarFile.getName() + " changed");
+return true;
+}
+}
+}
+return false;
+}
+private String getRelativePath(File grammarFile) {
+if (grammarFile.getPath().startsWith(libDirectory.getPath()))
+return grammarFile.getName();
+if (packageName != null)
+return packageName + grammarFile.getName();
+String path = MojoUtils.findSourceSubdir(sourceDirectory, grammarFile);
+return path + grammarFile.getName();
+}
+private Collection<String> findUsages(String grammarFileName) {
+Collection<String> result = new ArrayList<String>();
+explore(grammarFileName, result);
+return result;
+}
+private void explore(String grammarName, Collection<String> result) {
+for (Graph.Node<String> node : graph.getNode(grammarName).edges) {
+result.add(node.payload);
+explore(node.payload, result);
+}
+}
+private void analyse(File grammarFile, Collection<File> grammarFiles, Tool tool) {
+GrammarRootAST grammar = tool.parseGrammar(grammarFile.getAbsolutePath());
+if (grammar == null)
+return;
+for (GrammarAST importDecl : grammar.getAllChildrenWithType(ANTLRParser.IMPORT)) {
+for (Tree id: importDecl.getAllChildrenWithType(ANTLRParser.ID)) {
+if (id != null) {
+String grammarPath = getRelativePath(grammarFile);
+graph.addEdge(id.getText() + ".g4", grammarPath);
+}
+}
+}
+for (GrammarAST options : grammar.getAllChildrenWithType(ANTLRParser.OPTIONS)) {
+for (int i = 0, count = options.getChildCount(); i < count; i++) {
+Tree option = options.getChild(i);
+if (option.getType() == ANTLRParser.ASSIGN) {
+String key = option.getChild(0).getText();
+String value = option.getChild(1).getText();
+if ("tokenVocab".equals(key)) {
+String name = stripQuotes(value);
+String grammarName = stripPath(name);
+String grammarPath = MojoUtils.findSourceSubdir(sourceDirectory,
+grammarFile);
+File depGrammarFile = resolve(grammarName, grammarPath);
+if (packageName != null)
+grammarPath = packageName;
+graph.addEdge(getRelativePath(depGrammarFile),
+grammarPath + grammarFile.getName());
+}
+}
+}
+}
+}
+private File resolve(String name, String path) {
+File file = new File(sourceDirectory, path + name + ".g4");
+if (file.exists())
+return file;
+file = new File(libDirectory, name + ".g4");
+if (file.exists())
+return file;
+return new File(libDirectory, name + ".tokens");
+}
+private Map<File, Map.Entry<byte[], Collection<String>>> loadStatus(File statusFile) {
+if (statusFile.exists()) {
+log.debug("Load grammars dependency status: " + statusFile);
+try {
+ObjectInputStream in = new ObjectInputStream(new FileInputStream(
+statusFile));
+try {
+@SuppressWarnings("unchecked")
+Map<File, Map.Entry<byte[], Collection<String>>> data =
+(Map<File, Map.Entry<byte[], Collection<String>>>)
+in.readObject();
+return data;
+} finally {
+in.close();
+}
+} catch (Exception ex) {
+log.warn("Could not load grammar dependency status information", ex);
+}
+}
+return new HashMap<File, Map.Entry<byte[], Collection<String>>>();
+}
+private String stripPath(String str) {
+return str.replaceAll("^.*[/\\\\]", "");
+}
+private String stripQuotes(String str) {
+return str.replaceAll("\\A'|'\\Z", "");
+}
+}

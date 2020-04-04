@@ -1,0 +1,9 @@
+package com.twelvemonkeys.io.enc;
+public class DeflateEncoderTestCase extends EncoderAbstractTestCase {
+protected Encoder createEncoder() {
+return new DeflateEncoder();
+}
+protected Decoder createCompatibleDecoder() {
+return new InflateDecoder();
+}
+}

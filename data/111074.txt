@@ -1,0 +1,24 @@
+package org.apereo.cas.cassandra;
+import com.datastax.driver.core.Session;
+import com.datastax.driver.core.policies.DefaultRetryPolicy;
+import com.datastax.driver.core.policies.DowngradingConsistencyRetryPolicy;
+import com.datastax.driver.core.policies.FallthroughRetryPolicy;
+import com.datastax.driver.core.policies.RetryPolicy;
+@FunctionalInterface
+public interface CassandraSessionFactory {
+int MAX_TTL = 10 * 365 * 24 * 60 * 60;
+Session getSession();
+enum RetryPolicyType {
+DEFAULT_RETRY_POLICY(DefaultRetryPolicy.INSTANCE),
+DOWNGRADING_CONSISTENCY_RETRY_POLICY(DowngradingConsistencyRetryPolicy.INSTANCE),
+FALLTHROUGH_RETRY_POLICY(FallthroughRetryPolicy.INSTANCE);
+@SuppressWarnings("ImmutableEnumChecker")
+private final RetryPolicy retryPolicy;
+RetryPolicyType(final RetryPolicy retryPolicy) {
+this.retryPolicy = retryPolicy;
+}
+public RetryPolicy getRetryPolicy() {
+return this.retryPolicy;
+}
+}
+}

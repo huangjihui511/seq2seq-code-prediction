@@ -1,0 +1,38 @@
+package org.spongepowered.mod.registry;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.ImmutableSetMultimap;
+import com.google.common.collect.SetMultimap;
+import net.minecraft.item.ItemStack;
+import net.minecraftforge.oredict.OreDictionary;
+import org.spongepowered.api.GameDictionary;
+import org.spongepowered.common.registry.SpongeGameDictionaryEntry;
+import java.util.Set;
+public class SpongeForgeGameDictionary implements GameDictionary {
+public static final GameDictionary instance = new SpongeForgeGameDictionary();
+private SpongeForgeGameDictionary() {
+}
+@Override
+public void register(final String key, final Entry entry) {
+final ItemStack stack = ((SpongeGameDictionaryEntry) entry).bridge$createDictionaryStack(OreDictionary.WILDCARD_VALUE);
+stack.setCount(1);
+OreDictionary.registerOre(key, stack);
+}
+@Override
+public Set<Entry> get(final String key) {
+final ImmutableSet.Builder<Entry> items = ImmutableSet.builder();
+for (ItemStack itemStack : OreDictionary.getOres(key)) {
+itemStack = itemStack.copy();
+itemStack.setCount(1);
+items.add(SpongeGameDictionaryEntry.of(itemStack, OreDictionary.WILDCARD_VALUE));
+}
+return items.build();
+}
+@Override
+public SetMultimap<String, Entry> getAll() {
+final ImmutableSetMultimap.Builder<String, Entry> allItems = ImmutableSetMultimap.builder();
+for (final String key : OreDictionary.getOreNames()) {
+allItems.putAll(key, this.get(key));
+}
+return allItems.build();
+}
+}

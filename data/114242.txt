@@ -1,0 +1,15 @@
+package com.datumbox.framework.development.switchers;
+import com.datumbox.framework.development.FeatureContext;
+import com.datumbox.framework.development.interfaces.Feature;
+public enum Example implements Feature {
+OPTION1,
+OPTION2;
+@Override
+public boolean isActivated() {
+return FeatureContext.isActive(this);
+}
+@Override
+public String toString() {
+return name();
+}
+}

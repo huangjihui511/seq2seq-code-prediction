@@ -1,0 +1,105 @@
+package io.flutter.android;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.EnvironmentUtil;
+import io.flutter.sdk.FlutterSdk;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import java.util.ArrayList;
+import java.util.List;
+public class IntelliJAndroidSdk {
+private static final Logger LOG = Logger.getInstance(IntelliJAndroidSdk.class);
+@NotNull
+private final Sdk sdk;
+@NotNull
+private final VirtualFile home;
+private IntelliJAndroidSdk(@NotNull Sdk sdk, @NotNull VirtualFile home) {
+this.sdk = sdk;
+this.home = home;
+}
+@NotNull
+public VirtualFile getHome() {
+return home;
+}
+public void setCurrent(@NotNull Project project) {
+assert ApplicationManager.getApplication().isWriteAccessAllowed();
+final ProjectRootManager roots = ProjectRootManager.getInstance(project);
+roots.setProjectSdk(sdk);
+}
+@Nullable
+public static IntelliJAndroidSdk fromProject(@NotNull Project project) {
+final Sdk candidate = ProjectRootManager.getInstance(project).getProjectSdk();
+return fromSdk(candidate);
+}
+@Nullable
+public static IntelliJAndroidSdk fromEnvironment() {
+final String path = EnvironmentUtil.getValue("ANDROID_HOME");
+if (path == null) {
+return null;
+}
+final VirtualFile file = LocalFileSystem.getInstance().findFileByPath(path);
+if (file == null) {
+return null;
+}
+return fromHome(file);
+}
+@Nullable
+public static IntelliJAndroidSdk fromHome(VirtualFile file) {
+for (IntelliJAndroidSdk candidate : findAll()) {
+if (file.equals(candidate.getHome())) {
+return candidate;
+}
+}
+return null; 
+}
+public static String chooseAndroidHome(@Nullable Project project, boolean askFlutterTools) {
+if (project == null) {
+return EnvironmentUtil.getValue("ANDROID_HOME");
+}
+final IntelliJAndroidSdk intelliJAndroidSdk = fromProject(project);
+if (intelliJAndroidSdk != null) {
+return intelliJAndroidSdk.getHome().getPath();
+}
+if (askFlutterTools) {
+final FlutterSdk flutterSdk = FlutterSdk.getFlutterSdk(project);
+if (flutterSdk != null) {
+final String androidSdkLocation = flutterSdk.queryFlutterConfig("android-sdk", true);
+if (androidSdkLocation != null) {
+return androidSdkLocation;
+}
+}
+}
+return EnvironmentUtil.getValue("ANDROID_HOME");
+}
+@NotNull
+private static List<IntelliJAndroidSdk> findAll() {
+final List<IntelliJAndroidSdk> result = new ArrayList<>();
+for (Sdk sdk : ProjectJdkTable.getInstance().getAllJdks()) {
+final IntelliJAndroidSdk candidate = IntelliJAndroidSdk.fromSdk(sdk);
+if (candidate != null) {
+result.add(candidate);
+}
+}
+return result;
+}
+@Nullable
+private static IntelliJAndroidSdk fromSdk(@Nullable Sdk candidate) {
+if (candidate == null) {
+return null;
+}
+if (!"Android SDK".equals(candidate.getSdkType().getName())) {
+return null;
+}
+final VirtualFile home = candidate.getHomeDirectory();
+if (home == null) {
+return null; 
+}
+return new IntelliJAndroidSdk(candidate, home);
+}
+}

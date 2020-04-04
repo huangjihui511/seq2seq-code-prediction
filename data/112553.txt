@@ -1,0 +1,104 @@
+package com.sun.swingset3.demos.spinner;
+import javax.swing.*;
+import java.awt.*;
+import java.awt.geom.Point2D;
+import javax.swing.event.ChangeListener;
+import javax.swing.event.ChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeEvent;
+import com.sun.swingset3.demos.ResourceManager;
+public class MandelbrotControl extends JPanel {
+private final JMandelbrot mandelbrot;
+private JSpinner iterSpinner;
+private CoordSpinner xSpinner;
+private CoordSpinner ySpinner;
+private static final double COORD_SPINNER_STEP = 0.1d; 
+private final ResourceManager resourceManager;
+public MandelbrotControl(JMandelbrot mandelbrot,
+ResourceManager resourceManager) {
+this.mandelbrot = mandelbrot;
+this.resourceManager = resourceManager;
+createUI();
+installListeners();
+}
+private void createUI() {
+setLayout(new FlowLayout(FlowLayout.LEADING, 5, 0));
+setBorder(BorderFactory.createTitledBorder(
+resourceManager.getString("SpinnerDemo.fractalControls")));
+JSpinnerPanel spinnerPanel = new JSpinnerPanel();
+iterSpinner = new JSpinner(new SpinnerNumberModel(
+mandelbrot.getMaxIteration(), 10, 100000, 50));
+iterSpinner.addChangeListener(new ChangeListener() {
+public void stateChanged(ChangeEvent e) {
+mandelbrot.setMaxIteration((Integer) iterSpinner.getValue());
+mandelbrot.calculatePicture();
+}
+});
+spinnerPanel.addSpinner(
+resourceManager.getString("SpinnerDemo.iterations"), iterSpinner);
+final double xValue = mandelbrot.getCenter().getX();
+double width = mandelbrot.getXHighLimit() - mandelbrot.getXLowLimit();
+xSpinner = new CoordSpinner(xValue, width * COORD_SPINNER_STEP);
+xSpinner.addChangeListener(new ChangeListener() {
+public void stateChanged(ChangeEvent e) {
+Double newX = (Double) xSpinner.getValue();
+mandelbrot.setCenter(new Point2D.Double(
+newX, mandelbrot.getCenter().getY()));
+mandelbrot.calculatePicture();
+}
+});
+spinnerPanel.addSpinner(
+resourceManager.getString("SpinnerDemo.x"), xSpinner);
+final double yValue = mandelbrot.getCenter().getY();
+double height = mandelbrot.getYHighLimit() - mandelbrot.getYLowLimit();
+ySpinner = new CoordSpinner(yValue, height * COORD_SPINNER_STEP);
+ySpinner.addChangeListener(new ChangeListener() {
+public void stateChanged(ChangeEvent e) {
+Double newY = (Double) ySpinner.getValue();
+mandelbrot.setCenter(new Point2D.Double(
+mandelbrot.getCenter().getX(), newY));
+mandelbrot.calculatePicture();
+}
+});
+spinnerPanel.addSpinner(
+resourceManager.getString("SpinnerDemo.y"), ySpinner);
+add(spinnerPanel);
+}
+private void installListeners() {
+mandelbrot.addPropertyChangeListener(
+JMandelbrot.CENTER_PROPERTY_NAME,
+new PropertyChangeListener() {
+public void propertyChange(PropertyChangeEvent evt) {
+double width = mandelbrot.getXHighLimit()
+- mandelbrot.getXLowLimit();
+double newX = mandelbrot.getCenter().getX();
+xSpinner.updateModel(newX, width * COORD_SPINNER_STEP);
+double height = mandelbrot.getYHighLimit()
+- mandelbrot.getYLowLimit();
+double newY = mandelbrot.getCenter().getY();
+ySpinner.updateModel(newY, height * COORD_SPINNER_STEP);
+}
+}
+);
+}
+private static class CoordSpinner extends JSpinner {
+@Override
+protected JComponent createEditor(SpinnerModel model) {
+return new NumberEditor(this, "#.####################");
+}
+public CoordSpinner(double value, double stepSize) {
+super(new SpinnerNumberModel(value, -100, 100, stepSize));
+}
+public void updateModel(double value, double stepSize) {
+SpinnerNumberModel model = (SpinnerNumberModel) getModel();
+model.setValue(value);
+model.setStepSize(stepSize);
+}
+@Override
+public Dimension getPreferredSize() {
+Dimension prefSize = super.getPreferredSize();
+prefSize.setSize(180, prefSize.getHeight());
+return prefSize;
+}
+}
+}

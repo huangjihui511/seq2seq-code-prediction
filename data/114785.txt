@@ -1,0 +1,14 @@
+package com.briup.common.exception;
+public class OrderServiceException extends Exception {
+public OrderServiceException() {
+}
+public OrderServiceException(String message) {
+super(message);
+}
+public OrderServiceException(Throwable cause) {
+super(cause);
+}
+public OrderServiceException(String message, Throwable cause) {
+super(message, cause);
+}
+}

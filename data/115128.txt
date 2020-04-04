@@ -1,0 +1,8 @@
+package io.ebean;
+import javax.persistence.PersistenceException;
+public class DataIntegrityException extends PersistenceException {
+private static final long serialVersionUID = -6740171949170180970L;
+public DataIntegrityException(String message, Throwable cause) {
+super(message, cause);
+}
+}

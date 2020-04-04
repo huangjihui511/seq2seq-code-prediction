@@ -1,0 +1,11 @@
+package net.pms.formats.audio;
+public class SHN extends AudioBase {
+@Override
+public Identifier getIdentifier() {
+return Identifier.SHN;
+}
+@Override
+public String[] getSupportedExtensions() {
+return new String[] { "shn" };
+}
+}

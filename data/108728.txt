@@ -1,0 +1,100 @@
+package com.xkcoding.rbac.security.repository;
+import cn.hutool.core.date.DateTime;
+import cn.hutool.core.date.DateUtil;
+import cn.hutool.core.lang.Snowflake;
+import com.xkcoding.rbac.security.SpringBootDemoRbacSecurityApplicationTests;
+import com.xkcoding.rbac.security.model.*;
+import com.xkcoding.rbac.security.model.unionkey.RolePermissionKey;
+import com.xkcoding.rbac.security.model.unionkey.UserRoleKey;
+import org.junit.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+public class DataInitTest extends SpringBootDemoRbacSecurityApplicationTests {
+@Autowired
+private UserDao userDao;
+@Autowired
+private RoleDao roleDao;
+@Autowired
+private PermissionDao permissionDao;
+@Autowired
+private UserRoleDao userRoleDao;
+@Autowired
+private RolePermissionDao rolePermissionDao;
+@Autowired
+private Snowflake snowflake;
+@Autowired
+private BCryptPasswordEncoder encoder;
+@Test
+public void initTest() {
+init();
+}
+private void init() {
+User admin = createUser(true);
+User user = createUser(false);
+Role roleAdmin = createRole(true);
+Role roleUser = createRole(false);
+createUserRoleRelation(admin.getId(), roleAdmin.getId());
+createUserRoleRelation(user.getId(), roleUser.getId());
+createRolePermissionRelation(roleAdmin.getId(), testPagePerm.getId());
+createRolePermissionRelation(roleUser.getId(), testPagePerm.getId());
+createRolePermissionRelation(roleAdmin.getId(), testBtnQueryPerm.getId());
+createRolePermissionRelation(roleUser.getId(), testBtnQueryPerm.getId());
+createRolePermissionRelation(roleAdmin.getId(), testBtnPermInsert.getId());
+createRolePermissionRelation(roleAdmin.getId(), monitorOnlinePagePerm.getId());
+createRolePermissionRelation(roleAdmin.getId(), monitorOnlineBtnQueryPerm.getId());
+createRolePermissionRelation(roleAdmin.getId(), monitorOnlineBtnKickoutPerm.getId());
+}
+private void createRolePermissionRelation(Long roleId, Long permissionId) {
+RolePermission adminPage = new RolePermission();
+RolePermissionKey adminPageKey = new RolePermissionKey();
+adminPageKey.setRoleId(roleId);
+adminPageKey.setPermissionId(permissionId);
+adminPage.setId(adminPageKey);
+rolePermissionDao.save(adminPage);
+}
+private Permission createPermission(String url, String name, Integer type, String permission, String method, Integer sort, Long parentId) {
+Permission perm = new Permission();
+perm.setId(snowflake.nextId());
+perm.setUrl(url);
+perm.setName(name);
+perm.setType(type);
+perm.setPermission(permission);
+perm.setMethod(method);
+perm.setSort(sort);
+perm.setParentId(parentId);
+permissionDao.save(perm);
+return perm;
+}
+private void createUserRoleRelation(Long userId, Long roleId) {
+UserRole userRole = new UserRole();
+UserRoleKey key = new UserRoleKey();
+key.setUserId(userId);
+key.setRoleId(roleId);
+userRole.setId(key);
+userRoleDao.save(userRole);
+}
+private Role createRole(boolean isAdmin) {
+Role role = new Role();
+role.setId(snowflake.nextId());
+role.setCreateTime(DateUtil.current(false));
+role.setUpdateTime(DateUtil.current(false));
+roleDao.save(role);
+return role;
+}
+private User createUser(boolean isAdmin) {
+User user = new User();
+user.setId(snowflake.nextId());
+user.setUsername(isAdmin ? "admin" : "user");
+user.setPassword(encoder.encode("123456"));
+user.setBirthday(DateTime.of("1994-11-22", "yyyy-MM-dd")
+.getTime());
+user.setEmail((isAdmin ? "admin" : "user") + "@xkcoding.com");
+user.setPhone(isAdmin ? "17300000000" : "17300001111");
+user.setSex(1);
+user.setStatus(1);
+user.setCreateTime(DateUtil.current(false));
+user.setUpdateTime(DateUtil.current(false));
+userDao.save(user);
+return user;
+}
+}

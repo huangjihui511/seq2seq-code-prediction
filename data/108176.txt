@@ -1,0 +1,19 @@
+package org.antlr.v4.test.runtime;
+import org.antlr.v4.runtime.misc.Pair;
+import java.util.List;
+public interface RuntimeTestDescriptor {
+String getTestName();
+String getTestType();
+String getInput();
+String getOutput();
+String getErrors();
+String getANTLRToolErrors();
+String getStartRule(); 
+boolean showDFA();
+boolean showDiagnosticErrors();
+Pair<String,String> getGrammar();
+List<Pair<String,String>> getSlaveGrammars();
+String getTarget();
+void setTarget(String targetName);
+boolean ignore(String targetName);
+}

@@ -1,0 +1,29 @@
+package io.flutter.analytics;
+public class ThrottlingBucket {
+private final int startingCount;
+private int drops;
+private long lastReplenish;
+public ThrottlingBucket(final int startingCount) {
+this.startingCount = startingCount;
+this.drops = startingCount;
+this.lastReplenish = System.currentTimeMillis();
+}
+public boolean removeDrop() {
+checkReplenish();
+if (drops <= 0) {
+return false;
+}
+else {
+drops--;
+return true;
+}
+}
+private void checkReplenish() {
+final long now = System.currentTimeMillis();
+if (lastReplenish + 1000L >= now) {
+final int inc = ((int)(now - lastReplenish)) / 1000;
+drops = Math.min(drops + inc, startingCount);
+lastReplenish += (1000L * inc);
+}
+}
+}

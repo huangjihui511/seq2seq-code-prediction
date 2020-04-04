@@ -1,0 +1,91 @@
+package com.pokegoapi.api.map;
+import POGOProtos.Map.MapCellOuterClass.MapCell;
+import POGOProtos.Networking.Requests.Messages.GetMapObjectsMessageOuterClass.GetMapObjectsMessage;
+import POGOProtos.Networking.Requests.RequestTypeOuterClass.RequestType;
+import POGOProtos.Networking.Responses.GetMapObjectsResponseOuterClass.GetMapObjectsResponse;
+import com.google.protobuf.InvalidProtocolBufferException;
+import com.pokegoapi.api.PokemonGo;
+import com.pokegoapi.exceptions.request.RequestFailedException;
+import com.pokegoapi.google.common.geometry.MutableInteger;
+import com.pokegoapi.google.common.geometry.S2CellId;
+import com.pokegoapi.google.common.geometry.S2LatLng;
+import com.pokegoapi.main.ServerRequest;
+import lombok.Getter;
+import java.util.ArrayList;
+import java.util.List;
+public class Map {
+private final PokemonGo api;
+private int defaultCellWidth = 3;
+@Getter
+public MapObjects mapObjects;
+@Getter
+private long mapUpdateTime;
+private final Object updateLock = new Object();
+public Map(PokemonGo api) {
+this.api = api;
+this.mapObjects = new MapObjects(api);
+}
+public boolean update() throws RequestFailedException {
+boolean updated = false;
+if (!(Double.isNaN(api.latitude) || Double.isNaN(api.longitude))) {
+this.mapObjects = requestMapObjects();
+updated = true;
+}
+synchronized (this.updateLock) {
+this.updateLock.notifyAll();
+}
+return updated;
+}
+protected MapObjects requestMapObjects()
+throws RequestFailedException {
+List<Long> cells = getDefaultCells();
+GetMapObjectsMessage.Builder builder = GetMapObjectsMessage.newBuilder();
+builder.setLatitude(api.latitude);
+builder.setLongitude(api.longitude);
+for (Long cell : cells) {
+builder.addCellId(cell);
+builder.addSinceTimestampMs(0);
+}
+ServerRequest request = new ServerRequest(RequestType.GET_MAP_OBJECTS, builder.build());
+api.requestHandler.sendServerRequests(request, true);
+try {
+long updateTime = mapUpdateTime;
+GetMapObjectsResponse response = GetMapObjectsResponse.parseFrom(request.getData());
+MapObjects mapObjects = new MapObjects(api);
+for (MapCell cell : response.getMapCellsList()) {
+mapObjects.addCell(cell);
+updateTime = Math.max(updateTime, cell.getCurrentTimestampMs());
+}
+mapUpdateTime = updateTime;
+return mapObjects;
+} catch (InvalidProtocolBufferException e) {
+throw new RequestFailedException(e);
+}
+}
+private List<Long> getDefaultCells() {
+return getCellIds(api.latitude, api.longitude, defaultCellWidth);
+}
+public List<Long> getCellIds(double latitude, double longitude, int width) {
+S2LatLng latLng = S2LatLng.fromDegrees(latitude, longitude);
+S2CellId cellId = S2CellId.fromLatLng(latLng).parent(15);
+MutableInteger index = new MutableInteger(0);
+MutableInteger jindex = new MutableInteger(0);
+int level = cellId.level();
+int size = 1 << (S2CellId.MAX_LEVEL - level);
+int face = cellId.toFaceIJOrientation(index, jindex, null);
+List<Long> cells = new ArrayList<>();
+int halfWidth = (int) Math.floor(width / 2);
+for (int x = -halfWidth; x <= halfWidth; x++) {
+for (int y = -halfWidth; y <= halfWidth; y++) {
+cells.add(S2CellId.fromFaceIJ(face, index.intValue() + x * size,
+jindex.intValue() + y * size).parent(15).id());
+}
+}
+return cells;
+}
+public void awaitUpdate() throws InterruptedException {
+synchronized (this.updateLock) {
+this.updateLock.wait();
+}
+}
+}

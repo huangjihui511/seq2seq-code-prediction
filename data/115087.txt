@@ -1,0 +1,14 @@
+package io.ebean.cache;
+public enum ServerCacheType {
+BEAN("_B"),
+NATURAL_KEY("_N"),
+COLLECTION_IDS("_C"),
+QUERY("_Q");
+private final String code;
+ServerCacheType(String code) {
+this.code = code;
+}
+public String code(){
+return code;
+}
+}

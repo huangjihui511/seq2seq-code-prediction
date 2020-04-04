@@ -1,0 +1,28 @@
+package com.github.benmanes.caffeine.profiler;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.LongAdder;
+import com.github.benmanes.caffeine.testing.ConcurrentTestHarness;
+import com.google.common.base.Stopwatch;
+public abstract class ProfilerHook {
+static int DISPLAY_DELAY_SEC = 5;
+static int NUM_THREADS = 8;
+protected final LongAdder calls;
+ProfilerHook() {
+calls = new LongAdder();
+}
+public final void run() {
+scheduleStatusTask();
+ConcurrentTestHarness.timeTasks(NUM_THREADS, this::profile);
+}
+protected abstract void profile();
+@SuppressWarnings("FutureReturnValueIgnored")
+private void scheduleStatusTask() {
+Stopwatch stopwatch = Stopwatch.createStarted();
+Executors.newSingleThreadScheduledExecutor().scheduleWithFixedDelay(() -> {
+long count = calls.longValue();
+long rate = count / stopwatch.elapsed(TimeUnit.SECONDS);
+System.out.printf("%s - %,d [%,d / sec]%n", stopwatch, count, rate);
+}, DISPLAY_DELAY_SEC, DISPLAY_DELAY_SEC, TimeUnit.SECONDS);
+}
+}

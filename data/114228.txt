@@ -1,0 +1,5 @@
+package com.datumbox.framework.common.interfaces;
+import java.util.Properties;
+public interface Configurable {
+public void load(Properties properties);
+}

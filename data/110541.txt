@@ -1,0 +1,22 @@
+package com.github.florent37.materialviewpager.header;
+import android.content.Context;
+import android.graphics.drawable.Drawable;
+import android.util.AttributeSet;
+import com.flaviofaria.kenburnsview.KenBurnsView;
+public class MaterialViewPagerKenBurnsHeader extends KenBurnsView {
+public MaterialViewPagerKenBurnsHeader(Context context) {
+super(context);
+}
+public MaterialViewPagerKenBurnsHeader(Context context, AttributeSet attrs) {
+super(context, attrs);
+}
+public MaterialViewPagerKenBurnsHeader(Context context, AttributeSet attrs, int defStyle) {
+super(context, attrs, defStyle);
+}
+public void setImageUrl(final String urlImage, final int fadeDuration) {
+MaterialViewPagerImageHelper.setImageUrl(this, urlImage, fadeDuration);
+}
+public void setImageDrawable(final Drawable drawable, final int fadeDuration) {
+MaterialViewPagerImageHelper.setImageDrawable(this, drawable, fadeDuration);
+}
+}

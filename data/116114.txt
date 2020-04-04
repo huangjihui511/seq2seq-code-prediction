@@ -1,0 +1,13 @@
+package net.i2p.router.peermanager;
+class PeerSelectionCriteria {
+public final static int PURPOSE_TEST = 4;
+private int _minReq;
+private int _maxReq;
+private int _purpose;
+public int getMinimumRequired() { return _minReq; }
+public void setMinimumRequired(int min) { _minReq = min; }
+public int getMaximumRequired() { return _maxReq; }
+public void setMaximumRequired(int max) { _maxReq = max; }
+public int getPurpose() { return _purpose; }
+public void setPurpose(int purpose) { _purpose = purpose; }
+}

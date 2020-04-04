@@ -1,0 +1,35 @@
+package mobi.hsz.idea.gitignore.indexing;
+import com.intellij.openapi.project.DumbAware;
+import com.intellij.util.indexing.*;
+import com.intellij.util.io.KeyDescriptor;
+import org.jetbrains.annotations.NotNull;
+public abstract class AbstractIgnoreFilesIndex<K, V> extends FileBasedIndexExtension<K, V>
+implements KeyDescriptor<K>, DataIndexer<K, V, FileContent>, FileBasedIndex.InputFilter, DumbAware {
+@NotNull
+@Override
+public DataIndexer<K, V, FileContent> getIndexer() {
+return this;
+}
+@NotNull
+@Override
+public KeyDescriptor<K> getKeyDescriptor() {
+return this;
+}
+@Override
+public boolean isEqual(K val1, K val2) {
+return val1.equals(val2);
+}
+@Override
+public int getHashCode(K value) {
+return value.hashCode();
+}
+@Override
+public boolean dependsOnFileContent() {
+return true;
+}
+@NotNull
+@Override
+public FileBasedIndex.InputFilter getInputFilter() {
+return this;
+}
+}

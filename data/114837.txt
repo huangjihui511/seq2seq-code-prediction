@@ -1,0 +1,32 @@
+package com.google.api.client.http.protobuf;
+import com.google.api.client.http.AbstractHttpContent;
+import com.google.api.client.http.HttpMediaType;
+import com.google.api.client.protobuf.ProtocolBuffers;
+import com.google.api.client.util.Beta;
+import com.google.api.client.util.Preconditions;
+import com.google.protobuf.MessageLite;
+import java.io.IOException;
+import java.io.OutputStream;
+@Beta
+public class ProtoHttpContent extends AbstractHttpContent {
+private final MessageLite message;
+public ProtoHttpContent(MessageLite message) {
+super(ProtocolBuffers.CONTENT_TYPE);
+this.message = Preconditions.checkNotNull(message);
+}
+@Override
+public long getLength() throws IOException {
+return message.getSerializedSize();
+}
+public void writeTo(OutputStream out) throws IOException {
+message.writeTo(out);
+out.flush();
+}
+public final MessageLite getMessage() {
+return message;
+}
+@Override
+public ProtoHttpContent setMediaType(HttpMediaType mediaType) {
+return (ProtoHttpContent) super.setMediaType(mediaType);
+}
+}

@@ -1,0 +1,60 @@
+package com.alibaba.cloud.sentinel.datasource;
+import java.util.Arrays;
+import java.util.Optional;
+import com.alibaba.cloud.sentinel.datasource.config.AbstractDataSourceProperties;
+import com.alibaba.csp.sentinel.slots.block.AbstractRule;
+import com.alibaba.csp.sentinel.slots.block.authority.AuthorityRule;
+import com.alibaba.csp.sentinel.slots.block.degrade.DegradeRule;
+import com.alibaba.csp.sentinel.slots.block.flow.FlowRule;
+import com.alibaba.csp.sentinel.slots.block.flow.param.ParamFlowRule;
+import com.alibaba.csp.sentinel.slots.system.SystemRule;
+import org.springframework.util.StringUtils;
+public enum RuleType {
+FLOW("flow", FlowRule.class),
+DEGRADE("degrade", DegradeRule.class),
+PARAM_FLOW("param-flow", ParamFlowRule.class),
+SYSTEM("system", SystemRule.class),
+AUTHORITY("authority", AuthorityRule.class),
+GW_FLOW("gw-flow",
+"com.alibaba.csp.sentinel.adapter.gateway.common.rule.GatewayFlowRule"),
+GW_API_GROUP("gw-api-group",
+"com.alibaba.csp.sentinel.adapter.gateway.common.api.ApiDefinition");
+private final String name;
+private Class clazz;
+private String clazzName;
+RuleType(String name, Class clazz) {
+this.name = name;
+this.clazz = clazz;
+}
+RuleType(String name, String clazzName) {
+this.name = name;
+this.clazzName = clazzName;
+}
+public String getName() {
+return name;
+}
+public Class getClazz() {
+if (clazz != null) {
+return clazz;
+}
+else {
+try {
+return Class.forName(clazzName);
+}
+catch (ClassNotFoundException e) {
+throw new RuntimeException(e);
+}
+}
+}
+public static Optional<RuleType> getByName(String name) {
+if (StringUtils.isEmpty(name)) {
+return Optional.empty();
+}
+return Arrays.stream(RuleType.values())
+.filter(ruleType -> name.equals(ruleType.getName())).findFirst();
+}
+public static Optional<RuleType> getByClass(Class clazz) {
+return Arrays.stream(RuleType.values())
+.filter(ruleType -> clazz == ruleType.getClazz()).findFirst();
+}
+}

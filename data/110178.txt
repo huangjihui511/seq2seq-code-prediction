@@ -1,0 +1,92 @@
+package com.google.auto.common;
+import static com.google.auto.common.MoreElements.isAnnotationPresent;
+import static com.google.common.base.Preconditions.checkNotNull;
+import com.google.common.base.Equivalence;
+import com.google.common.base.Predicate;
+import com.google.common.collect.FluentIterable;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
+import java.lang.annotation.Annotation;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import javax.lang.model.element.AnnotationMirror;
+import javax.lang.model.element.AnnotationValue;
+import javax.lang.model.element.Element;
+import javax.lang.model.element.ExecutableElement;
+import javax.lang.model.type.DeclaredType;
+import javax.lang.model.util.ElementFilter;
+import javax.lang.model.util.Elements;
+public final class AnnotationMirrors {
+private static final Equivalence<AnnotationMirror> ANNOTATION_MIRROR_EQUIVALENCE =
+new Equivalence<AnnotationMirror>() {
+@Override
+protected boolean doEquivalent(AnnotationMirror left, AnnotationMirror right) {
+return MoreTypes.equivalence().equivalent(left.getAnnotationType(),
+right.getAnnotationType()) && AnnotationValues.equivalence().pairwise().equivalent(
+getAnnotationValuesWithDefaults(left).values(),
+getAnnotationValuesWithDefaults(right).values());
+}
+@Override
+protected int doHash(AnnotationMirror annotation) {
+DeclaredType type = annotation.getAnnotationType();
+Iterable<AnnotationValue> annotationValues =
+getAnnotationValuesWithDefaults(annotation).values();
+return Arrays.hashCode(new int[] {MoreTypes.equivalence().hash(type),
+AnnotationValues.equivalence().pairwise().hash(annotationValues)});
+}
+};
+public static Equivalence<AnnotationMirror> equivalence() {
+return ANNOTATION_MIRROR_EQUIVALENCE;
+}
+public static ImmutableMap<ExecutableElement, AnnotationValue> getAnnotationValuesWithDefaults(
+AnnotationMirror annotation) {
+ImmutableMap.Builder<ExecutableElement, AnnotationValue> values = ImmutableMap.builder();
+Map<? extends ExecutableElement, ? extends AnnotationValue> declaredValues =
+annotation.getElementValues();
+for (ExecutableElement method :
+ElementFilter.methodsIn(annotation.getAnnotationType().asElement().getEnclosedElements())) {
+if (declaredValues.containsKey(method)) {
+values.put(method, declaredValues.get(method));
+} else if (method.getDefaultValue() != null) {
+values.put(method, method.getDefaultValue());
+} else {
+throw new IllegalStateException(
+"Unset annotation value without default should never happen: "
++ MoreElements.asType(method.getEnclosingElement()).getQualifiedName()
++ '.' + method.getSimpleName() + "()");
+}
+}
+return values.build();
+}
+public static AnnotationValue getAnnotationValue(
+AnnotationMirror annotationMirror, String elementName) {
+return getAnnotationElementAndValue(annotationMirror, elementName).getValue();
+}
+public static Map.Entry<ExecutableElement, AnnotationValue> getAnnotationElementAndValue(
+AnnotationMirror annotationMirror, final String elementName) {
+checkNotNull(annotationMirror);
+checkNotNull(elementName);
+for (Map.Entry<ExecutableElement, AnnotationValue> entry :
+getAnnotationValuesWithDefaults(annotationMirror).entrySet()) {
+if (entry.getKey().getSimpleName().contentEquals(elementName)) {
+return entry;
+}
+}
+throw new IllegalArgumentException(String.format("@%s does not define an element %s()",
+MoreElements.asType(annotationMirror.getAnnotationType().asElement()).getQualifiedName(),
+elementName));
+}
+public static ImmutableSet<? extends AnnotationMirror> getAnnotatedAnnotations(Element element,
+final Class<? extends Annotation> annotationType) {
+List<? extends AnnotationMirror> annotations = element.getAnnotationMirrors();
+return FluentIterable.from(annotations)
+.filter(new Predicate<AnnotationMirror>() {
+@Override public boolean apply(AnnotationMirror input) {
+return isAnnotationPresent(input.getAnnotationType().asElement(), annotationType);
+}
+})
+.toSet();
+}
+private AnnotationMirrors() {}
+}

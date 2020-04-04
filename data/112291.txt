@@ -1,0 +1,18 @@
+package com.github.jknack.handlebars.internal;
+import java.util.List;
+import com.github.jknack.handlebars.Context;
+import com.github.jknack.handlebars.PathExpression;
+public class RefParam implements Param {
+private final List<PathExpression> value;
+public RefParam(final List<PathExpression> value) {
+this.value = value;
+}
+@Override
+public Object apply(final Context context) {
+return context.get(this.value);
+}
+@Override
+public String toString() {
+return value.toString();
+}
+}

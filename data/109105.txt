@@ -1,0 +1,5 @@
+package io.vertx.core.cli.converters;
+@FunctionalInterface
+public interface Converter<T> {
+T fromString(String s);
+}

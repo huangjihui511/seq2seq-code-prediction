@@ -1,0 +1,85 @@
+package org.springframework.integration.support.management;
+import org.springframework.context.Lifecycle;
+import org.springframework.jmx.export.annotation.ManagedAttribute;
+import org.springframework.jmx.export.annotation.ManagedOperation;
+@Deprecated
+@IntegrationManagedResource
+public class LifecycleMessageSourceMetrics implements MessageSourceMetrics, Lifecycle {
+private final Lifecycle lifecycle;
+protected final MessageSourceMetrics delegate; 
+public LifecycleMessageSourceMetrics(Lifecycle lifecycle, MessageSourceMetrics delegate) {
+this.lifecycle = lifecycle;
+this.delegate = delegate;
+}
+public MessageSourceMetrics getDelegate() {
+return this.delegate;
+}
+@Override
+@ManagedOperation
+public void reset() {
+this.delegate.reset();
+}
+@Override
+@ManagedAttribute
+public boolean isRunning() {
+return this.lifecycle.isRunning();
+}
+@Override
+@ManagedOperation
+public void start() {
+this.lifecycle.start();
+}
+@Override
+@ManagedOperation
+public void stop() {
+this.lifecycle.stop();
+}
+@Override
+public String getManagedName() {
+return this.delegate.getManagedName();
+}
+@Override
+public String getManagedType() {
+return this.delegate.getManagedType();
+}
+@Override
+public int getMessageCount() {
+return this.delegate.getMessageCount();
+}
+@Override
+public long getMessageCountLong() {
+return this.delegate.getMessageCountLong();
+}
+@Override
+public void setCountsEnabled(boolean countsEnabled) {
+this.delegate.setCountsEnabled(countsEnabled);
+}
+@Override
+public boolean isCountsEnabled() {
+return this.delegate.isCountsEnabled();
+}
+@Override
+public void setLoggingEnabled(boolean enabled) {
+this.delegate.setLoggingEnabled(enabled);
+}
+@Override
+public boolean isLoggingEnabled() {
+return this.delegate.isLoggingEnabled();
+}
+@Override
+public void setManagedName(String name) {
+this.delegate.setManagedName(name);
+}
+@Override
+public void setManagedType(String source) {
+this.delegate.setManagedType(source);
+}
+@Override
+public ManagementOverrides getOverrides() {
+return this.delegate.getOverrides();
+}
+@Override
+public void destroy() {
+this.delegate.destroy();
+}
+}

@@ -1,0 +1,65 @@
+package com.graphhopper.jsprit.core.algorithm.recreate;
+import com.graphhopper.jsprit.core.algorithm.recreate.listener.InsertionStartsListener;
+import com.graphhopper.jsprit.core.problem.driver.Driver;
+import com.graphhopper.jsprit.core.problem.job.Job;
+import com.graphhopper.jsprit.core.problem.solution.route.VehicleRoute;
+import com.graphhopper.jsprit.core.problem.vehicle.Vehicle;
+import com.graphhopper.jsprit.core.util.RandomNumberGeneration;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Random;
+@Deprecated
+class CalculatesServiceInsertionWithTimeScheduling implements JobInsertionCostsCalculator {
+public static class KnowledgeInjection implements InsertionStartsListener {
+private CalculatesServiceInsertionWithTimeScheduling c;
+public KnowledgeInjection(CalculatesServiceInsertionWithTimeScheduling c) {
+super();
+this.c = c;
+}
+@Override
+public void informInsertionStarts(Collection<VehicleRoute> vehicleRoutes, Collection<Job> unassignedJobs) {
+List<Double> knowledge = new ArrayList<Double>();
+if (vehicleRoutes.isEmpty()) {
+}
+for (VehicleRoute route : vehicleRoutes) {
+knowledge.add(route.getDepartureTime());
+}
+c.setDepartureTimeKnowledge(knowledge);
+}
+}
+private static Logger log = LoggerFactory.getLogger(CalculatesServiceInsertionWithTimeScheduling.class);
+private JobInsertionCostsCalculator jic;
+private List<Double> departureTimeKnowledge = new ArrayList<Double>();
+public void setRandom(Random random) {
+this.random = random;
+}
+private Random random = RandomNumberGeneration.getRandom();
+CalculatesServiceInsertionWithTimeScheduling(JobInsertionCostsCalculator jic, double t, double f) {
+super();
+this.jic = jic;
+log.debug("initialise " + this);
+}
+@Override
+public String toString() {
+return "[name=" + this.getClass().toString() + "]";
+}
+@Override
+public InsertionData getInsertionData(VehicleRoute currentRoute, Job jobToInsert, Vehicle newVehicle, double newVehicleDepartureTime, Driver newDriver, double bestKnownScore) {
+double departureTime = newVehicleDepartureTime;
+if (currentRoute.isEmpty()) {
+if (!departureTimeKnowledge.isEmpty()) {
+departureTime = departureTimeKnowledge.get(random.nextInt(departureTimeKnowledge.size()));
+}
+} else if (!currentRoute.getVehicle().getId().equals(newVehicle.getId())) {
+departureTime = currentRoute.getDepartureTime();
+}
+InsertionData insertionData = jic.getInsertionData(currentRoute, jobToInsert, newVehicle, departureTime, newDriver, bestKnownScore);
+return insertionData;
+}
+public void setDepartureTimeKnowledge(List<Double> departureTimes) {
+departureTimeKnowledge = departureTimes;
+}
+}

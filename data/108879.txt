@@ -1,0 +1,86 @@
+package the.bytecode.club.bytecodeviewer;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
+import javax.imageio.ImageIO;
+import javax.swing.ImageIcon;
+import org.apache.commons.codec.binary.Base64;
+import org.imgscalr.Scalr;
+public class Resources {
+public static List<BufferedImage> iconList;
+public static BufferedImage icon;
+public static ImageIcon nextIcon;
+public static ImageIcon prevIcon;
+public static ImageIcon busyIcon;
+public static ImageIcon busyB64Icon;
+public static ImageIcon batIcon;
+public static ImageIcon shIcon;
+public static ImageIcon csharpIcon;
+public static ImageIcon cplusplusIcon;
+public static ImageIcon configIcon;
+public static ImageIcon jarIcon;
+public static ImageIcon zipIcon;
+public static ImageIcon packagesIcon;
+public static ImageIcon folderIcon;
+public static ImageIcon androidIcon;
+public static ImageIcon fileIcon;
+public static ImageIcon textIcon;
+public static ImageIcon classIcon;
+public static ImageIcon imageIcon;
+public static ImageIcon decodedIcon;
+public static ImageIcon javaIcon;
+static {
+icon = b642IMG("iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAUd0lEQVR42pWaWXRbVZaGq5iHqgaSeJZsy7YkD7KtwZItebblQfI8x/HseIodO3bixE5iZw4ZSBwyACkCXQ003dD0oigq1UBqFVQ1HSB0wkyvXt1VPNSiavHCC288/b3/I11ZSszQDzuRfO89Z39n/3uffST9BMBP17Dbgna72B1hdmfQ7hK7W+yeoN0btPvE7v8Rdl+Y3Rsc4+7guHcF5wif9/ag3fYd/v70J/zHWlGFcLPRKqth99Yoc1TVKssTc1b74Krxw1Vbh3yxAl+9Mre/QZmnrvFHG+/Xnud4alwxzpEXnJOm+UGfbEH/wv2NAHkwMQ4P6GLk/1hlDyXFKVuXFI/1yQnKolJ0yqLTEhFjTEKsKRlxZgPi01OQkJ6qTJeRBn2mEYlZpjWN13gP7+VzfJ7G8WjRqXo1xwZDQmhe+kBfHhR7QHz7O300fq6LUhYBQkJ1UxDkFggZdEMQIJoTCkCsAhDn6TgdpKMWE5KyzcqSc9JDZsjNCL3WridZAmA3Q3F8zhMVBFpHELGHxJcHk2KVPZAYE4K5BYSkD+hjQuR8kAMQYENKgkwgUTBJFMzJgQhkpIrzRnHKJA6axdl0pFgzkGrNRJotS5nRbokw7e8pco8GRygugk4ixYXhAnGhOF90ml7Nvd5AX7SoRMKsGRElK7mJD9E4SFSqTg1KgLh0wy0AdF5z2uTIRrozV1lmvg2ZBQHLyLfK33KQnifX8nJgFuO9fC5VQaWr8RhRXWaaWijO92NgbAGQ2whyG5NIu0FJag0IDs5JOBkBtJXXnKfjWW47LG4HcgqdyC1yKePrDAFItaSjrrkZlf5aZBXYA4AuawgqHIgLxQXjvFTB98GEg9zOivCglhffAcHBExkFmSyVEZDJzQQQhyyePOSI07aSAjjKPMgrL4SroliZvbgAxpwsxCcnYmFxCecvXESO3J9bnK8gCa8BMaoE4kJpMFRBOMw6gXkoOT6Q0wSRIJCBIHcQRCW43EDqDWEQISkpGUkUZLJwADpkF+ed4nS+twTu6jJ4aspR5KtU5iwrRGqmGdHxsThw6GH8540PYfU4FSShrQIfDqRJjtHRpHYzDP3UYOh7BIjKizCImLBIECItGIV0mYzyCQeg83S6xF+FsvoaVDT6UNHkQ2WzH56qMqRlmRGTEIdXXn0Nn/3XfyOvxKPu98hzrspiNQ6BuDAZIlGTRIdRZ/T1QZjwnFkfBhMEuUOBcPNR0dCqk0psyYkwCA6uRYGTEqCgqlQ5pJwXx6ta61HT1ghfRzPqulrh72xBcXUFjJnikCEZX/71b3j5lcvweMvU/XyOz3MhOJ6t1I1siQ7nYdTDYeLCCgAXW4PhhqmB3EkQXogS2mgJoQbBnOBg5iAEJ+FkXEXKp7SuWjlU3dqgnG7obkdzTyda+zYq87U2wlnkRoopDTc++Bh/+cuXKCorRXldDfwCW9VSr57nOIW1FaHoMN/CYbiY9Id+xQRh1gfzJS8AcidB7mJLsCEsGvGSF1piU043Q2hR8LbUqdVv3NShHO8c6kX35gFsHO5H48Y2FFaUIiM7C+9eu64glvYdQk6eHcXectS3NaO5u0M9z0iWN9SqcZln4TBUAnOT/hAmVvKFix0VlFgECPsbai9cUoSgpJiAlJOCqAhAcFJGgfJp6e1SAD2jg+gbG1IgzRs7UFpVia6Nm1Qk/ud
+nextIcon = new ImageIcon(b642IMG("iVBORw0KGgoAAAANSUhEUgAAABAAAAAQBAMAAADt3eJSAAAAMFBMVEX
+prevIcon = new ImageIcon(b642IMG("iVBORw0KGgoAAAANSUhEUgAAABAAAAAQBAMAAADt3eJSAAAAMFBMVEX
+busyIcon = new ImageIcon(Resources.class.getResource("/resources/1.gif"));
+busyB64Icon = new ImageIcon(b642IMG("R0lGODlhEAALAPQAAP
+batIcon = new ImageIcon(Resources.class.getResource("/resources/bat.png"));
+shIcon = new ImageIcon(Resources.class.getResource("/resources/sh.png"));
+csharpIcon = new ImageIcon(Resources.class.getResource("/resources/c#.png"));
+cplusplusIcon = new ImageIcon(Resources.class.getResource("/resources/c++.png"));
+configIcon = new ImageIcon(Resources.class.getResource("/resources/config.png"));
+jarIcon = new ImageIcon(Resources.class.getResource("/resources/jar.png"));
+zipIcon = new ImageIcon(Resources.class.getResource("/resources/zip.png"));
+packagesIcon = new ImageIcon(Resources.class.getResource("/resources/package.png"));
+folderIcon = new ImageIcon(Resources.class.getResource("/resources/folder.png"));
+androidIcon = new ImageIcon(Resources.class.getResource("/resources/android.png"));
+fileIcon = new ImageIcon(Resources.class.getResource("/resources/file.png"));
+textIcon = new ImageIcon(Resources.class.getResource("/resources/text.png"));
+classIcon = new ImageIcon(Resources.class.getResource("/resources/class.png"));
+imageIcon = new ImageIcon(Resources.class.getResource("/resources/image.png"));
+decodedIcon = new ImageIcon(Resources.class.getResource("/resources/decoded.png"));
+javaIcon = new ImageIcon(Resources.class.getResource("/resources/java.png"));
+iconList = new ArrayList<BufferedImage>();
+int size = 16;
+for (int i = 0; i < 24; i++) {
+iconList.add(resize(icon, size, size));
+size += 2;
+}
+}
+public static BufferedImage resize(BufferedImage image, int width, int height) {
+return Scalr.resize(image, Scalr.Method.ULTRA_QUALITY, width, height);
+}
+public static BufferedImage b642IMG(String imageString) {
+BufferedImage image = null;
+byte[] imageByte;
+try {
+imageByte = Base64.decodeBase64(imageString);
+ByteArrayInputStream bis = new ByteArrayInputStream(imageByte);
+image = ImageIO.read(bis);
+bis.close();
+} catch (Exception e) {
+new the.bytecode.club.bytecodeviewer.api.ExceptionUI(e);
+}
+return image;
+}
+public static String findLibrary(String nameContains) {
+for (File f : new File(BytecodeViewer.libsDirectory).listFiles()) {
+if (f.getName().contains(nameContains))
+return f.getAbsolutePath();
+}
+return null;
+}
+}

@@ -1,0 +1,5 @@
+package com.baomidou.mybatisplus.autoconfigure;
+@FunctionalInterface
+public interface MybatisPlusPropertiesCustomizer {
+void customize(MybatisPlusProperties properties);
+}

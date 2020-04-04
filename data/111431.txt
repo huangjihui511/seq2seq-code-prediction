@@ -1,0 +1,30 @@
+package io.grpc.internal;
+import io.grpc.NameResolver;
+import java.net.URI;
+import javax.annotation.Nullable;
+final class OverrideAuthorityNameResolverFactory extends NameResolver.Factory {
+private final NameResolver.Factory delegate;
+private final String authorityOverride;
+OverrideAuthorityNameResolverFactory(NameResolver.Factory delegate, String authorityOverride) {
+this.delegate = delegate;
+this.authorityOverride = authorityOverride;
+}
+@Nullable
+@Override
+public NameResolver newNameResolver(URI targetUri, NameResolver.Args args) {
+final NameResolver resolver = delegate.newNameResolver(targetUri, args);
+if (resolver == null) {
+return null;
+}
+return new ForwardingNameResolver(resolver) {
+@Override
+public String getServiceAuthority() {
+return authorityOverride;
+}
+};
+}
+@Override
+public String getDefaultScheme() {
+return delegate.getDefaultScheme();
+}
+}

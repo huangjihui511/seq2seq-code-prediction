@@ -1,0 +1,52 @@
+package org.apache.fontbox.cmap;
+import static org.apache.fontbox.cmap.CMap.toInt;
+public class CodespaceRange
+{
+private byte[] start;
+private byte[] end;
+private int startInt;
+private int endInt;
+private int codeLength = 0;
+public CodespaceRange()
+{
+}
+public int getCodeLength()
+{
+return codeLength;
+}
+public byte[] getEnd()
+{
+return end;
+}
+void setEnd(byte[] endBytes)
+{
+end = endBytes;
+endInt = toInt(endBytes, endBytes.length);
+}
+public byte[] getStart()
+{
+return start;
+}
+void setStart(byte[] startBytes)
+{
+start = startBytes;
+codeLength = start.length;
+startInt = toInt(startBytes, startBytes.length);
+}
+public boolean matches(byte[] code)
+{
+return isFullMatch(code, code.length);
+}
+public boolean isFullMatch(byte[] code, int codeLen)
+{
+if (codeLen == codeLength)
+{
+int value = toInt(code, codeLen);
+if (value >= startInt && value <=endInt)
+{
+return true;
+}
+}
+return false;
+}
+}

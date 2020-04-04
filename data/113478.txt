@@ -1,0 +1,143 @@
+package com.pokegoapi.examples;
+import POGOProtos.Inventory.Item.ItemIdOuterClass.ItemId;
+import POGOProtos.Networking.Responses.CatchPokemonResponseOuterClass.CatchPokemonResponse.CatchStatus;
+import com.pokegoapi.api.PokemonGo;
+import com.pokegoapi.api.inventory.ItemBag;
+import com.pokegoapi.api.inventory.PokeBank;
+import com.pokegoapi.api.inventory.Pokeball;
+import com.pokegoapi.api.map.MapObjects;
+import com.pokegoapi.api.map.Point;
+import com.pokegoapi.api.map.fort.Pokestop;
+import com.pokegoapi.api.map.pokemon.CatchablePokemon;
+import com.pokegoapi.api.map.pokemon.Encounter;
+import com.pokegoapi.api.map.pokemon.NearbyPokemon;
+import com.pokegoapi.api.map.pokemon.ThrowProperties;
+import com.pokegoapi.api.pokemon.Pokemon;
+import com.pokegoapi.api.settings.PokeballSelector;
+import com.pokegoapi.auth.PtcCredentialProvider;
+import com.pokegoapi.exceptions.NoSuchItemException;
+import com.pokegoapi.exceptions.request.RequestFailedException;
+import com.pokegoapi.util.Log;
+import com.pokegoapi.util.MapUtil;
+import com.pokegoapi.util.PokeDictionary;
+import com.pokegoapi.util.hash.HashProvider;
+import com.pokegoapi.util.path.Path;
+import okhttp3.OkHttpClient;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Locale;
+import java.util.Random;
+import java.util.Set;
+public class CatchPokemonAtAreaExample {
+public static void main(String[] args) {
+OkHttpClient http = new OkHttpClient();
+final PokemonGo api = new PokemonGo(http);
+try {
+HashProvider hasher = ExampleConstants.getHashProvider();
+api.login(new PtcCredentialProvider(http, ExampleConstants.LOGIN, ExampleConstants.PASSWORD), hasher);
+api.setLocation(ExampleConstants.LATITUDE, ExampleConstants.LONGITUDE, ExampleConstants.ALTITUDE);
+catchArea(api);
+MapObjects mapObjects = api.getMap().mapObjects;
+List<Pokestop> travelPokestops = new ArrayList<>();
+Set<NearbyPokemon> nearby = mapObjects.nearby;
+for (NearbyPokemon nearbyPokemon : nearby) {
+String fortId = nearbyPokemon.getFortId();
+if (fortId != null && fortId.length() > 0) {
+Pokestop pokestop = mapObjects.getPokestop(fortId);
+if (pokestop != null && !travelPokestops.contains(pokestop)) {
+travelPokestops.add(pokestop);
+}
+}
+}
+Collections.sort(travelPokestops, new Comparator<Pokestop>() {
+@Override
+public int compare(Pokestop primary, Pokestop secondary) {
+double lat = api.latitude;
+double lng = api.longitude;
+double distance1 = MapUtil.distFrom(primary.getLatitude(), primary.getLongitude(), lat, lng);
+double distance2 = MapUtil.distFrom(secondary.getLatitude(), secondary.getLongitude(), lat, lng);
+return Double.compare(distance1, distance2);
+}
+});
+for (Pokestop pokestop : travelPokestops) {
+Point destination = new Point(pokestop.getLatitude(), pokestop.getLongitude());
+Path path = new Path(api.getPoint(), destination, 20.0);
+System.out.println("Traveling to " + destination + " at 20KMPH!");
+path.start(api);
+try {
+while (!path.complete) {
+Point point = path.calculateIntermediate(api);
+api.setLatitude(point.getLatitude());
+api.setLongitude(point.getLongitude());
+Thread.sleep(2000);
+}
+} catch (InterruptedException e) {
+break;
+}
+System.out.println("Finished traveling to pokestop, catching pokemon.");
+catchArea(api);
+}
+} catch (NoSuchItemException | RequestFailedException e) {
+Log.e("Main", "An exception occurred while running example: ", e);
+}
+}
+private static void catchArea(PokemonGo api) throws RequestFailedException, NoSuchItemException {
+ItemBag bag = api.inventories.itemBag;
+try {
+api.getMap().awaitUpdate();
+Set<CatchablePokemon> catchablePokemon = api.getMap().mapObjects.getPokemon();
+System.out.println("Pokemon in area: " + catchablePokemon.size());
+Random random = new Random();
+PokeBank pokebank = api.inventories.pokebank;
+for (CatchablePokemon cp : catchablePokemon) {
+Encounter encounter = cp.encounter();
+if (encounter.isSuccessful()) {
+System.out.println("Encountered: " + cp.pokemonId);
+List<Pokeball> usablePokeballs = bag.getUsablePokeballs();
+if (usablePokeballs.size() > 0) {
+double probability = encounter.getCaptureProbability();
+Pokeball pokeball = PokeballSelector.SMART.select(usablePokeballs, probability);
+System.out.println("Attempting to catch: " + cp.pokemonId + " with " + pokeball
++ " (" + probability + ")");
+while (encounter.isActive()) {
+Thread.sleep(500 + random.nextInt(1000));
+int razzberryCount = bag.getItem(POGOProtos.Inventory.Item.ItemIdOuterClass.ItemId.ITEM_RAZZ_BERRY).count;
+if (encounter.getActiveItem() == null && razzberryCount > 0) {
+encounter.useItem(ItemId.ITEM_RAZZ_BERRY);
+}
+encounter.throwPokeball(PokeballSelector.SMART, ThrowProperties.random());
+if (encounter.status == CatchStatus.CATCH_SUCCESS) {
+Pokemon pokemon = pokebank.getPokemonById(encounter.capturedPokemon);
+if (pokemon != null) {
+double iv = pokemon.getIvInPercentage();
+int number = pokemon.getPokemonId().getNumber();
+String name = PokeDictionary.getDisplayName(number, Locale.ENGLISH);
+System.out.println("====" + name + "====");
+System.out.println("CP: " + pokemon.getCp());
+System.out.println("IV: " + iv + "%");
+System.out.println("Height: " + pokemon.getHeightM() + "m");
+System.out.println("Weight: " + pokemon.getWeightKg() + "kg");
+System.out.println("Move 1: " + pokemon.getMove1());
+System.out.println("Move 2: " + pokemon.getMove2());
+pokemon.renamePokemon(name + " " + iv + "%");
+if (iv > 90) {
+pokemon.setFavoritePokemon(true);
+}
+}
+}
+}
+} else {
+System.out.println("Skipping Pokemon, we have no Pokeballs!");
+}
+Thread.sleep(3000 + random.nextInt(1000));
+} else {
+System.out.println("Failed to encounter pokemon: " + encounter.encounterResult);
+}
+}
+} catch (InterruptedException e) {
+return;
+}
+}
+}

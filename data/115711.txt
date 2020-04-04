@@ -1,0 +1,5 @@
+package com.graphhopper.jsprit.core.algorithm.recreate;
+import com.graphhopper.jsprit.core.problem.job.Job;
+public interface ScoringFunction {
+double score(InsertionData best, Job job);
+}

@@ -1,0 +1,8 @@
+package io.vertx.core;
+@SuppressWarnings( "deprecation" )
+public interface Verticle {
+Vertx getVertx();
+void init(Vertx vertx, Context context);
+void start(Promise<Void> startPromise) throws Exception;
+void stop(Promise<Void> stopPromise) throws Exception;
+}

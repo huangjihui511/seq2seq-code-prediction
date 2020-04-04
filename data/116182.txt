@@ -1,0 +1,37 @@
+package net.i2p.router.client;
+import net.i2p.data.LeaseSet;
+import net.i2p.data.PrivateKey;
+import net.i2p.router.Job;
+class LeaseRequestState {
+private LeaseSet _grantedLeaseSet;
+private final LeaseSet _requestedLeaseSet;
+private final Job _onGranted;
+private final Job _onFailed;
+private final long _expiration;
+private final long _currentEarliestLeastDate;
+private boolean _successful;
+public LeaseRequestState(Job onGranted, Job onFailed, long currentEarliestLeastDate,
+long expiration, LeaseSet requested) {
+_onGranted = onGranted;
+_onFailed = onFailed;
+_currentEarliestLeastDate = currentEarliestLeastDate;
+_expiration = expiration;
+_requestedLeaseSet = requested;
+}
+public LeaseSet getGranted() { return _grantedLeaseSet; }
+public void setGranted(LeaseSet ls) { _grantedLeaseSet = ls; }
+public LeaseSet getRequested() { return _requestedLeaseSet; }
+public Job getOnGranted() { return _onGranted; }
+public Job getOnFailed() { return _onFailed; }
+public long getExpiration() { return _expiration; }
+public long getCurrentEarliestLeaseDate() { return _currentEarliestLeastDate; }
+public boolean getIsSuccessful() { return _successful; }
+public void setIsSuccessful(boolean is) { _successful = is; }
+@Override
+public String toString() {
+return "leaseSet request asking for " + _requestedLeaseSet
++ " having received " + _grantedLeaseSet
++ " succeeding? " + _successful
++ " expiring on " + _expiration;
+}
+}

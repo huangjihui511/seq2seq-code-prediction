@@ -1,0 +1,32 @@
+package com.pokegoapi.main;
+import POGOProtos.Networking.Requests.RequestTypeOuterClass.RequestType;
+import com.google.protobuf.ByteString;
+import com.google.protobuf.InvalidProtocolBufferException;
+import com.google.protobuf.Message;
+import lombok.Getter;
+public class ServerRequest {
+@Getter
+public final RequestType type;
+@Getter
+public final Message request;
+private final Object responseLock = new Object();
+private ByteString response;
+public ServerRequest(RequestType type, Message request) {
+this.type = type;
+this.request = request;
+}
+public void handleResponse(ByteString response) {
+synchronized (responseLock) {
+this.response = response;
+this.responseLock.notifyAll();
+}
+}
+public ByteString getData() throws InvalidProtocolBufferException {
+synchronized (responseLock) {
+if (response != null) {
+return response;
+}
+throw new InvalidProtocolBufferException("Response data cannot be null");
+}
+}
+}

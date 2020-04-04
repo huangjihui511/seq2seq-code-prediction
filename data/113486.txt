@@ -1,0 +1,6 @@
+package com.pokegoapi.api.listener;
+import com.pokegoapi.api.map.fort.PokestopLootResult;
+import com.pokegoapi.api.map.fort.Fort;
+public interface PokestopListener extends Listener {
+void onLoot(PokestopLootResult result, Fort pokestop);
+}

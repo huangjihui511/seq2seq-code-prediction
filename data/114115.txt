@@ -1,0 +1,5 @@
+package org.apache.parquet.avro;
+import org.apache.avro.generic.GenericData;
+public interface AvroDataSupplier {
+GenericData get();
+}

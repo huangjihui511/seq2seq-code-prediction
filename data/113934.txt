@@ -1,0 +1,16 @@
+package org.spongepowered.mod.network;
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.ChannelHandlerContext;
+import net.minecraftforge.fml.common.network.FMLIndexedMessageToMessageCodec;
+import org.spongepowered.api.network.Message;
+import org.spongepowered.common.network.SpongeNetworkManager;
+public class SpongeMessageCodec extends FMLIndexedMessageToMessageCodec<Message> {
+@Override
+public void encodeInto(ChannelHandlerContext ctx, Message msg, ByteBuf target) throws Exception {
+msg.writeTo(SpongeNetworkManager.toChannelBuf(target));
+}
+@Override
+public void decodeInto(ChannelHandlerContext ctx, ByteBuf source, Message msg) {
+msg.readFrom(SpongeNetworkManager.toChannelBuf(source));
+}
+}

@@ -1,0 +1,179 @@
+package org.msgpack.core.example;
+import org.msgpack.core.MessagePack;
+import org.msgpack.core.MessagePack.PackerConfig;
+import org.msgpack.core.MessagePack.UnpackerConfig;
+import org.msgpack.core.MessageBufferPacker;
+import org.msgpack.core.MessageFormat;
+import org.msgpack.core.MessagePacker;
+import org.msgpack.core.MessageUnpacker;
+import org.msgpack.value.ArrayValue;
+import org.msgpack.value.ExtensionValue;
+import org.msgpack.value.FloatValue;
+import org.msgpack.value.IntegerValue;
+import org.msgpack.value.Value;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.math.BigInteger;
+public class MessagePackExample
+{
+private MessagePackExample()
+{
+}
+public static void basicUsage()
+throws IOException
+{
+MessageBufferPacker packer = MessagePack.newDefaultBufferPacker();
+packer
+.packInt(1)
+.packString("leo")
+.packArrayHeader(2)
+.packString("xxx-xxxx")
+.packString("yyy-yyyy");
+packer.close(); 
+MessageUnpacker unpacker = MessagePack.newDefaultUnpacker(packer.toByteArray());
+int id = unpacker.unpackInt();             
+String name = unpacker.unpackString();     
+int numPhones = unpacker.unpackArrayHeader();  
+String[] phones = new String[numPhones];
+for (int i = 0; i < numPhones; ++i) {
+phones[i] = unpacker.unpackString();   
+}
+unpacker.close();
+System.out.println(String.format("id:%d, name:%s, phone:[%s]", id, name, join(phones)));
+}
+private static String join(String[] in)
+{
+StringBuilder s = new StringBuilder();
+for (int i = 0; i < in.length; ++i) {
+if (i > 0) {
+s.append(", ");
+}
+s.append(in[i]);
+}
+return s.toString();
+}
+public static void packer()
+throws IOException
+{
+MessageBufferPacker packer = MessagePack.newDefaultBufferPacker();
+packer.packBoolean(true);
+packer.packShort((short) 34);
+packer.packInt(1);
+packer.packLong(33000000000L);
+packer.packFloat(0.1f);
+packer.packDouble(3.14159263);
+packer.packByte((byte) 0x80);
+packer.packNil();
+packer.packString("hello message pack!");
+byte[] s = "utf-8 strings".getBytes(MessagePack.UTF8);
+packer.packRawStringHeader(s.length);
+packer.writePayload(s);
+int[] arr = new int[] {3, 5, 1, 0, -1, 255};
+packer.packArrayHeader(arr.length);
+for (int v : arr) {
+packer.packInt(v);
+}
+packer.packMapHeader(2); 
+packer.packString("apple");
+packer.packInt(1);
+packer.packString("banana");
+packer.packInt(2);
+byte[] ba = new byte[] {1, 2, 3, 4};
+packer.packBinaryHeader(ba.length);
+packer.writePayload(ba);
+byte[] extData = "custom data type".getBytes(MessagePack.UTF8);
+packer.packExtensionTypeHeader((byte) 1, 10);  
+packer.writePayload(extData);
+packer
+.packInt(1)
+.packString("leo")
+.packArrayHeader(2)
+.packString("xxx-xxxx")
+.packString("yyy-yyyy");
+}
+public static void readAndWriteFile()
+throws IOException
+{
+File tempFile = File.createTempFile("target/tmp", ".txt");
+tempFile.deleteOnExit();
+MessagePacker packer = MessagePack.newDefaultPacker(new FileOutputStream(tempFile));
+packer.packInt(1);
+packer.packString("Hello Message Pack!");
+packer.packArrayHeader(2).packFloat(0.1f).packDouble(0.342);
+packer.close();
+MessageUnpacker unpacker = MessagePack.newDefaultUnpacker(new FileInputStream(tempFile));
+while (unpacker.hasNext()) {
+MessageFormat format = unpacker.getNextFormat();
+Value v = unpacker.unpackValue();
+switch (v.getValueType()) {
+case NIL:
+v.isNilValue(); 
+System.out.println("read nil");
+break;
+case BOOLEAN:
+boolean b = v.asBooleanValue().getBoolean();
+System.out.println("read boolean: " + b);
+break;
+case INTEGER:
+IntegerValue iv = v.asIntegerValue();
+if (iv.isInIntRange()) {
+int i = iv.toInt();
+System.out.println("read int: " + i);
+}
+else if (iv.isInLongRange()) {
+long l = iv.toLong();
+System.out.println("read long: " + l);
+}
+else {
+BigInteger i = iv.toBigInteger();
+System.out.println("read long: " + i);
+}
+break;
+case FLOAT:
+FloatValue fv = v.asFloatValue();
+float f = fv.toFloat();   
+double d = fv.toDouble(); 
+System.out.println("read float: " + d);
+break;
+case STRING:
+String s = v.asStringValue().asString();
+System.out.println("read string: " + s);
+break;
+case BINARY:
+byte[] mb = v.asBinaryValue().asByteArray();
+System.out.println("read binary: size=" + mb.length);
+break;
+case ARRAY:
+ArrayValue a = v.asArrayValue();
+for (Value e : a) {
+System.out.println("read array element: " + e);
+}
+break;
+case EXTENSION:
+ExtensionValue ev = v.asExtensionValue();
+byte extType = ev.getType();
+byte[] extValue = ev.getData();
+break;
+}
+}
+}
+public static void configuration()
+throws IOException
+{
+MessageBufferPacker packer = new PackerConfig()
+.withSmallStringOptimizationThreshold(256) 
+.newBufferPacker();
+packer.packInt(10);
+packer.packBoolean(true);
+packer.close();
+byte[] packedData = packer.toByteArray();
+MessageUnpacker unpacker = new UnpackerConfig()
+.withStringDecoderBufferSize(16 * 1024) 
+.newUnpacker(packedData);
+int i = unpacker.unpackInt();  
+boolean b = unpacker.unpackBoolean(); 
+unpacker.close();
+}
+}

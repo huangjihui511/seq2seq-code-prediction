@@ -1,0 +1,27 @@
+package org.mockito.internal.junit;
+import org.mockito.exceptions.verification.ArgumentsAreDifferent;
+public class ExceptionFactory {
+private ExceptionFactory() {
+}
+private static interface ExceptionFactoryImpl {
+AssertionError create(String message, String wanted, String actual);
+}
+private final static ExceptionFactoryImpl factory;
+static {
+ExceptionFactoryImpl theFactory = null;
+try {
+Class.forName("org.opentest4j.AssertionFailedError");
+theFactory = org.mockito.exceptions.verification.opentest4j.ArgumentsAreDifferent::new;
+} catch (ClassNotFoundException onlyIfOpenTestIsNotAvailable) {
+try {
+Class.forName("junit.framework.ComparisonFailure");
+theFactory = org.mockito.exceptions.verification.junit.ArgumentsAreDifferent::new;
+} catch (ClassNotFoundException onlyIfJUnitIsNotAvailable) {
+}
+}
+factory = (theFactory == null) ? ArgumentsAreDifferent::new : theFactory;
+}
+public static AssertionError createArgumentsAreDifferentException(String message, String wanted, String actual) {
+return factory.create(message, wanted, actual);
+}
+}

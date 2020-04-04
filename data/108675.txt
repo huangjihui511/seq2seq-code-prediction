@@ -1,0 +1,9 @@
+package com.alibaba.csp.sentinel.adapter.dubbo.fallback;
+import com.alibaba.csp.sentinel.slots.block.BlockException;
+import org.apache.dubbo.rpc.Invocation;
+import org.apache.dubbo.rpc.Invoker;
+import org.apache.dubbo.rpc.Result;
+@FunctionalInterface
+public interface DubboFallback {
+Result handle(Invoker<?> invoker, Invocation invocation, BlockException ex);
+}

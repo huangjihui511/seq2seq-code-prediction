@@ -1,0 +1,114 @@
+package io.realm.examples.appmodules;
+import android.app.Activity;
+import android.os.Bundle;
+import android.util.Log;
+import android.widget.LinearLayout;
+import android.widget.TextView;
+import io.realm.Realm;
+import io.realm.RealmConfiguration;
+import io.realm.examples.appmodules.model.Cow;
+import io.realm.examples.appmodules.model.Pig;
+import io.realm.examples.appmodules.model.Snake;
+import io.realm.examples.appmodules.model.Spider;
+import io.realm.examples.appmodules.modules.CreepyAnimalsModule;
+import io.realm.examples.librarymodules.Zoo;
+import io.realm.examples.librarymodules.model.Cat;
+import io.realm.examples.librarymodules.model.Dog;
+import io.realm.examples.librarymodules.model.Elephant;
+import io.realm.examples.librarymodules.model.Lion;
+import io.realm.examples.librarymodules.model.Zebra;
+import io.realm.examples.librarymodules.modules.DomesticAnimalsModule;
+import io.realm.examples.librarymodules.modules.ZooAnimalsModule;
+import io.realm.exceptions.RealmException;
+public class ModulesExampleActivity extends Activity {
+public static final String TAG = ModulesExampleActivity.class.getName();
+private LinearLayout rootLayout = null;
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+super.onCreate(savedInstanceState);
+setContentView(R.layout.activity_modules_example);
+rootLayout = ((LinearLayout) findViewById(R.id.container));
+rootLayout.removeAllViews();
+RealmConfiguration defaultConfig = new RealmConfiguration.Builder().build();
+RealmConfiguration farmAnimalsConfig = new RealmConfiguration.Builder()
+.name("farm.realm")
+.modules(Realm.getDefaultModule(), new DomesticAnimalsModule())
+.build();
+RealmConfiguration exoticAnimalsConfig = new RealmConfiguration.Builder()
+.name("exotic.realm")
+.modules(new ZooAnimalsModule(), new CreepyAnimalsModule())
+.build();
+showStatus("Opening multiple Realms");
+Realm defaultRealm = Realm.getInstance(defaultConfig);
+final Realm farmRealm = Realm.getInstance(farmAnimalsConfig);
+Realm exoticRealm = Realm.getInstance(exoticAnimalsConfig);
+showStatus("Create objects in the default Realm");
+defaultRealm.executeTransaction(new Realm.Transaction() {
+@Override
+public void execute(Realm realm) {
+realm.createObject(Cow.class);
+realm.createObject(Pig.class);
+realm.createObject(Snake.class);
+realm.createObject(Spider.class);
+}
+});
+showStatus("Create objects in the farm Realm");
+farmRealm.executeTransaction(new Realm.Transaction() {
+@Override
+public void execute(Realm realm) {
+realm.createObject(Cow.class);
+realm.createObject(Pig.class);
+realm.createObject(Cat.class);
+realm.createObject(Dog.class);
+}
+});
+showStatus("Create objects in the exotic Realm");
+exoticRealm.executeTransaction(new Realm.Transaction() {
+@Override
+public void execute(Realm realm) {
+realm.createObject(Elephant.class);
+realm.createObject(Lion.class);
+realm.createObject(Zebra.class);
+realm.createObject(Snake.class);
+realm.createObject(Spider.class);
+}
+});
+showStatus("Copy objects between Realms");
+showStatus("Number of pigs on the farm : " + farmRealm.where(Pig.class).count());
+showStatus("Copy pig from defaultRealm to farmRealm");
+final Pig defaultPig = defaultRealm.where(Pig.class).findFirst();
+farmRealm.executeTransaction(new Realm.Transaction() {
+@Override
+public void execute(Realm realm) {
+realm.copyToRealm(defaultPig);
+}
+});
+showStatus("Number of unnamed pigs on the farm : " + farmRealm.where(Pig.class).isNull("name").count());
+showStatus("Trying to add an unsupported class");
+defaultRealm.beginTransaction();
+try {
+defaultRealm.createObject(Elephant.class);
+} catch (RealmException expected) {
+showStatus("This throws a :" + expected.toString());
+} finally {
+defaultRealm.cancelTransaction();
+}
+showStatus("Interacting with library code that uses Realm internally");
+int animals = 5;
+Zoo libraryZoo = new Zoo();
+libraryZoo.open();
+showStatus("Adding animals: " + animals);
+libraryZoo.addAnimals(5);
+showStatus("Number of animals in the library Realm:" + libraryZoo.getNoOfAnimals());
+libraryZoo.close();
+defaultRealm.close();
+farmRealm.close();
+exoticRealm.close();
+}
+private void showStatus(String txt) {
+Log.i(TAG, txt);
+TextView tv = new TextView(this);
+tv.setText(txt);
+rootLayout.addView(tv);
+}
+}

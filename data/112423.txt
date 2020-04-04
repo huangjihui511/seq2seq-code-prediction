@@ -1,0 +1,54 @@
+package io.jooby;
+import io.jooby.internal.FileAsset;
+import io.jooby.internal.JarAsset;
+import io.jooby.internal.URLAsset;
+import javax.annotation.Nonnull;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.JarURLConnection;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.nio.ByteBuffer;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Base64;
+public interface Asset extends AutoCloseable {
+static Asset create(@Nonnull Path resource) {
+return new FileAsset(resource);
+}
+static Asset create(@Nonnull String path, @Nonnull URL resource) {
+try {
+if ("jar".equals(resource.getProtocol())) {
+return new JarAsset((JarURLConnection) resource.openConnection());
+}
+if ("file".equals(resource.getProtocol())) {
+return create(Paths.get(resource.toURI()));
+}
+return new URLAsset(resource, path);
+} catch (IOException | URISyntaxException x) {
+throw SneakyThrows.propagate(x);
+}
+}
+long getSize();
+long getLastModified();
+boolean isDirectory();
+default @Nonnull String getEtag() {
+StringBuilder b = new StringBuilder(32);
+b.append("W/\"");
+Base64.Encoder encoder = Base64.getEncoder();
+int hashCode = hashCode();
+long lastModified = getLastModified();
+long length = getSize();
+ByteBuffer buffer = ByteBuffer.allocate(Long.BYTES);
+buffer.putLong(lastModified ^ hashCode);
+b.append(Long.toHexString(lastModified ^ hashCode));
+buffer.clear();
+buffer.putLong(length ^ hashCode);
+b.append(encoder.encodeToString(buffer.array()));
+b.append('"');
+return b.toString();
+}
+@Nonnull
+MediaType getContentType();
+InputStream stream();
+}

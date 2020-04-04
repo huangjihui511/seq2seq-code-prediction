@@ -1,0 +1,141 @@
+package org.wltea.analyzer.core;
+import java.util.Arrays;
+class LetterSegmenter implements ISegmenter {
+static final String SEGMENTER_NAME = "LETTER_SEGMENTER";
+private static final char[] Letter_Connector = new char[]{'#' , '&' , '+' , '-' , '.' , '@' , '_'};
+private static final char[] Num_Connector = new char[]{',' , '.'};
+private int start;
+private int end;
+private int englishStart;
+private int englishEnd;
+private int arabicStart;
+private int arabicEnd;
+LetterSegmenter(){
+Arrays.sort(Letter_Connector);
+Arrays.sort(Num_Connector);
+this.start = -1;
+this.end = -1;
+this.englishStart = -1;
+this.englishEnd = -1;
+this.arabicStart = -1;
+this.arabicEnd = -1;
+}
+public void analyze(AnalyzeContext context) {
+boolean bufferLockFlag = false;
+bufferLockFlag = this.processEnglishLetter(context) || bufferLockFlag;
+bufferLockFlag = this.processArabicLetter(context) || bufferLockFlag;
+bufferLockFlag = this.processMixLetter(context) || bufferLockFlag;
+if(bufferLockFlag){
+context.lockBuffer(SEGMENTER_NAME);
+}else{
+context.unlockBuffer(SEGMENTER_NAME);
+}
+}
+public void reset() {
+this.start = -1;
+this.end = -1;
+this.englishStart = -1;
+this.englishEnd = -1;
+this.arabicStart = -1;
+this.arabicEnd = -1;
+}
+private boolean processMixLetter(AnalyzeContext context){
+boolean needLock = false;
+if(CharacterUtil.CHAR_ARABIC == context.getCurrentCharType()
+|| CharacterUtil.CHAR_ENGLISH == context.getCurrentCharType()){
+this.start = context.getCursor();
+this.end = start;
+}
+if(CharacterUtil.CHAR_ARABIC == context.getCurrentCharType()
+|| CharacterUtil.CHAR_ENGLISH == context.getCurrentCharType()){
+this.end = context.getCursor();
+}else if(CharacterUtil.CHAR_USELESS == context.getCurrentCharType()
+&& this.isLetterConnector(context.getCurrentChar())){
+this.end = context.getCursor();
+}else{
+Lexeme newLexeme = new Lexeme(context.getBufferOffset() , this.start , this.end - this.start + 1 , Lexeme.TYPE_LETTER);
+context.addLexeme(newLexeme);
+this.start = -1;
+this.end = -1;
+}
+}
+if(context.isBufferConsumed() && (this.start != -1 && this.end != -1)){
+Lexeme newLexeme = new Lexeme(context.getBufferOffset() , this.start , this.end - this.start + 1 , Lexeme.TYPE_LETTER);
+context.addLexeme(newLexeme);
+this.start = -1;
+this.end = -1;
+}
+if(this.start == -1 && this.end == -1){
+needLock = false;
+}else{
+needLock = true;
+}
+return needLock;
+}
+private boolean processEnglishLetter(AnalyzeContext context){
+boolean needLock = false;
+if(CharacterUtil.CHAR_ENGLISH == context.getCurrentCharType()){
+this.englishStart = context.getCursor();
+this.englishEnd = this.englishStart;
+}
+if(CharacterUtil.CHAR_ENGLISH == context.getCurrentCharType()){
+this.englishEnd =  context.getCursor();
+}else{
+Lexeme newLexeme = new Lexeme(context.getBufferOffset() , this.englishStart , this.englishEnd - this.englishStart + 1 , Lexeme.TYPE_ENGLISH);
+context.addLexeme(newLexeme);
+this.englishStart = -1;
+this.englishEnd= -1;
+}
+}
+if(context.isBufferConsumed() && (this.englishStart != -1 && this.englishEnd != -1)){
+Lexeme newLexeme = new Lexeme(context.getBufferOffset() , this.englishStart , this.englishEnd - this.englishStart + 1 , Lexeme.TYPE_ENGLISH);
+context.addLexeme(newLexeme);
+this.englishStart = -1;
+this.englishEnd= -1;
+}
+if(this.englishStart == -1 && this.englishEnd == -1){
+needLock = false;
+}else{
+needLock = true;
+}
+return needLock;
+}
+private boolean processArabicLetter(AnalyzeContext context){
+boolean needLock = false;
+if(CharacterUtil.CHAR_ARABIC == context.getCurrentCharType()){
+this.arabicStart = context.getCursor();
+this.arabicEnd = this.arabicStart;
+}
+if(CharacterUtil.CHAR_ARABIC == context.getCurrentCharType()){
+this.arabicEnd = context.getCursor();
+}else if(CharacterUtil.CHAR_USELESS == context.getCurrentCharType()
+&& this.isNumConnector(context.getCurrentChar())){
+}else{
+Lexeme newLexeme = new Lexeme(context.getBufferOffset() , this.arabicStart , this.arabicEnd - this.arabicStart + 1 , Lexeme.TYPE_ARABIC);
+context.addLexeme(newLexeme);
+this.arabicStart = -1;
+this.arabicEnd = -1;
+}
+}
+if(context.isBufferConsumed() && (this.arabicStart != -1 && this.arabicEnd != -1)){
+Lexeme newLexeme = new Lexeme(context.getBufferOffset() ,  this.arabicStart , this.arabicEnd - this.arabicStart + 1 , Lexeme.TYPE_ARABIC);
+context.addLexeme(newLexeme);
+this.arabicStart = -1;
+this.arabicEnd = -1;
+}
+if(this.arabicStart == -1 && this.arabicEnd == -1){
+needLock = false;
+}else{
+needLock = true;
+}
+return needLock;
+}
+private boolean isLetterConnector(char input){
+int index = Arrays.binarySearch(Letter_Connector, input);
+return index >= 0;
+}
+private boolean isNumConnector(char input){
+int index = Arrays.binarySearch(Num_Connector, input);
+return index >= 0;
+}
+}

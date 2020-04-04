@@ -1,0 +1,29 @@
+package com.baomidou.mybatisplus.dts.listener;
+import com.baomidou.mybatisplus.core.toolkit.ExceptionUtils;
+import com.baomidou.mybatisplus.dts.DtsConstants;
+import com.baomidou.mybatisplus.dts.DtsMeta;
+import com.baomidou.mybatisplus.dts.parser.IDtsParser;
+import org.springframework.amqp.rabbit.annotation.RabbitHandler;
+import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
+import java.util.List;
+@Component
+@RabbitListener(queues = {DtsConstants.RABBIT_QUEUE})
+public class RabbitRmtListener {
+@Autowired
+private IDtsParser dtsParser;
+@Autowired
+private List<IDtsListener> dtsListenerList;
+@RabbitHandler
+@Transactional(rollbackFor = Exception.class)
+public void receive(String event) {
+try {
+DtsMeta dtsMeta = dtsParser.readValue(event, DtsMeta.class);
+dtsListenerList.forEach(d -> d.process(dtsMeta));
+} catch (Exception e) {
+ExceptionUtils.mpe("rmt parser error, event: %s", e, event);
+}
+}
+}

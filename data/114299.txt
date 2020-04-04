@@ -1,0 +1,65 @@
+package mobi.hsz.idea.gitignore;
+import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.ProjectManagerListener;
+import com.intellij.openapi.roots.ContentIterator;
+import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileVisitor;
+import com.intellij.util.indexing.FileBasedIndex;
+import com.intellij.util.indexing.IndexableFileSet;
+import mobi.hsz.idea.gitignore.file.type.IgnoreFileType;
+import mobi.hsz.idea.gitignore.indexing.ExternalIndexableSetContributor;
+import org.jetbrains.annotations.NotNull;
+import static mobi.hsz.idea.gitignore.IgnoreManager.RefreshStatusesListener.REFRESH_STATUSES;
+public class IgnoreFileBasedIndexProjectHandler implements IndexableFileSet, ProjectComponent {
+private final Project project;
+@NotNull
+private final ProjectManager projectManager;
+@NotNull
+private final FileBasedIndex index;
+@NotNull
+private final ProjectManagerListener projectListener = new ProjectManagerListener() {
+public void projectClosing(@NotNull Project project) {
+index.removeIndexableSet(IgnoreFileBasedIndexProjectHandler.this);
+}
+};
+public IgnoreFileBasedIndexProjectHandler(@NotNull final Project project, @NotNull ProjectManager projectManager,
+@NotNull final FileBasedIndex index) {
+this.project = project;
+this.projectManager = projectManager;
+this.index = index;
+StartupManager.getInstance(project).registerPreStartupActivity(() -> {
+index.registerIndexableSet(IgnoreFileBasedIndexProjectHandler.this, project);
+project.getMessageBus().syncPublisher(REFRESH_STATUSES).refresh();
+});
+}
+public void initComponent() {
+projectManager.addProjectManagerListener(project, projectListener);
+}
+public void disposeComponent() {
+projectManager.removeProjectManagerListener(project, projectListener);
+}
+@Override
+public boolean isInSet(@NotNull VirtualFile file) {
+return file.getFileType() instanceof IgnoreFileType &&
+ExternalIndexableSetContributor.getAdditionalFiles(project).contains(file);
+}
+@Override
+public void iterateIndexableFilesIn(@NotNull VirtualFile file, @NotNull final ContentIterator iterator) {
+VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor() {
+@Override
+public boolean visitFile(@NotNull VirtualFile file) {
+if (!isInSet(file)) {
+return false;
+}
+if (!file.isDirectory()) {
+iterator.processFile(file);
+}
+return true;
+}
+});
+}
+}

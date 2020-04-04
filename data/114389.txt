@@ -1,0 +1,10 @@
+package com.oreilly.springdata.gemfire.core;
+import java.util.List;
+import org.springframework.data.gemfire.repository.Query;
+import org.springframework.data.repository.CrudRepository;
+public interface ProductRepository extends CrudRepository<Product, Long> {
+List<Product> findByDescriptionContaining(String description);
+@Query("SELECT * FROM /Product where attributes[$1] = $2")
+List<Product> findByAttributes(String key, String value);
+List<Product> findByName(String name);
+}

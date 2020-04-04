@@ -1,0 +1,5 @@
+package spark.servlet;
+public interface SparkApplication {
+void init();
+default void destroy() {}
+}

@@ -1,0 +1,269 @@
+package org.gnucash.android.model;
+import android.content.Intent;
+import android.support.annotation.NonNull;
+import org.gnucash.android.BuildConfig;
+import org.gnucash.android.db.adapter.AccountsDbAdapter;
+import org.gnucash.android.export.ofx.OfxHelper;
+import org.gnucash.android.model.Account.OfxAccountType;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+public class Transaction extends BaseModel{
+public static final String MIME_TYPE = "vnd.android.cursor.item/vnd." + BuildConfig.APPLICATION_ID + ".transaction";
+@Deprecated
+public static final String EXTRA_ACCOUNT_UID = "org.gnucash.android.extra.account_uid";
+@Deprecated
+public static final String EXTRA_DOUBLE_ACCOUNT_UID = "org.gnucash.android.extra.double_account_uid";
+@Deprecated
+public static final String EXTRA_AMOUNT = "org.gnucash.android.extra.amount";
+@Deprecated
+public static final String EXTRA_TRANSACTION_TYPE = "org.gnucash.android.extra.transaction_type";
+public static final String EXTRA_SPLITS = "org.gnucash.android.extra.transaction.splits";
+private Commodity mCommodity;
+private List<Split> mSplitList = new ArrayList<>();
+private String mDescription;
+private String mNotes = "";
+private boolean mIsExported = false;
+private long mTimestamp;
+private boolean mIsTemplate = false;
+private String mScheduledActionUID = null;
+public Transaction(String name) {
+initDefaults();
+setDescription(name);
+}
+public Transaction(Transaction transaction, boolean generateNewUID){
+initDefaults();
+setDescription(transaction.getDescription());
+setNote(transaction.getNote());
+setTime(transaction.getTimeMillis());
+setCommodity(transaction.getCommodity());
+for (Split split : transaction.mSplitList) {
+addSplit(new Split(split, generateNewUID));
+}
+if (!generateNewUID){
+setUID(transaction.getUID());
+}
+}
+private void initDefaults(){
+setCommodity(Commodity.DEFAULT_COMMODITY);
+this.mTimestamp = System.currentTimeMillis();
+}
+public Split createAutoBalanceSplit(){
+Money imbalance = getImbalance(); 
+if (!imbalance.isAmountZero()){
+Split split = new Split(imbalance, mCommodity.getCurrencyCode());
+split.setType(imbalance.isNegative() ? TransactionType.CREDIT : TransactionType.DEBIT);
+addSplit(split);
+return split;
+}
+return null;
+}
+@Override
+public void setUID(String uid) {
+super.setUID(uid);
+for (Split split : mSplitList) {
+split.setTransactionUID(uid);
+}
+}
+public List<Split> getSplits(){
+return mSplitList;
+}
+public List<Split> getSplits(String accountUID){
+List<Split> splits = new ArrayList<>();
+for (Split split : mSplitList) {
+if (split.getAccountUID().equals(accountUID)){
+splits.add(split);
+}
+}
+return splits;
+}
+public void setSplits(List<Split> splitList){
+mSplitList = splitList;
+for (Split split : splitList) {
+split.setTransactionUID(getUID());
+}
+}
+public void addSplit(Split split){
+split.setTransactionUID(getUID());
+mSplitList.add(split);
+}
+public Money getBalance(String accountUID){
+return computeBalance(accountUID, mSplitList);
+}
+private Money getImbalance(){
+Money imbalance = Money.createZeroInstance(mCommodity.getCurrencyCode());
+for (Split split : mSplitList) {
+if (!split.getQuantity().getCommodity().equals(mCommodity)) {
+return Money.createZeroInstance(mCommodity.getCurrencyCode());
+}
+Money amount = split.getValue();
+if (split.getType() == TransactionType.DEBIT)
+imbalance = imbalance.subtract(amount);
+else
+imbalance = imbalance.add(amount);
+}
+return imbalance;
+}
+public static Money computeBalance(String accountUID, List<Split> splitList) {
+AccountsDbAdapter accountsDbAdapter = AccountsDbAdapter.getInstance();
+AccountType accountType = accountsDbAdapter.getAccountType(accountUID);
+String accountCurrencyCode = accountsDbAdapter.getAccountCurrencyCode(accountUID);
+boolean isDebitAccount = accountType.hasDebitNormalBalance();
+Money balance = Money.createZeroInstance(accountCurrencyCode);
+for (Split split : splitList) {
+if (!split.getAccountUID().equals(accountUID))
+continue;
+Money amount;
+if (split.getValue().getCommodity().getCurrencyCode().equals(accountCurrencyCode)){
+amount = split.getValue();
+} else { 
+amount = split.getQuantity();
+}
+boolean isDebitSplit = split.getType() == TransactionType.DEBIT;
+if (isDebitAccount) {
+if (isDebitSplit) {
+balance = balance.add(amount);
+} else {
+balance = balance.subtract(amount);
+}
+} else {
+if (isDebitSplit) {
+balance = balance.subtract(amount);
+} else {
+balance = balance.add(amount);
+}
+}
+}
+return balance;
+}
+public String getCurrencyCode() {
+return mCommodity.getCurrencyCode();
+}
+public @NonNull Commodity getCommodity() {
+return mCommodity;
+}
+public void setCommodity(@NonNull Commodity commodity) {
+this.mCommodity = commodity;
+}
+public String getDescription() {
+return mDescription;
+}
+public void setDescription(String description) {
+this.mDescription = description.trim();
+}
+public void setNote(String notes) {
+this.mNotes = notes;
+}
+public String getNote() {
+return mNotes;
+}
+public void setTime(Date timestamp){
+this.mTimestamp = timestamp.getTime();
+}
+public void setTime(long timeInMillis) {
+this.mTimestamp = timeInMillis;
+}
+public long getTimeMillis(){
+return mTimestamp;
+}
+public static TransactionType getTypeForBalance(AccountType accountType, boolean shouldReduceBalance){
+TransactionType type;
+if (accountType.hasDebitNormalBalance()) {
+type = shouldReduceBalance ? TransactionType.CREDIT : TransactionType.DEBIT;
+} else {
+type = shouldReduceBalance ? TransactionType.DEBIT : TransactionType.CREDIT;
+}
+return type;
+}
+public static boolean shouldDecreaseBalance(AccountType accountType, TransactionType transactionType) {
+if (accountType.hasDebitNormalBalance()) {
+return transactionType == TransactionType.CREDIT;
+} else
+return transactionType == TransactionType.DEBIT;
+}
+public void setExported(boolean isExported){
+mIsExported = isExported;
+}
+public boolean isExported(){
+return mIsExported;
+}
+public boolean isTemplate(){
+return mIsTemplate;
+}
+public void setTemplate(boolean isTemplate){
+mIsTemplate = isTemplate;
+}
+public Element toOFX(Document doc, String accountUID){
+Money balance = getBalance(accountUID);
+TransactionType transactionType = balance.isNegative() ? TransactionType.DEBIT : TransactionType.CREDIT;
+Element transactionNode = doc.createElement(OfxHelper.TAG_STATEMENT_TRANSACTION);
+Element typeNode = doc.createElement(OfxHelper.TAG_TRANSACTION_TYPE);
+typeNode.appendChild(doc.createTextNode(transactionType.toString()));
+transactionNode.appendChild(typeNode);
+Element datePosted = doc.createElement(OfxHelper.TAG_DATE_POSTED);
+datePosted.appendChild(doc.createTextNode(OfxHelper.getOfxFormattedTime(mTimestamp)));
+transactionNode.appendChild(datePosted);
+Element dateUser = doc.createElement(OfxHelper.TAG_DATE_USER);
+dateUser.appendChild(doc.createTextNode(
+OfxHelper.getOfxFormattedTime(mTimestamp)));
+transactionNode.appendChild(dateUser);
+Element amount = doc.createElement(OfxHelper.TAG_TRANSACTION_AMOUNT);
+amount.appendChild(doc.createTextNode(balance.toPlainString()));
+transactionNode.appendChild(amount);
+Element transID = doc.createElement(OfxHelper.TAG_TRANSACTION_FITID);
+transID.appendChild(doc.createTextNode(getUID()));
+transactionNode.appendChild(transID);
+Element name = doc.createElement(OfxHelper.TAG_NAME);
+name.appendChild(doc.createTextNode(mDescription));
+transactionNode.appendChild(name);
+if (mNotes != null && mNotes.length() > 0){
+Element memo = doc.createElement(OfxHelper.TAG_MEMO);
+memo.appendChild(doc.createTextNode(mNotes));
+transactionNode.appendChild(memo);
+}
+if (mSplitList.size() == 2){ 
+String transferAccountUID = accountUID;
+for (Split split : mSplitList) {
+if (!split.getAccountUID().equals(accountUID)){
+transferAccountUID = split.getAccountUID();
+break;
+}
+}
+Element bankId = doc.createElement(OfxHelper.TAG_BANK_ID);
+bankId.appendChild(doc.createTextNode(OfxHelper.APP_ID));
+Element acctId = doc.createElement(OfxHelper.TAG_ACCOUNT_ID);
+acctId.appendChild(doc.createTextNode(transferAccountUID));
+Element accttype = doc.createElement(OfxHelper.TAG_ACCOUNT_TYPE);
+AccountsDbAdapter acctDbAdapter = AccountsDbAdapter.getInstance();
+OfxAccountType ofxAccountType = Account.convertToOfxAccountType(acctDbAdapter.getAccountType(transferAccountUID));
+accttype.appendChild(doc.createTextNode(ofxAccountType.toString()));
+Element bankAccountTo = doc.createElement(OfxHelper.TAG_BANK_ACCOUNT_TO);
+bankAccountTo.appendChild(bankId);
+bankAccountTo.appendChild(acctId);
+bankAccountTo.appendChild(accttype);
+transactionNode.appendChild(bankAccountTo);
+}
+return transactionNode;
+}
+public String getScheduledActionUID() {
+return mScheduledActionUID;
+}
+public void setScheduledActionUID(String scheduledActionUID) {
+mScheduledActionUID = scheduledActionUID;
+}
+public static Intent createIntent(Transaction transaction){
+Intent intent = new Intent(Intent.ACTION_INSERT);
+intent.setType(Transaction.MIME_TYPE);
+intent.putExtra(Intent.EXTRA_TITLE, transaction.getDescription());
+intent.putExtra(Intent.EXTRA_TEXT, transaction.getNote());
+intent.putExtra(Account.EXTRA_CURRENCY_CODE, transaction.getCurrencyCode());
+StringBuilder stringBuilder = new StringBuilder();
+for (Split split : transaction.getSplits()) {
+stringBuilder.append(split.toCsv()).append("\n");
+}
+intent.putExtra(Transaction.EXTRA_SPLITS, stringBuilder.toString());
+return intent;
+}
+}

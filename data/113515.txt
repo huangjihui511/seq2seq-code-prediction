@@ -1,0 +1,16 @@
+package com.pokegoapi.util.hash;
+import lombok.Getter;
+import java.util.List;
+public class Hash {
+@Getter
+public final int locationAuthHash;
+@Getter
+public final int locationHash;
+@Getter
+public final List<Long> requestHashes;
+public Hash(int locationAuthHash, int locationHash, List<Long> requestHashes) {
+this.locationAuthHash = locationAuthHash;
+this.locationHash = locationHash;
+this.requestHashes = requestHashes;
+}
+}

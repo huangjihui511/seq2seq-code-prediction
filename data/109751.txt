@@ -1,0 +1,23 @@
+package lombok.javac.handlers.singulars;
+import org.mangosdk.spi.ProviderFor;
+import lombok.core.LombokImmutableList;
+import lombok.javac.handlers.JavacSingularsRecipes.JavacSingularizer;
+@ProviderFor(JavacSingularizer.class)
+public class JavacGuavaTableSingularizer extends JavacGuavaSingularizer {
+private static final LombokImmutableList<String> SUFFIXES =
+LombokImmutableList.of("rowKey", "columnKey", "value");
+private static final LombokImmutableList<String> SUPPORTED_TYPES =
+LombokImmutableList.of("com.google.common.collect.ImmutableTable");
+@Override public LombokImmutableList<String> getSupportedTypes() {
+return SUPPORTED_TYPES;
+}
+@Override protected LombokImmutableList<String> getArgumentSuffixes() {
+return SUFFIXES;
+}
+@Override protected String getAddMethodName() {
+return "put";
+}
+@Override protected String getAddAllTypeName() {
+return "com.google.common.collect.Table";
+}
+}

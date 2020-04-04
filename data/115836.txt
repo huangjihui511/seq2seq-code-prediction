@@ -1,0 +1,5 @@
+package com.jeff.tianti.common.entity;
+import javax.persistence.MappedSuperclass;
+@MappedSuperclass
+public class IdEntity {
+}

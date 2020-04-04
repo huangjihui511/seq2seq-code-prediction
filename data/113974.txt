@@ -1,0 +1,6 @@
+package org.spongepowered.mod.bridge.fml;
+import net.minecraftforge.fml.common.ModContainer;
+public interface LoadControllerBridge_Forge {
+ModContainer forgeBridge$getActiveModContainer();
+void forgeBridge$setActiveModContainer(ModContainer container);
+}

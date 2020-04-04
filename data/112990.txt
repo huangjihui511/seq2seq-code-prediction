@@ -1,0 +1,63 @@
+package org.apache.pdfbox.pdmodel.interactive.form;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import org.apache.pdfbox.cos.COSArray;
+import org.apache.pdfbox.cos.COSBase;
+import org.apache.pdfbox.cos.COSStream;
+import org.apache.pdfbox.io.IOUtils;
+import org.apache.pdfbox.pdmodel.common.COSObjectable;
+import org.w3c.dom.Document;
+public final class PDXFAResource implements COSObjectable
+{
+private final COSBase xfa;
+public PDXFAResource(COSBase xfaBase)
+{
+xfa = xfaBase;
+}
+@Override
+public COSBase getCOSObject()
+{
+return xfa;
+}
+public byte[] getBytes() throws IOException
+{
+if (this.getCOSObject() instanceof COSArray)
+{
+return getBytesFromPacket((COSArray) this.getCOSObject());
+}
+else if (xfa.getCOSObject() instanceof COSStream)
+{
+return getBytesFromStream((COSStream) this.getCOSObject());
+}
+return new byte[0];
+}
+private static byte[] getBytesFromPacket(final COSArray cosArray) throws IOException
+{
+try (final ByteArrayOutputStream baos = new ByteArrayOutputStream())
+{
+for (int i = 1; i < cosArray.size(); i += 2)
+{
+COSBase cosObj = cosArray.getObject(i);
+if (cosObj instanceof COSStream)
+{
+baos.write(getBytesFromStream((COSStream) cosObj.getCOSObject()));
+}
+}
+return baos.toByteArray();
+}
+}
+private static byte[] getBytesFromStream(final COSStream stream) throws IOException
+{
+try (final InputStream is = stream.createInputStream())
+{
+return IOUtils.toByteArray(is);
+}
+}
+public Document getDocument() throws IOException
+{
+return org.apache.pdfbox.util.XMLUtil 
+.parse(new ByteArrayInputStream(this.getBytes()), true);
+}
+}

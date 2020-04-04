@@ -1,0 +1,5 @@
+package com.newlandframework.rpc.core;
+import com.newlandframework.rpc.model.MessageRequest;
+public interface Modular {
+<T> ModuleProvider<T> invoke(ModuleInvoker<T> invoker, MessageRequest request);
+}

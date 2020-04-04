@@ -1,0 +1,27 @@
+package com.github.benmanes.caffeine.cache;
+import java.util.function.Consumer;
+import org.checkerframework.checker.nullness.qual.NonNull;
+interface Buffer<E> {
+int FULL = 1;
+int SUCCESS = 0;
+int FAILED = -1;
+@SuppressWarnings("unchecked")
+static <E> Buffer<E> disabled() {
+return (Buffer<E>) DisabledBuffer.INSTANCE;
+}
+int offer(@NonNull E e);
+void drainTo(@NonNull Consumer<E> consumer);
+default int size() {
+return writes() - reads();
+}
+int reads();
+int writes();
+}
+enum DisabledBuffer implements Buffer<Object> {
+INSTANCE;
+@Override public int offer(Object e) { return Buffer.SUCCESS; }
+@Override public void drainTo(Consumer<Object> consumer) {}
+@Override public int size() { return 0; }
+@Override public int reads() { return 0; }
+@Override public int writes() { return 0; }
+}

@@ -1,0 +1,115 @@
+package org.spongepowered.api.data.manipulator.mutable.common;
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Maps;
+import org.spongepowered.api.data.DataContainer;
+import org.spongepowered.api.data.Queries;
+import org.spongepowered.api.data.key.Key;
+import org.spongepowered.api.data.manipulator.DataManipulator;
+import org.spongepowered.api.data.manipulator.ImmutableDataManipulator;
+import org.spongepowered.api.data.value.BaseValue;
+import org.spongepowered.api.data.value.immutable.ImmutableValue;
+import org.spongepowered.api.data.value.mutable.Value;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
+@SuppressWarnings("unchecked")
+public abstract class AbstractData<M extends DataManipulator<M, I>, I extends ImmutableDataManipulator<I, M>> implements DataManipulator<M, I> {
+private final Map<Key<?>, Supplier<Value<?>>> keyValueMap = Maps.newHashMap();
+private final Map<Key<?>, Supplier<?>> keyFieldGetterMap = Maps.newHashMap();
+private final Map<Key<?>, Consumer<Object>> keyFieldSetterMap = Maps.newHashMap();
+protected AbstractData() {
+}
+protected final void registerKeyValue(Key<?> key, Supplier<Value<?>> function) {
+this.keyValueMap.put(checkNotNull(key), checkNotNull(function));
+}
+protected final void registerFieldGetter(Key<?> key, Supplier<?> function) {
+this.keyFieldGetterMap.put(checkNotNull(key, "The key cannot be null"), checkNotNull(function, "The function cannot be null"));
+}
+@SuppressWarnings("rawtypes")
+protected final <E> void registerFieldSetter(Key<? extends BaseValue<E>> key, Consumer<E> function) {
+this.keyFieldSetterMap.put(checkNotNull(key), checkNotNull((Consumer) function));
+}
+protected abstract void registerGettersAndSetters();
+@Override
+public <E> M set(Key<? extends BaseValue<E>> key, E value) {
+checkArgument(supports(key), "This data manipulator doesn't support the following key: " + key.toString());
+this.keyFieldSetterMap.get(key).accept(value);
+return (M) this;
+}
+@Override
+public <E> M transform(Key<? extends BaseValue<E>> key, Function<E, E> function) {
+checkArgument(supports(key));
+this.keyFieldSetterMap.get(key).accept(checkNotNull(function.apply((E) this.keyFieldGetterMap.get(key).get())));
+return (M) this;
+}
+@Override
+public <E> Optional<E> get(Key<? extends BaseValue<E>> key) {
+final Supplier<?> supplier = this.keyFieldGetterMap.get(checkNotNull(key));
+if (supplier == null) {
+return Optional.empty();
+}
+return Optional.of((E) supplier.get());
+}
+@Override
+public <E, V extends BaseValue<E>> Optional<V> getValue(Key<V> key) {
+final Supplier<?> supplier = this.keyValueMap.get(checkNotNull(key));
+if (supplier == null) {
+return Optional.empty();
+}
+return Optional.of((V) supplier.get());
+}
+@Override
+public boolean supports(Key<?> key) {
+return this.keyFieldSetterMap.containsKey(checkNotNull(key));
+}
+@Override
+public Set<Key<?>> getKeys() {
+return ImmutableSet.copyOf(this.keyFieldSetterMap.keySet());
+}
+@Override
+public Set<ImmutableValue<?>> getValues() {
+ImmutableSet.Builder<ImmutableValue<?>> builder = ImmutableSet.builder();
+for (Supplier<Value<?>> function : this.keyValueMap.values()) {
+builder.add(checkNotNull(function.get()).asImmutable());
+}
+return builder.build();
+}
+@Override
+public int hashCode() {
+return Objects.hash(this.keyFieldGetterMap, this.keyFieldSetterMap, this.keyValueMap);
+}
+@SuppressWarnings("rawtypes")
+@Override
+public boolean equals(Object obj) {
+if (this == obj) {
+return true;
+}
+if (obj == null || getClass() != obj.getClass()) {
+return false;
+}
+final AbstractData other = (AbstractData) obj;
+return Objects.equals(this.keyFieldGetterMap.values().stream()
+.map(Supplier::get)
+.collect(Collectors.toList()),
+((Map<Key<?>, Supplier<?>>) other.keyFieldGetterMap).values().stream()
+.map(Supplier::get)
+.collect(Collectors.toList()));
+}
+@Override
+public DataContainer toContainer() {
+final DataContainer dataContainer = DataContainer.createNew()
+.set(Queries.CONTENT_VERSION, getContentVersion());
+fillContainer(dataContainer);
+return dataContainer;
+}
+protected DataContainer fillContainer(DataContainer dataContainer) {
+return dataContainer;
+}
+}

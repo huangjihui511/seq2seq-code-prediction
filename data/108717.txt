@@ -1,0 +1,18 @@
+package com.xkcoding.websocket.payload.server;
+import com.google.common.collect.Lists;
+import com.xkcoding.websocket.model.server.SysFile;
+import com.xkcoding.websocket.payload.KV;
+import lombok.Data;
+import java.util.List;
+@Data
+public class SysFileVO {
+List<List<KV>> data = Lists.newArrayList();
+public static SysFileVO create(List<SysFile> sysFiles) {
+SysFileVO vo = new SysFileVO();
+for (SysFile sysFile : sysFiles) {
+List<KV> item = Lists.newArrayList();
+vo.data.add(item);
+}
+return vo;
+}
+}

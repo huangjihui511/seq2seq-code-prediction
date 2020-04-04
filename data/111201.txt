@@ -1,0 +1,42 @@
+package com.github.benmanes.caffeine.cache.node;
+import com.github.benmanes.caffeine.cache.Feature;
+import com.squareup.javapoet.MethodSpec;
+import com.squareup.javapoet.TypeName;
+@SuppressWarnings("PMD.AvoidDuplicateLiterals")
+public final class AddMaximum extends NodeRule {
+@Override
+protected boolean applies() {
+return Feature.usesMaximum(context.generateFeatures);
+}
+@Override
+protected void execute() {
+addQueueFlag();
+addWeight();
+}
+private void addQueueFlag() {
+context.nodeSubtype.addField(int.class, "queueType");
+context.nodeSubtype.addMethod(MethodSpec.methodBuilder("getQueueType")
+.addModifiers(context.publicFinalModifiers())
+.returns(int.class)
+.addStatement("return queueType")
+.build());
+context.nodeSubtype.addMethod(MethodSpec.methodBuilder("setQueueType")
+.addModifiers(context.publicFinalModifiers())
+.addParameter(int.class, "queueType")
+.addStatement("this.queueType = queueType")
+.build());
+}
+private void addWeight() {
+if (!context.generateFeatures.contains(Feature.MAXIMUM_WEIGHT)) {
+return;
+}
+context.nodeSubtype.addField(int.class, "weight")
+.addMethod(newGetter(Strength.STRONG, TypeName.INT, "weight", Visibility.IMMEDIATE))
+.addMethod(newSetter(TypeName.INT, "weight", Visibility.IMMEDIATE));
+context.constructorByKey.addStatement("this.$N = $N", "weight", "weight");
+context.constructorByKeyRef.addStatement("this.$N = $N", "weight", "weight");
+context.nodeSubtype.addField(int.class, "policyWeight")
+.addMethod(newGetter(Strength.STRONG, TypeName.INT, "policyWeight", Visibility.IMMEDIATE))
+.addMethod(newSetter(TypeName.INT, "policyWeight", Visibility.IMMEDIATE));
+}
+}

@@ -1,0 +1,47 @@
+package io.vertx.core.dns;
+import io.vertx.codegen.annotations.Nullable;
+import io.vertx.core.AsyncResult;
+import io.vertx.core.Future;
+import io.vertx.core.Handler;
+import io.vertx.codegen.annotations.Fluent;
+import io.vertx.codegen.annotations.VertxGen;
+import java.util.List;
+@VertxGen
+public interface DnsClient {
+@Fluent
+DnsClient lookup(String name, Handler<AsyncResult<@Nullable String>> handler);
+Future<@Nullable String> lookup(String name);
+@Fluent
+DnsClient lookup4(String name, Handler<AsyncResult<@Nullable String>> handler);
+Future<@Nullable String> lookup4(String name);
+@Fluent
+DnsClient lookup6(String name, Handler<AsyncResult<@Nullable String>> handler);
+Future<@Nullable String> lookup6(String name);
+@Fluent
+DnsClient resolveA(String name, Handler<AsyncResult<List<String>>> handler);
+Future<List<String>> resolveA(String name);
+@Fluent
+DnsClient resolveAAAA(String name, Handler<AsyncResult<List<String>>> handler);
+Future<List<String>> resolveAAAA(String name);
+@Fluent
+DnsClient resolveCNAME(String name, Handler<AsyncResult<List<String>>> handler);
+Future<List<String>> resolveCNAME(String name);
+@Fluent
+DnsClient resolveMX(String name, Handler<AsyncResult<List<MxRecord>>> handler);
+Future<List<MxRecord>> resolveMX(String name);
+@Fluent
+DnsClient resolveTXT(String name, Handler<AsyncResult<List<String>>> handler);
+Future<List<String>> resolveTXT(String name);
+@Fluent
+DnsClient resolvePTR(String name, Handler<AsyncResult<@Nullable String>> handler);
+Future<@Nullable String> resolvePTR(String name);
+@Fluent
+DnsClient resolveNS(String name, Handler<AsyncResult<List<String>>> handler);
+Future<List<String>> resolveNS(String name);
+@Fluent
+DnsClient resolveSRV(String name, Handler<AsyncResult<List<SrvRecord>>> handler);
+Future<List<SrvRecord>> resolveSRV(String name);
+@Fluent
+DnsClient reverseLookup(String ipaddress, Handler<AsyncResult<@Nullable String>> handler);
+Future<@Nullable String> reverseLookup(String ipaddress);
+}

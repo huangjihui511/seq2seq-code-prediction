@@ -1,0 +1,9 @@
+package org.spongepowered.mod.bridge.client;
+import net.minecraft.client.gui.GuiOverlayDebug;
+import org.spongepowered.api.text.Text;
+public interface MinecraftBridge_Forge {
+void forgeBridge$setDebugGui(GuiOverlayDebug debugGui);
+GuiOverlayDebug forgeBridge$getDebugGui();
+Text forgeBridge$getSinglePlayerKickMessage();
+void forgeBridge$setSinglePlayerKickMessage(Text text);
+}

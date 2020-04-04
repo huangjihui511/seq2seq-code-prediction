@@ -1,0 +1,36 @@
+package org.jupiter.example;
+import java.util.concurrent.CompletableFuture;
+import org.jupiter.rpc.ServiceProviderImpl;
+@ServiceProviderImpl(version = "1.0.0.daily")
+public class AsyncUserServiceImpl implements AsyncUserService {
+@Override
+public User syncCreateUser() {
+return User.createUser();
+}
+@Override
+public CompletableFuture<User> createUser() {
+CompletableFuture<User> f = new CompletableFuture<>();
+new Thread(() -> {
+try {
+Thread.sleep(1000);
+} catch (InterruptedException e) {
+e.printStackTrace();
+}
+f.complete(User.createUser());
+}).start();
+return f;
+}
+@Override
+public MyCompletableFuture<User> createUser2() {
+MyCompletableFuture<User> f = new MyCompletableFuture<>();
+new Thread(() -> {
+try {
+Thread.sleep(1000);
+} catch (InterruptedException e) {
+e.printStackTrace();
+}
+f.complete(User.createUser());
+}).start();
+return f;
+}
+}

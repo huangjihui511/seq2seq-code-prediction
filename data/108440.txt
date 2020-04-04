@@ -1,0 +1,38 @@
+package com.oracle.svm.agent;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import com.oracle.svm.configure.trace.TraceProcessor;
+public class TraceProcessorWriterAdapter extends TraceWriter {
+private final TraceProcessor processor;
+TraceProcessorWriterAdapter(TraceProcessor processor) {
+this.processor = processor;
+}
+TraceProcessor getProcessor() {
+return processor;
+}
+@Override
+void traceEntry(Map<String, Object> entry) {
+processor.processEntry(arraysToLists(entry));
+}
+private Map<String, Object> arraysToLists(Map<String, Object> map) {
+for (Map.Entry<String, Object> mapEntry : map.entrySet()) {
+if (mapEntry.getValue() instanceof Object[]) {
+mapEntry.setValue(arraysToLists((Object[]) mapEntry.getValue()));
+}
+}
+return map;
+}
+private List<?> arraysToLists(Object[] array) {
+Object[] newArray = Arrays.copyOf(array, array.length);
+for (int i = 0; i < newArray.length; i++) {
+if (newArray[i] instanceof Object[]) {
+newArray[i] = arraysToLists((Object[]) newArray[i]);
+}
+}
+return Arrays.asList(newArray);
+}
+@Override
+public void close() {
+}
+}

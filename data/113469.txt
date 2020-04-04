@@ -1,0 +1,57 @@
+package com.pokegoapi.util.path;
+import com.pokegoapi.api.PokemonGo;
+import com.pokegoapi.api.map.Point;
+import com.pokegoapi.util.MapUtil;
+import lombok.Getter;
+public class Path {
+private Point source;
+private Point destination;
+private Point intermediate;
+private double speed;
+private long startTime;
+private long endTime;
+@Getter
+private long totalTime;
+@Getter
+public boolean complete;
+public Path(Point source, Point destination, double speed) {
+this.source = source;
+this.destination = destination;
+double metersPerHour = speed * 1000;
+this.speed = metersPerHour / 60 / 60 / 1000;
+this.intermediate = new Point(source.getLatitude(), source.getLongitude());
+this.totalTime = (long) (MapUtil.distFrom(source, destination) / this.speed);
+}
+public long start(PokemonGo api) {
+startTime = api.currentTimeMillis();
+endTime = startTime + totalTime;
+complete = false;
+return totalTime;
+}
+public Point calculateIntermediate(PokemonGo api) {
+if (totalTime <= 0) {
+this.complete = true;
+return this.destination;
+}
+long time = Math.min(api.currentTimeMillis(), endTime) - startTime;
+if (time >= totalTime) {
+this.complete = true;
+}
+double intermediate = (double) time / totalTime;
+double latitude = source.getLatitude() + (destination.getLatitude() - source.getLatitude()) * intermediate;
+double longitude = source.getLongitude() + (destination.getLongitude() - source.getLongitude()) * intermediate;
+this.intermediate.latitude = latitude;
+this.intermediate.longitude = longitude;
+return this.intermediate;
+}
+public long getTimeLeft(PokemonGo api) {
+return Math.max(0, endTime - api.currentTimeMillis());
+}
+public void setSpeed(PokemonGo api, double speed) {
+double metersPerHour = speed * 1000;
+this.speed = metersPerHour / 60 / 60 / 1000;
+this.source = calculateIntermediate(api);
+this.totalTime = (long) (MapUtil.distFrom(source, destination) / this.speed);
+start(api);
+}
+}

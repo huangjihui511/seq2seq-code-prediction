@@ -1,0 +1,59 @@
+package org.fusesource.mqtt.client;
+import org.fusesource.hawtbuf.Buffer;
+import org.fusesource.hawtbuf.UTF8Buffer;
+import org.fusesource.hawtdispatch.DispatchQueue;
+import org.fusesource.hawtdispatch.Task;
+public class Message {
+private final UTF8Buffer topic;
+private final Buffer payload;
+private Callback<Callback<Void>>  onComplete;
+private final DispatchQueue queue;
+boolean blocking = false;
+public Message(DispatchQueue queue, UTF8Buffer topic, Buffer payload, Callback<Callback<Void>> onComplete) {
+this.queue = queue;
+this.payload = payload;
+this.topic = topic;
+this.onComplete = onComplete;
+}
+public byte[] getPayload() {
+return payload.toByteArray();
+}
+public Buffer getPayloadBuffer() {
+return payload;
+}
+public String getTopic() {
+return topic.toString();
+}
+public UTF8Buffer getTopicBuffer() {
+return topic;
+}
+public void ack() {
+if( blocking ) {
+final Promise<Void> future = new Promise<Void>();
+ack(future);
+try {
+future.await();
+} catch (Exception e) {
+throw new RuntimeException(e);
+}
+} else {
+ack(null);
+}
+}
+public void ack(final Callback<Void> onAcked) {
+if(onComplete!=null) {
+queue.execute(new Task() {
+Callback<Callback<Void>> onCompleteCopy = onComplete;
+@Override
+public void run() {
+onCompleteCopy.onSuccess(onAcked);
+}
+});
+onComplete = null;
+} else {
+if( onAcked!=null ) {
+onAcked.onSuccess(null);
+}
+}
+}
+}

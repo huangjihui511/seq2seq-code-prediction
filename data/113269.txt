@@ -1,0 +1,8 @@
+package org.pf4j.demo;
+import org.pf4j.demo.api.Greeting;
+public class HowdyGreeting implements Greeting {
+@Override
+public String getGreeting() {
+return "Howdy";
+}
+}

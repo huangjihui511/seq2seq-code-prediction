@@ -1,0 +1,23 @@
+package mobi.hsz.idea.gitignore.command;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiFile;
+import mobi.hsz.idea.gitignore.file.IgnoreTemplatesFactory;
+import mobi.hsz.idea.gitignore.file.type.IgnoreFileType;
+import org.jetbrains.annotations.NotNull;
+public class CreateFileCommandAction extends CommandAction<PsiFile> {
+private final PsiDirectory directory;
+private final IgnoreFileType fileType;
+public CreateFileCommandAction(@NotNull Project project,
+@NotNull PsiDirectory directory,
+@NotNull IgnoreFileType fileType) {
+super(project);
+this.directory = directory;
+this.fileType = fileType;
+}
+@Override
+protected PsiFile compute() {
+IgnoreTemplatesFactory factory = new IgnoreTemplatesFactory(fileType);
+return factory.createFromTemplate(directory);
+}
+}

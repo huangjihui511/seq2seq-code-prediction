@@ -1,0 +1,6 @@
+package org.menacheri.jetclient.event;
+public interface EventHandler
+{
+void onEvent(Event event);
+int getEventType();
+}

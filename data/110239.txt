@@ -1,0 +1,13 @@
+package tests;
+import com.google.auto.factory.AutoFactory;
+import com.google.auto.factory.Provided;
+import org.checkerframework.checker.nullness.compatqual.NullableDecl;
+import org.checkerframework.checker.nullness.compatqual.NullableType;
+@AutoFactory
+final class CheckerFrameworkNullable {
+CheckerFrameworkNullable(
+@NullableDecl String nullableDecl,
+@Provided @NullableDecl String providedNullableDecl,
+@NullableType String nullableType,
+@Provided @NullableType String providedNullableType) {}
+}

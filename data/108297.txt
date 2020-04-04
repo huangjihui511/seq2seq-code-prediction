@@ -1,0 +1,8 @@
+package org.apache.flink.table.sources;
+import org.apache.flink.annotation.PublicEvolving;
+@PublicEvolving
+public interface NestedFieldsProjectableTableSource<T> {
+TableSource<T> projectNestedFields(
+int[] fields,
+String[][] nestedFields);
+}

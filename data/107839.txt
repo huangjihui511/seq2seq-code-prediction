@@ -1,0 +1,16 @@
+package org.junit.internal;
+public final class Checks {
+private Checks() {}
+public static <T> T notNull(T value) {
+if (value == null) {
+throw new NullPointerException();
+}
+return value;
+}
+public static <T> T notNull(T value, String message) {
+if (value == null) {
+throw new NullPointerException(message);
+}
+return value;
+}
+}

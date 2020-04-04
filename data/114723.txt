@@ -1,0 +1,21 @@
+package com.twelvemonkeys.servlet.jsp.taglib;
+import javax.servlet.ServletConfig;
+import javax.servlet.ServletContext;
+import javax.servlet.jsp.JspWriter;
+import javax.servlet.jsp.tagext.Tag;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Enumeration;
+public interface ExTag extends Tag {
+public void writeHtml(JspWriter pOut, String pHtml) throws IOException;
+public void log(String pMsg);
+public void log(String pMsg, Throwable pException);
+public ServletContext getServletContext();
+public String getInitParameter(String pName);
+public Enumeration getInitParameterNames();
+public String getInitParameter(String pName, int pScope);
+public Enumeration getInitParameterNames(int pScope);
+public ServletConfig getServletConfig();
+public String getContextPath();
+public InputStream getResourceAsStream(String pPath);
+}

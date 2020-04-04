@@ -1,0 +1,5 @@
+package it.unimi.dsi.fastutil.io;
+public interface RepositionableStream {
+void position(long newPosition) throws java.io.IOException;
+long position() throws java.io.IOException;
+}

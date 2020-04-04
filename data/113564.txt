@@ -1,0 +1,17 @@
+package org.fusesource.mqtt.codec;
+import java.net.ProtocolException;
+import static org.fusesource.mqtt.codec.MessageSupport.*;
+public class PUBREC extends MessageSupport.AckBase implements Message {
+public static final byte TYPE = 5;
+public byte messageType() {
+return TYPE;
+}
+@Override
+public PUBREC decode(MQTTFrame frame) throws ProtocolException {
+return (PUBREC) super.decode(frame);
+}
+@Override
+public PUBREC messageId(short messageId) {
+return (PUBREC) super.messageId(messageId);
+}
+}

@@ -1,0 +1,33 @@
+package mobi.hsz.idea.gitignore.codeInspection;
+import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.psi.PsiElementVisitor;
+import mobi.hsz.idea.gitignore.IgnoreBundle;
+import mobi.hsz.idea.gitignore.psi.IgnoreEntry;
+import mobi.hsz.idea.gitignore.psi.IgnoreVisitor;
+import mobi.hsz.idea.gitignore.util.Glob;
+import org.jetbrains.annotations.NotNull;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
+public class IgnoreIncorrectEntryInspection extends LocalInspectionTool {
+@NotNull
+@Override
+@SuppressWarnings("ResultOfMethodCallIgnored")
+public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
+return new IgnoreVisitor() {
+@Override
+public void visitEntry(@NotNull IgnoreEntry entry) {
+String regex = entry.getText();
+if (IgnoreBundle.Syntax.GLOB.equals(entry.getSyntax())) {
+regex = Glob.createRegex(regex, false);
+}
+try {
+Pattern.compile(regex);
+} catch (PatternSyntaxException e) {
+holder.registerProblem(entry,
+IgnoreBundle.message("codeInspection.incorrectEntry.message", e.getDescription()));
+}
+}
+};
+}
+}

@@ -1,0 +1,8 @@
+package io.jooby;
+import javax.annotation.Nonnull;
+public interface Extension {
+default boolean lateinit() {
+return false;
+}
+void install(@Nonnull Jooby application) throws Exception;
+}

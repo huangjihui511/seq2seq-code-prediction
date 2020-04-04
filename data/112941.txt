@@ -1,0 +1,5 @@
+package io.kubernetes.client.extended.workqueue;
+import java.time.Duration;
+public interface DelayingQueue<T> extends WorkQueue<T> {
+void addAfter(T item, Duration duration);
+}

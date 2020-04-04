@@ -1,0 +1,141 @@
+package io.grpc;
+import static com.google.common.base.Preconditions.checkNotNull;
+import com.google.common.base.Objects;
+import java.util.Collections;
+import java.util.IdentityHashMap;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import javax.annotation.Nullable;
+import javax.annotation.concurrent.Immutable;
+@ExperimentalApi("https:
+@Immutable
+public final class Attributes {
+private final Map<Key<?>, Object> data;
+public static final Attributes EMPTY = new Attributes(Collections.<Key<?>, Object>emptyMap());
+private Attributes(Map<Key<?>, Object> data) {
+assert data != null;
+this.data = data;
+}
+@SuppressWarnings("unchecked")
+@Nullable
+public <T> T get(Key<T> key) {
+return (T) data.get(key);
+}
+@Deprecated
+public Set<Key<?>> keys() {
+return Collections.unmodifiableSet(data.keySet());
+}
+Set<Key<?>> keysForTest() {
+return Collections.unmodifiableSet(data.keySet());
+}
+@Deprecated
+public static Builder newBuilder(Attributes base) {
+checkNotNull(base, "base");
+return new Builder(base);
+}
+public static Builder newBuilder() {
+return new Builder(EMPTY);
+}
+public Builder toBuilder() {
+return new Builder(this);
+}
+@Immutable
+public static final class Key<T> {
+private final String debugString;
+private Key(String debugString) {
+this.debugString = debugString;
+}
+@Override
+public String toString() {
+return debugString;
+}
+@Deprecated
+public static <T> Key<T> of(String debugString) {
+return new Key<>(debugString);
+}
+public static <T> Key<T> create(String debugString) {
+return new Key<>(debugString);
+}
+}
+@Override
+public String toString() {
+return data.toString();
+}
+@Override
+public boolean equals(Object o) {
+if (this == o) {
+return true;
+}
+if (o == null || getClass() != o.getClass()) {
+return false;
+}
+Attributes that = (Attributes) o;
+if (data.size() != that.data.size()) {
+return false;
+}
+for (Entry<Key<?>, Object> e : data.entrySet()) {
+if (!that.data.containsKey(e.getKey())) {
+return false;
+}
+if (!Objects.equal(e.getValue(), that.data.get(e.getKey()))) {
+return false;
+}
+}
+return true;
+}
+@Override
+public int hashCode() {
+int hashCode = 0;
+for (Entry<Key<?>, Object> e : data.entrySet()) {
+hashCode += Objects.hashCode(e.getKey(), e.getValue());
+}
+return hashCode;
+}
+public static final class Builder {
+private Attributes base;
+private Map<Key<?>, Object> newdata;
+private Builder(Attributes base) {
+assert base != null;
+this.base = base;
+}
+private Map<Key<?>, Object> data(int size) {
+if (newdata == null) {
+newdata = new IdentityHashMap<>(size);
+}
+return newdata;
+}
+public <T> Builder set(Key<T> key, T value) {
+data(1).put(key, value);
+return this;
+}
+@ExperimentalApi("https:
+public <T> Builder discard(Key<T> key) {
+if (base.data.containsKey(key)) {
+Map<Key<?>, Object> newBaseData = new IdentityHashMap<>(base.data);
+newBaseData.remove(key);
+base = new Attributes(newBaseData);
+}
+if (newdata != null) {
+newdata.remove(key);
+}
+return this;
+}
+public Builder setAll(Attributes other) {
+data(other.data.size()).putAll(other.data);
+return this;
+}
+public Attributes build() {
+if (newdata != null) {
+for (Entry<Key<?>, Object> entry : base.data.entrySet()) {
+if (!newdata.containsKey(entry.getKey())) {
+newdata.put(entry.getKey(), entry.getValue());
+}
+}
+base = new Attributes(newdata);
+newdata = null;
+}
+return base;
+}
+}
+}

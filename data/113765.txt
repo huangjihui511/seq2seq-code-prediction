@@ -1,0 +1,352 @@
+package com.spazedog.lib.rootfw4;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.WeakHashMap;
+import android.os.Bundle;
+import android.util.Log;
+import com.spazedog.lib.rootfw4.ShellStream.OnStreamListener;
+import com.spazedog.lib.rootfw4.containers.Data;
+import com.spazedog.lib.rootfw4.utils.Device;
+import com.spazedog.lib.rootfw4.utils.Device.Process;
+import com.spazedog.lib.rootfw4.utils.File;
+import com.spazedog.lib.rootfw4.utils.Filesystem;
+import com.spazedog.lib.rootfw4.utils.Filesystem.Disk;
+import com.spazedog.lib.rootfw4.utils.Memory;
+import com.spazedog.lib.rootfw4.utils.Memory.CompCache;
+import com.spazedog.lib.rootfw4.utils.Memory.Swap;
+import com.spazedog.lib.rootfw4.utils.io.FileReader;
+import com.spazedog.lib.rootfw4.utils.io.FileWriter;
+public class Shell {
+public static final String TAG = Common.TAG + ".Shell";
+protected static Set<Shell> mInstances = Collections.newSetFromMap(new WeakHashMap<Shell, Boolean>());
+protected static Map<String, String> mBinaries = new HashMap<String, String>();
+protected Set<OnShellBroadcastListener> mBroadcastRecievers = Collections.newSetFromMap(new WeakHashMap<OnShellBroadcastListener, Boolean>());
+protected Set<OnShellConnectionListener> mConnectionRecievers = new HashSet<OnShellConnectionListener>();
+protected Object mLock = new Object();
+protected ShellStream mStream;
+protected Boolean mIsConnected = false;
+protected Boolean mIsRoot = false;
+protected List<String> mOutput = null;
+protected Integer mResultCode = 0;
+protected Integer mShellTimeout = 15000;
+protected Set<Integer> mResultCodes = new HashSet<Integer>();
+public static interface OnShellBroadcastListener {
+public void onShellBroadcast(String key, Bundle data);
+}
+public static interface OnShellResultListener {
+public void onShellResult(Result result);
+}
+public static interface OnShellValidateListener {
+public Boolean onShellValidate(String command, Integer result, List<String> output, Set<Integer> resultCodes);
+}
+public static interface OnShellConnectionListener {
+public void onShellDisconnect();
+}
+public static class Result extends Data<Result> {
+private Integer mResultCode;
+private Integer[] mValidResults;
+private Integer mCommandNumber;
+public Result(String[] lines, Integer result, Integer[] validResults, Integer commandNumber) {
+super(lines);
+mResultCode = result;
+mValidResults = validResults;
+mCommandNumber = commandNumber;
+}
+public Integer getResultCode() {
+return mResultCode;
+}
+public Boolean wasSuccessful() {
+for (int i=0; i < mValidResults.length; i++) {
+if ((int) mValidResults[i] == (int) mResultCode) {
+return true;
+}
+}
+return false;
+}
+public Integer getCommandNumber() {
+return mCommandNumber;
+}
+}
+public class Attempts {
+protected String[] mAttempts;
+protected Integer[] mResultCodes;
+protected OnShellValidateListener mValidateListener;
+protected OnShellResultListener mResultListener;
+protected Attempts(String command) {
+if (command != null) {
+Integer pos = 0;
+mAttempts = new String[ Common.BINARIES.length ];
+for (String binary : Common.BINARIES) {
+if (command.contains("%binary ")) {
+mAttempts[pos] = command.replaceAll("%binary ", (binary != null && binary.length() > 0 ? binary + " " : ""));
+} else {
+mAttempts[pos] = (binary != null && binary.length() > 0 ? binary + " " : "") + command;
+}
+pos += 1;
+}
+}
+}
+public Attempts setValidateListener(OnShellValidateListener listener) {
+mValidateListener = listener; return this;
+}
+public Attempts setResultListener(OnShellResultListener listener) {
+mResultListener = listener; return this;
+}
+public Attempts setResultCodes(Integer... resultCodes) {
+mResultCodes = resultCodes; return this;
+}
+public Result execute(OnShellValidateListener listener) {
+return setValidateListener(listener).execute();
+}
+public Result execute() {
+return Shell.this.execute(mAttempts, mResultCodes, mValidateListener);
+}
+public void executeAsync(OnShellResultListener listener) {
+setResultListener(listener).executeAsync();
+}
+public void executeAsync() {
+Shell.this.executeAsync(mAttempts, mResultCodes, mValidateListener, mResultListener);
+}
+}
+public Shell(Boolean requestRoot) {
+mResultCodes.add(0);
+mIsRoot = requestRoot;
+for (int i=0; i < 2; i++) {
+if(Common.DEBUG)Log.d(TAG, "Construct: Running connection attempt number " + (i+1));
+mStream = new ShellStream(requestRoot, new OnStreamListener() {
+@Override
+public void onStreamStart() {
+if(Common.DEBUG)Log.d(TAG, "onStreamStart: ...");
+mOutput = new ArrayList<String>();
+}
+@Override
+public void onStreamInput(String outputLine) {
+if(Common.DEBUG)Log.d(TAG, "onStreamInput: " + (outputLine != null ? (outputLine.length() > 50 ? outputLine.substring(0, 50) + " ..." : outputLine) : "NULL"));
+mOutput.add(outputLine);
+}
+@Override
+public void onStreamStop(Integer resultCode) {
+if(Common.DEBUG)Log.d(TAG, "onStreamStop: " + resultCode);
+mResultCode = resultCode;
+}
+@Override
+public void onStreamDied() {
+if(Common.DEBUG)Log.d(TAG, "onStreamDied: The stream has been closed");
+if (mIsConnected) {
+if(Common.DEBUG)Log.d(TAG, "onStreamDied: The stream seams to have died, reconnecting");
+mStream = new ShellStream(mIsRoot, this);
+if (mStream.isActive()) {
+Result result = execute("echo connected");
+mIsConnected = result != null && "connected".equals(result.getLine());
+} else {
+if(Common.DEBUG)Log.d(TAG, "onStreamDied: Could not reconnect");
+mIsConnected = false;
+}
+}
+if (!mIsConnected) {
+for (OnShellConnectionListener reciever : mConnectionRecievers) {
+reciever.onShellDisconnect();
+}
+}
+}
+});
+if (mStream.isActive()) {
+Result result = execute("echo connected");
+mIsConnected = result != null && "connected".equals(result.getLine());
+if (mIsConnected) {
+if(Common.DEBUG)Log.d(TAG, "Construct: Connection has been established");
+mInstances.add(this); break;
+}
+}
+}
+}
+public Result execute(String command) {
+return execute(new String[]{command}, null, null);
+}
+public Result execute(String[] commands) {
+return execute(commands, null, null);
+}
+public Result execute(String[] commands, Integer[] resultCodes, OnShellValidateListener validater) {
+synchronized(mLock) {
+if (mStream.waitFor(mShellTimeout)) {
+Integer cmdCount = 0;
+Set<Integer> codes = new HashSet<Integer>(mResultCodes);
+if (resultCodes != null) {
+Collections.addAll(codes, resultCodes);
+}
+for (String command : commands) {
+if(Common.DEBUG)Log.d(TAG, "execute: Executing the command '" + command + "'");
+mStream.execute(command);
+if(!mStream.waitFor(mShellTimeout)) {
+mStream.destroy();
+return null;
+}
+if(Common.DEBUG)Log.d(TAG, "execute: The command finished with the result code '" + mResultCode + "'");
+if ((validater != null && validater.onShellValidate(command, mResultCode, mOutput, codes)) || codes.contains(mResultCode)) {
+codes.add(mResultCode); break;
+}
+cmdCount += 1;
+}
+if (mOutput != null) {
+return new Result(mOutput.toArray(new String[mOutput.size()]), mResultCode, codes.toArray(new Integer[codes.size()]), cmdCount);
+}
+}
+return null;
+}
+}
+public void executeAsync(String command, OnShellResultListener listener) {
+executeAsync(new String[]{command}, null, null, listener);
+}
+public void executeAsync(String[] commands, OnShellResultListener listener) {
+executeAsync(commands, null, null, listener);
+}
+public synchronized void executeAsync(final String[] commands, final Integer[] resultCodes, final OnShellValidateListener validater, final OnShellResultListener listener) {
+if(Common.DEBUG)Log.d(TAG, "executeAsync: Starting an async shell execution");
+final Object lock = new Object();
+new Thread() {
+@Override
+public void run() {
+Result result = null;
+synchronized (lock) {
+lock.notifyAll();
+}
+synchronized(mLock) {
+result = Shell.this.execute(commands, resultCodes, validater);
+}
+listener.onShellResult(result);
+}
+}.start();
+synchronized (lock) {
+try {
+lock.wait();
+} catch (InterruptedException e) {}
+}
+}
+public static void sendBroadcast(String key, Bundle data) {
+for (Shell instance : mInstances) {
+instance.broadcastReciever(key, data);
+}
+}
+protected void broadcastReciever(String key, Bundle data) {
+for (OnShellBroadcastListener recievers : mBroadcastRecievers) {
+recievers.onShellBroadcast(key, data);
+}
+}
+public void addBroadcastListener(OnShellBroadcastListener listener) {
+mBroadcastRecievers.add(listener);
+}
+public void addShellConnectionListener(OnShellConnectionListener listener) {
+mConnectionRecievers.add(listener);
+}
+public void removeShellConnectionListener(OnShellConnectionListener listener) {
+mConnectionRecievers.remove(listener);
+}
+public Boolean isRoot() {
+return mIsRoot;
+}
+public Boolean isConnected() {
+return mIsConnected;
+}
+public Integer getTimeout() {
+return mShellTimeout;
+}
+public void setTimeout(Integer timeout) {
+if (timeout >= 0) {
+mShellTimeout = timeout;
+}
+}
+public void addResultCode(Integer resultCode) {
+mResultCodes.add(resultCode);
+}
+public void removeResultCode(Integer resultCode) {
+mResultCodes.remove(resultCode);
+}
+public void resetResultCodes() {
+mResultCodes.clear();
+mResultCodes.add(0);
+}
+public void destroy() {
+if (mStream != null) {
+mIsConnected = false;
+if (mStream.isRunning() || !mStream.isActive()) {
+if(Common.DEBUG)Log.d(TAG, "destroy: Destroying the stream");
+mStream.destroy();
+} else {
+if(Common.DEBUG)Log.d(TAG, "destroy: Making a clean exit on the stream");
+execute("exit 0");
+}
+mStream = null;
+mInstances.remove(this);
+mBroadcastRecievers.clear();
+}
+}
+public String findCommand(String bin) {
+if (!mBinaries.containsKey(bin)) {
+for (String toolbox : Common.BINARIES) {
+String cmd = toolbox != null && toolbox.length() > 0 ? toolbox + " " + bin : bin;
+Result result = execute( cmd + " -h" );
+if (result != null) {
+String line = result.getLine();
+if (!line.endsWith("not found") && !line.endsWith("such tool")) {
+mBinaries.put(bin, cmd); break;
+}
+}
+}
+}
+return mBinaries.get(bin);
+}
+public Attempts createAttempts(String command) {
+if (command != null) {
+return new Attempts(command);
+}
+return null;
+}
+public FileReader getFileReader(String file) {
+try {
+return new FileReader(this, file);
+} catch (FileNotFoundException e) {
+return null;
+}
+}
+public FileWriter getFileWriter(String file, Boolean append) {
+try {
+return new FileWriter(this, file, append);
+} catch (IOException e) {
+return null;
+}
+}
+public File getFile(String file) {
+return new File(this, file);
+}
+public Filesystem getFilesystem() {
+return new Filesystem(this);
+}
+public Disk getDisk(String disk) {
+return new Disk(this, disk);
+}
+public Device getDevice() {
+return new Device(this);
+}
+public Process getProcess(String process) {
+return new Process(this, process);
+}
+public Process getProcess(Integer pid) {
+return new Process(this, pid);
+}
+public Memory getMemory() {
+return new Memory(this);
+}
+public CompCache getCompCache() {
+return new CompCache(this);
+}
+public Swap getSwap(String device) {
+return new Swap(this, device);
+}
+}

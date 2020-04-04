@@ -1,0 +1,12 @@
+package org.spongepowered.api.text.selector;
+import org.spongepowered.api.util.generator.dummy.DummyObjectProvider;
+public final class SelectorTypes {
+public static final SelectorType ALL_ENTITIES = DummyObjectProvider.createFor(SelectorType.class, "ALL_ENTITIES");
+public static final SelectorType ALL_PLAYERS = DummyObjectProvider.createFor(SelectorType.class, "ALL_PLAYERS");
+public static final SelectorType NEAREST_PLAYER = DummyObjectProvider.createFor(SelectorType.class, "NEAREST_PLAYER");
+public static final SelectorType RANDOM = DummyObjectProvider.createFor(SelectorType.class, "RANDOM");
+public static final SelectorType SOURCE = DummyObjectProvider.createFor(SelectorType.class, "SOURCE");
+private SelectorTypes() {
+throw new AssertionError("You should not be attempting to instantiate this class.");
+}
+}

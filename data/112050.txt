@@ -1,0 +1,14 @@
+package org.springframework.data.mongodb.core.spel;
+import org.springframework.expression.spel.ExpressionState;
+import org.springframework.expression.spel.SpelNode;
+import org.springframework.expression.spel.ast.OperatorNot;
+public class NotOperatorNode extends ExpressionNode {
+private final OperatorNot operatorNode;
+protected NotOperatorNode(OperatorNot node, ExpressionState state) {
+super(node, state);
+this.operatorNode = node;
+}
+public String getMongoOperator() {
+return "$not";
+}
+}

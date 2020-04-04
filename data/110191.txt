@@ -1,0 +1,6 @@
+package com.google.auto.factory;
+import javax.inject.Inject;
+public class QualifiedDependencyImpl implements Dependency {
+@Inject
+QualifiedDependencyImpl() {}
+}

@@ -1,0 +1,176 @@
+package com.google.api.client.xml;
+import com.google.api.client.util.Key;
+import com.google.api.client.xml.atom.Atom;
+import com.google.common.collect.ImmutableMap;
+import java.io.StringWriter;
+import java.util.Collection;
+import java.util.TreeSet;
+import junit.framework.TestCase;
+import org.xmlpull.v1.XmlSerializer;
+public class XmlNamespaceDictionaryTest extends TestCase {
+private static final String EXPECTED =
+"<?xml version=\"1.0\"?><feed xmlns=\"http:
++ ".org/2005/Atom\" xmlns:gd=\"http:
++ "\"><title>One</title></entry><entry gd:etag=\"def\"><title>Two</title></entry></feed>";
+private static final String EXPECTED_EMPTY_MAP =
+"<?xml version=\"1.0\"?><entry xmlns" + "=\"http:
+private static final String EXPECTED_EMPTY_MAP_NS_UNDECLARED =
+"<?xml version=\"1.0\"?><n1" + ":entry xmlns:n1=\"http:
+private static final String EXPECTED_EMPTY_MAP_ATOM_NS =
+"<?xml version=\"1.0\"?><atom" + ":entry xmlns:atom=\"http:
+private static final String EXPECTED_UNKNOWN_NS =
+"<?xml version=\"1.0\"?><feed xmlns"
++ "=\"http:
++ "</title></entry><entry gd:etag=\"def\"><title>Two</title></entry></feed>";
+public XmlNamespaceDictionaryTest() {}
+public XmlNamespaceDictionaryTest(String name) {
+super(name);
+}
+public void testSet() {
+XmlNamespaceDictionary dictionary = new XmlNamespaceDictionary();
+dictionary.set("", "http:
+assertEquals("http:
+assertEquals("", dictionary.getAliasForUri("http:
+dictionary.set("", "http:
+assertEquals("http:
+assertNull(dictionary.getAliasForUri("http:
+assertEquals("", dictionary.getAliasForUri("http:
+dictionary.set("foo", "http:
+assertEquals("http:
+assertNull(dictionary.getUriForAlias(""));
+assertEquals("foo", dictionary.getAliasForUri("http:
+dictionary.set("foo", "http:
+assertEquals("http:
+assertNull(dictionary.getUriForAlias("gd"));
+assertNull(dictionary.getAliasForUri("http:
+dictionary.set(null, null);
+assertEquals("http:
+dictionary.set("foo", null);
+assertTrue(dictionary.getAliasToUriMap().isEmpty());
+dictionary
+.set("foo", "http:
+.set(null, "http:
+assertTrue(dictionary.getAliasToUriMap().isEmpty());
+}
+public void testSerialize() throws Exception {
+Feed feed = new Feed();
+feed.entries = new TreeSet<Entry>();
+feed.entries.add(new Entry("One", "abc"));
+feed.entries.add(new Entry("Two", "def"));
+StringWriter writer = new StringWriter();
+XmlSerializer serializer = Xml.createSerializer();
+serializer.setOutput(writer);
+XmlNamespaceDictionary namespaceDictionary = new XmlNamespaceDictionary();
+namespaceDictionary.set("", Atom.ATOM_NAMESPACE);
+namespaceDictionary.set("gd", "http:
+namespaceDictionary.serialize(serializer, Atom.ATOM_NAMESPACE, "feed", feed);
+assertEquals(EXPECTED, writer.toString());
+}
+public void testSerializeByName() throws Exception {
+Feed feed = new Feed();
+feed.entries = new TreeSet<Entry>();
+feed.entries.add(new Entry("One", "abc"));
+feed.entries.add(new Entry("Two", "def"));
+StringWriter writer = new StringWriter();
+XmlSerializer serializer = Xml.createSerializer();
+serializer.setOutput(writer);
+XmlNamespaceDictionary namespaceDictionary = new XmlNamespaceDictionary();
+namespaceDictionary.set("", Atom.ATOM_NAMESPACE);
+namespaceDictionary.set("gd", "http:
+namespaceDictionary.serialize(serializer, "feed", feed);
+assertEquals(EXPECTED, writer.toString());
+}
+public void testSerialize_emptyMap() throws Exception {
+ImmutableMap<String, String> map = ImmutableMap.of();
+StringWriter writer = new StringWriter();
+XmlSerializer serializer = Xml.createSerializer();
+serializer.setOutput(writer);
+XmlNamespaceDictionary namespaceDictionary = new XmlNamespaceDictionary();
+namespaceDictionary.set("", Atom.ATOM_NAMESPACE);
+namespaceDictionary.serialize(serializer, Atom.ATOM_NAMESPACE, "entry", map);
+assertEquals(EXPECTED_EMPTY_MAP, writer.toString());
+}
+public void testSerializeByName_emptyMap() throws Exception {
+ImmutableMap<String, String> map = ImmutableMap.of();
+StringWriter writer = new StringWriter();
+XmlSerializer serializer = Xml.createSerializer();
+serializer.setOutput(writer);
+XmlNamespaceDictionary namespaceDictionary = new XmlNamespaceDictionary();
+namespaceDictionary.set("", Atom.ATOM_NAMESPACE);
+namespaceDictionary.serialize(serializer, "entry", map);
+assertEquals(EXPECTED_EMPTY_MAP, writer.toString());
+}
+public void testSerializeByName_emptyMapAtomNs() throws Exception {
+ImmutableMap<String, String> map = ImmutableMap.of();
+StringWriter writer = new StringWriter();
+XmlSerializer serializer = Xml.createSerializer();
+serializer.setOutput(writer);
+XmlNamespaceDictionary namespaceDictionary = new XmlNamespaceDictionary();
+namespaceDictionary.set("atom", Atom.ATOM_NAMESPACE);
+namespaceDictionary.serialize(serializer, "atom:entry", map);
+assertEquals(EXPECTED_EMPTY_MAP_ATOM_NS, writer.toString());
+}
+public void testSerialize_emptyMapNsUndeclared() throws Exception {
+ImmutableMap<String, String> map = ImmutableMap.of();
+StringWriter writer = new StringWriter();
+XmlSerializer serializer = Xml.createSerializer();
+serializer.setOutput(writer);
+XmlNamespaceDictionary namespaceDictionary = new XmlNamespaceDictionary();
+namespaceDictionary.serialize(serializer, Atom.ATOM_NAMESPACE, "entry", map);
+assertEquals(EXPECTED_EMPTY_MAP_NS_UNDECLARED, writer.toString());
+}
+public void testSerialize_errorOnUnknown() throws Exception {
+Entry entry = new Entry("One", "abc");
+StringWriter writer = new StringWriter();
+XmlSerializer serializer = Xml.createSerializer();
+serializer.setOutput(writer);
+XmlNamespaceDictionary namespaceDictionary = new XmlNamespaceDictionary();
+try {
+namespaceDictionary.serialize(serializer, Atom.ATOM_NAMESPACE, "entry", entry);
+fail("expected IllegalArgumentException");
+} catch (IllegalArgumentException e) {
+assertEquals("unrecognized alias: (default)", e.getMessage());
+}
+}
+public void testSerializeByName_errorOnUnknown() throws Exception {
+Entry entry = new Entry("One", "abc");
+StringWriter writer = new StringWriter();
+XmlSerializer serializer = Xml.createSerializer();
+serializer.setOutput(writer);
+XmlNamespaceDictionary namespaceDictionary = new XmlNamespaceDictionary();
+try {
+namespaceDictionary.serialize(serializer, "entry", entry);
+fail("expected IllegalArgumentException");
+} catch (IllegalArgumentException e) {
+assertEquals("unrecognized alias: (default)", e.getMessage());
+}
+}
+public void testSerialize_unknown() throws Exception {
+Feed feed = new Feed();
+feed.entries = new TreeSet<Entry>();
+feed.entries.add(new Entry("One", "abc"));
+feed.entries.add(new Entry("Two", "def"));
+StringWriter writer = new StringWriter();
+XmlSerializer serializer = Xml.createSerializer();
+serializer.setOutput(writer);
+XmlNamespaceDictionary namespaceDictionary = new XmlNamespaceDictionary();
+assertEquals(EXPECTED_UNKNOWN_NS, namespaceDictionary.toStringOf("feed", feed));
+}
+public static class Entry implements Comparable<Entry> {
+@Key public String title;
+@Key("@gd:etag")
+public String etag;
+public Entry(String title, String etag) {
+super();
+this.title = title;
+this.etag = etag;
+}
+public int compareTo(Entry other) {
+return title.compareTo(other.title);
+}
+}
+public static class Feed {
+@Key("entry")
+public Collection<Entry> entries;
+}
+}

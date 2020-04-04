@@ -1,0 +1,6 @@
+package com.graphhopper.jsprit.core.algorithm.recreate.listener;
+import com.graphhopper.jsprit.core.problem.job.Job;
+import java.util.Collection;
+public interface JobUnassignedListener extends InsertionListener {
+void informJobUnassigned(Job unassigned, Collection<String> failedConstraintNames);
+}

@@ -1,0 +1,10 @@
+package com.datumbox.framework.development.switchers;
+import com.datumbox.framework.development.interfaces.FeatureMark;
+import java.lang.annotation.*;
+@FeatureMark
+@Target({ElementType.CONSTRUCTOR, ElementType.FIELD, ElementType.LOCAL_VARIABLE, ElementType.METHOD, ElementType.PACKAGE, ElementType.PARAMETER, ElementType.TYPE})
+@Inherited
+@Retention(RetentionPolicy.RUNTIME)
+public @interface ExampleMark {
+public Example[] options();
+}

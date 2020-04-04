@@ -1,0 +1,18 @@
+package tests;
+import com.google.auto.factory.AutoFactory;
+import java.util.List;
+final class FactoryImplementingCreateMethod {
+interface Interface {}
+interface FactoryInterfaceWithCreateMethod {
+Interface create();
+Interface create(int a);
+Interface create(List<Integer> generic);
+}
+@AutoFactory(implementing = FactoryInterfaceWithCreateMethod.class)
+static class ConcreteClass implements Interface {
+ConcreteClass() {}
+ConcreteClass(int aDifferentArgumentName) {}
+ConcreteClass(List<Integer> genericWithDifferentArgumentName) {}
+ConcreteClass(int a, boolean b) {}
+}
+}

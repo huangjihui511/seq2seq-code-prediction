@@ -1,0 +1,36 @@
+package tests;
+import javax.annotation.Nullable;
+import javax.annotation.processing.Generated;
+import javax.inject.Inject;
+import javax.inject.Provider;
+@Generated(
+value = "com.google.auto.factory.processor.AutoFactoryProcessor",
+comments = "https:
+)
+final class SimpleClassNullableParametersFactory {
+private final Provider<String> providedNullableProvider;
+private final Provider<String> providedQualifiedNullableProvider;
+@Inject
+SimpleClassNullableParametersFactory(
+Provider<String> providedNullableProvider,
+@BQualifier Provider<String> providedQualifiedNullableProvider) {
+this.providedNullableProvider = checkNotNull(providedNullableProvider, 1);
+this.providedQualifiedNullableProvider = checkNotNull(providedQualifiedNullableProvider, 2);
+}
+SimpleClassNullableParameters create(
+@Nullable String nullable, @Nullable @AQualifier String qualifiedNullable) {
+return new SimpleClassNullableParameters(
+nullable,
+qualifiedNullable,
+providedNullableProvider.get(),
+providedQualifiedNullableProvider.get());
+}
+private static <T> T checkNotNull(T reference, int argumentIndex) {
+if (reference == null) {
+throw new NullPointerException(
+"@AutoFactory method argument is null but is not marked @Nullable. Argument index: "
++ argumentIndex);
+}
+return reference;
+}
+}

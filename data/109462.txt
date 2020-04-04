@@ -1,0 +1,41 @@
+package com.facebook.presto.operator;
+import com.google.common.util.concurrent.SettableFuture;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertTrue;
+public final class WorkProcessorAssertion
+{
+private WorkProcessorAssertion() {}
+public static <T> void assertBlocks(WorkProcessor<T> processor)
+{
+assertFalse(processor.process());
+assertTrue(processor.isBlocked());
+assertFalse(processor.isFinished());
+assertFalse(processor.process());
+}
+public static <T, V> void assertUnblocks(WorkProcessor<T> processor, SettableFuture<V> future)
+{
+future.set(null);
+assertFalse(processor.isBlocked());
+}
+public static <T> void assertYields(WorkProcessor<T> processor)
+{
+assertFalse(processor.process());
+assertFalse(processor.isBlocked());
+assertFalse(processor.isFinished());
+}
+public static <T> void assertResult(WorkProcessor<T> processor, T result)
+{
+assertTrue(processor.process());
+assertFalse(processor.isBlocked());
+assertFalse(processor.isFinished());
+assertEquals(processor.getResult(), result);
+}
+public static <T> void assertFinishes(WorkProcessor<T> processor)
+{
+assertTrue(processor.process());
+assertFalse(processor.isBlocked());
+assertTrue(processor.isFinished());
+assertTrue(processor.process());
+}
+}

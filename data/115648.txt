@@ -1,0 +1,4 @@
+package com.graphhopper.jsprit.analysis.toolbox;
+class NoLocationFoundException extends Exception {
+private static final long serialVersionUID = 1L;
+}

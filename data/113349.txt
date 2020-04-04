@@ -1,0 +1,65 @@
+package org.ocpsoft.prettytime.impl;
+import org.ocpsoft.prettytime.TimeUnit;
+public abstract class ResourcesTimeUnit implements TimeUnit
+{
+private long maxQuantity = 0;
+private long millisPerUnit = 1;
+abstract protected String getResourceKeyPrefix();
+protected String getResourceBundleName()
+{
+return "org.ocpsoft.prettytime.i18n.Resources";
+}
+@Override
+public long getMaxQuantity()
+{
+return maxQuantity;
+}
+public void setMaxQuantity(long maxQuantity)
+{
+this.maxQuantity = maxQuantity;
+}
+@Override
+public long getMillisPerUnit()
+{
+return millisPerUnit;
+}
+public void setMillisPerUnit(long millisPerUnit)
+{
+this.millisPerUnit = millisPerUnit;
+}
+@Override
+public boolean isPrecise()
+{
+return true;
+}
+@Override
+public String toString()
+{
+return getResourceKeyPrefix();
+}
+@Override
+public int hashCode()
+{
+final int prime = 31;
+int result = 1;
+result = prime * result + (int) (maxQuantity ^ (maxQuantity >>> 32));
+result = prime * result + (int) (millisPerUnit ^ (millisPerUnit >>> 32));
+return result;
+}
+@Override
+public boolean equals(Object obj)
+{
+if (this == obj)
+return true;
+if (obj == null)
+return false;
+if (getClass() != obj.getClass())
+return false;
+ResourcesTimeUnit other = (ResourcesTimeUnit) obj;
+if (maxQuantity != other.maxQuantity)
+return false;
+if (millisPerUnit != other.millisPerUnit)
+return false;
+return true;
+}
+}

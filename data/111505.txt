@@ -1,0 +1,8 @@
+package io.grpc;
+import java.io.IOException;
+import java.io.OutputStream;
+@ExperimentalApi("https:
+public interface Compressor {
+String getMessageEncoding();
+OutputStream compress(OutputStream os) throws IOException;
+}

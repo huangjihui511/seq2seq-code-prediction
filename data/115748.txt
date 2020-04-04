@@ -1,0 +1,32 @@
+package org.springframework.integration.support.management;
+import org.springframework.beans.factory.DisposableBean;
+import org.springframework.integration.support.management.metrics.MetricsCaptor;
+import org.springframework.jmx.export.annotation.ManagedAttribute;
+import org.springframework.jmx.export.annotation.ManagedOperation;
+public interface IntegrationManagement extends DisposableBean {
+String METER_PREFIX = "spring.integration.";
+String SEND_TIMER_NAME = METER_PREFIX + "send";
+String RECEIVE_COUNTER_NAME = METER_PREFIX + "receive";
+@ManagedAttribute(description = "Use to disable debug logging during normal message flow")
+void setLoggingEnabled(boolean enabled);
+@ManagedAttribute
+boolean isLoggingEnabled();
+@ManagedOperation
+void reset();
+@ManagedAttribute(description = "Enable message counting statistics")
+void setCountsEnabled(boolean countsEnabled);
+@ManagedAttribute
+boolean isCountsEnabled();
+ManagementOverrides getOverrides();
+default void registerMetricsCaptor(MetricsCaptor captor) {
+}
+@Override
+default void destroy() {
+}
+class ManagementOverrides {
+public boolean loggingConfigured; 
+public boolean countsConfigured; 
+public boolean statsConfigured; 
+public boolean metricsConfigured; 
+}
+}

@@ -1,0 +1,21 @@
+package com.github.jknack.handlebars.io;
+import static org.apache.commons.lang3.Validate.notNull;
+import java.io.IOException;
+import java.nio.charset.Charset;
+public class ForwardingTemplateSource extends AbstractTemplateSource {
+private final TemplateSource source;
+public ForwardingTemplateSource(final TemplateSource source) {
+this.source = notNull(source, "The source is required.");
+}
+@Override public String content(final Charset charset) throws IOException {
+return source.content(charset);
+}
+@Override
+public String filename() {
+return source.filename();
+}
+@Override
+public long lastModified() {
+return source.lastModified();
+}
+}

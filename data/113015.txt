@@ -1,0 +1,18 @@
+package org.apache.pdfbox.debugger.streampane.tooltip;
+import java.awt.Color;
+final class RGToolTip extends ColorToolTip
+{
+RGToolTip(String rowText)
+{
+createMarkUp(rowText);
+}
+private void createMarkUp(String rowText)
+{
+float[] rgbValues = extractColorValues(rowText);
+if (rgbValues != null)
+{
+Color color = new Color(rgbValues[0], rgbValues[1], rgbValues[2]);
+setToolTipText(getMarkUp(colorHexValue(color)));
+}
+}
+}

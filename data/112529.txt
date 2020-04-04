@@ -1,0 +1,258 @@
+package com.sun.swingset3.codeview;
+import java.util.*;
+public class CodeStyler {
+private final static Map<String, String> RESERVED_WORDS = new HashMap<String, String>(); 
+private boolean inMultiLineComment = false;
+private String commentStart = "</font><font size=4 color=\"#0000aa\"><i>";
+private String commentEnd = "</font></i><font size=4 color=black>";
+private String stringStart = "</font><font size=4 color=\"#00bb00\">";
+private String stringEnd = "</font><font size=4 color=black>";
+private String reservedWordStart = "<b>";
+private String reservedWordEnd = "</b>";
+static {
+loadHash();
+}
+public CodeStyler() {
+}
+public void setCommentStart(String commentStart) {
+this.commentStart = commentStart;
+}
+public void setCommentEnd(String commentEnd) {
+this.commentEnd = commentEnd;
+}
+public void setStringStart(String stringStart) {
+this.stringStart = stringStart;
+}
+public void setStringEnd(String stringEnd) {
+this.stringEnd = stringEnd;
+}
+public void setReservedWordStart(String reservedWordStart) {
+this.reservedWordStart = reservedWordStart;
+}
+public void setReservedWordEnd(String reservedWordEnd) {
+this.reservedWordEnd = reservedWordEnd;
+}
+public String getCommentStart() {
+return commentStart;
+}
+public String getCommentEnd() {
+return commentEnd;
+}
+public String getStringStart() {
+return stringStart;
+}
+public String getStringEnd() {
+return stringEnd;
+}
+public String getReservedWordStart() {
+return reservedWordStart;
+}
+public String getReservedWordEnd() {
+return reservedWordEnd;
+}
+public String syntaxHighlight( String line ) {
+return htmlFilter(line);
+}
+private String htmlFilter( String line ) {
+if( line == null || line.equals("") ) {
+return "";
+}
+line = replace(line, "&", "&#38;");
+line = replace(line, "\\\\", "&#92;&#92;" );
+line = replace(line, "" + (char)92 + (char)34, "&#92;&#34");
+line = replace(line, "<", "&#60;");
+line = replace(line, ">", "&#62;");
+return multiLineCommentFilter(line);
+}
+private String multiLineCommentFilter(String line) {
+if (line == null || line.equals("")) {
+return "";
+}
+StringBuffer buf = new StringBuffer();
+int index;
+if (inMultiLineComment && (index = line.indexOf("*/")) > -1 && !isInsideString(line,index)) {
+inMultiLineComment = false;
+buf.append(line.substring(0,index));
+buf.append("*/").append(commentEnd);
+if (line.length() > index+2) {
+buf.append(inlineCommentFilter(line.substring(index+2)));
+}
+return buf.toString();
+}
+else if (inMultiLineComment) {
+return line;
+}
+else if ((index = line.indexOf("/*")) > -1 && !isInsideString(line,index)) {
+inMultiLineComment = true;
+buf.append(inlineCommentFilter(line.substring(0,index)));
+buf.append(commentStart).append("/*");
+buf.append(multiLineCommentFilter(line.substring(index+2)));
+return buf.toString();
+}
+else {
+return inlineCommentFilter(line);
+}
+}
+private String inlineCommentFilter(String line) {
+if (line == null || line.equals("")) {
+return "";
+}
+StringBuffer buf = new StringBuffer();
+int index;
+if ((index = line.indexOf("
+buf.append(stringFilter(line.substring(0,index)));
+buf.append(commentStart);
+buf.append(line.substring(index));
+buf.append(commentEnd);
+}
+else {
+buf.append(stringFilter(line));
+}
+return buf.toString();
+}
+private String stringFilter(String line) {
+if (line == null || line.equals("")) {
+return "";
+}
+StringBuffer buf = new StringBuffer();
+if (!line.contains("\"")) {
+return keywordFilter(line);
+}
+int start = 0;
+int startStringIndex = -1;
+int endStringIndex;
+int tempIndex;
+while ((tempIndex = line.indexOf("\"")) > -1) {
+if (startStringIndex == -1) {
+startStringIndex = 0;
+buf.append( stringFilter(line.substring(start,tempIndex)) );
+buf.append(stringStart).append("\"");
+line = line.substring(tempIndex+1);
+}
+else {
+startStringIndex = -1;
+endStringIndex = tempIndex;
+buf.append(line.substring(0,endStringIndex+1));
+buf.append(stringEnd);
+line = line.substring(endStringIndex+1);
+}
+}
+buf.append( keywordFilter(line) );
+return buf.toString();
+}
+private String keywordFilter( String line ) {
+if( line == null || line.equals("") ) {
+return "";
+}
+StringBuffer buf = new StringBuffer();
+Map<String, String> usedReservedWords = new HashMap<String, String>(); 
+int i=0;
+char ch;
+StringBuffer temp = new StringBuffer();
+while( i < line.length() ) {
+temp.setLength(0);
+ch = line.charAt(i);
+while( i<line.length() && ( ( ch >= 65 && ch <= 90 )
+|| ( ch >= 97 && ch <= 122 ) ) ) {
+temp.append(ch);
+i++;
+if( i < line.length() ) {
+ch = line.charAt(i);
+}
+}
+String tempString = temp.toString();
+if( RESERVED_WORDS.containsKey(tempString) && !usedReservedWords.containsKey(tempString)) {
+usedReservedWords.put(tempString,tempString);
+line = replace( line, tempString, (reservedWordStart+tempString+reservedWordEnd) );
+i += (reservedWordStart.length() + reservedWordEnd.length());
+}
+else {
+i++;
+}
+}
+buf.append(line);
+return buf.toString();
+}
+private static String replace( String line, String oldString, String newString ) {
+int i=0;
+while( ( i=line.indexOf( oldString, i ) ) >= 0 ) {
+line = (new StringBuffer().append(line.substring(0,i)).append(newString).append(line.substring(i+oldString.length()))).toString();
+i += newString.length();
+}
+return line;
+}
+private static boolean isInsideString(String line, int position) {
+if (!line.contains("\"")) {
+return false;
+}
+int index;
+String left = line.substring(0,position);
+String right = line.substring(position);
+int leftCount = 0;
+int rightCount = 0;
+while ((index = left.indexOf("\"")) > -1) {
+leftCount ++;
+left = left.substring(index+1);
+}
+while ((index = right.indexOf("\"")) > -1) {
+rightCount ++;
+right = right.substring(index+1);
+}
+return rightCount % 2 != 0 && leftCount % 2 != 0;
+}
+private static void loadHash() {
+RESERVED_WORDS.put("abstract", "abstract");
+RESERVED_WORDS.put("do", "do");
+RESERVED_WORDS.put("inner", "inner");
+RESERVED_WORDS.put("public", "public");
+RESERVED_WORDS.put("var", "var");
+RESERVED_WORDS.put("boolean", "boolean");
+RESERVED_WORDS.put("continue", "continue");
+RESERVED_WORDS.put("int", "int");
+RESERVED_WORDS.put("return", "return");
+RESERVED_WORDS.put("void", "void");
+RESERVED_WORDS.put("break", "break");
+RESERVED_WORDS.put("else", "else");
+RESERVED_WORDS.put("interface", "interface");
+RESERVED_WORDS.put("short", "short");
+RESERVED_WORDS.put("volatile", "volatile");
+RESERVED_WORDS.put("byvalue", "byvalue");
+RESERVED_WORDS.put("extends", "extends");
+RESERVED_WORDS.put("long", "long");
+RESERVED_WORDS.put("static", "static");
+RESERVED_WORDS.put("while", "while");
+RESERVED_WORDS.put("case", "case");
+RESERVED_WORDS.put("final", "final");
+RESERVED_WORDS.put("naive", "naive");
+RESERVED_WORDS.put("super", "super");
+RESERVED_WORDS.put("transient", "transient");
+RESERVED_WORDS.put("cast", "cast");
+RESERVED_WORDS.put("float", "float");
+RESERVED_WORDS.put("new", "new");
+RESERVED_WORDS.put("rest", "rest");
+RESERVED_WORDS.put("catch", "catch");
+RESERVED_WORDS.put("for", "for");
+RESERVED_WORDS.put("null", "null");
+RESERVED_WORDS.put("synchronized", "synchronized");
+RESERVED_WORDS.put("char", "char");
+RESERVED_WORDS.put("finally", "finally");
+RESERVED_WORDS.put("operator", "operator");
+RESERVED_WORDS.put("this", "this");
+RESERVED_WORDS.put("class", "class");
+RESERVED_WORDS.put("generic", "generic");
+RESERVED_WORDS.put("outer", "outer");
+RESERVED_WORDS.put("switch", "switch");
+RESERVED_WORDS.put("const", "const");
+RESERVED_WORDS.put("goto", "goto");
+RESERVED_WORDS.put("package", "package");
+RESERVED_WORDS.put("throw", "throw");
+RESERVED_WORDS.put("double", "double");
+RESERVED_WORDS.put("if", "if");
+RESERVED_WORDS.put("private", "private");
+RESERVED_WORDS.put("true", "true");
+RESERVED_WORDS.put("default", "default");
+RESERVED_WORDS.put("import", "import");
+RESERVED_WORDS.put("protected", "protected");
+RESERVED_WORDS.put("try", "try");
+}
+}

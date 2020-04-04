@@ -1,0 +1,13 @@
+package com.briup.dao;
+import java.util.Map;
+import com.briup.bean.Book;
+import com.briup.bean.OrderLine;
+import com.briup.bean.Orderform;
+public interface IOrderDao {
+void saveOrder(Orderform order) throws Exception;
+void deleteOrder(Long orderid) throws Exception;
+Map<Long,Orderform> findAllOrder(Long customerid) throws Exception;
+Orderform findOrderById(Long orderid) throws Exception;
+Map<Long,Book> findAllBook() throws Exception;
+void saveOrderLine(OrderLine line);
+}

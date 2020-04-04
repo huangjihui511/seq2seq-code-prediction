@@ -1,0 +1,16 @@
+package org.jeecg.modules.quartz.job;
+import org.jeecg.common.util.DateUtils;
+import org.quartz.Job;
+import org.quartz.JobExecutionContext;
+import org.quartz.JobExecutionException;
+import lombok.extern.slf4j.Slf4j;
+@Slf4j
+public class SampleParamJob implements Job {
+private String parameter;
+public void setParameter(String parameter) {
+this.parameter = parameter;
+}
+@Override
+public void execute(JobExecutionContext jobExecutionContext) throws JobExecutionException {
+}
+}

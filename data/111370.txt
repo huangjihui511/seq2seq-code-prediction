@@ -1,0 +1,6 @@
+package com.example;
+public class ConfigConsumer {
+public static final boolean BOTH_DEBUG =
+com.example.config1.BuildConfig.DEBUG && com.example.config2.BuildConfig.DEBUG;
+private ConfigConsumer() {}
+};

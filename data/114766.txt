@@ -1,0 +1,15 @@
+package main;
+import java.util.ArrayList;
+import java.util.List;
+import bean.Imooc;
+public class Main {
+public static void main(String[] args) {
+String url = "http:
+Imooc imooc;
+for(int i=0; i<5;i++){
+imooc = new Imooc(url);
+url = imooc.nextUrl;
+System.out.println(imooc);
+}
+}
+}

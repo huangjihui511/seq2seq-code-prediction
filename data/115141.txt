@@ -1,0 +1,31 @@
+package io.ebean.bean;
+public interface PersistenceContext {
+void put(Class<?> rootType, Object id, Object bean);
+Object putIfAbsent(Class<?> rootType, Object id, Object bean);
+Object get(Class<?> rootType, Object uid);
+WithOption getWithOption(Class<?> rootType, Object uid);
+void clear();
+void clear(Class<?> rootType);
+void clear(Class<?> rootType, Object uid);
+void deleted(Class<?> rootType, Object id);
+int size(Class<?> rootType);
+class WithOption {
+public static final WithOption DELETED = new WithOption();
+private final boolean deleted;
+private final Object bean;
+private WithOption() {
+this.deleted = true;
+this.bean = null;
+}
+public WithOption(Object bean) {
+this.deleted = false;
+this.bean = bean;
+}
+public boolean isDeleted() {
+return deleted;
+}
+public Object getBean() {
+return bean;
+}
+}
+}

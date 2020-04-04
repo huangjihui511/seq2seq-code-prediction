@@ -1,0 +1,82 @@
+package org.jb2011.lnf.beautyeye;
+import javax.swing.BorderFactory;
+import javax.swing.JDialog;
+import javax.swing.JFrame;
+import javax.swing.UIDefaults;
+import javax.swing.UIManager;
+import javax.swing.plaf.BorderUIResource;
+import javax.swing.plaf.InsetsUIResource;
+import org.jb2011.lnf.beautyeye.BeautyEyeLNFHelper.FrameBorderStyle;
+import org.jb2011.lnf.beautyeye.winlnfutils.WinUtils;
+import com.sun.java.swing.plaf.windows.WindowsLookAndFeel;
+public class BeautyEyeLookAndFeelWin extends WindowsLookAndFeel
+{
+static{
+initLookAndFeelDecorated();
+}
+public BeautyEyeLookAndFeelWin()
+{
+super();
+BeautyEyeLNFHelper.implLNF();
+org.jb2011.lnf.beautyeye.ch20_filechooser.__UI__.uiImpl_win();
+initForVista();
+}
+protected void initForVista()
+{
+if(WinUtils.isOnVista())
+{
+UIManager.put("CheckBoxMenuItem.margin",new InsetsUIResource(0,0,0,0));
+UIManager.put("RadioButtonMenuItem.margin",new InsetsUIResource(0,0,0,0));
+UIManager.put("Menu.border",new BorderUIResource(BorderFactory.createEmptyBorder(1,3,2,3)));
+UIManager.put("MenuItem.border",new BorderUIResource(BorderFactory.createEmptyBorder(1,0,2,0)));
+UIManager.put("CheckBoxMenuItem.border",new BorderUIResource(BorderFactory.createEmptyBorder(4,2,4,2)));
+UIManager.put("RadioButtonMenuItem.border",new BorderUIResource(BorderFactory.createEmptyBorder(4,0,4,0)));
+UIManager.put("CheckBoxMenuItem.checkIcon"
+,new org.jb2011.lnf.beautyeye.ch9_menu.BECheckBoxMenuItemUI.CheckBoxMenuItemIcon().setUsedForVista(true));
+UIManager.put("RadioButtonMenuItem.checkIcon"
+,new org.jb2011.lnf.beautyeye.ch9_menu.BERadioButtonMenuItemUI.RadioButtonMenuItemIcon().setUsedForVista(true));
+}
+}
+@Override
+public String getName()
+{
+return "BeautyEyeWin";
+}
+@Override
+public String getID()
+{
+return "BeautyEyeWin";
+}
+@Override
+public String getDescription()
+{
+return "BeautyEye windows-platform L&F developed by Jack Jiang(jb2011@163.com).";
+}
+@Override
+public boolean getSupportsWindowDecorations()
+{
+return true;
+}
+protected void initComponentDefaults(UIDefaults table)
+{
+super.initComponentDefaults(table);
+initOtherResourceBundle(table);
+}
+protected void initOtherResourceBundle(UIDefaults table)
+{
+table.addResourceBundle( "org.jb2011.lnf.beautyeye.resources.beautyeye" );
+}
+static void initLookAndFeelDecorated()
+{
+if(BeautyEyeLNFHelper.frameBorderStyle == FrameBorderStyle.osLookAndFeelDecorated)
+{
+JFrame.setDefaultLookAndFeelDecorated(false);
+JDialog.setDefaultLookAndFeelDecorated(false);
+}
+else
+{
+JFrame.setDefaultLookAndFeelDecorated(true);
+JDialog.setDefaultLookAndFeelDecorated(true);
+}
+}
+}

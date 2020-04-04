@@ -1,0 +1,53 @@
+package com.github.benmanes.caffeine.cache.simulator.membership.bloom;
+import static com.google.common.base.Preconditions.checkState;
+import org.fastfilter.Filter;
+import org.fastfilter.FilterType;
+import com.github.benmanes.caffeine.cache.simulator.BasicSettings;
+import com.github.benmanes.caffeine.cache.simulator.membership.Membership;
+import com.google.common.base.CaseFormat;
+import com.typesafe.config.Config;
+public final class FastFilter implements Membership {
+private final FilterType filterType;
+private final int bitsPerKey;
+private final long[] keys;
+private Filter filter;
+public FastFilter(Config config) {
+FastFilterSettings settings = new FastFilterSettings(config);
+keys = new long[(int) settings.membership().expectedInsertions()];
+filterType = settings.filterType();
+bitsPerKey = settings.bitsPerKey();
+reset();
+}
+@Override
+public boolean mightContain(long e) {
+return filter.mayContain(e);
+}
+@Override
+public void clear() {
+reset();
+}
+@Override
+public boolean put(long e) {
+if (filter.mayContain(e)) {
+return false;
+}
+filter.add(e);
+return true;
+}
+private void reset() {
+filter = filterType.construct(keys, bitsPerKey);
+checkState(filter.supportsAdd(), "Filter must support additions");
+}
+static final class FastFilterSettings extends BasicSettings {
+public FastFilterSettings(Config config) {
+super(config);
+}
+public FilterType filterType() {
+String type = config().getString("membership.fast-filter.type");
+return FilterType.valueOf(CaseFormat.LOWER_HYPHEN.to(CaseFormat.UPPER_UNDERSCORE, type));
+}
+public int bitsPerKey() {
+return config().getInt("membership.fast-filter.bits-per-key");
+}
+}
+}

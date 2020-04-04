@@ -1,0 +1,98 @@
+package com.twelvemonkeys.servlet.jsp.taglib;
+import javax.servlet.ServletConfig;
+import javax.servlet.ServletContext;
+import javax.servlet.ServletRequest;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.jsp.JspException;
+import javax.servlet.jsp.JspWriter;
+import javax.servlet.jsp.PageContext;
+import javax.servlet.jsp.tagext.TagSupport;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Enumeration;
+import java.util.StringTokenizer;
+public class ExTagSupport extends TagSupport implements ExTag {
+public void writeHtml(JspWriter pOut, String pHtml) throws IOException {
+StringTokenizer parser = new StringTokenizer(pHtml, "<>&", true);
+while (parser.hasMoreTokens()) {
+String token = parser.nextToken();
+if (token.equals("<")) {
+pOut.print("&lt;");
+}
+else if (token.equals(">")) {
+pOut.print("&gt;");
+}
+else if (token.equals("&")) {
+pOut.print("&amp;");
+}
+else {
+pOut.print(token);
+}
+}
+}
+public void log(String pMsg) {
+getServletContext().log(pMsg);
+}
+public void log(String pMsg, Throwable pException) {
+getServletContext().log(pMsg, pException);
+}
+public ServletContext getServletContext() {
+return pageContext.getServletContext();
+}
+public int doEndTag() throws JspException {
+clearServiceState();
+return super.doEndTag();
+}
+public void release() {
+clearServiceState();
+clearProperties();
+super.release();
+}
+protected void clearProperties() {
+}
+protected void clearServiceState() {
+}
+public String getInitParameter(String pName) {
+return getInitParameter(pName, PageContext.APPLICATION_SCOPE);
+}
+public Enumeration getInitParameterNames() {
+return getInitParameterNames(PageContext.APPLICATION_SCOPE);
+}
+public String getInitParameter(String pName, int pScope) {
+switch (pScope) {
+case PageContext.PAGE_SCOPE:
+return getServletConfig().getInitParameter(pName);
+case PageContext.APPLICATION_SCOPE:
+return getServletContext().getInitParameter(pName);
+default:
+throw new IllegalArgumentException("Illegal scope.");
+}
+}
+public Enumeration getInitParameterNames(int pScope) {
+switch (pScope) {
+case PageContext.PAGE_SCOPE:
+return getServletConfig().getInitParameterNames();
+case PageContext.APPLICATION_SCOPE:
+return getServletContext().getInitParameterNames();
+default:
+throw new IllegalArgumentException("Illegal scope");
+}
+}
+public ServletConfig getServletConfig() {
+return pageContext.getServletConfig();
+}
+public String getContextPath() {
+ServletRequest request = pageContext.getRequest();
+if (request instanceof HttpServletRequest) {
+return ((HttpServletRequest) request).getContextPath();
+}
+return "/";
+}
+public InputStream getResourceAsStream(String pPath) {
+String path = pPath;
+if (pPath != null && !pPath.startsWith("/")) {
+path = getContextPath() + pPath;
+}
+return pageContext.getServletContext().getResourceAsStream(path);
+}
+}

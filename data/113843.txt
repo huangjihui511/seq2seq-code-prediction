@@ -1,0 +1,133 @@
+package psiprobe.beans;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import javax.inject.Inject;
+import org.apache.catalina.Context;
+import org.apache.catalina.Wrapper;
+import org.apache.catalina.util.ServerInfo;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import psiprobe.TomcatContainer;
+import psiprobe.model.ApplicationResource;
+public class ContainerWrapperBean {
+private static final Logger logger = LoggerFactory.getLogger(ContainerWrapperBean.class);
+private TomcatContainer tomcatContainer;
+private final Object lock = new Object();
+@Inject
+private List<String> adapterClasses;
+private ResourceResolver resourceResolver;
+private boolean forceFirstAdapter;
+@Inject
+private Map<String, ResourceResolver> resourceResolvers;
+public boolean isForceFirstAdapter() {
+return forceFirstAdapter;
+}
+@Value("false")
+public void setForceFirstAdapter(boolean forceFirstAdapter) {
+this.forceFirstAdapter = forceFirstAdapter;
+}
+public void setWrapper(Wrapper wrapper) {
+if (tomcatContainer == null) {
+synchronized (lock) {
+if (tomcatContainer == null) {
+String serverInfo = ServerInfo.getServerInfo();
+logger.info("Server info: {}", serverInfo);
+for (String className : adapterClasses) {
+try {
+Object obj = Class.forName(className).getDeclaredConstructor().newInstance();
+logger.debug("Testing container adapter: {}", className);
+if (obj instanceof TomcatContainer) {
+if (forceFirstAdapter || ((TomcatContainer) obj).canBoundTo(serverInfo)) {
+logger.info("Using {}", className);
+tomcatContainer = (TomcatContainer) obj;
+tomcatContainer.setWrapper(wrapper);
+break;
+}
+logger.debug("Cannot bind {} to {}", className, serverInfo);
+} else {
+logger.error("{} does not implement {}", className,
+TomcatContainer.class.getName());
+}
+} catch (Exception e) {
+logger.debug("", e);
+logger.info("Failed to load {}", className);
+}
+}
+if (tomcatContainer == null) {
+logger.error("No suitable container adapter found!");
+}
+}
+}
+}
+try {
+if (tomcatContainer != null && wrapper == null) {
+logger.info("Unregistering container adapter");
+tomcatContainer.setWrapper(null);
+}
+} catch (Exception e) {
+logger.error("Could not unregister container adapter", e);
+}
+}
+public TomcatContainer getTomcatContainer() {
+return tomcatContainer;
+}
+public List<String> getAdapterClasses() {
+return adapterClasses;
+}
+public void setAdapterClasses(List<String> adapterClasses) {
+this.adapterClasses = adapterClasses;
+}
+public ResourceResolver getResourceResolver() {
+if (resourceResolver == null) {
+if (System.getProperty("jboss.server.name") != null) {
+resourceResolver = resourceResolvers.get("jboss");
+logger.info("Using JBOSS resource resolver");
+} else {
+resourceResolver = resourceResolvers.get("default");
+logger.info("Using DEFAULT resource resolver");
+}
+}
+return resourceResolver;
+}
+public Map<String, ResourceResolver> getResourceResolvers() {
+return resourceResolvers;
+}
+public void setResourceResolvers(Map<String, ResourceResolver> resourceResolvers) {
+this.resourceResolvers = resourceResolvers;
+}
+public List<ApplicationResource> getDataSources() throws Exception {
+List<ApplicationResource> resources = new ArrayList<>();
+resources.addAll(getPrivateDataSources());
+resources.addAll(getGlobalDataSources());
+return resources;
+}
+public List<ApplicationResource> getPrivateDataSources() throws Exception {
+List<ApplicationResource> resources = new ArrayList<>();
+if (tomcatContainer != null && getResourceResolver().supportsPrivateResources()) {
+for (Context app : getTomcatContainer().findContexts()) {
+List<ApplicationResource> appResources =
+getResourceResolver().getApplicationResources(app, this);
+filterDataSources(appResources, resources);
+}
+}
+return resources;
+}
+public List<ApplicationResource> getGlobalDataSources() throws Exception {
+List<ApplicationResource> resources = new ArrayList<>();
+if (getResourceResolver().supportsGlobalResources()) {
+List<ApplicationResource> globalResources = getResourceResolver().getApplicationResources();
+filterDataSources(globalResources, resources);
+}
+return resources;
+}
+protected void filterDataSources(List<ApplicationResource> resources,
+List<ApplicationResource> dataSources) {
+for (ApplicationResource res : resources) {
+if (res.getDataSourceInfo() != null) {
+dataSources.add(res);
+}
+}
+}
+}

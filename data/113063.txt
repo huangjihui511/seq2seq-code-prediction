@@ -1,0 +1,24 @@
+package org.apache.fontbox.ttf.table.common;
+public class LangSysRecord
+{
+private final String langSysTag;
+private final LangSysTable langSysTable;
+public LangSysRecord(String langSysTag, LangSysTable langSysTable)
+{
+this.langSysTag = langSysTag;
+this.langSysTable = langSysTable;
+}
+public String getLangSysTag()
+{
+return langSysTag;
+}
+public LangSysTable getLangSysTable()
+{
+return langSysTable;
+}
+@Override
+public String toString()
+{
+return String.format("LangSysRecord[langSysTag=%s]", langSysTag);
+}
+}

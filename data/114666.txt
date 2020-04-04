@@ -1,0 +1,70 @@
+package com.twelvemonkeys.sql;
+import java.io.Serializable;
+public final class DatabaseProduct implements Serializable {
+private static final String UNKNOWN_NAME = "Unknown";
+private static final String GENERIC_NAME = "Generic";
+private static final String CACHE_NAME = "Caché";
+private static final String DB2_NAME = "DB2";
+private static final String MSSQL_NAME = "MSSQL";
+private static final String ORACLE_NAME = "Oracle";
+private static final String POSTGRESS_NAME = "PostgreSQL";
+private static final String SYBASE_NAME = "Sybase";
+public static final DatabaseProduct GENERIC = new DatabaseProduct(GENERIC_NAME);
+public static final DatabaseProduct CACHE = new DatabaseProduct(CACHE_NAME);
+public static final DatabaseProduct DB2 = new DatabaseProduct(DB2_NAME);
+public static final DatabaseProduct MSSQL = new DatabaseProduct(MSSQL_NAME);
+public static final DatabaseProduct ORACLE = new DatabaseProduct(ORACLE_NAME);
+public static final DatabaseProduct POSTGRES = new DatabaseProduct(POSTGRESS_NAME);
+public static final DatabaseProduct SYBASE = new DatabaseProduct(SYBASE_NAME);
+private static final DatabaseProduct[] VALUES = {
+GENERIC, CACHE, DB2, MSSQL, ORACLE, POSTGRES, SYBASE,
+};
+private static int sNextOrdinal = -1;
+private final int mOrdinal = sNextOrdinal++;
+private final String mKey;
+private DatabaseProduct(String pName) {
+mKey = pName;
+}
+static int enumSize() {
+return sNextOrdinal;
+}
+final int id() {
+return mOrdinal;
+}
+final String key() {
+return mKey;
+}
+public String toString() {
+return mKey + " [id=" + mOrdinal+ "]";
+}
+public static DatabaseProduct resolve(String pName) {
+if ("ANSI".equalsIgnoreCase(pName) || GENERIC_NAME.equalsIgnoreCase(pName)) {
+return GENERIC;
+}
+else if ("Cache".equalsIgnoreCase(pName) || CACHE_NAME.equalsIgnoreCase(pName)) {
+return CACHE;
+}
+else if (DB2_NAME.equalsIgnoreCase(pName)) {
+return DB2;
+}
+else if (MSSQL_NAME.equalsIgnoreCase(pName)) {
+return MSSQL;
+}
+else if (ORACLE_NAME.equalsIgnoreCase(pName)) {
+return ORACLE;
+}
+else if ("Postgres".equalsIgnoreCase(pName) || POSTGRESS_NAME.equalsIgnoreCase(pName)) {
+return POSTGRES;
+}
+else if (SYBASE_NAME.equalsIgnoreCase(pName)) {
+return SYBASE;
+}
+else {
+throw new IllegalArgumentException("Unknown database product \"" + pName
++ "\", try any of the known products, or \"Generic\"");
+}
+}
+private Object readResolve() {
+return VALUES[mOrdinal]; 
+}
+}

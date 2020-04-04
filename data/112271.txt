@@ -1,0 +1,39 @@
+package com.github.jknack.handlebars.springmvc;
+import java.io.IOException;
+import java.net.URL;
+import static java.util.Objects.requireNonNull;
+import org.springframework.context.ApplicationContext;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.ResourceLoader;
+import org.springframework.util.ResourceUtils;
+import com.github.jknack.handlebars.io.URLTemplateLoader;
+public class SpringTemplateLoader extends URLTemplateLoader {
+private ResourceLoader loader;
+public SpringTemplateLoader(final ResourceLoader loader) {
+this.loader = requireNonNull(loader, "A resource loader is required.");
+}
+public SpringTemplateLoader(final ApplicationContext applicationContext) {
+this((ResourceLoader) applicationContext);
+}
+@Override
+protected URL getResource(final String location) throws IOException {
+Resource resource = loader.getResource(location);
+if (!resource.exists()) {
+return null;
+}
+return resource.getURL();
+}
+@Override
+public String resolve(final String location) {
+String protocol = null;
+if (location.startsWith(ResourceUtils.CLASSPATH_URL_PREFIX)) {
+protocol = ResourceUtils.CLASSPATH_URL_PREFIX;
+} else if (location.startsWith(ResourceUtils.FILE_URL_PREFIX)) {
+protocol = ResourceUtils.FILE_URL_PREFIX;
+}
+if (protocol == null) {
+return super.resolve(location);
+}
+return protocol + super.resolve(location.substring(protocol.length()));
+}
+}

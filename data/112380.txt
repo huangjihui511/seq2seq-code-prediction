@@ -1,0 +1,5 @@
+package io.jooby.internal.handler;
+import io.jooby.Route;
+public interface LinkedHandler extends Route.Handler {
+Route.Handler next();
+}

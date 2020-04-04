@@ -1,0 +1,23 @@
+package io.realm.examples.arch;
+import android.arch.lifecycle.LiveData;
+import android.arch.lifecycle.ViewModel;
+import java.util.List;
+import io.realm.Realm;
+import io.realm.examples.arch.livemodel.LiveRealmResults;
+import io.realm.examples.arch.model.Person;
+public class PersonListViewModel extends ViewModel {
+private final Realm realm;
+private final LiveData<List<Person>> persons;
+public PersonListViewModel() {
+realm = Realm.getDefaultInstance(); 
+persons = new LiveRealmResults<>(realm.where(Person.class).sort("age").findAllAsync());
+}
+public LiveData<List<Person>> getPersons() {
+return persons;
+}
+@Override
+protected void onCleared() {
+realm.close(); 
+super.onCleared();
+}
+}

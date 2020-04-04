@@ -1,0 +1,43 @@
+package org.jb2011.lnf.beautyeye.ch16_tree;
+import javax.swing.ImageIcon;
+import org.jb2011.lnf.beautyeye.utils.RawCache;
+public class __IconFactory__ extends RawCache<ImageIcon>
+{
+public final static String IMGS_ROOT="imgs";
+private static __IconFactory__ instance = null;
+public static __IconFactory__ getInstance()
+{
+if(instance==null)
+instance = new __IconFactory__();
+return instance;
+}
+@Override
+protected ImageIcon getResource(String relativePath, Class baseClass)
+{
+return new ImageIcon(baseClass.getResource(relativePath));
+}
+public ImageIcon getImage(String relativePath)
+{
+return  getRaw(relativePath,this.getClass());
+}
+public ImageIcon getTreeDefaultOpenIcon_16_16()
+{
+return getImage(IMGS_ROOT+"/treeDefaultOpen1.png");
+}
+public ImageIcon getTreeDefaultClosedIcon_16_16()
+{
+return getImage(IMGS_ROOT+"/treeDefaultClosed1.png");
+}
+public ImageIcon getTreeDefaultLeafIcon_16_16()
+{
+return getImage(IMGS_ROOT+"/leaf1.png");
+}
+public ImageIcon getTreeA()
+{
+return getImage(IMGS_ROOT+"/a.png");
+}
+public ImageIcon getTreeB()
+{
+return getImage(IMGS_ROOT+"/b.png");
+}
+}

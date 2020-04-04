@@ -1,0 +1,6 @@
+package io.jooby;
+public enum ExecutionMode {
+EVENT_LOOP,
+WORKER,
+DEFAULT
+}

@@ -1,0 +1,8 @@
+package com.taobao.taokeeper.dao;
+import com.taobao.taokeeper.model.TaoKeeperSettings;
+import common.toolkit.java.exception.DaoException;
+public interface SettingsDAO {
+public boolean addTaoKeeperSettings( TaoKeeperSettings taoKeeperSettings )throws DaoException;
+public TaoKeeperSettings getTaoKeeperSettingsBySettingsId( int settingsId )throws DaoException;
+public boolean updateTaoKeeperSettingsBySettingsId( TaoKeeperSettings taoKeeperSettings ) throws DaoException;
+}

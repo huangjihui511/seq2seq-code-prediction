@@ -1,0 +1,7 @@
+package org.pf4j.util;
+public class ZipFileFilter extends ExtensionFileFilter {
+private static final String ZIP_EXTENSION = ".ZIP";
+public ZipFileFilter() {
+super(ZIP_EXTENSION);
+}
+}

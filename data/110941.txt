@@ -1,0 +1,16 @@
+package io.dropwizard.auth;
+import org.glassfish.jersey.server.ContainerRequest;
+import java.security.Principal;
+class PrincipalContainerRequestValueFactory {
+private final ContainerRequest request;
+public PrincipalContainerRequestValueFactory(ContainerRequest request) {
+this.request = request;
+}
+public Principal provide() {
+final Principal principal = request.getSecurityContext().getUserPrincipal();
+if (principal == null) {
+throw new IllegalStateException("Cannot inject a custom principal into unauthenticated request");
+}
+return principal;
+}
+}

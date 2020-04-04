@@ -1,0 +1,48 @@
+package com.facebook.buck.util;
+class WindowsCreateProcessEscape {
+private WindowsCreateProcessEscape() {}
+public static void quote(StringBuilder buf, String arg) {
+if (!mightNeedQuotes(arg)) {
+buf.append(arg);
+return;
+}
+buf.append('"');
+int nPending = 0;
+for (int i = 0; i < arg.length(); i++) {
+char c = arg.charAt(i);
+if (c == '\\') {
+nPending++;
+} else {
+if (c == '"') {
+for (int j = 0; j < nPending; j++) {
+buf.append('\\');
+}
+buf.append('\\');
+}
+nPending = 0;
+}
+buf.append(c);
+}
+for (int j = 0; j < nPending; j++) {
+buf.append('\\');
+}
+buf.append('"');
+}
+public static String quote(String arg) {
+StringBuilder buf = new StringBuilder(2 + arg.length() * 2);
+quote(buf, arg);
+return buf.toString();
+}
+private static boolean mightNeedQuotes(String arg) {
+if (arg.length() == 0) {
+return true;
+}
+for (int i = 0; i < arg.length(); i++) {
+char c = arg.charAt(i);
+if (c == '"' || c == ' ' || c == '\t') {
+return true;
+}
+}
+return false;
+}
+}

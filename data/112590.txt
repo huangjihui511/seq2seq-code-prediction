@@ -1,0 +1,40 @@
+package org.jb2011.lnf.beautyeye.ch12_progress;
+import org.jb2011.lnf.beautyeye.utils.NinePatchHelper;
+import org.jb2011.lnf.beautyeye.utils.RawCache;
+import org.jb2011.ninepatch4j.NinePatch;
+public class __Icon9Factory__ extends RawCache<NinePatch>
+{
+public final static String IMGS_ROOT="imgs/np";
+private static __Icon9Factory__ instance = null;
+public static __Icon9Factory__ getInstance()
+{
+if(instance==null)
+instance = new __Icon9Factory__();
+return instance;
+}
+@Override
+protected NinePatch getResource(String relativePath, Class baseClass)
+{
+return NinePatchHelper.createNinePatch(baseClass.getResource(relativePath), false);
+}
+public NinePatch getRaw(String relativePath)
+{
+return  getRaw(relativePath,this.getClass());
+}
+public NinePatch getProgressBarBg()
+{
+return getRaw(IMGS_ROOT+"/progress_bar_bg.9.png");
+}
+public NinePatch getProgressBarBg_v()
+{
+return getRaw(IMGS_ROOT+"/progress_bar_bg_v.9.png");
+}
+public NinePatch getProgressBar_green()
+{
+return getRaw(IMGS_ROOT+"/progress_bar_green.9.png");
+}
+public NinePatch getProgressBar_blue_v()
+{
+return getRaw(IMGS_ROOT+"/progress_bar_grean_v.9.png");
+}
+}

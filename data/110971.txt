@@ -1,0 +1,15 @@
+package io.dropwizard.configuration;
+import io.dropwizard.validation.ConstraintViolations;
+import javax.validation.ConstraintViolation;
+import java.util.Set;
+public class ConfigurationValidationException extends ConfigurationException {
+private static final long serialVersionUID = 5325162099634227047L;
+private final Set<ConstraintViolation<?>> constraintViolations;
+public <T> ConfigurationValidationException(String path, Set<ConstraintViolation<T>> errors) {
+super(path, ConstraintViolations.format(errors));
+this.constraintViolations = ConstraintViolations.copyOf(errors);
+}
+public Set<ConstraintViolation<?>> getConstraintViolations() {
+return constraintViolations;
+}
+}

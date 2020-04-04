@@ -1,0 +1,5 @@
+package org.apache.struts2.action;
+import javax.servlet.ServletContext;
+public interface ServletContextAware {
+void withServletContext(ServletContext context);
+}

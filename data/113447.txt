@@ -1,0 +1,117 @@
+package com.pokegoapi.api.device;
+import POGOProtos.Networking.Envelopes.SignatureOuterClass;
+import com.pokegoapi.api.PokemonGo;
+import java.util.Random;
+public class DeviceInfo {
+private static final String[][] DEVICES = new String[][]{
+{"iPhone8,1", "iPhone", "N71AP"},
+{"iPhone8,2", "iPhone", "N66AP"},
+{"iPhone8,4", "iPhone", "N69AP"},
+{"iPhone9,1", "iPhone", "D10AP"},
+{"iPhone9,2", "iPhone", "D11AP"},
+{"iPhone9,3", "iPhone", "D101AP"},
+{"iPhone9,4", "iPhone", "D111AP"}
+};
+private static final String[] IPHONE_OS_VERSIONS = { "11.0", "11.1", "11.2", "11.2.5", "11.3.0"
+};
+private static final String[] IOS_VERSIONS = {
+"11.0", "11.1", "11.2", "11.2.5", "11.3.0"
+};
+private SignatureOuterClass.Signature.DeviceInfo.Builder deviceInfoBuilder;
+public DeviceInfo() {
+deviceInfoBuilder = SignatureOuterClass.Signature.DeviceInfo.newBuilder();
+}
+public DeviceInfo(DeviceInfos deviceInfos) {
+this();
+deviceInfoBuilder
+.setAndroidBoardName(deviceInfos.getAndroidBoardName())
+.setAndroidBootloader(deviceInfos.getAndroidBootloader())
+.setDeviceBrand(deviceInfos.getDeviceBrand())
+.setDeviceId(deviceInfos.getDeviceId())
+.setDeviceModel(deviceInfos.getDeviceModel())
+.setDeviceModelBoot(deviceInfos.getDeviceModelBoot())
+.setDeviceModelIdentifier(deviceInfos.getDeviceModelIdentifier())
+.setFirmwareBrand(deviceInfos.getFirmwareBrand())
+.setFirmwareFingerprint(deviceInfos.getFirmwareFingerprint())
+.setFirmwareTags(deviceInfos.getFirmwareTags())
+.setFirmwareType(deviceInfos.getFirmwareType())
+.setHardwareManufacturer(deviceInfos.getHardwareManufacturer())
+.setHardwareModel(deviceInfos.getHardwareModel());
+}
+private static String bytesToHex(byte[] bytes) {
+char[] hexArray = "0123456789abcdef".toCharArray();
+char[] hexChars = new char[bytes.length * 2];
+for (int index = 0; index < bytes.length; index++) {
+int var = bytes[index] & 0xFF;
+hexChars[index * 2] = hexArray[var >>> 4];
+hexChars[index * 2 + 1] = hexArray[var & 0x0F];
+}
+return new String(hexChars).toLowerCase();
+}
+public static DeviceInfo getDefault(PokemonGo api) {
+DeviceInfo deviceInfo = new DeviceInfo();
+Random random = new Random(api.seed);
+byte[] bytes = new byte[16];
+random.nextBytes(bytes);
+String[] device = DEVICES[random.nextInt(DEVICES.length)];
+deviceInfo.setDeviceId(bytesToHex(bytes));
+if (random.nextInt(IPHONE_OS_VERSIONS.length + IOS_VERSIONS.length) >= IPHONE_OS_VERSIONS.length) {
+deviceInfo.setFirmwareType(IOS_VERSIONS[random.nextInt(IOS_VERSIONS.length)]);
+deviceInfo.setFirmwareBrand("iOS");
+} else {
+deviceInfo.setFirmwareType(IPHONE_OS_VERSIONS[random.nextInt(IPHONE_OS_VERSIONS.length)]);
+deviceInfo.setFirmwareBrand("iPhone OS");
+}
+deviceInfo.setDeviceModelBoot(device[0]);
+deviceInfo.setDeviceModel(device[1]);
+deviceInfo.setHardwareModel(device[2]);
+deviceInfo.setDeviceBrand("Apple");
+deviceInfo.setHardwareManufacturer("Apple");
+return deviceInfo;
+}
+public void setAndroidBoardName(String androidBoardName) {
+deviceInfoBuilder.setAndroidBoardName(androidBoardName);
+}
+public void setAndroidBootloader(String androidBootloader) {
+deviceInfoBuilder.setAndroidBootloader(androidBootloader);
+}
+public void setDeviceBrand(String deviceBrand) {
+deviceInfoBuilder.setDeviceBrand(deviceBrand);
+}
+public void setDeviceId(String deviceId) {
+deviceInfoBuilder.setDeviceId(deviceId);
+}
+public void setDeviceModel(String deviceModel) {
+deviceInfoBuilder.setDeviceModel(deviceModel);
+}
+public void setDeviceModelBoot(String deviceModelBoot) {
+deviceInfoBuilder.setDeviceModelBoot(deviceModelBoot);
+}
+public void setDeviceModelIdentifier(String deviceModelIdentifier) {
+deviceInfoBuilder.setDeviceModelIdentifier(deviceModelIdentifier);
+}
+public void setFirmwareBrand(String firmwareBrand) {
+deviceInfoBuilder.setFirmwareBrand(firmwareBrand);
+}
+public void setFirmwareFingerprint(String firmwareFingerprint) {
+deviceInfoBuilder.setFirmwareFingerprint(firmwareFingerprint);
+}
+public void setFirmwareTags(String firmwareTags) {
+deviceInfoBuilder.setFirmwareTags(firmwareTags);
+}
+public void setFirmwareType(String firmwareType) {
+deviceInfoBuilder.setFirmwareType(firmwareType);
+}
+public void setHardwareManufacturer(String hardwareManufacturer) {
+deviceInfoBuilder.setHardwareManufacturer(hardwareManufacturer);
+}
+public void setHardwareModel(String hardwareModel) {
+deviceInfoBuilder.setHardwareModel(hardwareModel);
+}
+public SignatureOuterClass.Signature.DeviceInfo.Builder getBuilder() {
+return deviceInfoBuilder;
+}
+public SignatureOuterClass.Signature.DeviceInfo getDeviceInfo() {
+return deviceInfoBuilder.build();
+}
+}

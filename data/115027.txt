@@ -1,0 +1,18 @@
+package com.example.guestbook;
+import com.google.cloud.firestore.Firestore;
+import com.google.cloud.firestore.FirestoreOptions;
+public class Persistence {
+private static Firestore firestore;
+@SuppressWarnings("JavadocMethod")
+public static Firestore getFirestore() {
+if (firestore == null) {
+Firestore db =
+FirestoreOptions.newBuilder().setProjectId("YOUR-PROJECT-ID").build().getService();
+firestore = db;
+}
+return firestore;
+}
+public static void setFirestore(Firestore firestore) {
+Persistence.firestore = firestore;
+}
+}

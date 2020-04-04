@@ -1,0 +1,47 @@
+package org.jb2011.lnf.beautyeye.ch10_internalframe;
+import javax.swing.ImageIcon;
+import org.jb2011.lnf.beautyeye.utils.RawCache;
+public class __IconFactory__ extends RawCache<ImageIcon>
+{
+public final static String IMGS_ROOT="imgs";
+private static __IconFactory__ instance = null;
+public static __IconFactory__ getInstance()
+{
+if(instance==null)
+instance = new __IconFactory__();
+return instance;
+}
+@Override
+protected ImageIcon getResource(String relativePath, Class baseClass)
+{
+return new ImageIcon(baseClass.getResource(relativePath));
+}
+public ImageIcon getImage(String relativePath)
+{
+return  getRaw(relativePath,this.getClass());
+}
+public ImageIcon getInternalFrameCloseIcon()
+{
+return getImage(IMGS_ROOT+"/frame_close_over.png");
+}
+public ImageIcon getInternalFrameMinIcon()
+{
+return getImage(IMGS_ROOT+"/frame_windowize_over.png");
+}
+public ImageIcon getInternalFrameMaxIcon()
+{
+return getImage(IMGS_ROOT+"/frame_maximize_over.png");
+}
+public ImageIcon getInternalIconfiedIcon()
+{
+return getImage(IMGS_ROOT+"/frame_minimize_over.png");
+}
+public ImageIcon getInternalFrameIcon()
+{
+return getImage(IMGS_ROOT+"/ifi1.png");
+}
+public ImageIcon getFrameTitleHeadBg_inactive()
+{
+return getImage(IMGS_ROOT+"/head_inactive.png");
+}
+}

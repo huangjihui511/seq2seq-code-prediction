@@ -1,0 +1,253 @@
+package org.ocpsoft.prettytime;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.List;
+import java.util.Locale;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Ignore;
+import org.junit.Test;
+import org.ocpsoft.prettytime.format.SimpleTimeFormat;
+public class PrettyTimeI18n_JA_Test
+{
+SimpleDateFormat format = new SimpleDateFormat("MM/dd/yyyy");
+private Locale locale;
+@Before
+public void setUp() throws Exception
+{
+locale = new Locale("ja");
+Locale.setDefault(Locale.JAPAN);
+}
+@Test
+public void testNullDate() throws Exception
+{
+PrettyTime t = new PrettyTime(locale);
+Date date = null;
+}
+@Test
+public void testRightNow() throws Exception
+{
+PrettyTime t = new PrettyTime(locale);
+}
+@Test
+public void testRightNowVariance() throws Exception
+{
+PrettyTime t = new PrettyTime(new Date(0), locale);
+}
+@Test
+public void testMillisecondsFromNow() throws Exception
+{
+PrettyTime t = new PrettyTime(new Date(0), locale);
+t.removeUnit(org.ocpsoft.prettytime.units.JustNow.class);
+}
+@Test
+public void testSecondsFromNow() throws Exception
+{
+PrettyTime t = new PrettyTime(new Date(0), locale);
+t.removeUnit(org.ocpsoft.prettytime.units.JustNow.class);
+t.removeUnit(org.ocpsoft.prettytime.units.Millisecond.class);
+}
+@Test
+public void testMinutesFromNow() throws Exception
+{
+PrettyTime t = new PrettyTime(new Date(0), locale);
+}
+@Test
+public void testHoursFromNow() throws Exception
+{
+PrettyTime t = new PrettyTime(new Date(0), locale);
+}
+@Test
+public void testDaysFromNow() throws Exception
+{
+PrettyTime t = new PrettyTime(new Date(0), locale);
+}
+@Test
+public void testWeeksFromNow() throws Exception
+{
+PrettyTime t = new PrettyTime(new Date(0), locale);
+}
+@Test
+public void testMonthsFromNow() throws Exception
+{
+PrettyTime t = new PrettyTime(new Date(0), locale);
+}
+@Test
+public void testYearsFromNow() throws Exception
+{
+PrettyTime t = new PrettyTime(new Date(0), locale);
+}
+@Test
+public void testOneDecadeFromNow() throws Exception
+{
+PrettyTime t = new PrettyTime(new Date(0), locale);
+}
+@Test
+public void testCenturiesFromNow() throws Exception
+{
+PrettyTime t = new PrettyTime(new Date(0), locale);
+}
+@Test
+public void testMillenniumFromNow() throws Exception
+{
+PrettyTime t = new PrettyTime(new Date(0), locale);
+}
+@Test
+public void testMomentsAgo() throws Exception
+{
+PrettyTime t = new PrettyTime(new Date(6000), locale);
+}
+@Test
+public void testMillisecondsAgo() throws Exception
+{
+PrettyTime t = new PrettyTime(new Date(450L), locale);
+t.removeUnit(org.ocpsoft.prettytime.units.JustNow.class);
+}
+@Test
+public void testSecondsAgo() throws Exception
+{
+PrettyTime t = new PrettyTime(new Date(1000 * 36), locale);
+t.removeUnit(org.ocpsoft.prettytime.units.JustNow.class);
+t.setReference(new Date(10)).removeUnit(org.ocpsoft.prettytime.units.Millisecond.class);
+}
+@Test
+public void testMinutesAgo() throws Exception
+{
+PrettyTime t = new PrettyTime(new Date(1000 * 60 * 12), locale);
+}
+@Test
+public void testHoursAgo() throws Exception
+{
+PrettyTime t = new PrettyTime(new Date(1000 * 60 * 60 * 3), locale);
+}
+@Test
+public void testDaysAgo() throws Exception
+{
+PrettyTime t = new PrettyTime(new Date(1000 * 60 * 60 * 24 * 3), locale);
+}
+@Test
+public void testWeeksAgo() throws Exception
+{
+PrettyTime t = new PrettyTime(new Date(1000 * 60 * 60 * 24 * 7 * 3), locale);
+}
+@Test
+public void testOneMonthAgo() throws Exception
+{
+PrettyTime t = new PrettyTime(new Date(2629743830L * 1L), locale);
+}
+@Test
+public void testMonthsAgo() throws Exception
+{
+PrettyTime t = new PrettyTime(new Date(2629743830L * 3L), locale);
+}
+@Test
+public void testCustomFormat() throws Exception
+{
+PrettyTime t = new PrettyTime(new Date(0), locale);
+TimeUnit unit = new TimeUnit()
+{
+@Override
+public long getMaxQuantity()
+{
+return 0;
+}
+@Override
+public long getMillisPerUnit()
+{
+return 5000;
+}
+@Override
+public boolean isPrecise()
+{
+return false;
+}
+};
+t.clearUnits();
+t.registerUnit(unit, new SimpleTimeFormat()
+.setSingularName("tick").setPluralName("ticks")
+.setPattern("%n %u").setRoundingTolerance(20)
+.setFutureSuffix("... RUN!")
+.setFuturePrefix("self destruct in: ").setPastPrefix("self destruct was: ").setPastSuffix(
+" ago..."));
+assertEquals("self destruct in: 5 ticks ... RUN!", t.format(new Date(25000)));
+t.setReference(new Date(25000));
+assertEquals("self destruct was: 5 ticks ago...", t.format(new Date(0)));
+}
+@Test
+public void testYearsAgo() throws Exception
+{
+PrettyTime t = new PrettyTime(new Date(2629743830L * 12L * 3L), locale);
+}
+@Test
+public void testDecadeAgo() throws Exception
+{
+PrettyTime t = new PrettyTime(new Date(315569259747L * 1L), locale);
+}
+@Test
+public void testCenturiesAgo() throws Exception
+{
+PrettyTime t = new PrettyTime(new Date(3155692597470L * 3L), locale);
+}
+@Test
+public void testMilleniumAgo() throws Exception
+{
+PrettyTime t = new PrettyTime(new Date(3155692597470L * 10 * 3L), locale);
+}
+@Test
+public void testWithinTwoHoursRounding() throws Exception
+{
+PrettyTime t = new PrettyTime(locale);
+}
+@Test
+public void testPreciseInTheFuture() throws Exception
+{
+PrettyTime t = new PrettyTime(locale);
+List<Duration> durations = t.calculatePreciseDuration(new Date(new Date().getTime() + 1000
+assertTrue(durations.size() >= 2);
+assertEquals(5, durations.get(0).getQuantity());
+assertEquals(10, durations.get(1).getQuantity());
+}
+@Test
+public void testPreciseInThePast() throws Exception
+{
+PrettyTime t = new PrettyTime(locale);
+List<Duration> durations = t.calculatePreciseDuration(new Date(new Date().getTime() - 1000
+assertTrue(durations.size() >= 2);
+assertEquals(-5, durations.get(0).getQuantity());
+assertEquals(-10, durations.get(1).getQuantity());
+}
+@Test
+public void testSetLocale() throws Exception
+{
+PrettyTime t = new PrettyTime(new Date(315569259747L * 1L), locale);
+t.setLocale(Locale.GERMAN);
+assertEquals("vor 1 Jahrzehnt", t.format(new Date(0)));
+}
+@Test
+@Ignore
+public void testCalendarParameter() throws Exception
+{
+Calendar c = Calendar.getInstance();
+Date r = c.getTime();
+PrettyTime t = new PrettyTime();
+t.setLocale(Locale.ENGLISH);
+t.setReference(r);
+c.add(Calendar.YEAR, -1);
+}
+@Test
+public void testFormatApproximateDuration() throws Exception
+{
+long tenMinMillis = java.util.concurrent.TimeUnit.MINUTES.toMillis(10);
+Date tenMinAgo = new Date(System.currentTimeMillis() - tenMinMillis);
+PrettyTime t = new PrettyTime();
+String result = t.formatDuration(tenMinAgo);
+}
+@After
+public void tearDown() throws Exception
+{
+Locale.setDefault(locale);
+}
+}

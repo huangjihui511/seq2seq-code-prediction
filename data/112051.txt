@@ -1,0 +1,49 @@
+package org.springframework.data.mongodb.core.aggregation;
+import java.util.Collection;
+import org.bson.Document;
+import org.springframework.data.mongodb.core.aggregation.ExposedFields.ExpressionFieldReference;
+import org.springframework.data.mongodb.core.aggregation.ExposedFields.FieldReference;
+import org.springframework.util.Assert;
+class NestedDelegatingExpressionAggregationOperationContext implements AggregationOperationContext {
+private final AggregationOperationContext delegate;
+private final Collection<Field> inners;
+NestedDelegatingExpressionAggregationOperationContext(AggregationOperationContext referenceContext,
+Collection<Field> inners) {
+Assert.notNull(referenceContext, "Reference context must not be null!");
+this.delegate = referenceContext;
+this.inners = inners;
+}
+@Override
+public Document getMappedObject(Document document) {
+return delegate.getMappedObject(document);
+}
+@Override
+public Document getMappedObject(Document document, Class<?> type) {
+return delegate.getMappedObject(document, type);
+}
+@Override
+public FieldReference getReference(Field field) {
+FieldReference reference = delegate.getReference(field);
+return isInnerVariableReference(field) ? new ExpressionFieldReference(delegate.getReference(field)) : reference;
+}
+private boolean isInnerVariableReference(Field field) {
+if (inners.isEmpty()) {
+return false;
+}
+for (Field inner : inners) {
+if (inner.getName().equals(field.getName())
+|| (field.getTarget().contains(".") && field.getTarget().startsWith(inner.getName()))) {
+return true;
+}
+}
+return false;
+}
+@Override
+public FieldReference getReference(String name) {
+return new ExpressionFieldReference(delegate.getReference(name));
+}
+@Override
+public Fields getFields(Class<?> type) {
+return delegate.getFields(type);
+}
+}

@@ -1,0 +1,31 @@
+package org.springframework.data.mongodb.core;
+public class Trade {
+private String ticker;
+private long quantity;
+private double price;
+private String orderType;
+public String getOrderType() {
+return orderType;
+}
+public void setOrderType(String orderType) {
+this.orderType = orderType;
+}
+public double getPrice() {
+return price;
+}
+public void setPrice(double price) {
+this.price = price;
+}
+public long getQuantity() {
+return quantity;
+}
+public void setQuantity(long quantity) {
+this.quantity = quantity;
+}
+public String getTicker() {
+return ticker;
+}
+public void setTicker(String ticker) {
+this.ticker = ticker;
+}
+}

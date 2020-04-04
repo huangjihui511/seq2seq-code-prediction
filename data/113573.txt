@@ -1,0 +1,63 @@
+package org.fusesource.mqtt.client;
+import junit.framework.TestCase;
+import org.fusesource.hawtbuf.Buffer;
+import static org.fusesource.hawtbuf.Buffer.*;
+import org.fusesource.hawtbuf.UTF8Buffer;
+import org.fusesource.mqtt.codec.MQTTFrame;
+public class CallbackApiTest extends BrokerTestSupport {
+public void testInterface() throws Exception {
+final Promise<Buffer> result = new Promise<Buffer>();
+MQTT mqtt = new MQTT();
+mqtt.setHost("localhost", port);
+mqtt.setTracer(new Tracer(){
+@Override
+public void onReceive(MQTTFrame frame) {
+System.out.println("recv: "+frame);
+}
+@Override
+public void onSend(MQTTFrame frame) {
+System.out.println("send: "+frame);
+}
+@Override
+public void debug(String message, Object... args) {
+System.out.println(String.format("debug: "+message, args));
+}
+});
+final CallbackConnection connection = mqtt.callbackConnection();
+connection.listener(new Listener() {
+public void onConnected() {
+System.out.println("connected");
+}
+public void onDisconnected() {
+System.out.println("disconnected");
+}
+public void onPublish(UTF8Buffer topic, Buffer payload, Runnable onComplete) {
+result.onSuccess(payload);
+onComplete.run();
+}
+public void onFailure(Throwable value) {
+System.out.println("failure: "+value);
+result.onFailure(value);
+connection.disconnect(null);
+}
+});
+connection.connect(new Callback<Void>() {
+public void onSuccess(Void v) {
+Topic[] topics = {new Topic(utf8("foo"), QoS.AT_LEAST_ONCE)};
+connection.subscribe(topics, new Callback<byte[]>() {
+public void onSuccess(byte[] value) {
+connection.publish("foo", "Hello".getBytes(), QoS.AT_LEAST_ONCE, false, null);
+}
+public void onFailure(Throwable value) {
+result.onFailure(value);
+connection.disconnect(null);
+}
+});
+}
+public void onFailure(Throwable value) {
+result.onFailure(value);
+}
+});
+assertEquals("Hello", new String(result.await().toByteArray()));
+}
+}

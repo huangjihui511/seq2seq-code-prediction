@@ -1,0 +1,5 @@
+package org.apache.flink.runtime.taskmanager;
+public class NoOpTaskActions implements TaskActions {
+@Override
+public void failExternally(Throwable cause) {}
+}

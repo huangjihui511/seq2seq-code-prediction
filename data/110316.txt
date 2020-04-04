@@ -1,0 +1,50 @@
+package de.codecentric.boot.admin.server.cloud.discovery;
+import java.net.URI;
+import com.netflix.appinfo.InstanceInfo;
+import org.junit.Test;
+import org.springframework.cloud.netflix.eureka.EurekaServiceInstance;
+import de.codecentric.boot.admin.server.domain.values.Registration;
+import static java.util.Collections.singletonMap;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+public class EurekaServiceInstanceConverterTest {
+@Test
+public void convert_secure() {
+InstanceInfo instanceInfo = mock(InstanceInfo.class);
+when(instanceInfo.getSecureHealthCheckUrl()).thenReturn("");
+when(instanceInfo.getHealthCheckUrl()).thenReturn("http:
+EurekaServiceInstance service = mock(EurekaServiceInstance.class);
+when(service.getInstanceInfo()).thenReturn(instanceInfo);
+when(service.getUri()).thenReturn(URI.create("http:
+when(service.getServiceId()).thenReturn("test");
+when(service.getMetadata()).thenReturn(singletonMap("management.context-path", "/mgmt"));
+Registration registration = new EurekaServiceInstanceConverter().convert(service);
+assertThat(registration.getName()).isEqualTo("test");
+assertThat(registration.getServiceUrl()).isEqualTo("http:
+assertThat(registration.getManagementUrl()).isEqualTo("http:
+assertThat(registration.getHealthUrl()).isEqualTo("http:
+}
+@Test
+public void convert_missing_mgmtpath() {
+InstanceInfo instanceInfo = mock(InstanceInfo.class);
+when(instanceInfo.getHealthCheckUrl()).thenReturn("http:
+EurekaServiceInstance service = mock(EurekaServiceInstance.class);
+when(service.getInstanceInfo()).thenReturn(instanceInfo);
+when(service.getUri()).thenReturn(URI.create("http:
+when(service.getServiceId()).thenReturn("test");
+Registration registration = new EurekaServiceInstanceConverter().convert(service);
+assertThat(registration.getManagementUrl()).isEqualTo("http:
+}
+@Test
+public void convert_secure_healthUrl() {
+InstanceInfo instanceInfo = mock(InstanceInfo.class);
+when(instanceInfo.getSecureHealthCheckUrl()).thenReturn("https:
+EurekaServiceInstance service = mock(EurekaServiceInstance.class);
+when(service.getInstanceInfo()).thenReturn(instanceInfo);
+when(service.getUri()).thenReturn(URI.create("http:
+when(service.getServiceId()).thenReturn("test");
+Registration registration = new EurekaServiceInstanceConverter().convert(service);
+assertThat(registration.getHealthUrl()).isEqualTo("https:
+}
+}

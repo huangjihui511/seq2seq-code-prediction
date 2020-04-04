@@ -1,0 +1,61 @@
+package com.example.appengine;
+import com.google.appengine.api.datastore.DatastoreService;
+import com.google.appengine.api.datastore.DatastoreServiceFactory;
+import com.google.appengine.api.datastore.Entity;
+import com.google.appengine.api.datastore.FetchOptions;
+import com.google.appengine.api.datastore.Query;
+import com.google.appengine.api.datastore.Query.CompositeFilterOperator;
+import com.google.appengine.api.datastore.Query.FilterOperator;
+import com.google.appengine.api.datastore.Query.FilterPredicate;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.List;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+public class IndexesServlet extends HttpServlet {
+private final DatastoreService datastore;
+public IndexesServlet() {
+datastore = DatastoreServiceFactory.getDatastoreService();
+}
+@Override
+public void doGet(HttpServletRequest req, HttpServletResponse resp)
+throws IOException, ServletException {
+PrintWriter out = resp.getWriter();
+Query q1 =
+new Query("Person")
+.setFilter(
+CompositeFilterOperator.and(
+new FilterPredicate("lastName", FilterOperator.EQUAL, "Smith"),
+new FilterPredicate("height", FilterOperator.EQUAL, 72)))
+.addSort("height", Query.SortDirection.DESCENDING);
+List<Entity> r1 = datastore.prepare(q1).asList(FetchOptions.Builder.withDefaults());
+out.printf("Got %d results from query 1.\n", r1.size());
+Query q2 =
+new Query("Person")
+.setFilter(
+CompositeFilterOperator.and(
+new FilterPredicate("lastName", FilterOperator.EQUAL, "Jones"),
+new FilterPredicate("height", FilterOperator.EQUAL, 63)))
+.addSort("height", Query.SortDirection.DESCENDING);
+List<Entity> r2 = datastore.prepare(q2).asList(FetchOptions.Builder.withDefaults());
+out.printf("Got %d results from query 2.\n", r2.size());
+Query q3 =
+new Query("Person")
+.setFilter(
+CompositeFilterOperator.and(
+new FilterPredicate("lastName", FilterOperator.EQUAL, "Friedkin"),
+new FilterPredicate("firstName", FilterOperator.EQUAL, "Damian")))
+.addSort("height", Query.SortDirection.ASCENDING);
+List<Entity> r3 = datastore.prepare(q3).asList(FetchOptions.Builder.withDefaults());
+out.printf("Got %d results from query 3.\n", r3.size());
+Query q4 =
+new Query("Person")
+.setFilter(new FilterPredicate("lastName", FilterOperator.EQUAL, "Blair"))
+.addSort("firstName", Query.SortDirection.ASCENDING)
+.addSort("height", Query.SortDirection.ASCENDING);
+List<Entity> r4 = datastore.prepare(q4).asList(FetchOptions.Builder.withDefaults());
+out.printf("Got %d results from query 4.\n", r4.size());
+}
+}

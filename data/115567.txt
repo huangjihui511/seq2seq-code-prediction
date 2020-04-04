@@ -1,0 +1,8 @@
+package com.netflix.astyanax;
+import com.netflix.astyanax.connectionpool.exceptions.WalException;
+public interface WriteAheadLog {
+WriteAheadEntry createEntry() throws WalException;
+void removeEntry(WriteAheadEntry entry);
+WriteAheadEntry readNextEntry();
+void retryEntry(WriteAheadEntry entry);
+}

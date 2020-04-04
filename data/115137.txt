@@ -1,0 +1,45 @@
+package io.ebean.bean;
+import io.ebean.ExpressionList;
+import java.io.Serializable;
+import java.util.Collection;
+import java.util.Set;
+public interface BeanCollection<E> extends Serializable {
+enum ModifyListenMode {
+NONE,
+REMOVALS,
+ALL
+}
+void setDisableLazyLoad(boolean disableLazyLoad);
+void loadFrom(BeanCollection<?> other);
+void addBean(E bean);
+void removeBean(E bean);
+void reset(EntityBean ownerBean, String propertyName);
+boolean isSkipSave();
+boolean holdsModifications();
+EntityBean getOwnerBean();
+String getPropertyName();
+boolean checkEmptyLazyLoad();
+ExpressionList<?> getFilterMany();
+void setFilterMany(ExpressionList<?> filterMany);
+boolean isRegisteredWithLoadContext();
+void setLoader(BeanCollectionLoader beanLoader);
+void setReadOnly(boolean readOnly);
+boolean isReadOnly();
+void internalAdd(Object bean);
+void internalAddWithCheck(Object bean);
+int size();
+boolean isEmpty();
+Collection<E> getActualDetails();
+Collection<?> getActualEntries();
+boolean isPopulated();
+boolean isReference();
+void setModifyListening(ModifyListenMode modifyListenMode);
+ModifyListenMode getModifyListening();
+void modifyAddition(E bean);
+void modifyRemoval(Object bean);
+Set<E> getModifyAdditions();
+Set<E> getModifyRemovals();
+void modifyReset();
+boolean wasTouched();
+BeanCollection<E> getShallowCopy();
+}

@@ -1,0 +1,160 @@
+package com.spazedog.lib.rootfw4;
+import java.util.HashSet;
+import java.util.Set;
+import com.spazedog.lib.rootfw4.Shell.Attempts;
+import com.spazedog.lib.rootfw4.Shell.OnShellConnectionListener;
+import com.spazedog.lib.rootfw4.Shell.OnShellResultListener;
+import com.spazedog.lib.rootfw4.Shell.OnShellValidateListener;
+import com.spazedog.lib.rootfw4.Shell.Result;
+import com.spazedog.lib.rootfw4.utils.Device;
+import com.spazedog.lib.rootfw4.utils.Device.Process;
+import com.spazedog.lib.rootfw4.utils.File;
+import com.spazedog.lib.rootfw4.utils.Filesystem;
+import com.spazedog.lib.rootfw4.utils.Memory;
+import com.spazedog.lib.rootfw4.utils.Filesystem.Disk;
+import com.spazedog.lib.rootfw4.utils.Memory.CompCache;
+import com.spazedog.lib.rootfw4.utils.Memory.Swap;
+import com.spazedog.lib.rootfw4.utils.io.FileReader;
+import com.spazedog.lib.rootfw4.utils.io.FileWriter;
+public class RootFW {
+protected static volatile Shell mShell;
+protected static volatile Integer mLockCount = 0;
+protected static final Object mLock = new Object();
+protected static Set<OnConnectionListener> mListeners = new HashSet<OnConnectionListener>();
+public static interface OnConnectionListener extends OnShellConnectionListener {
+public void onShellConnect();
+}
+public static Boolean connect() {
+synchronized(mLock) {
+if (mShell == null || !mShell.isConnected()) {
+mLockCount = 0;
+mShell = new Shell(true);
+if (!mShell.isConnected()) {
+mShell = new Shell(false);
+}
+mShell.addShellConnectionListener(new OnShellConnectionListener(){
+@Override
+public void onShellDisconnect() {
+for (OnConnectionListener listener : mListeners) {
+listener.onShellDisconnect();
+}
+}
+});
+for (OnConnectionListener listener : mListeners) {
+listener.onShellConnect();
+}
+}
+return mShell.isConnected();
+}
+}
+public static void disconnect() {
+disconnect(false);
+}
+public static void disconnect(Boolean force) {
+synchronized(mLock) {
+if (mLockCount == 0 || force) {
+mLockCount = 0;
+mShell.destroy();
+mShell = null;
+}
+}
+}
+public static void lock() {
+synchronized(mLock) {
+mLockCount += 1;
+}
+}
+public static void unlock() {
+synchronized(mLock) {
+if (mLockCount > 0) {
+mLockCount -= 1;
+} else {
+mLockCount = 0;
+}
+}
+}
+public static Boolean isLocked() {
+synchronized(mLock) {
+return mLockCount == 0;
+}
+}
+public static void addConnectionListener(OnConnectionListener listener) {
+synchronized(mLock) {
+mListeners.add(listener);
+}
+}
+public static void removeConnectionListener(OnConnectionListener listener) {
+synchronized(mLock) {
+mListeners.remove(listener);
+}
+}
+public static Result execute(String command) {
+return mShell.execute(command);
+}
+public static Result execute(String[] commands) {
+return mShell.execute(commands);
+}
+public static Result execute(String[] commands, Integer[] resultCodes, OnShellValidateListener validater) {
+return mShell.execute(commands, resultCodes, validater);
+}
+public static void executeAsync(String command, OnShellResultListener listener) {
+mShell.executeAsync(command, listener);
+}
+public static void executeAsync(String[] commands, OnShellResultListener listener) {
+mShell.executeAsync(commands, listener);
+}
+public static void executeAsync(String[] commands, Integer[] resultCodes, OnShellValidateListener validater, OnShellResultListener listener) {
+mShell.executeAsync(commands, resultCodes, validater, listener);
+}
+public static Boolean isRoot() {
+return mShell.isRoot();
+}
+public static Boolean isConnected() {
+return mShell != null && mShell.isConnected();
+}
+public static Integer getTimeout() {
+return mShell.getTimeout();
+}
+public static void setTimeout(Integer timeout) {
+mShell.setTimeout(timeout);
+}
+public static String findCommand(String bin) {
+return mShell.findCommand(bin);
+}
+public static Attempts createAttempts(String command) {
+return mShell.createAttempts(command);
+}
+public static FileReader getFileReader(String file) {
+return mShell.getFileReader(file);
+}
+public static FileWriter getFileWriter(String file, Boolean append) {
+return mShell.getFileWriter(file, append);
+}
+public static File getFile(String file) {
+return mShell.getFile(file);
+}
+public static Filesystem getFilesystem() {
+return mShell.getFilesystem();
+}
+public static Disk getDisk(String disk) {
+return mShell.getDisk(disk);
+}
+public static Device getDevice() {
+return mShell.getDevice();
+}
+public static Process getProcess(String process) {
+return mShell.getProcess(process);
+}
+public static Process getProcess(Integer pid) {
+return mShell.getProcess(pid);
+}
+public static Memory getMemory() {
+return mShell.getMemory();
+}
+public static CompCache getCompCache() {
+return mShell.getCompCache();
+}
+public static Swap getSwap(String device) {
+return mShell.getSwap(device);
+}
+}

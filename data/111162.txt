@@ -1,0 +1,49 @@
+package com.github.benmanes.caffeine.cache.simulator.parser;
+import static com.google.common.base.Preconditions.checkArgument;
+import java.io.BufferedInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import org.apache.commons.compress.archivers.ArchiveException;
+import org.apache.commons.compress.archivers.ArchiveStreamFactory;
+import org.apache.commons.compress.compressors.CompressorException;
+import org.apache.commons.compress.compressors.CompressorStreamFactory;
+import org.tukaani.xz.XZInputStream;
+public abstract class AbstractTraceReader implements TraceReader {
+private static final int BUFFER_SIZE = 1 << 16;
+protected final String filePath;
+public AbstractTraceReader(String filePath) {
+this.filePath = filePath.trim();
+}
+protected InputStream readFile() throws IOException {
+BufferedInputStream input = new BufferedInputStream(openFile(), BUFFER_SIZE);
+input.mark(100);
+try {
+return new XZInputStream(input);
+} catch (IOException e) {
+input.reset();
+}
+try {
+return new CompressorStreamFactory().createCompressorInputStream(input);
+} catch (CompressorException e) {
+input.reset();
+}
+try {
+return new ArchiveStreamFactory().createArchiveInputStream(input);
+} catch (ArchiveException e) {
+input.reset();
+}
+return input;
+}
+private InputStream openFile() throws IOException {
+Path file = Paths.get(filePath);
+if (Files.exists(file)) {
+return Files.newInputStream(file);
+}
+InputStream input = getClass().getResourceAsStream(filePath);
+checkArgument(input != null, "Could not find file: " + filePath);
+return input;
+}
+}

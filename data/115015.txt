@@ -1,0 +1,86 @@
+package com.example.cloudsql;
+import java.io.IOException;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.sql.DataSource;
+@WebServlet(name = "Index", value = "")
+public class IndexServlet extends HttpServlet {
+private static final Logger LOGGER = Logger.getLogger(IndexServlet.class.getName());
+@Override
+public void doGet(HttpServletRequest req, HttpServletResponse resp)
+throws IOException, ServletException {
+DataSource pool = (DataSource) req.getServletContext().getAttribute("my-pool");
+int tabCount;
+int spaceCount;
+List<Vote> recentVotes = new ArrayList<>();
+try (Connection conn = pool.getConnection()) {
+PreparedStatement voteStmt =  conn.prepareStatement(
+"SELECT candidate, time_cast FROM votes ORDER BY time_cast DESC LIMIT 5");
+ResultSet voteResults = voteStmt.executeQuery();
+while (voteResults.next()) {
+String candidate = voteResults.getString(1);
+Timestamp timeCast = voteResults.getTimestamp(2);
+recentVotes.add(new Vote(candidate, timeCast));
+}
+PreparedStatement voteCountStmt = conn.prepareStatement(
+"SELECT COUNT(vote_id) FROM votes WHERE candidate=?");
+voteCountStmt.setString(1, "TABS");
+ResultSet tabResult = voteCountStmt.executeQuery();
+tabResult.next(); 
+tabCount = tabResult.getInt(1);
+voteCountStmt.setString(1, "SPACES");
+ResultSet spaceResult = voteCountStmt.executeQuery();
+spaceResult.next(); 
+spaceCount = spaceResult.getInt(1);
+} catch (SQLException ex) {
+throw new ServletException("Unable to successfully connect to the database. Please check the "
++ "steps in the README and try again.", ex);
+}
+req.setAttribute("tabCount", tabCount);
+req.setAttribute("spaceCount", spaceCount);
+req.setAttribute("recentVotes", recentVotes);
+req.getRequestDispatcher("/index.jsp").forward(req, resp);
+}
+@Override
+public void doPost(HttpServletRequest req, HttpServletResponse resp)
+throws IOException {
+String team = req.getParameter("team");
+if (team != null) {
+team = team.toUpperCase();
+}
+Timestamp now = new Timestamp(new Date().getTime());
+if (team == null || (!team.equals("TABS") && !team.equals("SPACES"))) {
+resp.setStatus(400);
+resp.getWriter().append("Invalid team specified.");
+return;
+}
+DataSource pool = (DataSource) req.getServletContext().getAttribute("my-pool");
+try (Connection conn = pool.getConnection()) {
+PreparedStatement voteStmt = conn.prepareStatement(
+"INSERT INTO votes (time_cast, candidate) VALUES (?, ?);");
+voteStmt.setTimestamp(1, now);
+voteStmt.setString(2, team);
+voteStmt.execute();
+} catch (SQLException ex) {
+LOGGER.log(Level.WARNING, "Error while attempting to submit vote.", ex);
+resp.setStatus(500);
+resp.getWriter().write("Unable to successfully cast vote! Please check the application "
++ "logs for more details.");
+}
+resp.setStatus(200);
+resp.getWriter().printf("Vote successfully cast for '%s' at time %s!\n", team, now);
+}
+}

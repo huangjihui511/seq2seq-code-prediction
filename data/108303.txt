@@ -1,0 +1,35 @@
+package org.apache.flink.runtime.io.network.partition.consumer;
+import org.apache.flink.runtime.executiongraph.ExecutionAttemptID;
+import org.apache.flink.runtime.jobgraph.IntermediateDataSetID;
+import java.io.Serializable;
+public class InputGateID implements Serializable {
+private static final long serialVersionUID = 4613970383536333315L;
+private final IntermediateDataSetID consumedResultID;
+private final ExecutionAttemptID consumerID;
+public InputGateID(IntermediateDataSetID consumedResultID, ExecutionAttemptID consumerID) {
+this.consumedResultID = consumedResultID;
+this.consumerID = consumerID;
+}
+public IntermediateDataSetID getConsumedResultID() {
+return consumedResultID;
+}
+public ExecutionAttemptID getConsumerID() {
+return consumerID;
+}
+@Override
+public boolean equals(Object obj) {
+if (obj != null && obj.getClass() == InputGateID.class) {
+InputGateID o = (InputGateID) obj;
+return o.getConsumedResultID().equals(consumedResultID) && o.getConsumerID().equals(consumerID);
+}
+return false;
+}
+@Override
+public int hashCode() {
+return consumedResultID.hashCode() ^ consumerID.hashCode();
+}
+@Override
+public String toString() {
+return consumedResultID.toString() + "@" + consumerID.toString();
+}
+}

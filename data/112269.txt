@@ -1,0 +1,282 @@
+package com.github.jknack.handlebars.springmvc;
+import static java.util.Objects.requireNonNull;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.Reader;
+import java.net.URI;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Enumeration;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.ResourceBundle;
+import java.util.Set;
+import org.springframework.beans.factory.InitializingBean;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.MessageSource;
+import org.springframework.web.servlet.ViewResolver;
+import org.springframework.web.servlet.view.AbstractTemplateViewResolver;
+import org.springframework.web.servlet.view.AbstractUrlBasedView;
+import com.github.jknack.handlebars.Decorator;
+import com.github.jknack.handlebars.Formatter;
+import com.github.jknack.handlebars.Handlebars;
+import com.github.jknack.handlebars.Helper;
+import com.github.jknack.handlebars.HelperRegistry;
+import com.github.jknack.handlebars.ValueResolver;
+import com.github.jknack.handlebars.cache.HighConcurrencyTemplateCache;
+import com.github.jknack.handlebars.cache.NullTemplateCache;
+import com.github.jknack.handlebars.cache.TemplateCache;
+import com.github.jknack.handlebars.helper.DefaultHelperRegistry;
+import com.github.jknack.handlebars.helper.I18nHelper;
+import com.github.jknack.handlebars.helper.I18nSource;
+import com.github.jknack.handlebars.io.TemplateLoader;
+import com.github.jknack.handlebars.io.URLTemplateLoader;
+public class HandlebarsViewResolver extends AbstractTemplateViewResolver
+implements InitializingBean, HelperRegistry {
+public static final String DEFAULT_CONTENT_TYPE = "text/html;charset=UTF-8";
+private Handlebars handlebars;
+private ValueResolver[] valueResolvers = ValueResolver.VALUE_RESOLVERS;
+private boolean failOnMissingFile = true;
+private HelperRegistry registry = new DefaultHelperRegistry();
+private boolean registerMessageHelper = true;
+private boolean bindI18nToMessageSource;
+private boolean deletePartialAfterMerge;
+private Formatter[] formatters;
+private String handlebarsJsFile;
+private TemplateCache templateCache = new HighConcurrencyTemplateCache();
+private Charset charset = StandardCharsets.UTF_8;
+public HandlebarsViewResolver(
+final Class<? extends HandlebarsView> viewClass) {
+setViewClass(viewClass);
+setContentType(DEFAULT_CONTENT_TYPE);
+setPrefix(TemplateLoader.DEFAULT_PREFIX);
+setSuffix(TemplateLoader.DEFAULT_SUFFIX);
+}
+public HandlebarsViewResolver() {
+this(HandlebarsView.class);
+}
+public HandlebarsViewResolver(final Handlebars handlebars) {
+this(handlebars, HandlebarsView.class);
+}
+public HandlebarsViewResolver(final Handlebars handlebars,
+final Class<? extends HandlebarsView> viewClass) {
+this(viewClass);
+this.handlebars = handlebars;
+}
+@Override
+protected AbstractUrlBasedView buildView(final String viewName)
+throws Exception {
+return configure((HandlebarsView) super.buildView(viewName));
+}
+protected AbstractUrlBasedView configure(final HandlebarsView view)
+throws IOException {
+String url = view.getUrl();
+url = url.substring(getPrefix().length(), url.length()
+- getSuffix().length());
+try {
+view.setTemplate(handlebars.compile(url));
+view.setValueResolver(valueResolvers);
+} catch (IOException ex) {
+if (failOnMissingFile) {
+throw ex;
+}
+logger.debug("File not found: " + url);
+}
+return view;
+}
+@Override
+protected Class<?> requiredViewClass() {
+return HandlebarsView.class;
+}
+@Override
+public void afterPropertiesSet() {
+if (handlebars == null) {
+TemplateLoader templateLoader = createTemplateLoader(getApplicationContext());
+handlebars = requireNonNull(createHandlebars(templateLoader),
+"A handlebars object is required.");
+}
+handlebars.with(registry);
+if (handlebarsJsFile != null) {
+handlebars.handlebarsJsFile(handlebarsJsFile);
+}
+if (formatters != null) {
+for (Formatter formatter : formatters) {
+handlebars.with(formatter);
+}
+}
+if (registerMessageHelper) {
+handlebars.registerHelper("message", new MessageSourceHelper(getApplicationContext()));
+}
+if (bindI18nToMessageSource) {
+I18nSource i18nSource = createI18nSource(getApplicationContext());
+I18nHelper.i18n.setSource(i18nSource);
+I18nHelper.i18nJs.setSource(i18nSource);
+}
+TemplateCache cache = handlebars.getCache();
+if (cache == NullTemplateCache.INSTANCE) {
+handlebars.with(templateCache);
+}
+handlebars.setDeletePartialAfterMerge(deletePartialAfterMerge);
+handlebars.setCharset(charset);
+}
+private static I18nSource createI18nSource(final ApplicationContext context) {
+return new I18nSource() {
+@Override
+public String message(final String key, final Locale locale, final Object... args) {
+return context.getMessage(key, args, locale);
+}
+@Override
+public String[] keys(final String basename, final Locale locale) {
+ResourceBundle bundle = ResourceBundle.getBundle(basename, locale);
+Enumeration<String> keys = bundle.getKeys();
+List<String> result = new ArrayList<String>();
+while (keys.hasMoreElements()) {
+String key = keys.nextElement();
+result.add(key);
+}
+return result.toArray(new String[result.size()]);
+}
+};
+}
+protected Handlebars createHandlebars(final TemplateLoader templateLoader) {
+return new Handlebars(templateLoader);
+}
+protected TemplateLoader createTemplateLoader(final ApplicationContext context) {
+URLTemplateLoader templateLoader = new SpringTemplateLoader(context);
+templateLoader.setPrefix(getPrefix());
+templateLoader.setSuffix(getSuffix());
+return templateLoader;
+}
+public Handlebars getHandlebars() {
+if (handlebars == null) {
+throw new IllegalStateException(
+"afterPropertiesSet() method hasn't been call it.");
+}
+return handlebars;
+}
+protected ValueResolver[] getValueResolvers() {
+return this.valueResolvers;
+}
+public void setValueResolvers(final ValueResolver... valueResolvers) {
+this.valueResolvers = requireNonNull(valueResolvers,
+"At least one value-resolver must be present.");
+}
+public void setFormatters(final Formatter... formatters) {
+this.formatters = requireNonNull(formatters,
+"At least one formatter must be present.");
+}
+public void setHandlebarsJsFile(final String location) {
+this.handlebarsJsFile = requireNonNull(location, "Location is required");
+}
+public void setFailOnMissingFile(final boolean failOnMissingFile) {
+this.failOnMissingFile = failOnMissingFile;
+}
+public void setHelpers(final Map<String, Helper<?>> helpers) {
+requireNonNull(helpers, "The helpers are required.");
+for (Entry<String, Helper<?>> helper : helpers.entrySet()) {
+registry.registerHelper(helper.getKey(), helper.getValue());
+}
+}
+public void setHelperSources(final List<?> helpers) {
+requireNonNull(helpers, "The helpers are required.");
+for (Object helper : helpers) {
+registry.registerHelpers(helper);
+}
+}
+@Override
+public HandlebarsViewResolver registerHelpers(final Object helperSource) {
+registry.registerHelpers(helperSource);
+return this;
+}
+@Override
+public HandlebarsViewResolver registerHelpers(final Class<?> helperSource) {
+registry.registerHelpers(helperSource);
+return this;
+}
+@Override
+public <C> Helper<C> helper(final String name) {
+return registry.helper(name);
+}
+@Override
+public Set<Entry<String, Helper<?>>> helpers() {
+return registry.helpers();
+}
+@Override
+public <H> HandlebarsViewResolver registerHelper(final String name, final Helper<H> helper) {
+registry.registerHelper(name, helper);
+return this;
+}
+@Override
+public <H> HandlebarsViewResolver registerHelperMissing(final Helper<H> helper) {
+registry.registerHelperMissing(helper);
+return this;
+}
+@Override
+public HandlebarsViewResolver registerHelpers(final URI location) throws Exception {
+registry.registerHelpers(location);
+return this;
+}
+@Override
+public HandlebarsViewResolver registerHelpers(final File input) throws Exception {
+registry.registerHelpers(input);
+return this;
+}
+@Override
+public HandlebarsViewResolver registerHelpers(final String filename, final Reader source)
+throws Exception {
+registry.registerHelpers(filename, source);
+return this;
+}
+@Override
+public HandlebarsViewResolver registerHelpers(final String filename, final InputStream source)
+throws Exception {
+registry.registerHelpers(filename, source);
+return this;
+}
+@Override
+public HandlebarsViewResolver registerHelpers(final String filename, final String source)
+throws IOException {
+registry.registerHelpers(filename, source);
+return this;
+}
+public HandlebarsViewResolver withoutMessageHelper() {
+setRegisterMessageHelper(false);
+return this;
+}
+public void setRegisterMessageHelper(final boolean registerMessageHelper) {
+this.registerMessageHelper = registerMessageHelper;
+}
+public void setBindI18nToMessageSource(final boolean bindI18nToMessageSource) {
+this.bindI18nToMessageSource = bindI18nToMessageSource;
+}
+public void setDeletePartialAfterMerge(final boolean deletePartialAfterMerge) {
+this.deletePartialAfterMerge = deletePartialAfterMerge;
+}
+@Override
+public void setCache(final boolean cache) {
+if (!cache) {
+templateCache = NullTemplateCache.INSTANCE;
+}
+super.setCache(cache);
+}
+public void setTemplateCache(final TemplateCache templateCache) {
+this.templateCache = templateCache;
+}
+@Override
+public Decorator decorator(final String name) {
+return this.registry.decorator(name);
+}
+@Override
+public HandlebarsViewResolver registerDecorator(final String name, final Decorator decorator) {
+registry.registerDecorator(name, decorator);
+return this;
+}
+@Override public HandlebarsViewResolver setCharset(final Charset charset) {
+this.charset = requireNonNull(charset, "Charset required.");
+return this;
+}
+}

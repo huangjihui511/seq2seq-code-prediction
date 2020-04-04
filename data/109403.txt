@@ -1,0 +1,55 @@
+package com.facebook.presto.cost;
+import com.facebook.presto.Session;
+import com.facebook.presto.cost.ComposableStatsCalculator.Rule;
+import com.facebook.presto.matching.Pattern;
+import com.facebook.presto.spi.relation.VariableReferenceExpression;
+import com.facebook.presto.sql.planner.TypeProvider;
+import com.facebook.presto.sql.planner.iterative.Lookup;
+import com.facebook.presto.sql.planner.plan.UnnestNode;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import static com.facebook.presto.sql.planner.plan.Patterns.unnest;
+public class UnnestStatsRule
+implements Rule<UnnestNode>
+{
+private static final int UPPER_BOUND_ROW_COUNT_FOR_ESTIMATION = 1;
+@Override
+public Pattern<UnnestNode> getPattern()
+{
+return unnest();
+}
+@Override
+public Optional<PlanNodeStatsEstimate> calculate(UnnestNode node, StatsProvider statsProvider, Lookup lookup, Session session, TypeProvider types)
+{
+PlanNodeStatsEstimate sourceStats = statsProvider.getStats(node.getSource());
+PlanNodeStatsEstimate.Builder calculatedStats = PlanNodeStatsEstimate.builder();
+if (sourceStats.getOutputRowCount() > UPPER_BOUND_ROW_COUNT_FOR_ESTIMATION) {
+return Optional.empty();
+}
+calculatedStats.setOutputRowCount(sourceStats.getOutputRowCount());
+for (VariableReferenceExpression variable : node.getReplicateVariables()) {
+calculatedStats.addVariableStatistics(variable, sourceStats.getVariableStatistics(variable));
+}
+for (Map.Entry<VariableReferenceExpression, List<VariableReferenceExpression>> entry : node.getUnnestVariables().entrySet()) {
+List<VariableReferenceExpression> unnestToVariables = entry.getValue();
+VariableStatsEstimate stats = sourceStats.getVariableStatistics(entry.getKey());
+for (VariableReferenceExpression variable : unnestToVariables) {
+calculatedStats.addVariableStatistics(
+variable,
+VariableStatsEstimate.builder()
+.setAverageRowSize(stats.getAverageRowSize())
+.build());
+}
+}
+if (node.getOrdinalityVariable().isPresent()) {
+calculatedStats.addVariableStatistics(
+node.getOrdinalityVariable().get(),
+VariableStatsEstimate.builder()
+.setLowValue(0)
+.setNullsFraction(0)
+.build());
+}
+return Optional.of(calculatedStats.build());
+}
+}

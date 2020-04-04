@@ -1,0 +1,49 @@
+package com.github.benmanes.caffeine.cache;
+import java.util.Deque;
+import org.checkerframework.checker.nullness.qual.Nullable;
+import com.github.benmanes.caffeine.cache.WriteOrderDeque.WriteOrder;
+final class WriteOrderDeque<E extends WriteOrder<E>> extends AbstractLinkedDeque<E> {
+@Override
+public boolean contains(Object o) {
+return (o instanceof WriteOrder<?>) && contains((WriteOrder<?>) o);
+}
+boolean contains(WriteOrder<?> e) {
+return (e.getPreviousInWriteOrder() != null)
+|| (e.getNextInWriteOrder() != null)
+|| (e == first);
+}
+@Override
+@SuppressWarnings("unchecked")
+public boolean remove(Object o) {
+return (o instanceof WriteOrder<?>) && remove((E) o);
+}
+public boolean remove(E e) {
+if (contains(e)) {
+unlink(e);
+return true;
+}
+return false;
+}
+@Override
+public @Nullable E getPrevious(E e) {
+return e.getPreviousInWriteOrder();
+}
+@Override
+public void setPrevious(E e, @Nullable E prev) {
+e.setPreviousInWriteOrder(prev);
+}
+@Override
+public @Nullable E getNext(E e) {
+return e.getNextInWriteOrder();
+}
+@Override
+public void setNext(E e, @Nullable E next) {
+e.setNextInWriteOrder(next);
+}
+interface WriteOrder<T extends WriteOrder<T>> {
+@Nullable T getPreviousInWriteOrder();
+void setPreviousInWriteOrder(@Nullable T prev);
+@Nullable T getNextInWriteOrder();
+void setNextInWriteOrder(@Nullable T next);
+}
+}

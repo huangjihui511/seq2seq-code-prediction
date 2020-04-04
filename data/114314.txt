@@ -1,0 +1,38 @@
+package mobi.hsz.idea.gitignore.util;
+import com.intellij.openapi.util.Pair;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import java.util.concurrent.ConcurrentHashMap;
+public class ExpiringMap<K, V> {
+private final int time;
+private final ConcurrentHashMap<K, Pair<V, Long>> map = new ConcurrentHashMap<>();
+public ExpiringMap(int time) {
+this.time = time;
+}
+@Nullable
+public V get(@NotNull K key) {
+long current = System.currentTimeMillis();
+final Pair<V, Long> data = map.get(key);
+if (data != null) {
+if ((data.getSecond() + time) > current) {
+return data.getFirst();
+}
+map.remove(key);
+}
+return null;
+}
+@NotNull
+public V set(@NotNull K key, @NotNull V value) {
+long current = System.currentTimeMillis();
+map.put(key, Pair.create(value, current));
+return value;
+}
+public void clear() {
+map.clear();
+}
+@NotNull
+public V getOrElse(@NotNull K key, @NotNull V defaultValue) {
+final V value = get(key);
+return value != null ? value : defaultValue;
+}
+}

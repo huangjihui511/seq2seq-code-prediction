@@ -1,0 +1,5 @@
+package io.hawt.web.auth;
+public interface AuthenticationContainerDiscovery {
+String getContainerName();
+boolean canAuthenticate(AuthenticationConfiguration configuration);
+}

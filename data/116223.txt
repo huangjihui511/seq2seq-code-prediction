@@ -1,0 +1,7 @@
+package org.apache.struts2.osgi.interceptor;
+import java.util.List;
+@Deprecated
+public interface ServiceAware<T> {
+@Deprecated
+void setServices(List<T> services);
+}

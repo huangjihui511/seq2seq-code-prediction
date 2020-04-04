@@ -1,0 +1,92 @@
+package com.sun.swingset3.demos.window;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import javax.swing.*;
+import javax.swing.border.EmptyBorder;
+import javax.swing.border.LineBorder;
+import com.sun.swingset3.DemoProperties;
+import com.sun.swingset3.demos.DemoUtilities;
+@DemoProperties(
+value = "JWindow Demo",
+category = "Toplevel Containers",
+description = "Demonstrates JWindow, a toplevel container with no system border.",
+sourceFiles = {
+"com/sun/swingset3/demos/window/WindowDemo.java",
+"com/sun/swingset3/demos/DemoUtilities.java",
+"com/sun/swingset3/demos/window/resources/WindowDemo.html",
+"com/sun/swingset3/demos/window/resources/images/WindowDemo.gif"
+}
+)
+public class WindowDemo extends JPanel {
+private JWindow window;
+private JComponent windowSpaceholder;
+public WindowDemo() {
+initComponents();
+}
+protected void initComponents() {
+window = createWindow();
+setLayout(new BorderLayout());
+add(createControlPanel(), BorderLayout.WEST);
+windowSpaceholder = createWindowSpaceholder(window);
+add(windowSpaceholder, BorderLayout.CENTER);
+}
+protected JComponent createControlPanel() {
+Box controlPanel = Box.createVerticalBox();
+controlPanel.setBorder(new EmptyBorder(8, 8, 8, 8));
+JButton showButton = new JButton("Show JWindow...");
+showButton.addActionListener(new ShowActionListener());
+controlPanel.add(showButton);
+return controlPanel;
+}
+private static JComponent createWindowSpaceholder(JWindow window) {
+JPanel windowPlaceholder = new JPanel();
+Dimension prefSize = window.getPreferredSize();
+prefSize.width += 12;
+prefSize.height += 12;
+windowPlaceholder.setPreferredSize(prefSize);
+return windowPlaceholder;
+}
+private static JWindow createWindow() {
+JWindow window = new JWindow();
+window.getRootPane().setBorder(new LineBorder(Color.BLACK, 1));
+JLabel label = new JLabel("I have no system border.");
+label.setHorizontalAlignment(JLabel.CENTER);
+label.setPreferredSize(new Dimension(250, 200));
+window.add(label);
+window.pack();
+return window;
+}
+public void start() {
+DemoUtilities.setToplevelLocation(window, windowSpaceholder, SwingConstants.CENTER);
+showWindow();
+}
+public void stop() {
+window.setVisible(false);
+}
+public void showWindow() {
+if (window.isShowing()) {
+window.toFront();
+} else {
+window.setVisible(true);
+}
+}
+private class ShowActionListener implements ActionListener {
+public void actionPerformed(ActionEvent actionEvent) {
+showWindow();
+}
+}
+public static void main(String args[]) {
+EventQueue.invokeLater(new Runnable() {
+public void run() {
+JFrame frame = new JFrame();
+WindowDemo demo = new WindowDemo();
+frame.add(demo);
+frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+frame.pack();
+frame.setVisible(true);
+demo.start();
+}
+});
+}
+}

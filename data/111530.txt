@@ -1,0 +1,47 @@
+package org.openrefine.wikidata.qa.scrutinizers;
+import java.util.Iterator;
+import org.openrefine.wikidata.qa.QAWarning;
+import org.wikidata.wdtk.datamodel.interfaces.EntityIdValue;
+import org.wikidata.wdtk.datamodel.interfaces.PropertyIdValue;
+import org.wikidata.wdtk.datamodel.interfaces.Reference;
+import org.wikidata.wdtk.datamodel.interfaces.Snak;
+import org.wikidata.wdtk.datamodel.interfaces.Statement;
+public class RestrictedPositionScrutinizer extends StatementScrutinizer {
+protected enum SnakPosition {
+MAINSNAK, QUALIFIER, REFERENCE
+}
+@Override
+public void scrutinize(Statement statement, EntityIdValue entityId, boolean added) {
+scrutinize(statement.getClaim().getMainSnak(), entityId, SnakPosition.MAINSNAK, added);
+scrutinizeSnakSet(statement.getClaim().getAllQualifiers(), entityId, SnakPosition.QUALIFIER, added);
+for (Reference ref : statement.getReferences()) {
+scrutinizeSnakSet(ref.getAllSnaks(), entityId, SnakPosition.REFERENCE, added);
+}
+}
+protected void scrutinizeSnakSet(Iterator<Snak> snaks, EntityIdValue entityId, SnakPosition position,
+boolean added) {
+while (snaks.hasNext()) {
+Snak snak = snaks.next();
+scrutinize(snak, entityId, position, added);
+}
+}
+public void scrutinize(Snak snak, EntityIdValue entityId, SnakPosition position, boolean added) {
+if (!positionAllowed(snak.getPropertyId(), position)) {
+String positionStr = position.toString().toLowerCase();
+QAWarning issue = new QAWarning("property-found-in-" + positionStr,
+snak.getPropertyId().getId(), QAWarning.Severity.IMPORTANT, 1);
+issue.setProperty("property_entity", snak.getPropertyId());
+addIssue(issue);
+}
+}
+public boolean positionAllowed(PropertyIdValue pid, SnakPosition position) {
+if(position.equals(SnakPosition.MAINSNAK)) {
+return _fetcher.allowedAsValue(pid);
+} else if(position.equals(SnakPosition.QUALIFIER)) {
+return _fetcher.allowedAsQualifier(pid);
+} else if(position.equals(SnakPosition.REFERENCE)) {
+return _fetcher.allowedAsReference(pid);
+}
+return true;
+}
+}

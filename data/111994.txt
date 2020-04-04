@@ -1,0 +1,64 @@
+package io.hawt.web.auth;
+import java.util.regex.Pattern;
+import javax.servlet.http.HttpServletRequest;
+import io.hawt.util.Strings;
+public class RelativeRequestUri {
+private static final Pattern PATH_SPLITTER = Pattern.compile("/");
+private final HttpServletRequest request;
+private final String uriPrefix;
+private final String uri;
+private final String[] uriComponents;
+public RelativeRequestUri(final HttpServletRequest request,
+final int pathIndex) {
+if (pathIndex < 0) {
+throw new IllegalArgumentException("pathIndex is negative");
+}
+final String requestUri = Strings.webContextPath(request.getRequestURI());
+int start = request.getContextPath().length();
+if (start < requestUri.length() && requestUri.charAt(start) == '/') {
+start++;
+}
+if (pathIndex != 0) {
+int c = 0;
+do {
+int i = requestUri.indexOf('/', start);
+start = i + 1;
+if (start == 0) {
+start = requestUri.length();
+break;
+}
+c++;
+} while (c < pathIndex);
+}
+if (start < requestUri.length()) {
+this.uriPrefix = requestUri.substring(0, start);
+this.uri = requestUri.substring(start);
+} else {
+this.uriPrefix = requestUri;
+this.uri = "";
+}
+this.uriComponents = uri.isEmpty() ? new String[0]
+: PATH_SPLITTER.split(uri);
+this.request = request;
+}
+public HttpServletRequest getRequest() {
+return request;
+}
+public String getPrefix() {
+return uriPrefix;
+}
+public String getUri() {
+return uri;
+}
+public String[] getComponents() {
+return uriComponents;
+}
+public String getLastComponent() {
+return uriComponents.length == 0 ? null
+: uriComponents[uriComponents.length - 1];
+}
+@Override
+public String toString() {
+return getUri();
+}
+}

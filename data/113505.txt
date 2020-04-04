@@ -1,0 +1,28 @@
+package com.pokegoapi.api.settings;
+import POGOProtos.Settings.MapSettingsOuterClass;
+import lombok.Getter;
+public class MapSettings {
+@Getter
+private String googleApiKey;
+@Getter
+private float minMapObjectDistance;
+@Getter
+public float maxRefresh;
+@Getter
+public float minRefresh;
+@Getter
+private double encounterRange;
+@Getter
+public double pokemonVisibilityRange;
+@Getter
+private double pokeNavRange;
+protected void update(MapSettingsOuterClass.MapSettings mapSettings) {
+googleApiKey = mapSettings.getGoogleMapsApiKey();
+minMapObjectDistance = mapSettings.getGetMapObjectsMinDistanceMeters();
+maxRefresh = mapSettings.getGetMapObjectsMaxRefreshSeconds() * 1000;
+minRefresh = mapSettings.getGetMapObjectsMinRefreshSeconds() * 1000;
+encounterRange = mapSettings.getEncounterRangeMeters();
+pokemonVisibilityRange = mapSettings.getPokemonVisibleRange();
+pokeNavRange = mapSettings.getPokeNavRangeMeters();
+}
+}

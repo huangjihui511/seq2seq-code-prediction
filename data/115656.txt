@@ -1,0 +1,8 @@
+package com.graphhopper.jsprit.core.algorithm;
+import com.graphhopper.jsprit.core.algorithm.listener.SearchStrategyModuleListener;
+import com.graphhopper.jsprit.core.problem.solution.VehicleRoutingProblemSolution;
+public interface SearchStrategyModule {
+public VehicleRoutingProblemSolution runAndGetSolution(VehicleRoutingProblemSolution vrpSolution);
+public String getName();
+public void addModuleListener(SearchStrategyModuleListener moduleListener);
+}

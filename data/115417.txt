@@ -1,0 +1,11 @@
+package io.flutter.inspector;
+import javax.swing.tree.DefaultMutableTreeNode;
+public class TreeUtils {
+public static DiagnosticsNode maybeGetDiagnostic(DefaultMutableTreeNode treeNode) {
+if (treeNode == null) {
+return null;
+}
+final Object userObject = treeNode.getUserObject();
+return (userObject instanceof DiagnosticsNode) ? (DiagnosticsNode)userObject : null;
+}
+}

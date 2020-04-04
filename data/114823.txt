@@ -1,0 +1,77 @@
+package com.google.api.client.extensions.appengine.http;
+import com.google.api.client.http.LowLevelHttpResponse;
+import com.google.appengine.api.urlfetch.HTTPHeader;
+import com.google.appengine.api.urlfetch.HTTPResponse;
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import java.util.ArrayList;
+final class UrlFetchResponse extends LowLevelHttpResponse {
+private final ArrayList<String> headerNames = new ArrayList<String>();
+private final ArrayList<String> headerValues = new ArrayList<String>();
+private final HTTPResponse fetchResponse;
+private String contentEncoding;
+private String contentType;
+private long contentLength;
+UrlFetchResponse(HTTPResponse fetchResponse) {
+this.fetchResponse = fetchResponse;
+for (HTTPHeader header : fetchResponse.getHeadersUncombined()) {
+String name = header.getName();
+String value = header.getValue();
+if (name != null && value != null) {
+headerNames.add(name);
+headerValues.add(value);
+if ("content-type".equalsIgnoreCase(name)) {
+contentType = value;
+} else if ("content-encoding".equalsIgnoreCase(name)) {
+contentEncoding = value;
+} else if ("content-length".equalsIgnoreCase(name)) {
+try {
+contentLength = Long.parseLong(value);
+} catch (NumberFormatException e) {
+}
+}
+}
+}
+}
+@Override
+public int getStatusCode() {
+return fetchResponse.getResponseCode();
+}
+@Override
+public InputStream getContent() {
+byte[] content = fetchResponse.getContent();
+return content == null ? null : new ByteArrayInputStream(content);
+}
+@Override
+public String getContentEncoding() {
+return contentEncoding;
+}
+@Override
+public long getContentLength() {
+return contentLength;
+}
+@Override
+public String getContentType() {
+return contentType;
+}
+@Override
+public String getReasonPhrase() {
+return null;
+}
+@Override
+public String getStatusLine() {
+return null;
+}
+@Override
+public int getHeaderCount() {
+return headerNames.size();
+}
+@Override
+public String getHeaderName(int index) {
+return headerNames.get(index);
+}
+@Override
+public String getHeaderValue(int index) {
+return headerValues.get(index);
+}
+}

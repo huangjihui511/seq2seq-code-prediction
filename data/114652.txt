@@ -1,0 +1,46 @@
+package com.twelvemonkeys.io.enc;
+import java.io.EOFException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.ByteBuffer;
+import java.util.zip.DataFormatException;
+import java.util.zip.Inflater;
+final class InflateDecoder implements Decoder {
+private final Inflater inflater;
+private final byte[] buffer;
+public InflateDecoder() {
+this(new Inflater(true));
+}
+public InflateDecoder(final Inflater pInflater) {
+if (pInflater == null) {
+throw new IllegalArgumentException("inflater == null");
+}
+inflater = pInflater;
+buffer = new byte[1024];
+}
+public int decode(final InputStream stream, final ByteBuffer buffer) throws IOException {
+try {
+int decoded;
+while ((decoded = inflater.inflate(buffer.array(), buffer.arrayOffset(), buffer.capacity())) == 0) {
+if (inflater.finished() || inflater.needsDictionary()) {
+return 0;
+}
+if (inflater.needsInput()) {
+fill(stream);
+}
+}
+return decoded;
+}
+catch (DataFormatException e) {
+String message = e.getMessage();
+throw new DecodeException(message != null ? message : "Invalid ZLIB data format", e);
+}
+}
+private void fill(final InputStream pStream) throws IOException {
+int available = pStream.read(buffer, 0, buffer.length);
+if (available == -1) {
+throw new EOFException("Unexpected end of ZLIB stream");
+}
+inflater.setInput(buffer, 0, available);
+}
+}

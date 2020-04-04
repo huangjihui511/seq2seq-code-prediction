@@ -1,0 +1,7 @@
+package io.jooby;
+import javax.annotation.Nonnull;
+import java.lang.reflect.Type;
+public interface ResponseHandler {
+boolean matches(@Nonnull Type type);
+@Nonnull Route.Handler create(Route.Handler next);
+}

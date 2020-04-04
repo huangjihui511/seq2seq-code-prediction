@@ -1,0 +1,474 @@
+package com.twelvemonkeys.sql;
+import com.twelvemonkeys.lang.StringUtil;
+import com.twelvemonkeys.lang.SystemUtil;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.lang.reflect.Array;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.math.BigDecimal;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.Enumeration;
+import java.util.Hashtable;
+import java.util.Properties;
+import java.util.Vector;
+public class ObjectReader {
+public final static void main(String[] pArgs) throws SQLException {
+System.err.println("Testing only!");
+ObjectReader obr = new ObjectReader(DatabaseConnection.getConnection());
+com.twelvemonkeys.usedcars.DBCar car = new com.twelvemonkeys.usedcars.DBCar(new Integer(1));
+com.twelvemonkeys.usedcars.DBDealer dealer = new com.twelvemonkeys.usedcars.DBDealer("NO4537");
+System.out.println(obr.readObject(dealer));
+com.twelvemonkeys.usedcars.Dealer[] dealers = (com.twelvemonkeys.usedcars.Dealer[]) obr.readObjects(dealer);
+for (int i = 0; i < dealers.length; i++) {
+System.out.println(dealers[i]);
+}
+System.out.println("------------------------------------------------------------------------------\n"
++ "Total: " + dealers.length + " dealers in database\n");
+Hashtable where = new Hashtable();
+where.put("zipCode", "0655");
+dealers = (com.twelvemonkeys.usedcars.Dealer[]) obr.readObjects(dealer, where);
+for (int i = 0; i < dealers.length; i++) {
+System.out.println(dealers[i]);
+}
+System.out.println("------------------------------------------------------------------------------\n"
++ "Total: " + dealers.length + " dealers matching query: "
++ where + "\n");
+com.twelvemonkeys.usedcars.Car[] cars = null;
+cars = (com.twelvemonkeys.usedcars.Car[]) obr.readObjects(car);
+for (int i = 0; i < cars.length; i++) {
+System.out.println(cars[i]);
+}
+System.out.println("------------------------------------------------------------------------------\n"
++ "Total: " + cars.length + " cars in database\n");
+where = new Hashtable();
+where.put("year", new Integer(1995));
+cars = (com.twelvemonkeys.usedcars.Car[]) obr.readObjects(car, where);
+for (int i = 0; i < cars.length; i++) {
+System.out.println(cars[i]);
+}
+System.out.println("------------------------------------------------------------------------------\n"
++ "Total: " + cars.length + " cars matching query: "
++ where + " \n");
+where = new Hashtable();
+where.put("publishers", "Bilguiden");
+cars = (com.twelvemonkeys.usedcars.Car[]) obr.readObjects(car, where);
+for (int i = 0; i < cars.length; i++) {
+System.out.println(cars[i]);
+}
+System.out.println("------------------------------------------------------------------------------\n"
++ "Total: " + cars.length + " cars matching query: "
++ where + "\n");
+System.out.println("==============================================================================\n"
++ getStats());
+}
+protected Log mLog = null;
+protected Properties mConfig = null;
+Connection mConnection = null;
+private Hashtable mCache = new Hashtable();
+public ObjectReader(Connection pConnection) {
+mConnection = pConnection;
+try {
+mConfig = SystemUtil.loadProperties(getClass());
+}
+catch (FileNotFoundException fnf) {
+}
+catch (IOException ioe) {
+new Log(this).logError(ioe);
+}
+mLog = new Log(this, mConfig);
+}
+public static String getStats() {
+long total = sCacheHit + sCacheMiss + sCacheUn;
+double hit = ((double) sCacheHit / (double) total) * 100.0;
+double miss = ((double) sCacheMiss / (double) total) * 100.0;
+double un = ((double) sCacheUn / (double) total) * 100.0;
+java.text.NumberFormat nf = java.text.NumberFormat.getInstance();
+return "Total: " + total + " reads. "
++ "Cache hits: " + sCacheHit + " (" + nf.format(hit) + "%), "
++ "Cache misses: " + sCacheMiss + " (" + nf.format(miss) + "%), "
++ "Unattempted: " + sCacheUn + " (" + nf.format(un) + "%) ";
+}
+private Object[] readIdentities(Class pObjClass, Hashtable pMapping,
+Hashtable pWhere, ObjectMapper pOM)
+throws SQLException {
+sCacheUn++;
+if (pWhere == null)
+pWhere = new Hashtable();
+String[] keys = new String[pWhere.size()];
+int i = 0;
+for (Enumeration en = pWhere.keys(); en.hasMoreElements(); i++) {
+keys[i] = (String) en.nextElement();
+}
+String sql = pOM.buildIdentitySQL(keys)
++ buildWhereClause(keys, pMapping);
+mLog.logDebug(sql + " (" + pWhere + ")");
+PreparedStatement statement = mConnection.prepareStatement(sql);
+for (int j = 0; j < keys.length; j++) {
+Object key =  pWhere.get(keys[j]);
+if (key instanceof Integer)
+statement.setInt(j + 1, ((Integer) key).intValue());
+else if (key instanceof BigDecimal)
+statement.setBigDecimal(j + 1, (BigDecimal) key);
+else
+statement.setString(j + 1, key.toString());
+}
+ResultSet rs = null;
+try {
+rs = statement.executeQuery();
+}
+catch (SQLException e) {
+mLog.logError(sql + " (" + pWhere + ")", e);
+throw e;
+}
+Vector result = new Vector();
+while (rs.next()) {
+Object obj = null;
+try {
+obj = pObjClass.newInstance();
+}
+catch (IllegalAccessException iae) {
+iae.printStackTrace();
+}
+catch (InstantiationException ie) {
+ie.printStackTrace();
+}
+pOM.mapColumnProperty(rs, 1,
+pOM.getProperty(pOM.getPrimaryKey()), obj);
+result.addElement(obj);
+}
+return result.toArray((Object[]) Array.newInstance(pObjClass,
+result.size()));
+}
+public Object readObject(DatabaseReadable pReadable) throws SQLException {
+return readObject(pReadable.getId(), pReadable.getClass(),
+pReadable.getMapping());
+}
+public Object readObject(Object pId, Class pObjClass, Hashtable pMapping)
+throws SQLException {
+return readObject(pId, pObjClass, pMapping, null);
+}
+public Object[] readObjects(DatabaseReadable pReadable)
+throws SQLException {
+return readObjects(pReadable.getClass(),
+pReadable.getMapping(), null);
+}
+private void setPropertyValue(Object pObj, String pProperty,
+Object pValue) {
+Method m = null;
+Class[] cl = {pValue.getClass()};
+try {
+m = pObj.getClass().
+getMethod("set" + StringUtil.capitalize(pProperty), cl);
+Object[] args = {pValue};
+m.invoke(pObj, args);
+}
+catch (NoSuchMethodException e) {
+e.printStackTrace();
+}
+catch (IllegalAccessException iae) {
+iae.printStackTrace();
+}
+catch (InvocationTargetException ite) {
+ite.printStackTrace();
+}
+}
+private Object getPropertyValue(Object pObj, String pProperty) {
+Method m = null;
+Class[] cl = new Class[0];
+try {
+m = pObj.getClass().
+getMethod("get" + StringUtil.capitalize(pProperty),
+new Class[0]);
+Object result = m.invoke(pObj, new Object[0]);
+return result;
+}
+catch (NoSuchMethodException e) {
+e.printStackTrace();
+}
+catch (IllegalAccessException iae) {
+iae.printStackTrace();
+}
+catch (InvocationTargetException ite) {
+ite.printStackTrace();
+}
+return null;
+}
+private void setChildObjects(Object pParent, ObjectMapper pOM)
+throws SQLException {
+if (pOM == null) {
+throw new NullPointerException("ObjectMapper in readChildObjects "
++ "cannot be null!!");
+}
+for (Enumeration keys = pOM.mMapTypes.keys(); keys.hasMoreElements();) {
+String property = (String) keys.nextElement();
+String mapType = (String) pOM.mMapTypes.get(property);
+if (property.length() <= 0 || mapType == null) {
+continue;
+}
+Object id = getPropertyValue(pParent,
+pOM.getProperty(pOM.getPrimaryKey()));
+if (mapType.equals(ObjectMapper.OBJECTMAP)) {
+Class objectClass = (Class) pOM.mClasses.get(property);
+DatabaseReadable dbr = null;
+try {
+dbr = (DatabaseReadable) objectClass.newInstance();
+}
+catch (Exception e) {
+mLog.logError(e);
+}
+Properties mapping = readMapping(objectClass);
+if (pOM.mJoins.containsKey(property))
+dbr.getMapping().put(".join", pOM.mJoins.get(property));
+Hashtable where = new Hashtable();
+String foreignKey = (String)
+dbr.getMapping().get(".foreignKey");
+if (foreignKey != null) {
+where.put(".foreignKey", id);
+}
+Object[] child = readObjects(dbr, where);
+if (child.length < 1)
+throw new SQLException("No child object with foreign key "
++ foreignKey + "=" + id);
+else if (child.length != 1)
+throw new SQLException("More than one object with foreign "
++ "key " + foreignKey + "=" + id);
+setPropertyValue(pParent, property, child[0]);
+}
+else if (mapType.equals(ObjectMapper.COLLECTIONMAP)) {
+Hashtable mapping = pOM.getPropertyMapping(property);
+Hashtable where = new Hashtable();
+String foreignKey = (String) mapping.get(".foreignKey");
+if (foreignKey != null) {
+where.put(".foreignKey", id);
+}
+DBObject dbr = new DBObject();
+dbr.mapping = mapping; 
+Object[] objs = readObjects(dbr, where);
+Hashtable children = new Hashtable();
+for (int i = 0; i < objs.length; i++) {
+children.put(((DBObject) objs[i]).getId(),
+((DBObject) objs[i]).getObject());
+}
+setPropertyValue(pParent, property, children);
+}
+}
+}
+public Object[] readObjects(Class pObjClass, Hashtable pMapping)
+throws SQLException {
+return readObjects(pObjClass, pMapping, null);
+}
+private String buildWhereClause(String[] pKeys, Hashtable pMapping) {
+StringBuilder sqlBuf = new StringBuilder();
+for (int i = 0; i < pKeys.length; i++) {
+String column = (String) pMapping.get(pKeys[i]);
+sqlBuf.append(" AND ");
+sqlBuf.append(column);
+sqlBuf.append(" = ?");
+}
+return sqlBuf.toString();
+}
+private String buildIdInClause(Object[] pIds, Hashtable pMapping) {
+StringBuilder sqlBuf = new StringBuilder();
+if (pIds != null && pIds.length > 0) {
+sqlBuf.append(" AND ");
+sqlBuf.append(pMapping.get(".primaryKey"));
+sqlBuf.append(" IN (");
+for (int i = 0; i < pIds.length; i++) {
+sqlBuf.append(pIds[i]); 
+sqlBuf.append(", ");
+}
+sqlBuf.append(")");
+}
+return sqlBuf.toString();
+}
+public Object[] readObjects(DatabaseReadable pReadable, Hashtable pWhere)
+throws SQLException {
+return readObjects(pReadable.getClass(),
+pReadable.getMapping(), pWhere);
+}
+public Object readObject(Object pId, Class pObjClass,
+Hashtable pMapping, Hashtable pWhere)
+throws SQLException {
+ObjectMapper om = new ObjectMapper(pObjClass, pMapping);
+return readObject0(pId, pObjClass, om, pWhere);
+}
+public Object readObjects(Object[] pIds, Class pObjClass,
+Hashtable pMapping, Hashtable pWhere)
+throws SQLException {
+ObjectMapper om = new ObjectMapper(pObjClass, pMapping);
+return readObjects0(pIds, pObjClass, om, pWhere);
+}
+public Object[] readObjects(Class pObjClass, Hashtable pMapping,
+Hashtable pWhere) throws SQLException {
+return readObjects0(pObjClass, pMapping, pWhere);
+}
+private Object[] readObjects0(Class pObjClass, Hashtable pMapping,
+Hashtable pWhere) throws SQLException {
+ObjectMapper om = new ObjectMapper(pObjClass, pMapping);
+Object[] ids = readIdentities(pObjClass, pMapping, pWhere, om);
+Object[] result = readObjects0(ids, pObjClass, om, pWhere);
+return result;
+}
+private Object[] readObjects0(Object[] pIds, Class pObjClass,
+ObjectMapper pOM, Hashtable pWhere)
+throws SQLException {
+Object[] result = new Object[pIds.length];
+for (int i = 0; i < pIds.length; i++) {
+sCacheUn++;
+if (pWhere == null)
+pWhere = new Hashtable();
+String[] keys = new String[pWhere.size()];
+int i = 0;
+for (Enumeration en = pWhere.keys(); en.hasMoreElements(); i++) {
+keys[i] = (String) en.nextElement();
+}
+String sql = pOM.buildSelectClause() + pOM.buildFromClause() +
++ buildWhereClause(keys, pMapping) + buildIdInClause(pIds, pMapping);
+mLog.logDebug(sql + " (" + pWhere + ")");
+mLog.logDebug(sql + " (" + pWhere + ")");
+PreparedStatement statement = null;
+try {
+statement = mConnection.prepareStatement(sql);
+for (int j = 0; j < keys.length; j++) {
+Object value = pWhere.get(keys[j]);
+if (value instanceof Integer)
+statement.setInt(j + 1, ((Integer) value).intValue());
+else if (value instanceof BigDecimal)
+statement.setBigDecimal(j + 1, (BigDecimal) value);
+else
+statement.setString(j + 1, value.toString());
+}
+for (int j = 0; j < pIds.length; j++) {
+Object id = pIds[i];
+if (id instanceof Integer)
+statement.setInt(j + 1, ((Integer) id).intValue());
+else if (id instanceof BigDecimal)
+statement.setBigDecimal(j + 1, (BigDecimal) id);
+else
+statement.setString(j + 1, id.toString());
+}
+ResultSet rs = statement.executeQuery();
+Object[] result = pOM.mapObjects(rs);
+for (int i = 0; i < result.length; i++) {
+setChildObjects(result[i], pOM);
+mContent.put(pOM.getPrimaryKey() + "=" + pId, result[0]);
+}
+return result[0];
+}
+Object id = getPropertyValue(result[i],
+pOM.getProperty(pOM.getPrimaryKey()));
+result[i] = readObject0(id, pObjClass, pOM, null);
+}
+return result;
+}
+static long sCacheHit;
+static long sCacheMiss;
+static long sCacheUn;
+private Object readObject0(Object pId, Class pObjClass, ObjectMapper pOM,
+Hashtable pWhere) throws SQLException {
+if (pId == null && pWhere == null)
+throw new IllegalArgumentException("Either id or where argument"
++ "must be non-null!");
+if (pId != null) {
+Object o = mCache.get(pOM.getPrimaryKey() + "=" + pId);
+if (o != null) {
+sCacheHit++;
+return o;
+}
+sCacheMiss++;
+}
+else {
+sCacheUn++;
+}
+if (pWhere == null)
+pWhere = new Hashtable();
+if (pId != null)
+pWhere.put(pOM.getProperty(pOM.getPrimaryKey()), pId);
+String[] keys = new String[pWhere.size()];
+Enumeration en = pWhere.keys();
+for (int i = 0; en.hasMoreElements(); i++) {
+keys[i] = (String) en.nextElement();
+}
+String sql = pOM.buildSQL() + buildWhereClause(keys, pOM.mPropertiesMap);
+mLog.logDebug(sql + " (" + pWhere + ")");
+PreparedStatement statement = null;
+try {
+statement = mConnection.prepareStatement(sql);
+for (int j = 0; j < keys.length; j++) {
+Object value = pWhere.get(keys[j]);
+if (value instanceof Integer)
+statement.setInt(j + 1, ((Integer) value).intValue());
+else if (value instanceof BigDecimal)
+statement.setBigDecimal(j + 1, (BigDecimal) value);
+else
+statement.setString(j + 1, value.toString());
+}
+ResultSet rs = statement.executeQuery();
+Object[] result = pOM.mapObjects(rs);
+if (result.length == 1) {
+setChildObjects(result[0], pOM);
+mCache.put(pOM.getPrimaryKey() + "=" + pId, result[0]);
+return result[0];
+}
+else if (result.length > 1) {
+throw new SQLException("More than one object with primary key "
++ pOM.getPrimaryKey() + "="
++ pWhere.get(pOM.getProperty(pOM.getPrimaryKey())) + "!");
+}
+}
+catch (SQLException e) {
+mLog.logError(sql + " (" + pWhere + ")", e);
+throw e;
+}
+finally {
+try {
+statement.close();
+}
+catch (SQLException e) {
+mLog.logError(e);
+}
+}
+return null;
+}
+public static Properties loadMapping(Class pClass) {
+try {
+return SystemUtil.loadProperties(pClass);
+}
+catch (FileNotFoundException fnf) {
+System.err.println("ERROR: " + fnf.getMessage());
+}
+catch (IOException ioe) {
+ioe.printStackTrace();
+}
+return new Properties();
+}
+public static Properties readMapping(Class pClass) {
+return loadMapping(pClass);
+}
+}
+class DBObject implements DatabaseReadable {
+Object id;
+Object o;
+static Hashtable mapping; 
+public DBObject() {
+}
+public void setId(Object id) {
+this.id = id;
+}
+public Object getId() {
+return id;
+}
+public void setObject(Object o) {
+this.o = o;
+}
+public Object getObject() {
+return o;
+}
+public Hashtable getMapping() {
+return mapping;
+}
+}

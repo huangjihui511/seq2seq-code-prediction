@@ -1,0 +1,79 @@
+package org.menacheri.jetclient.communication;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import org.menacheri.jetclient.app.Session;
+import org.menacheri.jetclient.event.Event;
+import org.menacheri.jetclient.event.EventHandler;
+import org.menacheri.jetclient.event.Events;
+import org.menacheri.jetclient.util.LoginHelper;
+public interface ReconnectPolicy
+{
+void applyPolicy(Session session);
+ReconnectPolicy NO_RECONNECT = new NoReconnect();
+public static class ReconnectNTimes implements ReconnectPolicy
+{
+protected final int times;
+protected final int delay;
+protected final LoginHelper loginHelper;
+public ReconnectNTimes(int times, int delay, LoginHelper loginHelper)
+{
+this.times = times;
+this.delay = delay;
+this.loginHelper = loginHelper;
+}
+@Override
+public void applyPolicy(final Session session)
+{
+final CountDownLatch loginSuccessLatch = new CountDownLatch(1);
+final EventHandler loginSuccess = new EventHandler()
+{
+@Override
+public void onEvent(Event event)
+{
+session.removeHandler(this);
+loginSuccessLatch.countDown();
+}
+@Override
+public int getEventType()
+{
+return Events.LOG_IN_SUCCESS;
+}
+};
+session.addHandler(loginSuccess);
+int tries = 1;
+for (; tries <= times; tries++)
+{
+session.reconnect(loginHelper);
+try
+{
+if (loginSuccessLatch.await(delay, TimeUnit.MILLISECONDS))
+{
+break;
+}
+else
+{
+System.err.println("Reconnect try " + tries + " did not succeed");
+}
+}
+catch (InterruptedException e)
+{
+throw new RuntimeException(e);
+}
+}
+if (tries > times)
+{
+loginSuccessLatch.countDown();
+System.err.println("Reconnect attempted " + tries + " times did not succeed, going to close session");
+session.close();
+}
+}
+}
+class NoReconnect implements ReconnectPolicy
+{
+@Override
+public void applyPolicy(Session session)
+{
+session.close();
+}
+}
+}

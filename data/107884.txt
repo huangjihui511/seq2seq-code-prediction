@@ -1,0 +1,8 @@
+package org.apache.zookeeper.graph.filterops;
+import org.apache.zookeeper.graph.FilterOp.*;
+public class NumberArg extends Arg<Long> {
+public NumberArg(Long value) {
+super(ArgType.NUMBER);
+this.value = value;
+}
+};

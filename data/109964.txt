@@ -1,0 +1,87 @@
+package com.google.cloud.tools.jib.event.events;
+import com.google.cloud.tools.jib.event.EventHandlers;
+import com.google.cloud.tools.jib.event.progress.Allocation;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.function.Consumer;
+import org.junit.Assert;
+import org.junit.Test;
+public class ProgressEventTest {
+private static class AllocationTree {
+private static final Allocation root = Allocation.newRoot("ignored", 2);
+private static final Allocation child1 = root.newChild("ignored", 1);
+private static final Allocation child1Child = child1.newChild("ignored", 100);
+private static final Allocation child2 = root.newChild("ignored", 200);
+private AllocationTree() {}
+}
+private static EventHandlers makeEventHandlers(Consumer<ProgressEvent> progressEventConsumer) {
+return EventHandlers.builder().add(ProgressEvent.class, progressEventConsumer).build();
+}
+private static final double DOUBLE_ERROR_MARGIN = 1e-10;
+private final Map<Allocation, Long> allocationCompletionMap = new HashMap<>();
+private double progress = 0.0;
+@Test
+public void testAccumulateProgress() {
+Consumer<ProgressEvent> progressEventConsumer =
+progressEvent -> {
+double fractionOfRoot = progressEvent.getAllocation().getFractionOfRoot();
+long units = progressEvent.getUnits();
+progress += units * fractionOfRoot;
+};
+EventHandlers eventHandlers = makeEventHandlers(progressEventConsumer);
+eventHandlers.dispatch(new ProgressEvent(AllocationTree.child1Child, 50));
+Assert.assertEquals(1.0 / 2 / 100 * 50, progress, DOUBLE_ERROR_MARGIN);
+eventHandlers.dispatch(new ProgressEvent(AllocationTree.child1Child, 50));
+Assert.assertEquals(1.0 / 2, progress, DOUBLE_ERROR_MARGIN);
+eventHandlers.dispatch(new ProgressEvent(AllocationTree.child2, 10));
+Assert.assertEquals(1.0 / 2 + 1.0 / 2 / 200 * 10, progress, DOUBLE_ERROR_MARGIN);
+eventHandlers.dispatch(new ProgressEvent(AllocationTree.child2, 190));
+Assert.assertEquals(1.0, progress, DOUBLE_ERROR_MARGIN);
+}
+@Test
+public void testSmoke() {
+Consumer<ProgressEvent> progressEventConsumer =
+progressEvent -> {
+Allocation allocation = progressEvent.getAllocation();
+long units = progressEvent.getUnits();
+updateCompletionMap(allocation, units);
+};
+EventHandlers eventHandlers = makeEventHandlers(progressEventConsumer);
+eventHandlers.dispatch(new ProgressEvent(AllocationTree.child1Child, 50));
+Assert.assertEquals(1, allocationCompletionMap.size());
+Assert.assertEquals(50, allocationCompletionMap.get(AllocationTree.child1Child).longValue());
+eventHandlers.dispatch(new ProgressEvent(AllocationTree.child1Child, 50));
+Assert.assertEquals(3, allocationCompletionMap.size());
+Assert.assertEquals(100, allocationCompletionMap.get(AllocationTree.child1Child).longValue());
+Assert.assertEquals(1, allocationCompletionMap.get(AllocationTree.child1).longValue());
+Assert.assertEquals(1, allocationCompletionMap.get(AllocationTree.root).longValue());
+eventHandlers.dispatch(new ProgressEvent(AllocationTree.child2, 200));
+Assert.assertEquals(4, allocationCompletionMap.size());
+Assert.assertEquals(100, allocationCompletionMap.get(AllocationTree.child1Child).longValue());
+Assert.assertEquals(1, allocationCompletionMap.get(AllocationTree.child1).longValue());
+Assert.assertEquals(200, allocationCompletionMap.get(AllocationTree.child2).longValue());
+Assert.assertEquals(2, allocationCompletionMap.get(AllocationTree.root).longValue());
+}
+@Test
+public void testType() {
+boolean[] called = new boolean[] {false};
+Consumer<ProgressEvent> buildImageConsumer =
+progressEvent -> {
+called[0] = true;
+};
+EventHandlers eventHandlers = makeEventHandlers(buildImageConsumer);
+eventHandlers.dispatch(new ProgressEvent(AllocationTree.child1, 50));
+Assert.assertTrue(called[0]);
+}
+private void updateCompletionMap(Allocation allocation, long units) {
+if (allocationCompletionMap.containsKey(allocation)) {
+units += allocationCompletionMap.get(allocation);
+}
+allocationCompletionMap.put(allocation, units);
+if (allocation.getAllocationUnits() == units) {
+allocation
+.getParent()
+.ifPresent(parentAllocation -> updateCompletionMap(parentAllocation, 1));
+}
+}
+}

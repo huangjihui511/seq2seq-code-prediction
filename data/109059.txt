@@ -1,0 +1,78 @@
+package examples;
+import io.vertx.core.Vertx;
+import io.vertx.core.buffer.Buffer;
+import io.vertx.core.datagram.DatagramSocket;
+import io.vertx.core.datagram.DatagramSocketOptions;
+public class DatagramExamples {
+public void example1(Vertx vertx) {
+DatagramSocket socket = vertx.createDatagramSocket(new DatagramSocketOptions());
+}
+public void example2(Vertx vertx) {
+DatagramSocket socket = vertx.createDatagramSocket(new DatagramSocketOptions());
+Buffer buffer = Buffer.buffer("content");
+socket.send(buffer, 1234, "10.0.0.1", asyncResult -> {
+System.out.println("Send succeeded? " + asyncResult.succeeded());
+});
+socket.send("A string used as content", 1234, "10.0.0.1", asyncResult -> {
+System.out.println("Send succeeded? " + asyncResult.succeeded());
+});
+}
+public void example3(Vertx vertx) {
+DatagramSocket socket = vertx.createDatagramSocket(new DatagramSocketOptions());
+socket.listen(1234, "0.0.0.0", asyncResult -> {
+if (asyncResult.succeeded()) {
+socket.handler(packet -> {
+});
+} else {
+System.out.println("Listen failed" + asyncResult.cause());
+}
+});
+}
+public void example4(Vertx vertx) {
+DatagramSocket socket = vertx.createDatagramSocket(new DatagramSocketOptions());
+Buffer buffer = Buffer.buffer("content");
+socket.send(buffer, 1234, "230.0.0.1", asyncResult -> {
+System.out.println("Send succeeded? " + asyncResult.succeeded());
+});
+}
+public void example5(Vertx vertx) {
+DatagramSocket socket = vertx.createDatagramSocket(new DatagramSocketOptions());
+socket.listen(1234, "0.0.0.0", asyncResult -> {
+if (asyncResult.succeeded()) {
+socket.handler(packet -> {
+});
+socket.listenMulticastGroup("230.0.0.1", asyncResult2 -> {
+System.out.println("Listen succeeded? " + asyncResult2.succeeded());
+});
+} else {
+System.out.println("Listen failed" + asyncResult.cause());
+}
+});
+}
+public void example6(Vertx vertx) {
+DatagramSocket socket = vertx.createDatagramSocket(new DatagramSocketOptions());
+socket.listen(1234, "0.0.0.0", asyncResult -> {
+if (asyncResult.succeeded()) {
+socket.handler(packet -> {
+});
+socket.listenMulticastGroup("230.0.0.1", asyncResult2 -> {
+if (asyncResult2.succeeded()) {
+socket.unlistenMulticastGroup("230.0.0.1", asyncResult3 -> {
+System.out.println("Unlisten succeeded? " + asyncResult3.succeeded());
+});
+} else {
+System.out.println("Listen failed" + asyncResult2.cause());
+}
+});
+} else {
+System.out.println("Listen failed" + asyncResult.cause());
+}
+});
+}
+public void example7(Vertx vertx) {
+DatagramSocket socket = vertx.createDatagramSocket(new DatagramSocketOptions());
+socket.blockMulticastGroup("230.0.0.1", "10.0.0.2", asyncResult -> {
+System.out.println("block succeeded? " + asyncResult.succeeded());
+});
+}
+}

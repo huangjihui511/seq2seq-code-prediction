@@ -1,0 +1,17 @@
+package lombok.eclipse.handlers;
+import static lombok.core.handlers.HandlerUtil.handleExperimentalFlagUsage;
+import lombok.ConfigurationKeys;
+import lombok.core.AnnotationValues;
+import lombok.core.HandlerPriority;
+import lombok.eclipse.EclipseAnnotationHandler;
+import lombok.eclipse.EclipseNode;
+import lombok.experimental.Accessors;
+import org.eclipse.jdt.internal.compiler.ast.Annotation;
+import org.mangosdk.spi.ProviderFor;
+@ProviderFor(EclipseAnnotationHandler.class)
+@HandlerPriority(65536)
+public class HandleAccessors extends EclipseAnnotationHandler<Accessors> {
+@Override public void handle(AnnotationValues<Accessors> annotation, Annotation ast, EclipseNode annotationNode) {
+handleExperimentalFlagUsage(annotationNode, ConfigurationKeys.ACCESSORS_FLAG_USAGE, "@Accessors");
+}
+}

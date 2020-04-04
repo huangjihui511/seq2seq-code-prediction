@@ -1,0 +1,56 @@
+package org.springframework.data.mongodb.gridfs;
+import java.io.InputStream;
+import org.bson.Document;
+import org.bson.types.ObjectId;
+import org.springframework.core.io.support.ResourcePatternResolver;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.gridfs.GridFsUpload.GridFsUploadBuilder;
+import org.springframework.lang.Nullable;
+import org.springframework.util.ObjectUtils;
+import org.springframework.util.StringUtils;
+import com.mongodb.client.gridfs.GridFSFindIterable;
+public interface GridFsOperations extends ResourcePatternResolver {
+default ObjectId store(InputStream content, String filename) {
+return store(content, filename, null, null);
+}
+default ObjectId store(InputStream content, @Nullable Object metadata) {
+return store(content, null, metadata);
+}
+default ObjectId store(InputStream content, @Nullable Document metadata) {
+return store(content, null, metadata);
+}
+default ObjectId store(InputStream content, @Nullable String filename, @Nullable String contentType) {
+return store(content, filename, contentType, null);
+}
+default ObjectId store(InputStream content, @Nullable String filename, @Nullable Object metadata) {
+return store(content, filename, null, metadata);
+}
+ObjectId store(InputStream content, @Nullable String filename, @Nullable String contentType,
+@Nullable Object metadata);
+default ObjectId store(InputStream content, @Nullable String filename, @Nullable Document metadata) {
+return store(content, filename, null, metadata);
+}
+default ObjectId store(InputStream content, @Nullable String filename, @Nullable String contentType,
+@Nullable Document metadata) {
+GridFsUploadBuilder<ObjectId> uploadBuilder = GridFsUpload.fromStream(content);
+if (StringUtils.hasText(filename)) {
+uploadBuilder.filename(filename);
+}
+if (StringUtils.hasText(contentType)) {
+uploadBuilder.contentType(contentType);
+}
+if (!ObjectUtils.isEmpty(metadata)) {
+uploadBuilder.metadata(metadata);
+}
+return store(uploadBuilder.build());
+}
+<T> T store(GridFsObject<T, InputStream> upload);
+GridFSFindIterable find(Query query);
+@Nullable
+com.mongodb.client.gridfs.model.GridFSFile findOne(Query query);
+void delete(Query query);
+GridFsResource getResource(String filename);
+GridFsResource getResource(com.mongodb.client.gridfs.model.GridFSFile file);
+GridFsResource[] getResources(String filenamePattern);
+}

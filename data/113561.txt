@@ -1,0 +1,17 @@
+package org.fusesource.mqtt.codec;
+import java.net.ProtocolException;
+import static org.fusesource.mqtt.codec.MessageSupport.*;
+public class PUBACK extends MessageSupport.AckBase implements Message {
+public static final byte TYPE = 4;
+public byte messageType() {
+return TYPE;
+}
+@Override
+public PUBACK decode(MQTTFrame frame) throws ProtocolException {
+return (PUBACK) super.decode(frame);
+}
+@Override
+public PUBACK messageId(short messageId) {
+return (PUBACK) super.messageId(messageId);
+}
+}

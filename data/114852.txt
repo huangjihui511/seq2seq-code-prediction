@@ -1,0 +1,78 @@
+package com.google.api.client.xml.atom;
+import com.google.api.client.util.Beta;
+import com.google.api.client.util.Preconditions;
+import com.google.api.client.util.Types;
+import com.google.api.client.xml.Xml;
+import com.google.api.client.xml.XmlNamespaceDictionary;
+import java.io.IOException;
+import java.io.InputStream;
+import org.xmlpull.v1.XmlPullParser;
+import org.xmlpull.v1.XmlPullParserException;
+@Beta
+public abstract class AbstractAtomFeedParser<T> {
+private boolean feedParsed;
+private final XmlPullParser parser;
+private final InputStream inputStream;
+private final Class<T> feedClass;
+private final XmlNamespaceDictionary namespaceDictionary;
+protected AbstractAtomFeedParser(
+XmlNamespaceDictionary namespaceDictionary,
+XmlPullParser parser,
+InputStream inputStream,
+Class<T> feedClass) {
+this.namespaceDictionary = Preconditions.checkNotNull(namespaceDictionary);
+this.parser = Preconditions.checkNotNull(parser);
+this.inputStream = Preconditions.checkNotNull(inputStream);
+this.feedClass = Preconditions.checkNotNull(feedClass);
+}
+public final XmlPullParser getParser() {
+return parser;
+}
+public final InputStream getInputStream() {
+return inputStream;
+}
+public final Class<T> getFeedClass() {
+return feedClass;
+}
+public final XmlNamespaceDictionary getNamespaceDictionary() {
+return namespaceDictionary;
+}
+public T parseFeed() throws IOException, XmlPullParserException {
+boolean close = true;
+try {
+this.feedParsed = true;
+T result = Types.newInstance(feedClass);
+Xml.parseElement(parser, result, namespaceDictionary, Atom.StopAtAtomEntry.INSTANCE);
+close = false;
+return result;
+} finally {
+if (close) {
+close();
+}
+}
+}
+public Object parseNextEntry() throws IOException, XmlPullParserException {
+if (!feedParsed) {
+feedParsed = true;
+Xml.parseElement(parser, null, namespaceDictionary, Atom.StopAtAtomEntry.INSTANCE);
+}
+boolean close = true;
+try {
+if (parser.getEventType() == XmlPullParser.START_TAG) {
+Object result = parseEntryInternal();
+parser.next();
+close = false;
+return result;
+}
+} finally {
+if (close) {
+close();
+}
+}
+return null;
+}
+public void close() throws IOException {
+inputStream.close();
+}
+protected abstract Object parseEntryInternal() throws IOException, XmlPullParserException;
+}

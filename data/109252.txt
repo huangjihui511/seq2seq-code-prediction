@@ -1,0 +1,18 @@
+package org.jeecg.modules.message.entity;
+import org.jeecg.common.system.base.entity.JeecgEntity;
+import org.jeecgframework.poi.excel.annotation.Excel;
+import com.baomidou.mybatisplus.annotation.TableName;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.experimental.Accessors;
+@Data
+@EqualsAndHashCode(callSuper = false)
+@Accessors(chain = true)
+@TableName("sys_sms_template")
+public class SysMessageTemplate extends JeecgEntity{
+private java.lang.String templateCode;
+private java.lang.String templateName;
+private java.lang.String templateContent;
+private java.lang.String templateTestJson;
+private java.lang.String templateType;
+}

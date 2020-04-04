@@ -1,0 +1,13 @@
+package com.twelvemonkeys.servlet.jsp.droplet.taglib;
+import javax.servlet.jsp.tagext.TagData;
+import javax.servlet.jsp.tagext.TagExtraInfo;
+public class ValueOfTEI extends TagExtraInfo {
+public boolean isValid(TagData pTagData) {
+Object nameAttr = pTagData.getAttribute("name");
+Object paramAttr = pTagData.getAttribute("param");
+if ((nameAttr != null && paramAttr == null) || (nameAttr == null && paramAttr != null)) {
+return true; 
+}
+return false;
+}
+}

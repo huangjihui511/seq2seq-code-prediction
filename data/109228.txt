@@ -1,0 +1,89 @@
+package org.jeecg.common.util.jsonschema;
+import java.io.Serializable;
+import java.util.List;
+import java.util.Map;
+import org.jeecg.common.system.vo.DictModel;
+import com.alibaba.fastjson.JSONObject;
+public abstract class CommonProperty implements Serializable{
+private static final long serialVersionUID = -426159949502493187L;
+protected String key;
+protected String type;
+protected List<DictModel> include;
+protected Object constant;
+public boolean isDisabled() {
+return disabled;
+}
+public void setDisabled(boolean disabled) {
+this.disabled = disabled;
+}
+public String getView() {
+return view;
+}
+public void setView(String view) {
+this.view = view;
+}
+public String getKey() {
+return key;
+}
+public void setKey(String key) {
+this.key = key;
+}
+public String getType() {
+return type;
+}
+public void setType(String type) {
+this.type = type;
+}
+public List<DictModel> getInclude() {
+return include;
+}
+public void setInclude(List<DictModel> include) {
+this.include = include;
+}
+public Object getConstant() {
+return constant;
+}
+public void setConstant(Object constant) {
+this.constant = constant;
+}
+public String getTitle() {
+return title;
+}
+public void setTitle(String title) {
+this.title = title;
+}
+public Integer getOrder() {
+return order;
+}
+public void setOrder(Integer order) {
+this.order = order;
+}
+public abstract Map<String,Object> getPropertyJson();
+public JSONObject getCommonJson() {
+JSONObject json = new JSONObject();
+json.put("type", type);
+if(include!=null && include.size()>0) {
+json.put("enum", include);
+}
+if(constant!=null) {
+json.put("const", constant);
+}
+if(title!=null) {
+json.put("title", title);
+}
+if(order!=null) {
+json.put("order", order);
+}
+if(view==null) {
+json.put("view", "input");
+}else {
+json.put("view", view);
+}
+if(disabled) {
+String str = "{\"widgetattrs\":{\"disabled\":true}}";
+JSONObject ui = JSONObject.parseObject(str);
+json.put("ui", ui);
+}
+return json;
+}
+}

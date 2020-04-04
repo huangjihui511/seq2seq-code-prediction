@@ -1,0 +1,3 @@
+package net.openhft.affinity.osgi;
+public class OSGiPlaceholder {
+}

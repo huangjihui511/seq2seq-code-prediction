@@ -1,0 +1,7 @@
+package com.github.jknack.handlebars;
+import java.io.IOException;
+import java.io.Writer;
+public interface TypeSafeTemplate<T> {
+void apply(T context, Writer writer) throws IOException;
+String apply(T context) throws IOException;
+}

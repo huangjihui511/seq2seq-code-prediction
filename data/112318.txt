@@ -1,0 +1,18 @@
+package com.github.jknack.handlebars.io;
+import static org.apache.commons.lang3.Validate.notEmpty;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.net.URL;
+public abstract class URLTemplateLoader extends AbstractTemplateLoader {
+@Override
+public TemplateSource sourceAt(final String uri) throws IOException {
+notEmpty(uri, "The uri is required.");
+String location = resolve(normalize(uri));
+URL resource = getResource(location);
+if (resource == null) {
+throw new FileNotFoundException(location);
+}
+return new URLTemplateSource(location, resource);
+}
+protected abstract URL getResource(final String location) throws IOException;
+}

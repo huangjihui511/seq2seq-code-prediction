@@ -1,0 +1,37 @@
+package com.datumbox.framework.common.utilities;
+import java.util.Random;
+public class RandomGenerator {
+private static Long globalSeed;
+private static ThreadLocal<Random> threadLocalRandom;
+private static final ThreadLocal<Random> threadLocalRandomUnseeded = new ThreadLocal<Random>() {
+@Override
+protected Random initialValue() {
+return new Random();
+}
+};
+public static synchronized Long getGlobalSeed() {
+return globalSeed;
+}
+public static synchronized void setGlobalSeed(Long globalSeed) {
+RandomGenerator.globalSeed = globalSeed;
+}
+public static synchronized Random getThreadLocalRandom() {
+if(threadLocalRandom == null) {
+threadLocalRandom = new ThreadLocal<Random>() {
+@Override
+protected Random initialValue() {
+if(globalSeed == null) {
+return new Random();
+}
+else {
+return new Random(globalSeed);
+}
+}
+};
+}
+return threadLocalRandom.get();
+}
+public static Random getThreadLocalRandomUnseeded() {
+return threadLocalRandomUnseeded.get();
+}
+}

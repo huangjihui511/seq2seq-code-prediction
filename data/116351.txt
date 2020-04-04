@@ -1,0 +1,114 @@
+package org.spongepowered.api.world.extent;
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import com.flowpowered.math.imaginary.Quaterniond;
+import com.flowpowered.math.vector.Vector3d;
+import com.flowpowered.math.vector.Vector3i;
+import org.spongepowered.api.data.DataContainer;
+import org.spongepowered.api.data.manipulator.DataManipulator;
+import org.spongepowered.api.data.property.entity.EyeLocationProperty;
+import org.spongepowered.api.entity.Entity;
+import org.spongepowered.api.entity.EntitySnapshot;
+import org.spongepowered.api.entity.EntityType;
+import org.spongepowered.api.util.AABB;
+import java.util.Collection;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
+import java.util.function.Predicate;
+public interface EntityUniverse {
+Optional<Entity> getEntity(UUID uuid);
+Collection<Entity> getEntities();
+Collection<Entity> getEntities(Predicate<Entity> filter);
+default Collection<Entity> getNearbyEntities(Vector3d location, double distance) {
+checkNotNull(location, "location");
+checkArgument(distance > 0, "distance must be > 0");
+return this.getEntities(e -> e.getLocation().getPosition().distanceSquared(location) <= distance * distance);
+}
+Entity createEntity(EntityType type, Vector3d position) throws IllegalArgumentException, IllegalStateException;
+default Entity createEntity(EntityType type, Vector3i position) throws IllegalArgumentException, IllegalStateException {
+checkNotNull(position, "position");
+return createEntity(type, position.toDouble());
+}
+Optional<Entity> createEntity(DataContainer entityContainer);
+Optional<Entity> createEntity(DataContainer entityContainer, Vector3d position);
+Entity createEntityNaturally(EntityType type, Vector3d position) throws IllegalArgumentException, IllegalStateException;
+default Entity createEntityNaturally(EntityType type, Vector3i position) throws IllegalArgumentException, IllegalStateException {
+checkNotNull(position, "position");
+return createEntityNaturally(type, position.toDouble());
+}
+Optional<Entity> restoreSnapshot(EntitySnapshot snapshot, Vector3d position);
+boolean spawnEntity(Entity entity);
+Collection<Entity> spawnEntities(Iterable<? extends Entity> entities);
+default Set<Entity> getIntersectingEntities(AABB box) {
+return getIntersectingEntities(box, entity -> true);
+}
+Set<Entity> getIntersectingEntities(AABB box, Predicate<Entity> filter);
+default Set<EntityHit> getIntersectingEntities(Vector3d start, Vector3d end) {
+return getIntersectingEntities(start, end, hit -> true);
+}
+Set<EntityHit> getIntersectingEntities(Vector3d start, Vector3d end, Predicate<EntityHit> filter);
+default Set<EntityHit> getIntersectingEntities(Entity looker, double distance) {
+return getIntersectingEntities(looker, distance, hit -> true);
+}
+default Set<EntityHit> getIntersectingEntities(Entity looker, double distance, Predicate<EntityHit> filter) {
+checkNotNull(looker, "looker");
+final Vector3d rotation = looker.getRotation();
+final Vector3d direction = Quaterniond.fromAxesAnglesDeg(rotation.getX(), -rotation.getY(), rotation.getZ()).getDirection();
+final Optional<EyeLocationProperty> data = looker.getProperty(EyeLocationProperty.class);
+final Vector3d start = data.map(EyeLocationProperty::getValue).orElse(looker.getLocation().getPosition());
+return getIntersectingEntities(start, direction, distance, filter);
+}
+default Set<EntityHit> getIntersectingEntities(Vector3d start, Vector3d direction, double distance) {
+return getIntersectingEntities(start, direction, distance, hit -> true);
+}
+Set<EntityHit> getIntersectingEntities(Vector3d start, Vector3d direction, double distance, Predicate<EntityHit> filter);
+class EntityHit {
+private final Entity entity;
+private final Vector3d intersection;
+private final Vector3d normal;
+private final double distance;
+public EntityHit(Entity entity, Vector3d intersection, Vector3d normal, double distance) {
+this.entity = checkNotNull(entity, "entity");
+this.intersection = checkNotNull(intersection, "intersection");
+this.normal = checkNotNull(normal, "normal");
+this.distance = distance;
+}
+public Entity getEntity() {
+return this.entity;
+}
+public Vector3d getIntersection() {
+return this.intersection;
+}
+public Vector3d getNormal() {
+return this.normal;
+}
+public double getDistance() {
+return this.distance;
+}
+@Override
+public boolean equals(Object other) {
+if (this == other) {
+return true;
+}
+if (!(other instanceof EntityHit)) {
+return false;
+}
+final EntityHit entityHit = (EntityHit) other;
+return this.entity.equals(entityHit.entity) && this.intersection.equals(entityHit.intersection) && this.normal.equals(entityHit.normal)
+&& this.distance == entityHit.distance;
+}
+@Override
+public int hashCode() {
+int result = this.entity.hashCode();
+result = 31 * result + this.intersection.hashCode();
+result = 31 * result + this.normal.hashCode();
+result = 31 * result + Double.hashCode(this.distance);
+return result;
+}
+@Override
+public String toString() {
+return "EntityHit(" + this.entity + " at " + this.intersection + " on " + this.normal + ")";
+}
+}
+}

@@ -1,0 +1,5 @@
+package com.jeff.tianti.cms.dao;
+import com.jeff.tianti.cms.entity.ColumnInfo;
+import com.jeff.tianti.common.dao.CommonDao;
+public interface ColumnInfoDao extends ColumnInfoDaoCustom,CommonDao<ColumnInfo,String>{
+}

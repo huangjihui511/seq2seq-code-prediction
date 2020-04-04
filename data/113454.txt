@@ -1,0 +1,188 @@
+package com.pokegoapi.api.inventory;
+import POGOProtos.Inventory.Item.ItemAwardOuterClass.ItemAward;
+import POGOProtos.Inventory.Item.ItemDataOuterClass.ItemData;
+import POGOProtos.Inventory.Item.ItemIdOuterClass.ItemId;
+import POGOProtos.Networking.Requests.Messages.RecycleInventoryItemMessageOuterClass.RecycleInventoryItemMessage;
+import POGOProtos.Networking.Requests.Messages.UseIncenseMessageOuterClass.UseIncenseMessage;
+import POGOProtos.Networking.Requests.Messages.UseItemXpBoostMessageOuterClass.UseItemXpBoostMessage;
+import POGOProtos.Networking.Requests.RequestTypeOuterClass.RequestType;
+import POGOProtos.Networking.Responses.LevelUpRewardsResponseOuterClass.LevelUpRewardsResponse;
+import POGOProtos.Networking.Responses.RecycleInventoryItemResponseOuterClass.RecycleInventoryItemResponse;
+import POGOProtos.Networking.Responses.RecycleInventoryItemResponseOuterClass.RecycleInventoryItemResponse.Result;
+import POGOProtos.Networking.Responses.UseIncenseResponseOuterClass.UseIncenseResponse;
+import POGOProtos.Networking.Responses.UseItemXpBoostResponseOuterClass.UseItemXpBoostResponse;
+import com.google.protobuf.InvalidProtocolBufferException;
+import com.pokegoapi.api.PokemonGo;
+import com.pokegoapi.exceptions.request.RequestFailedException;
+import com.pokegoapi.main.ServerRequest;
+import com.pokegoapi.util.Log;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+public class ItemBag {
+private final PokemonGo api;
+private final Map<ItemId, Item> items = Collections.synchronizedMap(new HashMap<ItemId, Item>());
+private final Object lock = new Object();
+public ItemBag(PokemonGo api) {
+this.api = api;
+}
+public void reset() {
+synchronized (this.lock) {
+items.clear();
+}
+}
+public void addItem(Item item) {
+synchronized (this.lock) {
+items.put(item.getItemId(), item);
+}
+}
+public Result removeItem(ItemId id, int quantity) throws RequestFailedException {
+Item item = getItem(id);
+if (item.count < quantity) {
+throw new IllegalArgumentException("You cannot remove more quantity than you have");
+}
+RecycleInventoryItemMessage msg = RecycleInventoryItemMessage.newBuilder().setItemId(id).setCount(quantity)
+.build();
+ServerRequest serverRequest = new ServerRequest(RequestType.RECYCLE_INVENTORY_ITEM, msg);
+api.requestHandler.sendServerRequests(serverRequest, true);
+RecycleInventoryItemResponse response;
+try {
+response = RecycleInventoryItemResponse.parseFrom(serverRequest.getData());
+} catch (InvalidProtocolBufferException e) {
+throw new RequestFailedException(e);
+}
+if (response.getResult() == RecycleInventoryItemResponse.Result.SUCCESS) {
+item.setCount(response.getNewCount());
+if (item.count <= 0) {
+removeItem(item.getItemId());
+}
+}
+return response.getResult();
+}
+public Item removeItem(ItemId id) {
+synchronized (this.lock) {
+return items.remove(id);
+}
+}
+public Item getItem(ItemId type) {
+if (type == ItemId.UNRECOGNIZED) {
+throw new IllegalArgumentException("You cannot get item for UNRECOGNIZED");
+}
+synchronized (this.lock) {
+if (!items.containsKey(type)) {
+return new Item(api, ItemData.newBuilder().setCount(0).setItemId(type).build(), this);
+}
+return items.get(type);
+}
+}
+public Collection<Item> getItems() {
+synchronized (this.lock) {
+return items.values();
+}
+}
+public int getItemsCount() {
+synchronized (this.lock) {
+int ct = 0;
+for (Item item : items.values()) {
+ct += item.count;
+}
+return ct;
+}
+}
+public void useItem(ItemId type) throws RequestFailedException {
+if (type == ItemId.UNRECOGNIZED) {
+throw new IllegalArgumentException("You cannot use item for UNRECOGNIZED");
+}
+switch (type) {
+case ITEM_INCENSE_ORDINARY:
+case ITEM_INCENSE_SPICY:
+case ITEM_INCENSE_COOL:
+case ITEM_INCENSE_FLORAL:
+useIncense(type);
+break;
+default:
+break;
+}
+}
+public void useIncense(ItemId type) throws RequestFailedException {
+UseIncenseMessage useIncenseMessage =
+UseIncenseMessage.newBuilder()
+.setIncenseType(type)
+.setIncenseTypeValue(type.getNumber())
+.build();
+ServerRequest useIncenseRequest = new ServerRequest(RequestType.USE_INCENSE, useIncenseMessage);
+api.requestHandler.sendServerRequests(useIncenseRequest, true);
+try {
+UseIncenseResponse response = UseIncenseResponse.parseFrom(useIncenseRequest.getData());
+Log.i("Main", "Use incense result: " + response.getResult());
+} catch (InvalidProtocolBufferException e) {
+throw new RequestFailedException(e);
+}
+}
+public void useIncense() throws RequestFailedException {
+useIncense(ItemId.ITEM_INCENSE_ORDINARY);
+}
+public UseItemXpBoostResponse useLuckyEgg()
+throws RequestFailedException {
+UseItemXpBoostMessage xpMsg = UseItemXpBoostMessage
+.newBuilder()
+.setItemId(ItemId.ITEM_LUCKY_EGG)
+.build();
+ServerRequest req = new ServerRequest(RequestType.USE_ITEM_XP_BOOST, xpMsg);
+api.requestHandler.sendServerRequests(req, true);
+try {
+UseItemXpBoostResponse response = UseItemXpBoostResponse.parseFrom(req.getData());
+Log.i("Main", "Use incense result: " + response.getResult());
+return response;
+} catch (InvalidProtocolBufferException e) {
+throw new RequestFailedException(e);
+}
+}
+@Deprecated
+public List<Pokeball> getUseablePokeballs() {
+return getUsablePokeballs();
+}
+public List<Pokeball> getUsablePokeballs() {
+List<Pokeball> pokeballs = new ArrayList<>();
+for (Pokeball pokeball : Pokeball.values()) {
+if (getItem(pokeball.ballType).count > 0) {
+pokeballs.add(pokeball);
+}
+}
+return pokeballs;
+}
+public boolean isIncenseActive() {
+synchronized (lock) {
+for (Map.Entry<ItemId, Item> entry : items.entrySet()) {
+Item item = entry.getValue();
+if (item.isApplied() && item.isIncense()) {
+return true;
+}
+}
+}
+return false;
+}
+public boolean isLuckyEggActive() {
+synchronized (lock) {
+for (Map.Entry<ItemId, Item> entry : items.entrySet()) {
+Item item = entry.getValue();
+if (item.isApplied() && item.isLuckyEgg()) {
+return true;
+}
+}
+}
+return false;
+}
+public void addAwardedItems(LevelUpRewardsResponse levelUpResponse) {
+for (ItemAward itemAward : levelUpResponse.getItemsAwardedList()) {
+Item item = getItem(itemAward.getItemId());
+item.setCount(item.count + itemAward.getItemCount());
+}
+}
+public int getMaxStorage() {
+return api.playerProfile.getPlayerData().getMaxItemStorage();
+}
+}

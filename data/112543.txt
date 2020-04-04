@@ -1,0 +1,146 @@
+package com.sun.swingset3.demos.frame;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.EventQueue;
+import java.awt.Image;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.net.URL;
+import javax.imageio.ImageIO;
+import javax.swing.*;
+import javax.swing.border.EmptyBorder;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+import com.sun.swingset3.DemoProperties;
+import com.sun.swingset3.demos.DemoUtilities;
+@DemoProperties(
+value = "JFrame Demo",
+category = "Toplevel Containers",
+description = "Demonstrates JFrame, Swing's top-level primary window container.",
+sourceFiles = {
+"com/sun/swingset3/demos/frame/BusyGlass.java",
+"com/sun/swingset3/demos/frame/FrameDemo.java",
+"com/sun/swingset3/demos/DemoUtilities.java",
+"com/sun/swingset3/demos/frame/resources/FrameDemo.html",
+"com/sun/swingset3/demos/frame/resources/images/FrameDemo.gif"
+}
+)
+public class FrameDemo extends JPanel {
+static {
+if (System.getProperty("os.name").equals("Mac OS X")) {
+System.setProperty("apple.laf.useScreenMenuBar", "true");
+}
+}
+private JFrame frame;
+private JComponent frameSpaceholder;
+public FrameDemo() {
+initComponents();
+}
+protected void initComponents() {
+frame = createFrame();
+setLayout(new BorderLayout());
+add(createControlPanel(), BorderLayout.WEST);
+frameSpaceholder = createFrameSpaceholder(frame);
+add(frameSpaceholder, BorderLayout.CENTER);
+}
+protected JComponent createControlPanel() {
+Box controlPanel = Box.createVerticalBox();
+controlPanel.setBorder(new EmptyBorder(8, 8, 8, 8));
+JButton showButton = new JButton("Show JFrame...");
+showButton.addActionListener(new ShowActionListener());
+controlPanel.add(showButton);
+JCheckBox busyCheckBox = new JCheckBox("Frame busy");
+busyCheckBox.setSelected(false);
+busyCheckBox.addChangeListener(new BusyChangeListener());
+controlPanel.add(busyCheckBox);
+return controlPanel;
+}
+private static JComponent createFrameSpaceholder(JFrame frame) {
+JPanel framePlaceholder = new JPanel();
+Dimension prefSize = frame.getPreferredSize();
+prefSize.width += 12;
+prefSize.height += 12;
+framePlaceholder.setPreferredSize(prefSize);
+return framePlaceholder;
+}
+private static JFrame createFrame() {
+JFrame frame = new JFrame("Demo JFrame");
+frame.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
+Image iconImage = null;
+try {
+URL imageURL = FrameDemo.class.getResource("resources/images/swingingduke.gif");
+iconImage = ImageIO.read(imageURL);
+} catch (Exception e) {
+}
+frame.setIconImage(iconImage);
+frame.setGlassPane(new BusyGlass());
+JMenuBar menubar = new JMenuBar();
+frame.setJMenuBar(menubar);
+JMenu menu = new JMenu("File");
+menubar.add(menu);
+menu.add("Open");
+menu.add("Save");
+JToolBar toolbar = new JToolBar();
+frame.add(toolbar, BorderLayout.NORTH);
+toolbar.add(new JButton("Toolbar Button"));
+JLabel label = new JLabel("I'm content but a little blue.");
+label.setHorizontalAlignment(JLabel.CENTER);
+label.setPreferredSize(new Dimension(300, 160));
+label.setBackground(new Color(197, 216, 236));
+label.setOpaque(true); 
+frame.add(label);
+JLabel statusLabel = new JLabel("I show status.");
+statusLabel.setBorder(new EmptyBorder(4, 4, 4, 4));
+statusLabel.setHorizontalAlignment(JLabel.LEADING);
+frame.add(statusLabel, BorderLayout.SOUTH);
+frame.pack();
+return frame;
+}
+public void start() {
+DemoUtilities.setToplevelLocation(frame, frameSpaceholder, SwingConstants.CENTER);
+showFrame();
+}
+public void stop() {
+frame.setVisible(false);
+}
+public void showFrame() {
+if (frame.isShowing()) {
+frame.toFront();
+} else {
+frame.setVisible(true);
+}
+}
+public void setFrameBusy(boolean busy) {
+frame.getGlassPane().setVisible(busy);
+frame.getJMenuBar().setEnabled(!busy);
+}
+public boolean isFrameBusy() {
+return frame.getGlassPane().isVisible();
+}
+private class ShowActionListener implements ActionListener {
+public void actionPerformed(ActionEvent actionEvent) {
+showFrame();
+}
+}
+private class BusyChangeListener implements ChangeListener {
+public void stateChanged(ChangeEvent changeEvent) {
+JCheckBox busyCheckBox = (JCheckBox) changeEvent.getSource();
+setFrameBusy(busyCheckBox.isSelected());
+showFrame(); 
+}
+}
+public static void main(String args[]) {
+EventQueue.invokeLater(new Runnable() {
+public void run() {
+JFrame frame = new JFrame();
+FrameDemo demo = new FrameDemo();
+frame.add(demo);
+frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+frame.pack();
+frame.setVisible(true);
+demo.start();
+}
+});
+}
+}

@@ -1,0 +1,73 @@
+package mobi.hsz.idea.gitignore.highlighter;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.fileTypes.SyntaxHighlighter;
+import com.intellij.openapi.options.colors.AttributesDescriptor;
+import com.intellij.openapi.options.colors.ColorDescriptor;
+import com.intellij.openapi.options.colors.ColorSettingsPage;
+import mobi.hsz.idea.gitignore.IgnoreBundle;
+import mobi.hsz.idea.gitignore.util.Resources;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import javax.swing.*;
+import java.util.Map;
+public class IgnoreColorSettingsPage implements ColorSettingsPage {
+@NonNls
+private static final String SAMPLE_GITIGNORE_PATH = "/sample.gitignore";
+@NonNls
+private static final String DISPLAY_NAME = IgnoreBundle.message("ignore.colorSettings.displayName");
+@NotNull
+private static final String SAMPLE_GITIGNORE = loadSampleGitignore();
+private static final AttributesDescriptor[] DESCRIPTORS = new AttributesDescriptor[]{
+new AttributesDescriptor(IgnoreBundle.message("highlighter.header"), IgnoreHighlighterColors.HEADER),
+new AttributesDescriptor(IgnoreBundle.message("highlighter.section"), IgnoreHighlighterColors.SECTION),
+new AttributesDescriptor(IgnoreBundle.message("highlighter.comment"), IgnoreHighlighterColors.COMMENT),
+new AttributesDescriptor(IgnoreBundle.message("highlighter.negation"), IgnoreHighlighterColors.NEGATION),
+new AttributesDescriptor(IgnoreBundle.message("highlighter.brackets"), IgnoreHighlighterColors.BRACKET),
+new AttributesDescriptor(IgnoreBundle.message("highlighter.slash"), IgnoreHighlighterColors.SLASH),
+new AttributesDescriptor(IgnoreBundle.message("highlighter.syntax"), IgnoreHighlighterColors.SYNTAX),
+new AttributesDescriptor(IgnoreBundle.message("highlighter.value"), IgnoreHighlighterColors.VALUE),
+new AttributesDescriptor(IgnoreBundle.message("highlighter.unused"), IgnoreHighlighterColors.UNUSED),
+};
+@Nullable
+@Override
+public Icon getIcon() {
+return null;
+}
+@NotNull
+@Override
+public SyntaxHighlighter getHighlighter() {
+return new IgnoreHighlighter(null, null);
+}
+@NotNull
+@Override
+public String getDemoText() {
+return SAMPLE_GITIGNORE;
+}
+@Nullable
+@Override
+public Map<String, TextAttributesKey> getAdditionalHighlightingTagToDescriptorMap() {
+return null;
+}
+@NotNull
+@Override
+public AttributesDescriptor[] getAttributeDescriptors() {
+return DESCRIPTORS;
+}
+@NotNull
+@Override
+public ColorDescriptor[] getColorDescriptors() {
+return ColorDescriptor.EMPTY_ARRAY;
+}
+@NotNull
+@Override
+public String getDisplayName() {
+return DISPLAY_NAME;
+}
+@NotNull
+private static String loadSampleGitignore() {
+final String content = Resources.getResourceContent(SAMPLE_GITIGNORE_PATH);
+assert content != null;
+return content;
+}
+}

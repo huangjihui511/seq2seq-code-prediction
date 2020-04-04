@@ -1,0 +1,7 @@
+package org.ocpsoft.prettytime.impl;
+import org.ocpsoft.prettytime.TimeFormat;
+import org.ocpsoft.prettytime.TimeUnit;
+public interface TimeFormatProvider
+{
+public TimeFormat getFormatFor(TimeUnit t);
+}

@@ -1,0 +1,32 @@
+package net.i2p.router.update;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.List;
+import net.i2p.router.RouterContext;
+import net.i2p.router.web.ConfigUpdateHelper;
+import net.i2p.update.*;
+import static net.i2p.update.UpdateType.*;
+import static net.i2p.update.UpdateMethod.*;
+class NewsHandler extends UpdateHandler implements Checker {
+private static final String BACKUP_NEWS_URL = "http:
+private static final String BACKUP_NEWS_URL_SU3 = "http:
+public NewsHandler(RouterContext ctx, ConsoleUpdateManager mgr) {
+super(ctx, mgr);
+}
+public UpdateTask check(UpdateType type, UpdateMethod method,
+String id, String currentVersion, long maxTime) {
+if ((type != ROUTER_SIGNED && type != NEWS && type != NEWS_SU3) ||
+method != HTTP)
+return null;
+List<URI> updateSources = new ArrayList<URI>(2);
+try {
+updateSources.add(new URI(ConfigUpdateHelper.getNewsURL(_context)));
+} catch (URISyntaxException use) {}
+try {
+updateSources.add(new URI(BACKUP_NEWS_URL_SU3));
+} catch (URISyntaxException use) {}
+UpdateRunner update = new NewsFetcher(_context, _mgr, updateSources);
+return update;
+}
+}

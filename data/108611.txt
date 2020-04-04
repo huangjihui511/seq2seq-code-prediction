@@ -1,0 +1,21 @@
+package com.alibaba.csp.sentinel.slots.statistic;
+import com.alibaba.csp.sentinel.context.Context;
+import com.alibaba.csp.sentinel.node.DefaultNode;
+import com.alibaba.csp.sentinel.slotchain.ProcessorSlotEntryCallback;
+import com.alibaba.csp.sentinel.slotchain.ResourceWrapper;
+import com.alibaba.csp.sentinel.slots.block.BlockException;
+import com.alibaba.csp.sentinel.slots.block.flow.param.ParameterMetric;
+import com.alibaba.csp.sentinel.slots.block.flow.param.ParameterMetricStorage;
+public class ParamFlowStatisticEntryCallback implements ProcessorSlotEntryCallback<DefaultNode> {
+@Override
+public void onPass(Context context, ResourceWrapper resourceWrapper, DefaultNode node, int count, Object... args) {
+ParameterMetric parameterMetric = ParameterMetricStorage.getParamMetric(resourceWrapper);
+if (parameterMetric != null) {
+parameterMetric.addThreadCount(args);
+}
+}
+@Override
+public void onBlocked(BlockException ex, Context context, ResourceWrapper resourceWrapper, DefaultNode param,
+int count, Object... args) {
+}
+}

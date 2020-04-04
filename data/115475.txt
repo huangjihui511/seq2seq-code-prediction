@@ -1,0 +1,259 @@
+package org.gnucash.android.model;
+import android.support.annotation.NonNull;
+import android.util.Log;
+import org.joda.time.LocalDateTime;
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+public class Budget extends BaseModel {
+private String mName;
+private String mDescription;
+private Recurrence mRecurrence;
+private List<BudgetAmount> mBudgetAmounts = new ArrayList<>();
+private long mNumberOfPeriods = 12; 
+public Budget(){
+}
+public Budget(@NonNull String name){
+this.mName = name;
+}
+public Budget(@NonNull String name, @NonNull Recurrence recurrence){
+this.mName = name;
+this.mRecurrence = recurrence;
+}
+public String getName() {
+return mName;
+}
+public void setName(@NonNull String name) {
+this.mName = name;
+}
+public String getDescription() {
+return mDescription;
+}
+public void setDescription(String description) {
+this.mDescription = description;
+}
+public Recurrence getRecurrence() {
+return mRecurrence;
+}
+public void setRecurrence(@NonNull Recurrence recurrence) {
+this.mRecurrence = recurrence;
+}
+public List<BudgetAmount> getBudgetAmounts() {
+return mBudgetAmounts;
+}
+public void setBudgetAmounts(List<BudgetAmount> budgetAmounts) {
+this.mBudgetAmounts = budgetAmounts;
+for (BudgetAmount budgetAmount : mBudgetAmounts) {
+budgetAmount.setBudgetUID(getUID());
+}
+}
+public void addBudgetAmount(BudgetAmount budgetAmount){
+budgetAmount.setBudgetUID(getUID());
+mBudgetAmounts.add(budgetAmount);
+}
+public Money getAmount(@NonNull String accountUID){
+for (BudgetAmount budgetAmount : mBudgetAmounts) {
+if (budgetAmount.getAccountUID().equals(accountUID))
+return budgetAmount.getAmount();
+}
+return null;
+}
+public Money getAmount(@NonNull String accountUID, int periodNum){
+for (BudgetAmount budgetAmount : mBudgetAmounts) {
+if (budgetAmount.getAccountUID().equals(accountUID)
+&& (budgetAmount.getPeriodNum() == periodNum || budgetAmount.getPeriodNum() == -1)){
+return budgetAmount.getAmount();
+}
+}
+return Money.getZeroInstance();
+}
+public Money getAmountSum(){
+Money sum = null; 
+for (BudgetAmount budgetAmount : mBudgetAmounts) {
+if (sum == null){
+sum = budgetAmount.getAmount();
+} else {
+try {
+sum = sum.add(budgetAmount.getAmount().abs());
+} catch (Money.CurrencyMismatchException ex){
+Log.i(getClass().getSimpleName(), "Skip some budget amounts with different currency");
+}
+}
+}
+return sum;
+}
+public long getNumberOfPeriods() {
+return mNumberOfPeriods;
+}
+public long getStartofCurrentPeriod(){
+LocalDateTime localDate = new LocalDateTime();
+int interval = mRecurrence.getMultiplier();
+switch (mRecurrence.getPeriodType()){
+case HOUR:
+localDate = localDate.millisOfDay().withMinimumValue().plusHours(interval);
+break;
+case DAY:
+localDate = localDate.millisOfDay().withMinimumValue().plusDays(interval);
+break;
+case WEEK:
+localDate = localDate.dayOfWeek().withMinimumValue().minusDays(interval);
+break;
+case MONTH:
+localDate = localDate.dayOfMonth().withMinimumValue().minusMonths(interval);
+break;
+case YEAR:
+localDate = localDate.dayOfYear().withMinimumValue().minusYears(interval);
+break;
+}
+return localDate.toDate().getTime();
+}
+public long getEndOfCurrentPeriod(){
+LocalDateTime localDate = new LocalDateTime();
+int interval = mRecurrence.getMultiplier();
+switch (mRecurrence.getPeriodType()){
+case HOUR:
+localDate = localDate.millisOfDay().withMaximumValue().plusHours(interval);
+break;
+case DAY:
+localDate = localDate.millisOfDay().withMaximumValue().plusDays(interval);
+break;
+case WEEK:
+localDate = localDate.dayOfWeek().withMaximumValue().plusWeeks(interval);
+break;
+case MONTH:
+localDate = localDate.dayOfMonth().withMaximumValue().plusMonths(interval);
+break;
+case YEAR:
+localDate = localDate.dayOfYear().withMaximumValue().plusYears(interval);
+break;
+}
+return localDate.toDate().getTime();
+}
+public long getStartOfPeriod(int periodNum){
+LocalDateTime localDate = new LocalDateTime(mRecurrence.getPeriodStart().getTime());
+int interval = mRecurrence.getMultiplier() * periodNum;
+switch (mRecurrence.getPeriodType()){
+case HOUR:
+localDate = localDate.millisOfDay().withMinimumValue().plusHours(interval);
+break;
+case DAY:
+localDate = localDate.millisOfDay().withMinimumValue().plusDays(interval);
+break;
+case WEEK:
+localDate = localDate.dayOfWeek().withMinimumValue().minusDays(interval);
+break;
+case MONTH:
+localDate = localDate.dayOfMonth().withMinimumValue().minusMonths(interval);
+break;
+case YEAR:
+localDate = localDate.dayOfYear().withMinimumValue().minusYears(interval);
+break;
+}
+return localDate.toDate().getTime();
+}
+public long getEndOfPeriod(int periodNum){
+LocalDateTime localDate = new LocalDateTime();
+int interval = mRecurrence.getMultiplier() * periodNum;
+switch (mRecurrence.getPeriodType()){
+case HOUR:
+localDate = localDate.plusHours(interval);
+break;
+case DAY:
+localDate = localDate.millisOfDay().withMaximumValue().plusDays(interval);
+break;
+case WEEK:
+localDate = localDate.dayOfWeek().withMaximumValue().plusWeeks(interval);
+break;
+case MONTH:
+localDate = localDate.dayOfMonth().withMaximumValue().plusMonths(interval);
+break;
+case YEAR:
+localDate = localDate.dayOfYear().withMaximumValue().plusYears(interval);
+break;
+}
+return localDate.toDate().getTime();
+}
+public void setNumberOfPeriods(long numberOfPeriods) {
+this.mNumberOfPeriods = numberOfPeriods;
+}
+public int getNumberOfAccounts(){
+Set<String> accountSet = new HashSet<>();
+for (BudgetAmount budgetAmount : mBudgetAmounts) {
+accountSet.add(budgetAmount.getAccountUID());
+}
+return accountSet.size();
+}
+public List<BudgetAmount> getCompactedBudgetAmounts(){
+Map<String, List<BigDecimal>> accountAmountMap = new HashMap<>();
+for (BudgetAmount budgetAmount : mBudgetAmounts) {
+String accountUID = budgetAmount.getAccountUID();
+BigDecimal amount = budgetAmount.getAmount().asBigDecimal();
+if (accountAmountMap.containsKey(accountUID)){
+accountAmountMap.get(accountUID).add(amount);
+} else {
+List<BigDecimal> amounts = new ArrayList<>();
+amounts.add(amount);
+accountAmountMap.put(accountUID, amounts);
+}
+}
+List<BudgetAmount> compactBudgetAmounts = new ArrayList<>();
+for (Map.Entry<String, List<BigDecimal>> entry : accountAmountMap.entrySet()) {
+List<BigDecimal> amounts = entry.getValue();
+BigDecimal first = amounts.get(0);
+boolean allSame = true;
+for (BigDecimal bigDecimal : amounts) {
+allSame &= bigDecimal.equals(first);
+}
+if (allSame){
+if (amounts.size() == 1) {
+for (BudgetAmount bgtAmount : mBudgetAmounts) {
+if (bgtAmount.getAccountUID().equals(entry.getKey())) {
+compactBudgetAmounts.add(bgtAmount);
+break;
+}
+}
+} else {
+BudgetAmount bgtAmount = new BudgetAmount(getUID(), entry.getKey());
+bgtAmount.setAmount(new Money(first, Commodity.DEFAULT_COMMODITY));
+bgtAmount.setPeriodNum(-1);
+compactBudgetAmounts.add(bgtAmount);
+}
+} else {
+for (BudgetAmount bgtAmount : mBudgetAmounts) {
+if (bgtAmount.getAccountUID().equals(entry.getKey())){
+compactBudgetAmounts.add(bgtAmount);
+}
+}
+}
+}
+return compactBudgetAmounts;
+}
+public List<BudgetAmount> getExpandedBudgetAmounts(){
+List<BudgetAmount> amountsToAdd = new ArrayList<>();
+List<BudgetAmount> amountsToRemove = new ArrayList<>();
+for (BudgetAmount budgetAmount : mBudgetAmounts) {
+if (budgetAmount.getPeriodNum() == -1){
+amountsToRemove.add(budgetAmount);
+String accountUID = budgetAmount.getAccountUID();
+for (int period = 0; period < mNumberOfPeriods; period++) {
+BudgetAmount bgtAmount = new BudgetAmount(getUID(), accountUID);
+bgtAmount.setAmount(budgetAmount.getAmount());
+bgtAmount.setPeriodNum(period);
+amountsToAdd.add(bgtAmount);
+}
+}
+}
+List<BudgetAmount> expandedBudgetAmounts = new ArrayList<>(mBudgetAmounts);
+for (BudgetAmount bgtAmount : amountsToRemove) {
+expandedBudgetAmounts.remove(bgtAmount);
+}
+for (BudgetAmount bgtAmount : amountsToAdd) {
+expandedBudgetAmounts.add(bgtAmount);
+}
+return expandedBudgetAmounts;
+}
+}

@@ -1,0 +1,56 @@
+package org.jb2011.lnf.beautyeye.ch15_slider;
+import org.jb2011.lnf.beautyeye.utils.NinePatchHelper;
+import org.jb2011.lnf.beautyeye.utils.RawCache;
+import org.jb2011.ninepatch4j.NinePatch;
+public class __Icon9Factory__ extends RawCache<NinePatch>
+{
+public final static String IMGS_ROOT="imgs/np";
+private static __Icon9Factory__ instance = null;
+public static __Icon9Factory__ getInstance()
+{
+if(instance==null)
+instance = new __Icon9Factory__();
+return instance;
+}
+@Override
+protected NinePatch getResource(String relativePath, Class baseClass)
+{
+return NinePatchHelper.createNinePatch(baseClass.getResource(relativePath), false);
+}
+public NinePatch getRaw(String relativePath)
+{
+return  getRaw(relativePath,this.getClass());
+}
+public NinePatch getSliderTrack()
+{
+return getRaw(IMGS_ROOT+"/slider_track2.9.png");
+}
+public NinePatch getSliderTrack_VERITICAL()
+{
+return getRaw(IMGS_ROOT+"/slider_track2_v.9.png");
+}
+public NinePatch getSliderTrack_disable()
+{
+return getRaw(IMGS_ROOT+"/slider_track2_dark.9.png");
+}
+public NinePatch getSliderTrack_VERITICAL_disable()
+{
+return getRaw(IMGS_ROOT+"/slider_track2_v_dark.9.png");
+}
+public NinePatch getSliderTrack_forground()
+{
+return getRaw(IMGS_ROOT+"/slider_track2_forgroud.9.png");
+}
+public NinePatch getSliderTrack_forground_disable()
+{
+return getRaw(IMGS_ROOT+"/slider_track2_forgroud_disable.9.png");
+}
+public NinePatch getSliderTrack_VERTICAL_forground()
+{
+return getRaw(IMGS_ROOT+"/slider_track2_forgroud_v.9.png");
+}
+public NinePatch getSliderTrack_VERTICAL_forground_disable()
+{
+return getRaw(IMGS_ROOT+"/slider_track2_forgroud_v_disable.9.png");
+}
+}

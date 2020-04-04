@@ -1,0 +1,814 @@
+package org.springframework.data.mongodb.core.aggregation;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import org.springframework.lang.Nullable;
+import org.springframework.util.Assert;
+import org.springframework.util.ObjectUtils;
+import org.springframework.util.StringUtils;
+public class DateOperators {
+public static DateOperatorFactory dateOf(String fieldReference) {
+Assert.notNull(fieldReference, "FieldReference must not be null!");
+return new DateOperatorFactory(fieldReference);
+}
+public static DateOperatorFactory dateOf(AggregationExpression expression) {
+Assert.notNull(expression, "Expression must not be null!");
+return new DateOperatorFactory(expression);
+}
+public static DateOperatorFactory dateValue(Object value) {
+Assert.notNull(value, "Value must not be null!");
+return new DateOperatorFactory(value);
+}
+public static DateFromPartsOperatorFactory dateFromParts() {
+return new DateFromPartsOperatorFactory(Timezone.none());
+}
+public static DateFromString dateFromString(String value) {
+return DateFromString.fromString(value);
+}
+public static class Timezone {
+private static final Timezone NONE = new Timezone(null);
+private final @Nullable Object value;
+private Timezone(@Nullable Object value) {
+this.value = value;
+}
+public static Timezone none() {
+return NONE;
+}
+public static Timezone valueOf(Object value) {
+Assert.notNull(value, "Value must not be null!");
+return new Timezone(value);
+}
+public static Timezone ofField(String fieldReference) {
+return valueOf(Fields.field(fieldReference));
+}
+public static Timezone ofExpression(AggregationExpression expression) {
+return valueOf(expression);
+}
+}
+public static class DateOperatorFactory {
+private final @Nullable String fieldReference;
+private final @Nullable Object dateValue;
+private final @Nullable AggregationExpression expression;
+private final Timezone timezone;
+private DateOperatorFactory(@Nullable String fieldReference, @Nullable AggregationExpression expression,
+@Nullable Object value, Timezone timezone) {
+this.fieldReference = fieldReference;
+this.expression = expression;
+this.dateValue = value;
+this.timezone = timezone;
+}
+public DateOperatorFactory(String fieldReference) {
+this(fieldReference, null, null, Timezone.none());
+Assert.notNull(fieldReference, "FieldReference must not be null!");
+}
+public DateOperatorFactory(AggregationExpression expression) {
+this(null, expression, null, Timezone.none());
+Assert.notNull(expression, "Expression must not be null!");
+}
+public DateOperatorFactory(Object value) {
+this(null, null, value, Timezone.none());
+Assert.notNull(value, "Value must not be null!");
+}
+public DateOperatorFactory withTimezone(Timezone timezone) {
+Assert.notNull(timezone, "Timezone must not be null!");
+return new DateOperatorFactory(fieldReference, expression, dateValue, timezone);
+}
+public DayOfYear dayOfYear() {
+return applyTimezone(DayOfYear.dayOfYear(dateReference()), timezone);
+}
+public DayOfMonth dayOfMonth() {
+return applyTimezone(DayOfMonth.dayOfMonth(dateReference()), timezone);
+}
+public DayOfWeek dayOfWeek() {
+return applyTimezone(DayOfWeek.dayOfWeek(dateReference()), timezone);
+}
+public Year year() {
+return applyTimezone(Year.year(dateReference()), timezone);
+}
+public Month month() {
+return applyTimezone(Month.month(dateReference()), timezone);
+}
+public Week week() {
+return applyTimezone(Week.week(dateReference()), timezone);
+}
+public Hour hour() {
+return applyTimezone(Hour.hour(dateReference()), timezone);
+}
+public Minute minute() {
+return applyTimezone(Minute.minute(dateReference()), timezone);
+}
+public Second second() {
+return applyTimezone(Second.second(dateReference()), timezone);
+}
+public Millisecond millisecond() {
+return applyTimezone(Millisecond.millisecond(dateReference()), timezone);
+}
+public DateToString toString(String format) {
+return applyTimezone(DateToString.dateToString(dateReference()).toString(format), timezone);
+}
+public DateToString toStringWithDefaultFormat() {
+return applyTimezone(DateToString.dateToString(dateReference()).defaultFormat(), timezone);
+}
+public IsoDayOfWeek isoDayOfWeek() {
+return applyTimezone(IsoDayOfWeek.isoDayWeek(dateReference()), timezone);
+}
+public IsoWeek isoWeek() {
+return applyTimezone(IsoWeek.isoWeek(dateReference()), timezone);
+}
+public IsoWeekYear isoWeekYear() {
+return applyTimezone(IsoWeekYear.isoWeekYear(dateReference()), timezone);
+}
+public DateToParts toParts() {
+return applyTimezone(DateToParts.dateToParts(dateReference()), timezone);
+}
+public DateFromString fromString() {
+return applyTimezone(DateFromString.fromString(dateReference()), timezone);
+}
+private Object dateReference() {
+if (usesFieldRef()) {
+return Fields.field(fieldReference);
+}
+return usesExpression() ? expression : dateValue;
+}
+private boolean usesFieldRef() {
+return fieldReference != null;
+}
+private boolean usesExpression() {
+return expression != null;
+}
+}
+public static class DateFromPartsOperatorFactory {
+private final Timezone timezone;
+private DateFromPartsOperatorFactory(Timezone timezone) {
+this.timezone = timezone;
+}
+public IsoDateFromParts isoWeekYear(Object isoWeekYear) {
+return applyTimezone(IsoDateFromParts.dateFromParts().isoWeekYear(isoWeekYear), timezone);
+}
+public IsoDateFromParts isoWeekYearOf(String fieldReference) {
+return isoWeekYear(Fields.field(fieldReference));
+}
+public IsoDateFromParts isoWeekYearOf(AggregationExpression expression) {
+return isoWeekYear(expression);
+}
+public DateFromParts year(Object year) {
+return applyTimezone(DateFromParts.dateFromParts().year(year), timezone);
+}
+public DateFromParts yearOf(String fieldReference) {
+return year(Fields.field(fieldReference));
+}
+public DateFromParts yearOf(AggregationExpression expression) {
+return year(expression);
+}
+public DateFromPartsOperatorFactory withTimezone(Timezone timezone) {
+Assert.notNull(timezone, "Timezone must not be null!");
+return new DateFromPartsOperatorFactory(timezone);
+}
+}
+public static abstract class TimezonedDateAggregationExpression extends AbstractAggregationExpression {
+protected TimezonedDateAggregationExpression(Object value) {
+super(value);
+}
+protected static java.util.Map<String, Object> appendTimezone(Object source, Timezone timezone) {
+java.util.Map<String, Object> args;
+if (source instanceof Map) {
+args = new LinkedHashMap<>((Map) source);
+} else {
+args = new LinkedHashMap<>(2);
+args.put("date", source);
+}
+if (!ObjectUtils.nullSafeEquals(Timezone.none(), timezone)) {
+args.put("timezone", timezone.value);
+} else if (args.containsKey("timezone")) {
+args.remove("timezone");
+}
+return args;
+}
+protected abstract TimezonedDateAggregationExpression withTimezone(Timezone timezone);
+protected boolean hasTimezone() {
+return contains("timezone");
+}
+}
+public static class DayOfYear extends TimezonedDateAggregationExpression {
+private DayOfYear(Object value) {
+super(value);
+}
+public static DayOfYear dayOfYear(Object value) {
+Assert.notNull(value, "value must not be null!");
+return new DayOfYear(value);
+}
+public static DayOfYear dayOfYear(String fieldReference) {
+Assert.notNull(fieldReference, "FieldReference must not be null!");
+return dayOfYear(Fields.field(fieldReference));
+}
+public static DayOfYear dayOfYear(AggregationExpression expression) {
+Assert.notNull(expression, "Expression must not be null!");
+return dayOfYear((Object) expression);
+}
+@Override
+public DayOfYear withTimezone(Timezone timezone) {
+Assert.notNull(timezone, "Timezone must not be null.");
+return new DayOfYear(appendTimezone(values().iterator().next(), timezone));
+}
+@Override
+protected String getMongoMethod() {
+return "$dayOfYear";
+}
+}
+public static class DayOfMonth extends TimezonedDateAggregationExpression {
+private DayOfMonth(Object value) {
+super(value);
+}
+public static DayOfMonth dayOfMonth(Object value) {
+Assert.notNull(value, "value must not be null!");
+return new DayOfMonth(value);
+}
+public static DayOfMonth dayOfMonth(String fieldReference) {
+Assert.notNull(fieldReference, "FieldReference must not be null!");
+return dayOfMonth(Fields.field(fieldReference));
+}
+public static DayOfMonth dayOfMonth(AggregationExpression expression) {
+Assert.notNull(expression, "Expression must not be null!");
+return dayOfMonth((Object) expression);
+}
+@Override
+public DayOfMonth withTimezone(Timezone timezone) {
+Assert.notNull(timezone, "Timezone must not be null.");
+return new DayOfMonth(appendTimezone(values().iterator().next(), timezone));
+}
+@Override
+protected String getMongoMethod() {
+return "$dayOfMonth";
+}
+}
+public static class DayOfWeek extends TimezonedDateAggregationExpression {
+private DayOfWeek(Object value) {
+super(value);
+}
+public static DayOfWeek dayOfWeek(Object value) {
+Assert.notNull(value, "value must not be null!");
+return new DayOfWeek(value);
+}
+public static DayOfWeek dayOfWeek(String fieldReference) {
+Assert.notNull(fieldReference, "FieldReference must not be null!");
+return dayOfWeek(Fields.field(fieldReference));
+}
+public static DayOfWeek dayOfWeek(AggregationExpression expression) {
+Assert.notNull(expression, "Expression must not be null!");
+return dayOfWeek((Object) expression);
+}
+@Override
+public DayOfWeek withTimezone(Timezone timezone) {
+Assert.notNull(timezone, "Timezone must not be null.");
+return new DayOfWeek(appendTimezone(values().iterator().next(), timezone));
+}
+@Override
+protected String getMongoMethod() {
+return "$dayOfWeek";
+}
+}
+public static class Year extends TimezonedDateAggregationExpression {
+private Year(Object value) {
+super(value);
+}
+public static Year year(Object value) {
+Assert.notNull(value, "value must not be null!");
+return new Year(value);
+}
+public static Year yearOf(String fieldReference) {
+Assert.notNull(fieldReference, "FieldReference must not be null!");
+return year(Fields.field(fieldReference));
+}
+public static Year yearOf(AggregationExpression expression) {
+Assert.notNull(expression, "Expression must not be null!");
+return year(expression);
+}
+@Override
+public Year withTimezone(Timezone timezone) {
+Assert.notNull(timezone, "Timezone must not be null.");
+return new Year(appendTimezone(values().iterator().next(), timezone));
+}
+@Override
+protected String getMongoMethod() {
+return "$year";
+}
+}
+public static class Month extends TimezonedDateAggregationExpression {
+private Month(Object value) {
+super(value);
+}
+public static Month month(Object value) {
+Assert.notNull(value, "value must not be null!");
+return new Month(value);
+}
+public static Month monthOf(String fieldReference) {
+Assert.notNull(fieldReference, "FieldReference must not be null!");
+return month(Fields.field(fieldReference));
+}
+public static Month monthOf(AggregationExpression expression) {
+Assert.notNull(expression, "Expression must not be null!");
+return month(expression);
+}
+@Override
+public Month withTimezone(Timezone timezone) {
+Assert.notNull(timezone, "Timezone must not be null.");
+return new Month(appendTimezone(values().iterator().next(), timezone));
+}
+@Override
+protected String getMongoMethod() {
+return "$month";
+}
+}
+public static class Week extends TimezonedDateAggregationExpression {
+private Week(Object value) {
+super(value);
+}
+public static Week week(Object value) {
+Assert.notNull(value, "value must not be null!");
+return new Week(value);
+}
+public static Week weekOf(String fieldReference) {
+Assert.notNull(fieldReference, "FieldReference must not be null!");
+return week(Fields.field(fieldReference));
+}
+public static Week weekOf(AggregationExpression expression) {
+Assert.notNull(expression, "Expression must not be null!");
+return week(expression);
+}
+@Override
+public Week withTimezone(Timezone timezone) {
+Assert.notNull(timezone, "Timezone must not be null.");
+return new Week(appendTimezone(values().iterator().next(), timezone));
+}
+@Override
+protected String getMongoMethod() {
+return "$week";
+}
+}
+public static class Hour extends TimezonedDateAggregationExpression {
+private Hour(Object value) {
+super(value);
+}
+public static Hour hour(Object value) {
+Assert.notNull(value, "value must not be null!");
+return new Hour(value);
+}
+public static Hour hourOf(String fieldReference) {
+Assert.notNull(fieldReference, "FieldReference must not be null!");
+return hour(Fields.field(fieldReference));
+}
+public static Hour hourOf(AggregationExpression expression) {
+Assert.notNull(expression, "Expression must not be null!");
+return hour(expression);
+}
+@Override
+public Hour withTimezone(Timezone timezone) {
+Assert.notNull(timezone, "Timezone must not be null.");
+return new Hour(appendTimezone(values().iterator().next(), timezone));
+}
+@Override
+protected String getMongoMethod() {
+return "$hour";
+}
+}
+public static class Minute extends TimezonedDateAggregationExpression {
+private Minute(Object value) {
+super(value);
+}
+public static Minute minute(Object value) {
+Assert.notNull(value, "value must not be null!");
+return new Minute(value);
+}
+public static Minute minuteOf(String fieldReference) {
+Assert.notNull(fieldReference, "FieldReference must not be null!");
+return minute(Fields.field(fieldReference));
+}
+public static Minute minuteOf(AggregationExpression expression) {
+Assert.notNull(expression, "Expression must not be null!");
+return minute(expression);
+}
+@Override
+public Minute withTimezone(Timezone timezone) {
+Assert.notNull(timezone, "Timezone must not be null.");
+return new Minute(appendTimezone(values().iterator().next(), timezone));
+}
+@Override
+protected String getMongoMethod() {
+return "$minute";
+}
+}
+public static class Second extends TimezonedDateAggregationExpression {
+private Second(Object value) {
+super(value);
+}
+public static Second second(Object value) {
+Assert.notNull(value, "value must not be null!");
+return new Second(value);
+}
+public static Second secondOf(String fieldReference) {
+Assert.notNull(fieldReference, "FieldReference must not be null!");
+return second(Fields.field(fieldReference));
+}
+public static Second secondOf(AggregationExpression expression) {
+Assert.notNull(expression, "Expression must not be null!");
+return second(expression);
+}
+@Override
+public Second withTimezone(Timezone timezone) {
+Assert.notNull(timezone, "Timezone must not be null.");
+return new Second(appendTimezone(values().iterator().next(), timezone));
+}
+@Override
+protected String getMongoMethod() {
+return "$second";
+}
+}
+public static class Millisecond extends TimezonedDateAggregationExpression {
+private Millisecond(Object value) {
+super(value);
+}
+public static Millisecond millisecond(Object value) {
+Assert.notNull(value, "value must not be null!");
+return new Millisecond(value);
+}
+public static Millisecond millisecondOf(String fieldReference) {
+Assert.notNull(fieldReference, "FieldReference must not be null!");
+return millisecond(Fields.field(fieldReference));
+}
+public static Millisecond millisecondOf(AggregationExpression expression) {
+Assert.notNull(expression, "Expression must not be null!");
+return millisecond(expression);
+}
+@Override
+public Millisecond withTimezone(Timezone timezone) {
+Assert.notNull(timezone, "Timezone must not be null.");
+return new Millisecond(appendTimezone(values().iterator().next(), timezone));
+}
+@Override
+protected String getMongoMethod() {
+return "$millisecond";
+}
+}
+public static class DateToString extends TimezonedDateAggregationExpression {
+private DateToString(Object value) {
+super(value);
+}
+public static FormatBuilder dateToString(Object value) {
+Assert.notNull(value, "value must not be null!");
+return new FormatBuilder() {
+@Override
+public DateToString toString(String format) {
+Assert.notNull(format, "Format must not be null!");
+return new DateToString(argumentMap(value, format, Timezone.none()));
+}
+@Override
+public DateToString defaultFormat() {
+return new DateToString(argumentMap(value, null, Timezone.none()));
+}
+};
+}
+public static FormatBuilder dateOf(final String fieldReference) {
+Assert.notNull(fieldReference, "FieldReference must not be null!");
+return dateToString(Fields.field(fieldReference));
+}
+public static FormatBuilder dateOf(final AggregationExpression expression) {
+Assert.notNull(expression, "Expression must not be null!");
+return dateToString(expression);
+}
+@Override
+public DateToString withTimezone(Timezone timezone) {
+Assert.notNull(timezone, "Timezone must not be null.");
+return new DateToString(append("timezone", timezone));
+}
+public DateToString onNullReturn(Object value) {
+return new DateToString(append("onNull", value));
+}
+public DateToString onNullReturnValueOf(String fieldReference) {
+return onNullReturn(Fields.field(fieldReference));
+}
+public DateToString onNullReturnValueOf(AggregationExpression expression) {
+return onNullReturn(expression);
+}
+@Override
+protected String getMongoMethod() {
+return "$dateToString";
+}
+private static java.util.Map<String, Object> argumentMap(Object date, @Nullable String format, Timezone timezone) {
+java.util.Map<String, Object> args = new LinkedHashMap<>(2);
+if (StringUtils.hasText(format)) {
+args.put("format", format);
+}
+args.put("date", date);
+if (!ObjectUtils.nullSafeEquals(timezone, Timezone.none())) {
+args.put("timezone", timezone.value);
+}
+return args;
+}
+protected java.util.Map<String, Object> append(String key, Object value) {
+java.util.Map<String, Object> clone = new LinkedHashMap<>(argumentMap());
+if (value instanceof Timezone) {
+if (ObjectUtils.nullSafeEquals(value, Timezone.none())) {
+clone.remove("timezone");
+} else {
+clone.put("timezone", ((Timezone) value).value);
+}
+} else {
+clone.put(key, value);
+}
+return clone;
+}
+public interface FormatBuilder {
+DateToString toString(String format);
+DateToString defaultFormat();
+}
+}
+public static class IsoDayOfWeek extends TimezonedDateAggregationExpression {
+private IsoDayOfWeek(Object value) {
+super(value);
+}
+public static IsoDayOfWeek isoDayWeek(Object value) {
+Assert.notNull(value, "value must not be null!");
+return new IsoDayOfWeek(value);
+}
+public static IsoDayOfWeek isoDayOfWeek(String fieldReference) {
+Assert.notNull(fieldReference, "FieldReference must not be null!");
+return isoDayWeek(Fields.field(fieldReference));
+}
+public static IsoDayOfWeek isoDayOfWeek(AggregationExpression expression) {
+Assert.notNull(expression, "Expression must not be null!");
+return isoDayWeek(expression);
+}
+@Override
+public IsoDayOfWeek withTimezone(Timezone timezone) {
+Assert.notNull(timezone, "Timezone must not be null.");
+return new IsoDayOfWeek(appendTimezone(values().iterator().next(), timezone));
+}
+@Override
+protected String getMongoMethod() {
+return "$isoDayOfWeek";
+}
+}
+public static class IsoWeek extends TimezonedDateAggregationExpression {
+private IsoWeek(Object value) {
+super(value);
+}
+public static IsoWeek isoWeek(Object value) {
+Assert.notNull(value, "value must not be null!");
+return new IsoWeek(value);
+}
+public static IsoWeek isoWeekOf(String fieldReference) {
+Assert.notNull(fieldReference, "FieldReference must not be null!");
+return isoWeek(Fields.field(fieldReference));
+}
+public static IsoWeek isoWeekOf(AggregationExpression expression) {
+Assert.notNull(expression, "Expression must not be null!");
+return isoWeek(expression);
+}
+@Override
+public IsoWeek withTimezone(Timezone timezone) {
+Assert.notNull(timezone, "Timezone must not be null.");
+return new IsoWeek(appendTimezone(values().iterator().next(), timezone));
+}
+@Override
+protected String getMongoMethod() {
+return "$isoWeek";
+}
+}
+public static class IsoWeekYear extends TimezonedDateAggregationExpression {
+private IsoWeekYear(Object value) {
+super(value);
+}
+public static IsoWeekYear isoWeekYear(Object value) {
+Assert.notNull(value, "value must not be null!");
+return new IsoWeekYear(value);
+}
+public static IsoWeekYear isoWeekYearOf(String fieldReference) {
+Assert.notNull(fieldReference, "FieldReference must not be null!");
+return isoWeekYear(Fields.field(fieldReference));
+}
+public static IsoWeekYear isoWeekYearOf(AggregationExpression expression) {
+Assert.notNull(expression, "Expression must not be null!");
+return isoWeekYear(expression);
+}
+@Override
+public IsoWeekYear withTimezone(Timezone timezone) {
+Assert.notNull(timezone, "Timezone must not be null.");
+return new IsoWeekYear(appendTimezone(values().iterator().next(), timezone));
+}
+@Override
+protected String getMongoMethod() {
+return "$isoWeekYear";
+}
+}
+public interface DateParts<T extends DateParts<T>> {
+T hour(Object hour);
+default T hourOf(String fieldReference) {
+return hour(Fields.field(fieldReference));
+}
+default T hourOf(AggregationExpression expression) {
+return hour(expression);
+}
+T minute(Object minute);
+default T minuteOf(String fieldReference) {
+return minute(Fields.field(fieldReference));
+}
+default T minuteOf(AggregationExpression expression) {
+return minute(expression);
+}
+T second(Object second);
+default T secondOf(String fieldReference) {
+return second(Fields.field(fieldReference));
+}
+default T secondOf(AggregationExpression expression) {
+return second(expression);
+}
+T milliseconds(Object milliseconds);
+default T millisecondsOf(String fieldReference) {
+return milliseconds(Fields.field(fieldReference));
+}
+default T millisecondsOf(AggregationExpression expression) {
+return milliseconds(expression);
+}
+}
+public static class DateFromParts extends TimezonedDateAggregationExpression implements DateParts<DateFromParts> {
+private DateFromParts(Object value) {
+super(value);
+}
+public static DateFromPartsWithYear dateFromParts() {
+return year -> new DateFromParts(Collections.singletonMap("year", year));
+}
+public DateFromParts month(Object month) {
+return new DateFromParts(append("month", month));
+}
+public DateFromParts monthOf(String fieldReference) {
+return month(Fields.field(fieldReference));
+}
+public DateFromParts monthOf(AggregationExpression expression) {
+return month(expression);
+}
+public DateFromParts day(Object day) {
+return new DateFromParts(append("day", day));
+}
+public DateFromParts dayOf(String fieldReference) {
+return day(Fields.field(fieldReference));
+}
+public DateFromParts dayOf(AggregationExpression expression) {
+return day(expression);
+}
+@Override
+public DateFromParts hour(Object hour) {
+return new DateFromParts(append("hour", hour));
+}
+@Override
+public DateFromParts minute(Object minute) {
+return new DateFromParts(append("minute", minute));
+}
+@Override
+public DateFromParts second(Object second) {
+return new DateFromParts(append("second", second));
+}
+@Override
+public DateFromParts milliseconds(Object milliseconds) {
+return new DateFromParts(append("milliseconds", milliseconds));
+}
+@Override
+public DateFromParts withTimezone(Timezone timezone) {
+return new DateFromParts(appendTimezone(argumentMap(), timezone));
+}
+@Override
+protected String getMongoMethod() {
+return "$dateFromParts";
+}
+public interface DateFromPartsWithYear {
+DateFromParts year(Object year);
+default DateFromParts yearOf(String fieldReference) {
+Assert.hasText(fieldReference, "Field reference must not be null nor empty.");
+return year(Fields.field(fieldReference));
+}
+default DateFromParts yearOf(AggregationExpression expression) {
+Assert.notNull(expression, "Expression must not be null!");
+return year(expression);
+}
+}
+}
+public static class IsoDateFromParts extends TimezonedDateAggregationExpression
+implements DateParts<IsoDateFromParts> {
+private IsoDateFromParts(Object value) {
+super(value);
+}
+public static IsoDateFromPartsWithYear dateFromParts() {
+return year -> new IsoDateFromParts(Collections.singletonMap("isoWeekYear", year));
+}
+public IsoDateFromParts isoWeek(Object isoWeek) {
+return new IsoDateFromParts(append("isoWeek", isoWeek));
+}
+public IsoDateFromParts isoWeekOf(String fieldReference) {
+return isoWeek(Fields.field(fieldReference));
+}
+public IsoDateFromParts isoWeekOf(AggregationExpression expression) {
+return isoWeek(expression);
+}
+public IsoDateFromParts isoDayOfWeek(Object day) {
+return new IsoDateFromParts(append("isoDayOfWeek", day));
+}
+public IsoDateFromParts isoDayOfWeekOf(String fieldReference) {
+return isoDayOfWeek(Fields.field(fieldReference));
+}
+public IsoDateFromParts isoDayOfWeekOf(AggregationExpression expression) {
+return isoDayOfWeek(expression);
+}
+@Override
+public IsoDateFromParts hour(Object hour) {
+return new IsoDateFromParts(append("hour", hour));
+}
+@Override
+public IsoDateFromParts minute(Object minute) {
+return new IsoDateFromParts(append("minute", minute));
+}
+@Override
+public IsoDateFromParts second(Object second) {
+return new IsoDateFromParts(append("second", second));
+}
+@Override
+public IsoDateFromParts milliseconds(Object milliseconds) {
+return new IsoDateFromParts(append("milliseconds", milliseconds));
+}
+@Override
+public IsoDateFromParts withTimezone(Timezone timezone) {
+return new IsoDateFromParts(appendTimezone(argumentMap(), timezone));
+}
+@Override
+protected String getMongoMethod() {
+return "$dateFromParts";
+}
+public interface IsoDateFromPartsWithYear {
+IsoDateFromParts isoWeekYear(Object isoWeekYear);
+default IsoDateFromParts isoWeekYearOf(String fieldReference) {
+Assert.hasText(fieldReference, "Field reference must not be null nor empty.");
+return isoWeekYear(Fields.field(fieldReference));
+}
+default IsoDateFromParts isoWeekYearOf(AggregationExpression expression) {
+Assert.notNull(expression, "Expression must not be null!");
+return isoWeekYear(expression);
+}
+}
+}
+public static class DateToParts extends TimezonedDateAggregationExpression {
+private DateToParts(Object value) {
+super(value);
+}
+public static DateToParts dateToParts(Object value) {
+Assert.notNull(value, "Value must not be null!");
+return new DateToParts(Collections.singletonMap("date", value));
+}
+public static DateToParts datePartsOf(String fieldReference) {
+Assert.notNull(fieldReference, "FieldReference must not be null!");
+return dateToParts(Fields.field(fieldReference));
+}
+public static DateToParts datePartsOf(AggregationExpression expression) {
+return dateToParts(expression);
+}
+public DateToParts iso8601() {
+return new DateToParts(append("iso8601", true));
+}
+@Override
+public DateToParts withTimezone(Timezone timezone) {
+return new DateToParts(appendTimezone(argumentMap(), timezone));
+}
+@Override
+protected String getMongoMethod() {
+return "$dateToParts";
+}
+}
+public static class DateFromString extends TimezonedDateAggregationExpression {
+private DateFromString(Object value) {
+super(value);
+}
+public static DateFromString fromString(Object value) {
+return new DateFromString(Collections.singletonMap("dateString", value));
+}
+public static DateFromString fromStringOf(String fieldReference) {
+return fromString(Fields.field(fieldReference));
+}
+public static DateFromString fromStringOf(AggregationExpression expression) {
+return fromString(expression);
+}
+@Override
+public DateFromString withTimezone(Timezone timezone) {
+return new DateFromString(appendTimezone(argumentMap(), timezone));
+}
+public DateFromString withFormat(String format) {
+Assert.notNull(format, "Format must not be null!");
+return new DateFromString(append("format", format));
+}
+@Override
+protected String getMongoMethod() {
+return "$dateFromString";
+}
+}
+@SuppressWarnings("unchecked")
+private static <T extends TimezonedDateAggregationExpression> T applyTimezone(T instance, Timezone timezone) {
+return !ObjectUtils.nullSafeEquals(Timezone.none(), timezone) && !instance.hasTimezone()
+? (T) instance.withTimezone(timezone) : instance;
+}
+}

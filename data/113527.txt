@@ -1,0 +1,17 @@
+package com.pokegoapi.api.device;
+public interface SensorInfos {
+long getTimestampSnapshot();
+long getAccelerometerAxes();
+double getAccelNormalizedX();
+double getAccelNormalizedY();
+double getAccelNormalizedZ();
+double getAccelRawX();
+double getAccelRawY();
+double getAccelRawZ();
+double getAngleNormalizedX();
+double getAngleNormalizedY();
+double getAngleNormalizedZ();
+double getGyroscopeRawX();
+double getGyroscopeRawY();
+double getGyroscopeRawZ();
+}

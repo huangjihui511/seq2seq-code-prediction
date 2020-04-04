@@ -1,0 +1,22 @@
+package com.example.guestbook;
+import java.io.IOException;
+import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+@SuppressWarnings("serial")
+@WebServlet(name = "SignGuestbookServlet", value = "/sign")
+public class SignGuestbookServlet extends HttpServlet {
+@Override
+public void doPost(HttpServletRequest req, HttpServletResponse resp)
+throws ServletException, IOException {
+Greeting greeting;
+String guestbookName = req.getParameter("guestbookName");
+String name = req.getParameter("name");
+String content = req.getParameter("content");
+greeting = new Greeting(guestbookName, content, name);
+greeting.save();
+resp.sendRedirect("/index.jsp?guestbookName=" + guestbookName);
+}
+}

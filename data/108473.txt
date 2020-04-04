@@ -1,0 +1,38 @@
+package com.oracle.svm.core.configure;
+import java.io.IOException;
+import java.io.Reader;
+import java.util.List;
+import java.util.function.Consumer;
+import com.oracle.svm.core.jdk.proxy.DynamicProxyRegistry;
+import com.oracle.svm.core.util.json.JSONParser;
+import com.oracle.svm.core.util.json.JSONParserException;
+public final class ProxyConfigurationParser extends ConfigurationParser {
+private final Consumer<String[]> interfaceListConsumer;
+public ProxyConfigurationParser(Consumer<String[]> interfaceListConsumer) {
+this.interfaceListConsumer = interfaceListConsumer;
+}
+@Override
+public void parseAndRegister(Reader reader) throws IOException {
+JSONParser parser = new JSONParser(reader);
+Object json = parser.parse();
+parseTopLevelArray(asList(json, "first level of document must be an array of interface lists"));
+}
+private void parseTopLevelArray(List<Object> interfaceLists) {
+for (Object interfaceList : interfaceLists) {
+parseInterfaceList(asList(interfaceList, "second level of document must be a lists of objects"));
+}
+}
+private void parseInterfaceList(List<?> data) {
+String[] interfaces = new String[data.size()];
+int i = 0;
+for (Object value : data) {
+interfaces[i] = asString(value);
+i++;
+}
+try {
+interfaceListConsumer.accept(interfaces);
+} catch (Exception e) {
+throw new JSONParserException(e.toString());
+}
+}
+}

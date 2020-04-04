@@ -1,0 +1,36 @@
+package org.apache.pdfbox.debugger.ui;
+import java.io.File;
+import javax.swing.filechooser.FileFilter;
+public class ExtensionFileFilter extends FileFilter
+{
+private String[] extensions = null;
+private final String desc;
+public ExtensionFileFilter( String[] ext, String description )
+{
+extensions = ext;
+desc = description;
+}
+@Override
+public boolean accept(File pathname)
+{
+if (pathname.isDirectory())
+{
+return true;
+}
+boolean acceptable = false;
+String name = pathname.getName().toUpperCase();
+for( int i=0; !acceptable && i<extensions.length; i++ )
+{
+if( name.endsWith( extensions[i].toUpperCase() ) )
+{
+acceptable = true;
+}
+}
+return acceptable;
+}
+@Override
+public String getDescription()
+{
+return desc;
+}
+}

@@ -1,0 +1,11 @@
+package com.twelvemonkeys.xml;
+import java.io.Reader;
+import java.io.IOException;
+public class XMLReader extends Reader {
+public void close() throws IOException {
+throw new UnsupportedOperationException("Method close not implemented");
+}
+public int read(char cbuf[], int off, int len) throws IOException {
+throw new UnsupportedOperationException("Method read not implemented");
+}
+}

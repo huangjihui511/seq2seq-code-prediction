@@ -1,0 +1,192 @@
+package psiprobe.model.stats;
+import com.thoughtworks.xstream.XStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.TreeMap;
+import javax.inject.Inject;
+import org.jfree.data.xy.XYDataItem;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.DisposableBean;
+import org.springframework.beans.factory.InitializingBean;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextAware;
+import org.springframework.web.context.WebApplicationContext;
+import psiprobe.tools.UpdateCommitLock;
+public class StatsCollection implements InitializingBean, DisposableBean, ApplicationContextAware {
+private static final Logger logger = LoggerFactory.getLogger(StatsCollection.class);
+private Map<String, List<XYDataItem>> statsData = new TreeMap<>();
+@Inject
+private XStream xstream;
+private String swapFileName;
+private String storagePath;
+private File contextTempDir;
+private int maxFiles = 2;
+private final UpdateCommitLock lock = new UpdateCommitLock();
+public String getSwapFileName() {
+return swapFileName;
+}
+@Value("stats.xml")
+public void setSwapFileName(String swapFileName) {
+this.swapFileName = swapFileName;
+}
+public String getStoragePath() {
+return storagePath;
+}
+public void setStoragePath(String storagePath) {
+this.storagePath = storagePath;
+}
+public synchronized boolean isCollected(String statsName) {
+return statsData.get(statsName) != null;
+}
+public int getMaxFiles() {
+return maxFiles;
+}
+public void setMaxFiles(int maxFiles) {
+this.maxFiles = maxFiles > 0 ? maxFiles : 2;
+}
+public synchronized List<XYDataItem> newStats(String name, int maxElements) {
+List<XYDataItem> stats = Collections.synchronizedList(new ArrayList<XYDataItem>(maxElements));
+statsData.put(name, stats);
+return stats;
+}
+public synchronized void resetStats(String name) {
+List<XYDataItem> stats = getStats(name);
+if (stats != null) {
+stats.clear();
+}
+}
+public synchronized List<XYDataItem> getStats(String name) {
+return statsData.get(name);
+}
+public long getLastValueForStat(String statName) {
+long statValue = 0;
+List<XYDataItem> stats = getStats(statName);
+if (stats != null && !stats.isEmpty()) {
+XYDataItem xy = stats.get(stats.size() - 1);
+if (xy != null && xy.getY() != null) {
+statValue = xy.getY().longValue();
+}
+}
+return statValue;
+}
+public synchronized Map<String, List<XYDataItem>> getStatsByPrefix(String statNamePrefix) {
+Map<String, List<XYDataItem>> map = new HashMap<>();
+for (Map.Entry<String, List<XYDataItem>> en : statsData.entrySet()) {
+if (en.getKey().startsWith(statNamePrefix)) {
+map.put(en.getKey(), en.getValue());
+}
+}
+return map;
+}
+private File makeFile() {
+return storagePath == null ? new File(contextTempDir, swapFileName)
+: new File(storagePath, swapFileName);
+}
+private void shiftFiles(int index) {
+if (index >= maxFiles - 1) {
+try {
+if (Files.exists(Paths.get(makeFile().getAbsolutePath() + "." + index))) {
+Files.delete(Paths.get(makeFile().getAbsolutePath() + "." + index));
+}
+} catch (IOException e) {
+logger.error("Could not delete file {}",
+new File(makeFile().getAbsolutePath() + "." + index).getName());
+}
+} else {
+shiftFiles(index + 1);
+File srcFile = index == 0 ? makeFile() : new File(makeFile().getAbsolutePath() + "." + index);
+if (Files.exists(srcFile.toPath())) {
+File destFile = new File(makeFile().getAbsolutePath() + "." + (index + 1));
+if (!srcFile.renameTo(destFile)) {
+logger.error("Could not rename file {} to {}", srcFile.getName(), destFile.getName());
+}
+}
+}
+}
+public synchronized void serialize() throws InterruptedException {
+lock.lockForCommit();
+long start = System.currentTimeMillis();
+try {
+shiftFiles(0);
+try (OutputStream os = Files.newOutputStream(makeFile().toPath())) {
+xstream.toXML(statsData, os);
+}
+} catch (Exception e) {
+logger.error("Could not write stats data to '{}'", makeFile().getAbsolutePath(), e);
+} finally {
+lock.releaseCommitLock();
+logger.debug("stats serialized in {}ms", System.currentTimeMillis() - start);
+}
+}
+@SuppressWarnings("unchecked")
+private Map<String, List<XYDataItem>> deserialize(File file) {
+Map<String, List<XYDataItem>> stats = null;
+if (file.exists() && file.canRead()) {
+long start = System.currentTimeMillis();
+try {
+try (InputStream fis = Files.newInputStream(file.toPath())) {
+stats = (Map<String, List<XYDataItem>>) (new XStream().fromXML(fis));
+if (stats != null) {
+for (Entry<String, List<XYDataItem>> set : stats.entrySet()) {
+List<XYDataItem> list = set.getValue();
+if (!list.isEmpty()) {
+XYDataItem xy = list.get(list.size() - 1);
+list.add(new XYDataItem(xy.getX().longValue() + 1, 0));
+list.add(new XYDataItem(System.currentTimeMillis(), 0));
+}
+}
+}
+}
+logger.debug("stats data read in {}ms", System.currentTimeMillis() - start);
+} catch (Exception e) {
+logger.error("Could not read stats data from '{}'", file.getAbsolutePath(), e);
+}
+}
+return stats;
+}
+public void lockForUpdate() throws InterruptedException {
+lock.lockForUpdate();
+}
+public void releaseLock() {
+lock.releaseUpdateLock();
+}
+@Override
+public synchronized void afterPropertiesSet() {
+int index = 0;
+Map<String, List<XYDataItem>> stats;
+while (true) {
+File file = index == 0 ? makeFile() : new File(makeFile().getAbsolutePath() + "." + index);
+stats = deserialize(file);
+index += 1;
+if (stats != null || index >= maxFiles - 1) {
+break;
+}
+}
+if (stats != null) {
+statsData = stats;
+} else {
+logger.debug("Stats data file not found. Empty file assumed.");
+}
+}
+@Override
+public void destroy() throws Exception {
+serialize();
+}
+@Override
+public void setApplicationContext(ApplicationContext applicationContext) {
+WebApplicationContext wac = (WebApplicationContext) applicationContext;
+contextTempDir = (File) wac.getServletContext().getAttribute("javax.servlet.context.tempdir");
+}
+}

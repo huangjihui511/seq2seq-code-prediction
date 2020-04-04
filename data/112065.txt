@@ -1,0 +1,38 @@
+package org.springframework.data.mongodb.util.json;
+import static org.assertj.core.api.Assertions.*;
+import org.bson.BsonDouble;
+import org.bson.BsonInt32;
+import org.bson.BsonInt64;
+import org.bson.BsonObjectId;
+import org.bson.BsonString;
+import org.bson.types.ObjectId;
+import org.junit.jupiter.api.Test;
+import org.springframework.data.mongodb.util.BsonUtils;
+class BsonUtilsTest {
+@Test 
+void simpleToBsonValue() {
+assertThat(BsonUtils.simpleToBsonValue(Long.valueOf(10))).isEqualTo(new BsonInt64(10));
+assertThat(BsonUtils.simpleToBsonValue(new Integer(10))).isEqualTo(new BsonInt32(10));
+assertThat(BsonUtils.simpleToBsonValue(Double.valueOf(0.1D))).isEqualTo(new BsonDouble(0.1D));
+assertThat(BsonUtils.simpleToBsonValue("value")).isEqualTo(new BsonString("value"));
+}
+@Test 
+void primitiveToBsonValue() {
+assertThat(BsonUtils.simpleToBsonValue(10L)).isEqualTo(new BsonInt64(10));
+}
+@Test 
+void objectIdToBsonValue() {
+ObjectId source = new ObjectId();
+assertThat(BsonUtils.simpleToBsonValue(source)).isEqualTo(new BsonObjectId(source));
+}
+@Test 
+void bsonValueToBsonValue() {
+BsonObjectId source = new BsonObjectId(new ObjectId());
+assertThat(BsonUtils.simpleToBsonValue(source)).isSameAs(source);
+}
+@Test 
+void unsupportedToBsonValue() {
+assertThatExceptionOfType(IllegalArgumentException.class)
+.isThrownBy(() -> BsonUtils.simpleToBsonValue(new Object()));
+}
+}

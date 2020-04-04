@@ -1,0 +1,11 @@
+package com.google.auto.factory;
+import static java.lang.annotation.ElementType.CONSTRUCTOR;
+import static java.lang.annotation.ElementType.TYPE;
+import java.lang.annotation.Target;
+@Target({ TYPE, CONSTRUCTOR })
+public @interface AutoFactory {
+String className() default "";
+Class<?>[] implementing() default { };
+Class<?> extending() default Object.class;
+boolean allowSubclasses() default false;
+}

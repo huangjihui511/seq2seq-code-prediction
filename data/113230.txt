@@ -1,0 +1,17 @@
+package org.pf4j;
+import java.nio.file.Path;
+public class PluginAlreadyLoadedException extends PluginRuntimeException {
+private final String pluginId;
+private final Path pluginPath;
+public PluginAlreadyLoadedException(String pluginId, Path pluginPath) {
+super("Plugin '{}' already loaded with id '{}'", pluginPath, pluginId);
+this.pluginId = pluginId;
+this.pluginPath = pluginPath;
+}
+public String getPluginId() {
+return pluginId;
+}
+public Path getPluginPath() {
+return pluginPath;
+}
+}

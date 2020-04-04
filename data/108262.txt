@@ -1,0 +1,11 @@
+package org.apache.flink.runtime.state.metainfo;
+import org.apache.flink.core.memory.DataInputView;
+import javax.annotation.Nonnull;
+import java.io.IOException;
+@FunctionalInterface
+public interface StateMetaInfoReader {
+@Nonnull
+StateMetaInfoSnapshot readStateMetaInfoSnapshot(
+@Nonnull DataInputView inputView,
+@Nonnull ClassLoader userCodeClassLoader) throws IOException;
+}

@@ -1,0 +1,17 @@
+package com.pokegoapi.api.inventory;
+import POGOProtos.Inventory.Item.ItemIdOuterClass.ItemId;
+import lombok.Getter;
+public enum Pokeball {
+POKEBALL(ItemId.ITEM_POKE_BALL, 1.0),
+GREATBALL(ItemId.ITEM_GREAT_BALL, 0.4),
+ULTRABALL(ItemId.ITEM_ULTRA_BALL, 0.2),
+MASTERBALL(ItemId.ITEM_MASTER_BALL, 0.0);
+@Getter
+public final ItemId ballType;
+@Getter
+public final double captureProbability;
+Pokeball(ItemId type, double probability) {
+ballType = type;
+captureProbability = probability;
+}
+}

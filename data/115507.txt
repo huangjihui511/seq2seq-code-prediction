@@ -1,0 +1,5 @@
+package org.gnucash.android.ui.common;
+public interface Refreshable {
+public void refresh();
+public void refresh(String uid);
+}

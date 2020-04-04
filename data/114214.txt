@@ -1,0 +1,35 @@
+package com.datumbox.framework.common.concurrency;
+import java.util.concurrent.Executor;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.Semaphore;
+public class ThrottledExecutor implements Executor {
+private final Executor wrappedExecutor;
+private final Semaphore semaphore;
+public ThrottledExecutor(Executor executor, int maxConcurrentTasks) {
+this.wrappedExecutor = executor;
+this.semaphore = new Semaphore(maxConcurrentTasks);
+}
+@Override
+public void execute(final Runnable command) {
+try {
+semaphore.acquire();
+}
+catch (InterruptedException ex) {
+throw new RuntimeException(ex);
+}
+try {
+wrappedExecutor.execute(() -> {
+try {
+command.run();
+}
+finally {
+semaphore.release();
+}
+});
+}
+catch (RejectedExecutionException ex) {
+semaphore.release();
+throw new RuntimeException(ex);
+}
+}
+}

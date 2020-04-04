@@ -1,0 +1,84 @@
+package com.twelvemonkeys.net;
+import com.twelvemonkeys.io.*;
+import com.twelvemonkeys.io.enc.Base64Decoder;
+import com.twelvemonkeys.io.enc.DecoderStream;
+import java.io.*;
+class BASE64 {
+private final static char[] PEM_ARRAY = {
+'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 
+'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 
+'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 
+'Y', 'Z', 'a', 'b', 'c', 'd', 'e', 'f', 
+'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 
+'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 
+'w', 'x', 'y', 'z', '0', '1', '2', '3', 
+'4', '5', '6', '7', '8', '9', '+', '/' 
+};
+public static String encode(byte[] pData) {
+int offset = 0;
+int len;
+StringBuilder buf = new StringBuilder();
+while ((pData.length - offset) > 0) {
+byte a, b, c;
+if ((pData.length - offset) > 2) {
+len = 3;
+}
+else {
+len = pData.length - offset;
+}
+switch (len) {
+case 1:
+a = pData[offset];
+b = 0;
+buf.append(PEM_ARRAY[(a >>> 2) & 0x3F]);
+buf.append(PEM_ARRAY[((a << 4) & 0x30) + ((b >>> 4) & 0xf)]);
+buf.append('=');
+buf.append('=');
+offset++;
+break;
+case 2:
+a = pData[offset];
+b = pData[offset + 1];
+c = 0;
+buf.append(PEM_ARRAY[(a >>> 2) & 0x3F]);
+buf.append(PEM_ARRAY[((a << 4) & 0x30) + ((b >>> 4) & 0xf)]);
+buf.append(PEM_ARRAY[((b << 2) & 0x3c) + ((c >>> 6) & 0x3)]);
+buf.append('=');
+offset += offset + 2; 
+break;
+default:
+a = pData[offset];
+b = pData[offset + 1];
+c = pData[offset + 2];
+buf.append(PEM_ARRAY[(a >>> 2) & 0x3F]);
+buf.append(PEM_ARRAY[((a << 4) & 0x30) + ((b >>> 4) & 0xf)]);
+buf.append(PEM_ARRAY[((b << 2) & 0x3c) + ((c >>> 6) & 0x3)]);
+buf.append(PEM_ARRAY[c & 0x3F]);
+offset = offset + 3;
+break;
+}
+}
+return buf.toString();
+}
+public static byte[] decode(String pData) throws IOException {
+InputStream in = new DecoderStream(new ByteArrayInputStream(pData.getBytes()), new Base64Decoder());
+ByteArrayOutputStream bytes = new FastByteArrayOutputStream(pData.length() * 3);
+FileUtil.copy(in, bytes);
+return bytes.toByteArray();
+}
+public static void main(String[] pArgs) throws IOException {
+if (pArgs.length == 1) {
+System.out.println(encode(pArgs[0].getBytes()));
+}
+else
+if (pArgs.length == 2 && ("-d".equals(pArgs[0]) || "--decode".equals(pArgs[0])))
+{
+System.out.println(new String(decode(pArgs[1])));
+}
+else {
+System.err.println("BASE64 [ -d | --decode ] arg");
+System.err.println("Encodes or decodes a given string");
+System.exit(5);
+}
+}
+}

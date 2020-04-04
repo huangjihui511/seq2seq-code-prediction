@@ -1,0 +1,11 @@
+package com.github.benmanes.caffeine.cache.local;
+public final class Finalize extends LocalCacheRule {
+@Override
+protected boolean applies() {
+return true;
+}
+@Override
+protected void execute() {
+context.cache.addMethod(context.constructor.build());
+}
+}

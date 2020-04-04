@@ -1,0 +1,19 @@
+package tests;
+import javax.annotation.processing.Generated;
+import javax.inject.Inject;
+@Generated(
+value = "com.google.auto.factory.processor.AutoFactoryProcessor",
+comments = "https:
+)
+final class MultipleFactoriesImplementingInterface_ClassBFactory
+implements MultipleFactoriesImplementingInterface.Base.Factory {
+@Inject
+MultipleFactoriesImplementingInterface_ClassBFactory() {}
+MultipleFactoriesImplementingInterface.ClassB create() {
+return new MultipleFactoriesImplementingInterface.ClassB();
+}
+@Override
+public MultipleFactoriesImplementingInterface.ClassB abstractNonDefaultCreate() {
+return create();
+}
+}

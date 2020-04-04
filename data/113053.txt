@@ -1,0 +1,38 @@
+package org.apache.fontbox.ttf.model;
+import java.util.Set;
+public interface GsubData
+{
+GsubData NO_DATA_FOUND = new GsubData()
+{
+@Override
+public boolean isFeatureSupported(String featureName)
+{
+throw new UnsupportedOperationException();
+}
+@Override
+public Language getLanguage()
+{
+throw new UnsupportedOperationException();
+}
+@Override
+public ScriptFeature getFeature(String featureName)
+{
+throw new UnsupportedOperationException();
+}
+@Override
+public String getActiveScriptName()
+{
+throw new UnsupportedOperationException();
+}
+@Override
+public Set<String> getSupportedFeatures()
+{
+throw new UnsupportedOperationException();
+}
+};
+Language getLanguage();
+String getActiveScriptName();
+boolean isFeatureSupported(String featureName);
+ScriptFeature getFeature(String featureName);
+Set<String> getSupportedFeatures();
+}

@@ -1,0 +1,90 @@
+package com.datumbox.framework.core.machinelearning.common.abstracts.modelers;
+import com.datumbox.framework.common.Configuration;
+import com.datumbox.framework.core.common.dataobjects.Record;
+import com.datumbox.framework.common.storage.interfaces.BigMap;
+import com.datumbox.framework.common.storage.interfaces.StorageEngine;
+import com.datumbox.framework.common.storage.interfaces.StorageEngine.MapType;
+import com.datumbox.framework.common.storage.interfaces.StorageEngine.StorageHint;
+import com.datumbox.framework.core.machinelearning.common.abstracts.AbstractTrainer;
+import com.datumbox.framework.core.machinelearning.common.interfaces.Cluster;
+import java.util.*;
+public abstract class AbstractClusterer<CL extends AbstractClusterer.AbstractCluster, MP extends AbstractClusterer.AbstractModelParameters, TP extends AbstractClusterer.AbstractTrainingParameters> extends AbstractModeler<MP, TP> {
+public static abstract class AbstractCluster implements Cluster {
+protected final Integer clusterId;
+protected int size = 0;
+protected AbstractCluster(Integer clusterId) {
+this.clusterId = clusterId;
+}
+@Override
+public int size() {
+return size;
+}
+@Override
+public int hashCode() {
+int hash = 7;
+hash = 89 * hash + this.clusterId;
+return hash;
+}
+@Override
+public boolean equals(Object obj) {
+if (obj == null) {
+return false;
+}
+if (getClass() != obj.getClass()) {
+return false;
+}
+else if (!Objects.equals(this.clusterId, ((AbstractCluster) obj).clusterId)) {
+return false;
+}
+return true;
+}
+protected abstract void clear();
+protected abstract void add(Record r);
+protected abstract void remove(Record r);
+}
+public static abstract class AbstractModelParameters<CL extends AbstractClusterer.AbstractCluster> extends AbstractModeler.AbstractModelParameters {
+private Set<Object> goldStandardClasses = new LinkedHashSet<>();
+@BigMap(keyClass=Integer.class, valueClass=AbstractCluster.class, mapType=MapType.HASHMAP, storageHint=StorageHint.IN_CACHE, concurrent=false)
+private Map<Integer, CL> clusterMap;
+protected AbstractModelParameters(StorageEngine storageEngine) {
+super(storageEngine);
+}
+public Integer getC() {
+if(clusterMap == null) {
+return 0;
+}
+return clusterMap.size();
+}
+public Set<Object> getGoldStandardClasses() {
+return goldStandardClasses;
+}
+protected void setGoldStandardClasses(Set<Object> goldStandardClasses) {
+this.goldStandardClasses = goldStandardClasses;
+}
+public Map<Integer, CL> getClusterMap() {
+return clusterMap;
+}
+protected void setClusterMap(Map<Integer, CL> clusterMap) {
+this.clusterMap = clusterMap;
+}
+}
+protected AbstractClusterer(TP trainingParameters, Configuration configuration) {
+super(trainingParameters, configuration);
+}
+protected AbstractClusterer(String storageName, Configuration configuration) {
+super(storageName, configuration);
+}
+protected void clearClusters() {
+MP modelParameters = knowledgeBase.getModelParameters();
+Map<Integer, CL> clusterMap = modelParameters.getClusterMap();
+for(Map.Entry<Integer, CL> e : clusterMap.entrySet()) {
+Integer clusterId = e.getKey();
+CL c = e.getValue();
+c.clear();
+clusterMap.put(clusterId, c);
+}
+}
+public Map<Integer, CL> getClusters() {
+return knowledgeBase.getModelParameters().getClusterMap();
+}
+}

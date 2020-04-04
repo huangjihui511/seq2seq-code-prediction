@@ -1,0 +1,44 @@
+package org.graalvm.compiler.truffle.compiler.nodes;
+import static org.graalvm.compiler.nodeinfo.NodeCycles.CYCLES_0;
+import static org.graalvm.compiler.nodeinfo.NodeSize.SIZE_0;
+import org.graalvm.compiler.core.common.type.StampFactory;
+import org.graalvm.compiler.graph.Node;
+import org.graalvm.compiler.graph.NodeClass;
+import org.graalvm.compiler.graph.spi.Canonicalizable;
+import org.graalvm.compiler.graph.spi.CanonicalizerTool;
+import org.graalvm.compiler.nodeinfo.NodeInfo;
+import org.graalvm.compiler.nodes.DeoptimizeNode;
+import org.graalvm.compiler.nodes.FixedWithNextNode;
+import org.graalvm.compiler.truffle.compiler.PartialEvaluator;
+import jdk.vm.ci.meta.DeoptimizationAction;
+import jdk.vm.ci.meta.DeoptimizationReason;
+import jdk.vm.ci.meta.ResolvedJavaMethod;
+import jdk.vm.ci.meta.SpeculationLog;
+import jdk.vm.ci.meta.SpeculationLog.Speculation;
+import jdk.vm.ci.meta.SpeculationLog.SpeculationReason;
+@NodeInfo(cycles = CYCLES_0, size = SIZE_0)
+public final class SpeculativeExceptionAnchorNode extends FixedWithNextNode implements Canonicalizable {
+public static final NodeClass<SpeculativeExceptionAnchorNode> TYPE = NodeClass.create(SpeculativeExceptionAnchorNode.class);
+private final DeoptimizationReason reason;
+private final DeoptimizationAction action;
+private final ResolvedJavaMethod targetMethod;
+public SpeculativeExceptionAnchorNode(DeoptimizationReason reason, DeoptimizationAction action, ResolvedJavaMethod targetMethod) {
+super(TYPE, StampFactory.forVoid());
+this.reason = reason;
+this.action = action;
+this.targetMethod = targetMethod;
+}
+@Override
+public Node canonical(CanonicalizerTool tool) {
+SpeculationLog speculationLog = graph().getSpeculationLog();
+if (speculationLog != null) {
+SpeculationReason speculationReason = PartialEvaluator.createTruffleBoundaryExceptionSpeculation(targetMethod);
+if (speculationLog.maySpeculate(speculationReason)) {
+Speculation exceptionSpeculation = speculationLog.speculate(speculationReason);
+return new DeoptimizeNode(action, reason, exceptionSpeculation);
+}
+return null;
+}
+return this;
+}
+}

@@ -1,0 +1,4 @@
+package net.openhft.affinity;
+public interface AffinityStrategy {
+boolean matches(int cpuId, int cpuId2);
+}

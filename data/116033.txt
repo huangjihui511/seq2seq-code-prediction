@@ -1,0 +1,6 @@
+package org.apache.rocketmq.spring.starter.enums;
+import org.apache.rocketmq.common.filter.ExpressionType;
+public enum SelectorType {
+TAG,
+SQL92
+}

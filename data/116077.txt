@@ -1,0 +1,77 @@
+package org.apache.dubbo.spring.starter.env;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.env.EnvironmentPostProcessor;
+import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.core.Ordered;
+import org.springframework.core.env.ConfigurableEnvironment;
+import org.springframework.core.env.Environment;
+import org.springframework.core.env.MapPropertySource;
+import org.springframework.core.env.MutablePropertySources;
+import org.springframework.core.env.PropertySource;
+import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Properties;
+import static org.apache.dubbo.spring.starter.util.DubboUtils.*;
+public class DubboDefaultPropertiesEnvironmentPostProcessor implements EnvironmentPostProcessor, Ordered {
+public static final String PROPERTY_SOURCE_NAME = "defaultProperties";
+public static final String ALLOW_BEAN_DEFINITION_OVERRIDING_PROPERTY = "spring.main.allow-bean-definition-overriding";
+@Override
+public void postProcessEnvironment(ConfigurableEnvironment environment, SpringApplication application) {
+MutablePropertySources propertySources = environment.getPropertySources();
+Map<String, Object> defaultProperties = createDefaultProperties(environment);
+if (!CollectionUtils.isEmpty(defaultProperties)) {
+addOrReplace(propertySources, defaultProperties);
+}
+}
+@Override
+public int getOrder() {
+return LOWEST_PRECEDENCE;
+}
+private Map<String, Object> createDefaultProperties(ConfigurableEnvironment environment) {
+Map<String, Object> defaultProperties = new HashMap<String, Object>();
+setDubboApplicationNameProperty(environment, defaultProperties);
+setDubboConfigMultipleProperty(defaultProperties);
+setDubboApplicationQosEnableProperty(defaultProperties);
+setAllowBeanDefinitionOverriding(defaultProperties);
+return defaultProperties;
+}
+private void setDubboApplicationNameProperty(Environment environment, Map<String, Object> defaultProperties) {
+String springApplicationName = environment.getProperty(SPRING_APPLICATION_NAME_PROPERTY);
+if (StringUtils.hasLength(springApplicationName)
+&& !environment.containsProperty(DUBBO_APPLICATION_NAME_PROPERTY)) {
+defaultProperties.put(DUBBO_APPLICATION_NAME_PROPERTY, springApplicationName);
+}
+}
+private void setDubboConfigMultipleProperty(Map<String, Object> defaultProperties) {
+defaultProperties.put(DUBBO_CONFIG_MULTIPLE_PROPERTY, Boolean.TRUE.toString());
+}
+private void setDubboApplicationQosEnableProperty(Map<String, Object> defaultProperties) {
+defaultProperties.put(DUBBO_APPLICATION_QOS_ENABLE_PROPERTY, Boolean.FALSE.toString());
+}
+private void setAllowBeanDefinitionOverriding(Map<String, Object> defaultProperties) {
+defaultProperties.put(ALLOW_BEAN_DEFINITION_OVERRIDING_PROPERTY, Boolean.TRUE.toString());
+}
+private void addOrReplace(MutablePropertySources propertySources,
+Map<String, Object> map) {
+MapPropertySource target = null;
+if (propertySources.contains(PROPERTY_SOURCE_NAME)) {
+PropertySource<?> source = propertySources.get(PROPERTY_SOURCE_NAME);
+if (source instanceof MapPropertySource) {
+target = (MapPropertySource) source;
+for (String key : map.keySet()) {
+if (!target.containsProperty(key)) {
+target.getSource().put(key, map.get(key));
+}
+}
+}
+}
+if (target == null) {
+target = new MapPropertySource(PROPERTY_SOURCE_NAME, map);
+}
+if (!propertySources.contains(PROPERTY_SOURCE_NAME)) {
+propertySources.addLast(target);
+}
+}
+}

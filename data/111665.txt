@@ -1,0 +1,150 @@
+package net.glowstone.command;
+import net.glowstone.GlowWorld;
+import net.glowstone.ServerProvider;
+import net.glowstone.block.state.BlockStateData;
+import net.glowstone.block.state.InvalidBlockStateException;
+import net.glowstone.block.state.StateSerialization;
+import org.apache.commons.lang.math.NumberUtils;
+import org.bukkit.ChatColor;
+import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
+import org.bukkit.command.BlockCommandSender;
+import org.bukkit.command.CommandSender;
+import org.bukkit.command.ConsoleCommandSender;
+import org.bukkit.entity.Entity;
+public class CommandUtils {
+private CommandUtils() {
+}
+private static double getDouble(String d, boolean shift) {
+boolean literal = d.split("\\.").length != 1;
+if (shift && !literal) {
+d += ".5";
+}
+return Double.valueOf(d);
+}
+public static BlockStateData readState(CommandSender sender, Material type, String state) {
+if (NumberUtils.isNumber(state)) {
+return new BlockStateData(Byte.parseByte(state));
+}
+try {
+return StateSerialization.parse(type, state);
+} catch (InvalidBlockStateException e) {
+sender.sendMessage(ChatColor.RED + e.getMessage());
+return null;
+}
+}
+private static GlowWorld getDefaultWorld() {
+return (GlowWorld) ServerProvider.getServer().getWorlds().get(0);
+}
+public static GlowWorld getWorld(CommandSender sender) {
+if (sender instanceof ConsoleCommandSender) {
+return getDefaultWorld();
+} else if (sender instanceof Entity) {
+return (GlowWorld) ((Entity) sender).getWorld();
+} else if (sender instanceof BlockCommandSender) {
+return (GlowWorld) ((BlockCommandSender) sender).getBlock().getWorld();
+}
+return getDefaultWorld();
+}
+public static Location getLocation(CommandSender sender) {
+if (sender instanceof Entity) {
+return ((Entity) sender).getLocation();
+} else if (sender instanceof BlockCommandSender) {
+return ((BlockCommandSender) sender).getBlock().getLocation();
+}
+return new Location(getDefaultWorld(), 0, 0, 0);
+}
+public static Location getLocation(CommandSender sender, String x, String y, String z) {
+Location currentLocation;
+if (x.startsWith("~") || y.startsWith("~") || z
+.startsWith("~")) { 
+currentLocation = getLocation(sender);
+} else { 
+currentLocation = new Location(getWorld(sender), 0, 0, 0);
+}
+return getLocation(currentLocation, x, y, z);
+}
+public static Location getLocation(Location location, String relativeX, String relativeY,
+String relativeZ) {
+double x;
+double y;
+double z;
+if (relativeX.startsWith("~")) {
+double diff = 0;
+if (relativeX.length() > 1) {
+diff = getDouble(relativeX.substring(1), true);
+}
+x = location.getX() + diff;
+} else {
+x = getDouble(relativeX, true);
+}
+if (relativeY.startsWith("~")) {
+double diff = 0;
+if (relativeY.length() > 1) {
+diff = getDouble(relativeY.substring(1), false);
+}
+y = location.getY() + diff;
+} else {
+y = getDouble(relativeY, false);
+}
+if (relativeZ.startsWith("~")) {
+double diff = 0;
+if (relativeZ.length() > 1) {
+diff = getDouble(relativeZ.substring(1), true);
+}
+z = location.getZ() + diff;
+} else {
+z = getDouble(relativeZ, true);
+}
+return new Location(location.getWorld(), x, y, z);
+}
+public static Location getRotation(Location location, String yawRelative,
+String pitchRelative) {
+float yaw;
+if (yawRelative.startsWith("~")) {
+float diff = 0;
+if (yawRelative.length() > 1) {
+diff = Float.valueOf(yawRelative.substring(1));
+}
+yaw = location.getYaw() + diff;
+} else {
+yaw = Float.valueOf(yawRelative);
+}
+float pitch;
+if (pitchRelative.startsWith("~")) {
+float diff = 0;
+if (pitchRelative.length() > 1) {
+diff = Float.valueOf(pitchRelative.substring(1));
+}
+pitch = location.getPitch() + diff;
+} else {
+pitch = Float.valueOf(pitchRelative);
+}
+return new Location(location.getWorld(), location.getX(), location.getY(), location.getZ(),
+yaw, pitch);
+}
+public static String getName(CommandSender sender) {
+if (sender instanceof Entity) {
+return getName((Entity) sender);
+}
+return sender.getName();
+}
+public static String getName(Entity entity) {
+String customName = entity.getCustomName();
+if (customName != null && !customName.isEmpty()) {
+return customName;
+}
+String name = entity.getName();
+if (name == null || name.isEmpty()) {
+name = entity.getType().getName();
+}
+return name;
+}
+public static boolean isPhysical(CommandSender sender) {
+return sender instanceof Entity || sender instanceof BlockCommandSender;
+}
+public static String toNamespaced(String input) {
+return input.indexOf(':') >= 0 ? input : NamespacedKey.MINECRAFT + ':' + input;
+}
+}

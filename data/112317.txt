@@ -1,0 +1,8 @@
+package com.github.jknack.handlebars.io;
+import java.io.IOException;
+import java.nio.charset.Charset;
+public interface TemplateSource {
+String content(Charset charset) throws IOException;
+String filename();
+long lastModified();
+}

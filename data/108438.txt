@@ -1,0 +1,21 @@
+package com.oracle.svm.core.annotate;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+@Retention(RetentionPolicy.RUNTIME)
+@Target({ElementType.METHOD, ElementType.CONSTRUCTOR})
+public @interface RestrictHeapAccess {
+enum Access {
+UNRESTRICTED,
+NO_ALLOCATION,
+NO_HEAP_ACCESS;
+public boolean isMoreRestrictiveThan(Access other) {
+return ordinal() > other.ordinal();
+}
+}
+Access access();
+boolean overridesCallers() default false;
+String reason();
+boolean mayBeInlined() default false;
+}

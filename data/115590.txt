@@ -1,0 +1,25 @@
+package com.netflix.astyanax.mapping;
+import com.google.common.collect.Maps;
+import java.util.Map;
+public class MappingCache {
+private final Map<Class<?>, Mapping<?>> cache = Maps.newConcurrentMap();
+public <T> Mapping<T> getMapping(Class<T> clazz, boolean includeParentFields) {
+return getMapping(clazz, new DefaultAnnotationSet(), includeParentFields);
+}
+public <T> Mapping<T> getMapping(Class<T> clazz) {
+return getMapping(clazz, false);
+}
+@SuppressWarnings({ "unchecked" })
+public <T> Mapping<T> getMapping(Class<T> clazz,
+AnnotationSet<?, ?> annotationSet, boolean includeParentFields) {
+Mapping<T> mapping = (Mapping<T>) cache.get(clazz); 
+if (mapping == null) {
+mapping = new Mapping<T>(clazz, annotationSet, includeParentFields);
+cache.put(clazz, mapping);
+}
+return mapping;
+}
+public <T> Mapping<T> getMapping(Class<T> clazz, AnnotationSet<?, ?> annotationSet) {
+return getMapping(clazz, annotationSet, false);
+}
+}

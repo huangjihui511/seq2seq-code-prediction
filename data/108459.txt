@@ -1,0 +1,6 @@
+package com.oracle.svm.core.jdk;
+public class AnnotationSupportConfig {
+public static void initialize() {
+ModuleUtils.addOpensToAllUnnamed("java.base", "jdk.internal.vm.annotation");
+}
+}

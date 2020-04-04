@@ -1,0 +1,134 @@
+package org.menacheri.jetclient;
+import java.net.InetSocketAddress;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import org.jboss.netty.bootstrap.ClientBootstrap;
+import org.jboss.netty.buffer.ChannelBuffer;
+import org.jboss.netty.channel.Channel;
+import org.jboss.netty.channel.ChannelFactory;
+import org.jboss.netty.channel.ChannelFuture;
+import org.jboss.netty.channel.ChannelFutureListener;
+import org.jboss.netty.channel.ChannelPipeline;
+import org.jboss.netty.channel.ChannelPipelineFactory;
+import org.jboss.netty.channel.group.ChannelGroup;
+import org.jboss.netty.channel.group.ChannelGroupFuture;
+import org.jboss.netty.channel.group.DefaultChannelGroup;
+import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
+import org.menacheri.jetclient.event.Event;
+public class NettyTCPClient
+{
+private final InetSocketAddress serverAddress;
+private final ChannelFactory channelFactory;
+private final ExecutorService boss;
+private final ExecutorService worker;
+private final ClientBootstrap bootstrap;
+private final int maxShutdownWaitTime;
+public static final ChannelGroup ALL_CHANNELS = new DefaultChannelGroup(
+"JET-CLIENT-CONNECTIONS");
+public NettyTCPClient(String jetserverHost, int port)
+{
+this(new InetSocketAddress(jetserverHost, port));
+}
+public NettyTCPClient(final InetSocketAddress serverAddress)
+{
+this(serverAddress, Executors.newCachedThreadPool(), Executors
+.newCachedThreadPool(), null, 5000);
+}
+public NettyTCPClient(final InetSocketAddress serverAddress,
+final ExecutorService boss, final ExecutorService worker,
+final ChannelFactory channelFactory, final int maxShutdownWaitTime)
+{
+this.serverAddress = serverAddress;
+this.boss = boss;
+this.worker = worker;
+if (null != channelFactory)
+{
+this.channelFactory = channelFactory;
+}
+else
+{
+this.channelFactory = new NioClientSocketChannelFactory(boss,
+worker);
+}
+this.bootstrap = new ClientBootstrap(this.channelFactory);
+this.bootstrap.setOption("tcpNoDelay", true);
+this.bootstrap.setOption("keepAlive", true);
+this.maxShutdownWaitTime = maxShutdownWaitTime;
+Runtime.getRuntime().addShutdownHook(new Thread()
+{
+public void run()
+{
+ChannelGroupFuture future = ALL_CHANNELS.close();
+try
+{
+future.await(NettyTCPClient.this.maxShutdownWaitTime);
+}
+catch (InterruptedException e)
+{
+e.printStackTrace();
+}
+bootstrap.releaseExternalResources();
+}
+});
+}
+public Channel connect(final ChannelPipelineFactory pipelineFactory,
+final Event loginEvent) throws InterruptedException
+{
+return connect(pipelineFactory, loginEvent, 5, TimeUnit.SECONDS);
+}
+public Channel connect(final ChannelPipelineFactory pipelineFactory,
+final Event loginEvent, int timeout, TimeUnit unit)
+throws InterruptedException
+{
+ChannelFuture future;
+synchronized (bootstrap)
+{
+bootstrap.setPipelineFactory(pipelineFactory);
+future = bootstrap.connect(serverAddress);
+future.addListener(new ChannelFutureListener()
+{
+@Override
+public void operationComplete(ChannelFuture future)
+throws Exception
+{
+if (future.isSuccess())
+{
+future.getChannel().write(loginEvent);
+}
+else
+{
+throw new RuntimeException(future.getCause()
+.getMessage());
+}
+}
+});
+}
+return future.getChannel();
+}
+public InetSocketAddress getServerAddress()
+{
+return serverAddress;
+}
+public ChannelFactory getChannelFactory()
+{
+return channelFactory;
+}
+public ExecutorService getBoss()
+{
+return boss;
+}
+public ExecutorService getWorker()
+{
+return worker;
+}
+public ClientBootstrap getBootstrap()
+{
+return bootstrap;
+}
+public int getMaxShutdownWaitTime()
+{
+return maxShutdownWaitTime;
+}
+}

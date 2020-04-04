@@ -1,0 +1,37 @@
+package com.pokegoapi.main;
+import POGOProtos.Networking.Platform.PlatformRequestTypeOuterClass.PlatformRequestType;
+import POGOProtos.Networking.Requests.RequestTypeOuterClass.RequestType;
+import com.google.protobuf.ByteString;
+import lombok.Getter;
+import lombok.Setter;
+import java.util.EnumMap;
+public class ServerResponse {
+private final EnumMap<RequestType, ByteString> responses = new EnumMap<>(RequestType.class);
+private final EnumMap<PlatformRequestType, ByteString> platformResponses = new EnumMap<>(PlatformRequestType.class);
+@Getter
+@Setter
+public Exception exception;
+public ServerResponse() {
+}
+public ServerResponse(Exception exception) {
+this.exception = exception;
+}
+public void addResponse(RequestType type, ByteString data) {
+responses.put(type, data);
+}
+public void addResponse(PlatformRequestType type, ByteString data) {
+platformResponses.put(type, data);
+}
+public ByteString get(RequestType type) {
+return responses.get(type);
+}
+public ByteString get(PlatformRequestType type) {
+return platformResponses.get(type);
+}
+public boolean has(RequestType type) {
+return responses.containsKey(type);
+}
+public boolean has(PlatformRequestType type) {
+return platformResponses.containsKey(type);
+}
+}

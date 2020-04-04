@@ -1,0 +1,11 @@
+package org.apereo.cas.redis;
+import org.junit.platform.runner.JUnitPlatform;
+import org.junit.platform.suite.api.SelectClasses;
+import org.junit.runner.RunWith;
+@SelectClasses({
+RedisAuthenticationHandlerTests.class,
+RedisPersonAttributeDaoTests.class
+})
+@RunWith(JUnitPlatform.class)
+public class AllRedisAuthenticationTestsSuite {
+}

@@ -1,0 +1,81 @@
+package com.github.jknack.handlebars;
+import java.io.IOException;
+import java.io.Writer;
+import java.util.Collections;
+import java.util.List;
+public interface Template {
+Template EMPTY = new Template() {
+@Override
+public String text() {
+return "";
+}
+@Override
+public String apply(final Object context) throws IOException {
+return "";
+}
+@Override
+public String apply(final Context context) throws IOException {
+return "";
+}
+@Override
+public void apply(final Context context, final Writer writer)
+throws IOException {
+}
+@Override
+public void apply(final Object context, final Writer writer)
+throws IOException {
+}
+@Override
+public String toJavaScript() {
+return "";
+}
+@Override
+public String filename() {
+return "";
+}
+@Override
+public int[] position() {
+return new int[]{0, 0 };
+}
+@SuppressWarnings({"rawtypes", "unchecked" })
+@Override
+public <T> TypeSafeTemplate<T> as() {
+TypeSafeTemplate template = as(TypeSafeTemplate.class);
+return template;
+}
+@SuppressWarnings("unchecked")
+@Override
+public <T, S extends TypeSafeTemplate<T>> S as(final Class<S> rootType) {
+TypeSafeTemplate<T> template = new TypeSafeTemplate<T>() {
+@Override
+public String apply(final T context) throws IOException {
+return "";
+}
+@Override
+public void apply(final T context, final Writer writer) throws IOException {
+}
+};
+return (S) template;
+}
+@Override
+public List<String> collect(final TagType... tagType) {
+return Collections.emptyList();
+}
+@Override
+public List<String> collectReferenceParameters() {
+return Collections.emptyList();
+}
+};
+void apply(Object context, Writer writer) throws IOException;
+String apply(Object context) throws IOException;
+void apply(Context context, Writer writer) throws IOException;
+String apply(Context context) throws IOException;
+String text();
+String toJavaScript();
+<T, S extends TypeSafeTemplate<T>> S as(final Class<S> type);
+<T> TypeSafeTemplate<T> as();
+List<String> collect(TagType... tagType);
+List<String> collectReferenceParameters();
+String filename();
+int[] position();
+}

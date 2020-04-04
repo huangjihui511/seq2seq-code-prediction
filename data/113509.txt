@@ -1,0 +1,11 @@
+package com.pokegoapi.auth;
+import lombok.Getter;
+import lombok.Setter;
+public class PtcAuthJson {
+@Getter
+@Setter
+public String lt;
+@Getter
+@Setter
+public String execution;
+}

@@ -1,0 +1,4 @@
+package org.spongepowered.mod.bridge.client.gui;
+public interface GUIOverlayDebugBridge_Forge {
+void forgeBridge$setPlayerTrackerData(String owner, String notifier);
+}

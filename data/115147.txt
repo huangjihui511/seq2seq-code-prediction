@@ -1,0 +1,6 @@
+package io.ebean.cache;
+import io.ebean.BackgroundExecutor;
+import io.ebean.config.ServerConfig;
+public interface ServerCachePlugin {
+ServerCacheFactory create(ServerConfig config, BackgroundExecutor executor);
+}

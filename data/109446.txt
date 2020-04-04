@@ -1,0 +1,55 @@
+package com.facebook.presto.execution;
+import com.facebook.presto.execution.scheduler.ResettableRandomizedIterator;
+import com.google.common.collect.ImmutableSet;
+import org.testng.annotations.Test;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotEquals;
+public class TestResettableRandomizedIterator
+{
+@Test
+public void testResetting()
+{
+Set<Integer> expected = new HashSet<>();
+for (int i = 0; i < 100; i++) {
+expected.add(i);
+}
+expected = ImmutableSet.copyOf(expected);
+ResettableRandomizedIterator<Integer> randomizedIterator = new ResettableRandomizedIterator<>(expected);
+Set<Integer> actual = new HashSet<>();
+while (randomizedIterator.hasNext()) {
+actual.add(randomizedIterator.next());
+}
+assertEquals(actual, expected);
+actual.clear();
+randomizedIterator.reset();
+while (randomizedIterator.hasNext()) {
+actual.add(randomizedIterator.next());
+}
+assertEquals(actual, expected);
+}
+@Test
+public void testRandom()
+{
+Set<Integer> values = new HashSet<>();
+for (int i = 0; i < 100; i++) {
+values.add(i);
+}
+values = ImmutableSet.copyOf(values);
+ResettableRandomizedIterator<Integer> randomizedIterator = new ResettableRandomizedIterator<>(values);
+List<Integer> list1 = new ArrayList<>();
+List<Integer> list2 = new ArrayList<>();
+randomizedIterator.reset();
+for (int i = 0; i < 99; i++) {
+list1.add(randomizedIterator.next());
+}
+randomizedIterator.reset();
+for (int i = 0; i < 99; i++) {
+list2.add(randomizedIterator.next());
+}
+assertNotEquals(list1, list2);
+}
+}

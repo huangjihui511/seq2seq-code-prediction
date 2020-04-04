@@ -1,0 +1,57 @@
+package com.alibaba.csp.sentinel.command.handler;
+import java.net.URLDecoder;
+import java.util.List;
+import com.alibaba.csp.sentinel.command.CommandHandler;
+import com.alibaba.csp.sentinel.command.CommandRequest;
+import com.alibaba.csp.sentinel.command.CommandResponse;
+import com.alibaba.csp.sentinel.command.annotation.CommandMapping;
+import com.alibaba.csp.sentinel.datasource.WritableDataSource;
+import com.alibaba.csp.sentinel.log.RecordLog;
+import com.alibaba.csp.sentinel.slots.block.flow.param.ParamFlowRule;
+import com.alibaba.csp.sentinel.slots.block.flow.param.ParamFlowRuleManager;
+import com.alibaba.csp.sentinel.util.StringUtil;
+import com.alibaba.fastjson.JSONArray;
+@CommandMapping(name = "setParamFlowRules", desc = "Set parameter flow rules, while previous rules will be replaced.")
+public class ModifyParamFlowRulesCommandHandler implements CommandHandler<String> {
+private static WritableDataSource<List<ParamFlowRule>> paramFlowWds = null;
+@Override
+public CommandResponse<String> handle(CommandRequest request) {
+String data = request.getParam("data");
+if (StringUtil.isBlank(data)) {
+return CommandResponse.ofFailure(new IllegalArgumentException("Bad data"));
+}
+try {
+data = URLDecoder.decode(data, "utf-8");
+} catch (Exception e) {
+RecordLog.info("Decode rule data error", e);
+return CommandResponse.ofFailure(e, "decode rule data error");
+}
+RecordLog.info(String.format("[API Server] Receiving rule change (type:parameter flow rule): %s", data));
+String result = SUCCESS_MSG;
+List<ParamFlowRule> flowRules = JSONArray.parseArray(data, ParamFlowRule.class);
+ParamFlowRuleManager.loadRules(flowRules);
+if (!writeToDataSource(paramFlowWds, flowRules)) {
+result = WRITE_DS_FAILURE_MSG;
+}
+return CommandResponse.ofSuccess(result);
+}
+private <T> boolean writeToDataSource(WritableDataSource<T> dataSource, T value) {
+if (dataSource != null) {
+try {
+dataSource.write(value);
+} catch (Exception e) {
+RecordLog.warn("Write data source failed", e);
+return false;
+}
+}
+return true;
+}
+public synchronized static WritableDataSource<List<ParamFlowRule>> getWritableDataSource() {
+return paramFlowWds;
+}
+public synchronized static void setWritableDataSource(WritableDataSource<List<ParamFlowRule>> hotParamWds) {
+ModifyParamFlowRulesCommandHandler.paramFlowWds = hotParamWds;
+}
+private static final String SUCCESS_MSG = "success";
+private static final String WRITE_DS_FAILURE_MSG = "partial success (write data source failed)";
+}

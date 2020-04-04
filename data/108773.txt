@@ -1,0 +1,38 @@
+package cn.hutool.setting;
+import cn.hutool.core.io.FileUtil;
+import cn.hutool.core.io.resource.NoResourceException;
+import cn.hutool.core.util.StrUtil;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+public class SettingUtil {
+private static Map<String, Setting> settingMap = new ConcurrentHashMap<>();
+private static final Object lock = new Object();
+public static Setting get(String name) {
+Setting setting = settingMap.get(name);
+if (null == setting) {
+synchronized (lock) {
+setting = settingMap.get(name);
+if (null == setting) {
+String filePath = name;
+String extName = FileUtil.extName(filePath);
+if (StrUtil.isEmpty(extName)) {
+filePath = filePath + "." + Setting.EXT_NAME;
+}
+setting = new Setting(filePath, true);
+settingMap.put(name, setting);
+}
+}
+}
+return setting;
+}
+public static Setting getFirstFound(String... names) {
+Setting setting;
+for (String name : names) {
+try {
+return get(name);
+} catch (NoResourceException e) {
+}
+}
+return null;
+}
+}

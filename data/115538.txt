@@ -1,0 +1,66 @@
+package com.JUtils.file;
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
+public class ZipUitls {
+private static final String ZIP_FILE_SUFFIX = ".zip";
+public static void zipFile(String resourcePath,String targetPath){
+File resourcesFile = new File(resourcePath);
+File targetFile = new File(targetPath);
+if(!targetFile.exists()){
+targetFile.mkdirs();
+}
+String targetName = resourcesFile.getName() + ZIP_FILE_SUFFIX;
+ZipOutputStream out = null;
+try {
+FileOutputStream outputStream = new FileOutputStream(targetPath+"
+out = new ZipOutputStream(new BufferedOutputStream(outputStream));
+compressedFile(out, resourcesFile, "");
+} catch (FileNotFoundException e) {
+e.printStackTrace();
+}finally{
+if (out != null) {
+try {
+out.close();
+} catch (IOException e) {
+e.printStackTrace();
+}
+}
+}
+}
+private static void compressedFile(ZipOutputStream out, File file, String dir) {
+FileInputStream fis = null;
+try {
+File[] files = file.listFiles();
+out.putNextEntry(new ZipEntry(dir + "/"));
+dir = dir.length() == 0 ? "" : dir + "/";
+for (int i = 0; i < files.length; i++) {
+}
+fis = new FileInputStream(file);
+out.putNextEntry(new ZipEntry(dir));
+int j = 0;
+byte[] buffer = new byte[1024];
+while ((j = fis.read(buffer)) > 0) {
+out.write(buffer, 0, j);
+}
+}
+} catch (FileNotFoundException e) {
+e.printStackTrace();
+} catch (IOException e) {
+e.printStackTrace();
+} finally{
+if(fis != null){
+try {
+fis.close();
+} catch (IOException e) {
+e.printStackTrace();
+}
+}
+}
+}
+}

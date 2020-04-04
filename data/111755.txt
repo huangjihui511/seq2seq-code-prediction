@@ -1,0 +1,20 @@
+package org.jupiter.common.concurrent;
+import java.util.concurrent.ThreadPoolExecutor;
+public class BlockingProducersPolicyWithReport extends AbstractRejectedExecutionHandler {
+public BlockingProducersPolicyWithReport(String threadPoolName) {
+super(threadPoolName, false, "");
+}
+public BlockingProducersPolicyWithReport(String threadPoolName, String dumpPrefixName) {
+super(threadPoolName, true, dumpPrefixName);
+}
+@Override
+public void rejectedExecution(Runnable r, ThreadPoolExecutor e) {
+logger.error("Thread pool [{}] is exhausted! {}.", threadPoolName, e.toString());
+dumpJvmInfoIfNeeded();
+if (!e.isShutdown()) {
+try {
+e.getQueue().put(r);
+} catch (InterruptedException ignored) { /* should not be interrupted */ }
+}
+}
+}

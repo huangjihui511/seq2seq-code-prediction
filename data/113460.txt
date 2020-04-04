@@ -1,0 +1,264 @@
+package com.pokegoapi.api.pokemon;
+import POGOProtos.Data.PokemonDataOuterClass.PokemonData;
+import POGOProtos.Inventory.Item.ItemIdOuterClass.ItemId;
+import POGOProtos.Networking.Requests.Messages.EvolvePokemonMessageOuterClass.EvolvePokemonMessage;
+import POGOProtos.Networking.Requests.Messages.NicknamePokemonMessageOuterClass.NicknamePokemonMessage;
+import POGOProtos.Networking.Requests.Messages.ReleasePokemonMessageOuterClass.ReleasePokemonMessage;
+import POGOProtos.Networking.Requests.Messages.SetFavoritePokemonMessageOuterClass.SetFavoritePokemonMessage;
+import POGOProtos.Networking.Requests.Messages.UpgradePokemonMessageOuterClass.UpgradePokemonMessage;
+import POGOProtos.Networking.Requests.Messages.UseItemPotionMessageOuterClass;
+import POGOProtos.Networking.Requests.Messages.UseItemReviveMessageOuterClass.UseItemReviveMessage;
+import POGOProtos.Networking.Requests.RequestTypeOuterClass.RequestType;
+import POGOProtos.Networking.Responses.EvolvePokemonResponseOuterClass.EvolvePokemonResponse;
+import POGOProtos.Networking.Responses.NicknamePokemonResponseOuterClass.NicknamePokemonResponse;
+import POGOProtos.Networking.Responses.ReleasePokemonResponseOuterClass.ReleasePokemonResponse;
+import POGOProtos.Networking.Responses.ReleasePokemonResponseOuterClass.ReleasePokemonResponse.Result;
+import POGOProtos.Networking.Responses.SetFavoritePokemonResponseOuterClass.SetFavoritePokemonResponse;
+import POGOProtos.Networking.Responses.UpgradePokemonResponseOuterClass.UpgradePokemonResponse;
+import POGOProtos.Networking.Responses.UseItemPotionResponseOuterClass.UseItemPotionResponse;
+import POGOProtos.Networking.Responses.UseItemReviveResponseOuterClass.UseItemReviveResponse;
+import com.google.protobuf.ByteString;
+import com.google.protobuf.InvalidProtocolBufferException;
+import com.pokegoapi.api.PokemonGo;
+import com.pokegoapi.api.inventory.Item;
+import com.pokegoapi.api.map.pokemon.EvolutionResult;
+import com.pokegoapi.api.player.PlayerProfile;
+import com.pokegoapi.exceptions.NoSuchItemException;
+import com.pokegoapi.exceptions.request.RequestFailedException;
+import com.pokegoapi.api.settings.templates.ItemTemplates;
+import com.pokegoapi.main.ServerRequest;
+import com.pokegoapi.util.AsyncHelper;
+import lombok.Getter;
+import lombok.Setter;
+import rx.Observable;
+import rx.exceptions.Exceptions;
+import rx.functions.Func1;
+public class Pokemon extends PokemonDetails {
+private static final String TAG = Pokemon.class.getSimpleName();
+@Getter
+@Setter
+private int stamina;
+public Pokemon(PokemonGo api, PokemonData proto) {
+super(api, proto);
+this.stamina = proto.getStamina();
+}
+public Result transferPokemon() throws RequestFailedException {
+if (this.isFavorite() || this.isDeployed()) {
+return Result.FAILED;
+}
+ReleasePokemonMessage reqMsg = ReleasePokemonMessage.newBuilder().setPokemonId(getId()).build();
+ServerRequest serverRequest = new ServerRequest(RequestType.RELEASE_POKEMON, reqMsg);
+api.requestHandler.sendServerRequests(serverRequest, true);
+ReleasePokemonResponse response;
+try {
+response = ReleasePokemonResponse.parseFrom(serverRequest.getData());
+} catch (InvalidProtocolBufferException e) {
+return ReleasePokemonResponse.Result.FAILED;
+}
+if (response.getResult() == Result.SUCCESS) {
+api.inventories.pokebank.removePokemon(this);
+}
+return response.getResult();
+}
+public NicknamePokemonResponse.Result renamePokemon(String nickname)
+throws RequestFailedException {
+NicknamePokemonMessage reqMsg = NicknamePokemonMessage.newBuilder()
+.setPokemonId(getId())
+.setNickname(nickname)
+.build();
+ServerRequest serverRequest = new ServerRequest(RequestType.NICKNAME_POKEMON, reqMsg);
+api.requestHandler.sendServerRequests(serverRequest, true);
+NicknamePokemonResponse response;
+try {
+response = NicknamePokemonResponse.parseFrom(serverRequest.getData());
+if (response.getResult() == NicknamePokemonResponse.Result.SUCCESS) {
+this.nickname = nickname;
+}
+} catch (InvalidProtocolBufferException e) {
+throw new RequestFailedException(e);
+}
+api.inventories.pokebank.removePokemon(this);
+return response.getResult();
+}
+public SetFavoritePokemonResponse.Result setFavoritePokemon(boolean markFavorite)
+throws RequestFailedException {
+SetFavoritePokemonMessage reqMsg = SetFavoritePokemonMessage.newBuilder()
+.setPokemonId(getId())
+.setIsFavorite(markFavorite)
+.build();
+ServerRequest serverRequest = new ServerRequest(RequestType.SET_FAVORITE_POKEMON, reqMsg);
+api.requestHandler.sendServerRequests(serverRequest, true);
+SetFavoritePokemonResponse response;
+try {
+response = SetFavoritePokemonResponse.parseFrom(serverRequest.getData());
+if (response.getResult() == SetFavoritePokemonResponse.Result.SUCCESS) {
+favorite = markFavorite ? 1 : 0;
+}
+} catch (InvalidProtocolBufferException e) {
+throw new RequestFailedException(e);
+}
+api.inventories.pokebank.removePokemon(this);
+return response.getResult();
+}
+public boolean canPowerUp() {
+return getCandy() >= getCandyCostsForPowerup() && api.playerProfile
+.getCurrency(PlayerProfile.Currency.STARDUST) >= getStardustCostsForPowerup();
+}
+public boolean canPowerUp(boolean considerMaxCPLimitForPlayerLevel)
+throws NoSuchItemException {
+return considerMaxCPLimitForPlayerLevel
+? this.canPowerUp() && (this.getCp() < this.getMaxCpForPlayer())
+: canPowerUp();
+}
+public boolean canEvolve() {
+Evolutions evolutions = api.itemTemplates.evolutions;
+return evolutions.canEvolve(getPokemonId()) && (getCandy() >= getCandiesToEvolve());
+}
+public UpgradePokemonResponse.Result powerUp() throws RequestFailedException {
+return AsyncHelper.toBlocking(powerUpAsync());
+}
+public Observable<UpgradePokemonResponse.Result> powerUpAsync() {
+UpgradePokemonMessage reqMsg = UpgradePokemonMessage.newBuilder().setPokemonId(getId()).build();
+ServerRequest serverRequest = new ServerRequest(RequestType.UPGRADE_POKEMON, reqMsg);
+return api.requestHandler.sendAsyncServerRequests(serverRequest, true).map(
+new Func1<ByteString, UpgradePokemonResponse.Result>() {
+@Override
+public UpgradePokemonResponse.Result call(ByteString result) {
+UpgradePokemonResponse response;
+try {
+response = UpgradePokemonResponse.parseFrom(result);
+} catch (InvalidProtocolBufferException e) {
+throw Exceptions.propagate(e);
+}
+applyProto(response.getUpgradedPokemon());
+return response.getResult();
+}
+});
+}
+public EvolutionResult evolve() throws RequestFailedException {
+return evolve(null);
+}
+public EvolutionResult evolve(ItemId evolutionItem) throws
+RequestFailedException {
+EvolvePokemonMessage.Builder messageBuilder = EvolvePokemonMessage.newBuilder().setPokemonId(getId());
+if (evolutionItem != null) {
+messageBuilder.setEvolutionItemRequirement(evolutionItem);
+}
+ServerRequest serverRequest = new ServerRequest(RequestType.EVOLVE_POKEMON, messageBuilder.build());
+api.requestHandler.sendServerRequests(serverRequest, true);
+EvolvePokemonResponse response;
+try {
+response = EvolvePokemonResponse.parseFrom(serverRequest.getData());
+} catch (InvalidProtocolBufferException e) {
+return null;
+}
+return new EvolutionResult(api, response);
+}
+public boolean isInjured() {
+return !isFainted() && getStamina() < getMaxStamina();
+}
+public boolean isFainted() {
+return getStamina() == 0;
+}
+public UseItemPotionResponse.Result heal()
+throws RequestFailedException {
+if (!isInjured() || isFainted())
+return UseItemPotionResponse.Result.ERROR_CANNOT_USE;
+if (api.inventories.itemBag.getItem(ItemId.ITEM_POTION).count > 0)
+return usePotion(ItemId.ITEM_POTION);
+if (api.inventories.itemBag.getItem(ItemId.ITEM_SUPER_POTION).count > 0)
+return usePotion(ItemId.ITEM_SUPER_POTION);
+if (api.inventories.itemBag.getItem(ItemId.ITEM_HYPER_POTION).count > 0)
+return usePotion(ItemId.ITEM_HYPER_POTION);
+if (api.inventories.itemBag.getItem(ItemId.ITEM_MAX_POTION).count > 0)
+return usePotion(ItemId.ITEM_MAX_POTION);
+return UseItemPotionResponse.Result.ERROR_CANNOT_USE;
+}
+public UseItemPotionResponse.Result usePotion(ItemId itemId)
+throws RequestFailedException {
+Item potion = api.inventories.itemBag.getItem(itemId);
+if (!potion.isPotion() || potion.count < 1 || !isInjured())
+return UseItemPotionResponse.Result.ERROR_CANNOT_USE;
+UseItemPotionMessageOuterClass.UseItemPotionMessage reqMsg = UseItemPotionMessageOuterClass
+.UseItemPotionMessage
+.newBuilder()
+.setItemId(itemId)
+.setPokemonId(getId())
+.build();
+ServerRequest serverRequest = new ServerRequest(RequestType.USE_ITEM_POTION, reqMsg);
+api.requestHandler.sendServerRequests(serverRequest, true);
+UseItemPotionResponse response;
+try {
+response = UseItemPotionResponse.parseFrom(serverRequest.getData());
+if (response.getResult() == UseItemPotionResponse.Result.SUCCESS) {
+potion.setCount(potion.count - 1);
+this.stamina = response.getStamina();
+}
+return response.getResult();
+} catch (InvalidProtocolBufferException e) {
+throw new RequestFailedException(e);
+}
+}
+public UseItemReviveResponse.Result revive()
+throws RequestFailedException {
+if (!isFainted())
+return UseItemReviveResponse.Result.ERROR_CANNOT_USE;
+if (api.inventories.itemBag.getItem(ItemId.ITEM_REVIVE).count > 0)
+return useRevive(ItemId.ITEM_REVIVE);
+if (api.inventories.itemBag.getItem(ItemId.ITEM_MAX_REVIVE).count > 0)
+return useRevive(ItemId.ITEM_MAX_REVIVE);
+return UseItemReviveResponse.Result.ERROR_CANNOT_USE;
+}
+public UseItemReviveResponse.Result useRevive(ItemId itemId)
+throws RequestFailedException {
+Item item = api.inventories.itemBag.getItem(itemId);
+if (!item.isRevive() || item.count < 1 || !isFainted())
+return UseItemReviveResponse.Result.ERROR_CANNOT_USE;
+UseItemReviveMessage reqMsg = UseItemReviveMessage
+.newBuilder()
+.setItemId(itemId)
+.setPokemonId(getId())
+.build();
+ServerRequest serverRequest = new ServerRequest(RequestType.USE_ITEM_REVIVE, reqMsg);
+api.requestHandler.sendServerRequests(serverRequest, true);
+UseItemReviveResponse response;
+try {
+response = UseItemReviveResponse.parseFrom(serverRequest.getData());
+if (response.getResult() == UseItemReviveResponse.Result.SUCCESS) {
+item.setCount(item.count - 1);
+this.stamina = response.getStamina();
+}
+return response.getResult();
+} catch (InvalidProtocolBufferException e) {
+throw new RequestFailedException(e);
+}
+}
+public Evolution getEvolution() {
+return api.itemTemplates.evolutions.getEvolution(this.getPokemonId());
+}
+public int getStaminaInPercentage() {
+return (getStamina() * 100) / getMaxStamina();
+}
+public int getCPInPercentageActualPlayerLevel()
+throws NoSuchItemException {
+return ((getCp() * 100) / getMaxCpForPlayer());
+}
+public int getCPInPercentageMaxPlayerLevel() throws NoSuchItemException {
+return ((getCp() * 100) / getMaxCp());
+}
+public double getIvInPercentage() {
+return ((Math.floor((this.getIvRatio() * 100) * 100)) / 100);
+}
+@Override
+public int hashCode() {
+return (int) getId();
+}
+@Override
+public boolean equals(Object obj) {
+return obj instanceof Pokemon && ((Pokemon) obj).getId() == getId();
+}
+public boolean isBuddy() {
+PlayerProfile profile = api.playerProfile;
+return profile.hasBuddy() && profile.buddy.getPokemon().getId() == this.getId();
+}
+}

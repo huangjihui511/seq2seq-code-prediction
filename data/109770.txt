@@ -1,0 +1,14 @@
+package lombok.installer;
+import java.awt.Image;
+import java.awt.image.BufferedImage;
+import javax.imageio.ImageIO;
+class AppleNativeLook {
+public static void go() throws Exception {
+Class<?> appClass = Class.forName("com.apple.eawt.Application");
+Object app = appClass.getMethod("getApplication").invoke(null);
+appClass.getMethod("removeAboutMenuItem").invoke(app);
+appClass.getMethod("removePreferencesMenuItem").invoke(app);
+BufferedImage image = ImageIO.read(AppleNativeLook.class.getResource("lombokIcon.png"));
+appClass.getMethod("setDockIconImage", Image.class).invoke(app, image);
+}
+}

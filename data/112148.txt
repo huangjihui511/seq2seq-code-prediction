@@ -1,0 +1,43 @@
+package org.menacheri.jetclient.event.impl;
+import org.menacheri.jetclient.communication.DeliveryGuaranty;
+import org.menacheri.jetclient.communication.DeliveryGuaranty.DeliveryGuarantyOptions;
+import org.menacheri.jetclient.event.Events;
+import org.menacheri.jetclient.event.Event;
+import org.menacheri.jetclient.event.NetworkEvent;
+public class DefaultNetworkEvent extends DefaultEvent implements NetworkEvent
+{
+DeliveryGuaranty guaranty;
+private static final long serialVersionUID = 1L;
+public DefaultNetworkEvent()
+{
+super.setType(Events.NETWORK_MESSAGE);
+this.guaranty = DeliveryGuaranty.DeliveryGuarantyOptions.RELIABLE;
+}
+public DefaultNetworkEvent(Event event)
+{
+this(event, DeliveryGuarantyOptions.RELIABLE);
+}
+public DefaultNetworkEvent(Event event, DeliveryGuaranty deliveryGuaranty)
+{
+this.setSource(event.getSource());
+this.setTimeStamp(event.getTimeStamp());
+this.guaranty = DeliveryGuaranty.DeliveryGuarantyOptions.RELIABLE;
+super.setType(Events.NETWORK_MESSAGE);
+}
+@Override
+public DeliveryGuaranty getDeliveryGuaranty()
+{
+return guaranty;
+}
+@Override
+public void setDeliveryGuaranty(DeliveryGuaranty deliveryGuaranty)
+{
+this.guaranty = deliveryGuaranty;
+}
+@Override
+public void setType(int type)
+{
+throw new UnsupportedOperationException("Event type of this class is already set to NETWORK_MESSAGE. " +
+"It should not be reset.");
+}
+}

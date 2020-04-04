@@ -1,0 +1,52 @@
+package org.apache.flink.runtime.executiongraph.failover.flip1;
+import org.apache.flink.runtime.scheduler.strategy.ExecutionVertexID;
+import java.util.Collections;
+import java.util.Set;
+import static org.apache.flink.util.Preconditions.checkNotNull;
+import static org.apache.flink.util.Preconditions.checkState;
+public class FailureHandlingResult {
+private final Set<ExecutionVertexID> verticesToRestart;
+private final long restartDelayMS;
+private final Throwable error;
+private FailureHandlingResult(Set<ExecutionVertexID> verticesToRestart, long restartDelayMS) {
+checkState(restartDelayMS >= 0);
+this.verticesToRestart = Collections.unmodifiableSet(checkNotNull(verticesToRestart));
+this.restartDelayMS = restartDelayMS;
+this.error = null;
+}
+private FailureHandlingResult(Throwable error) {
+this.verticesToRestart = null;
+this.restartDelayMS = -1;
+this.error = checkNotNull(error);
+}
+public Set<ExecutionVertexID> getVerticesToRestart() {
+if (canRestart()) {
+return verticesToRestart;
+} else {
+throw new IllegalStateException("Cannot get vertices to restart when the restarting is suppressed.");
+}
+}
+public long getRestartDelayMS() {
+if (canRestart()) {
+return restartDelayMS;
+} else {
+throw new IllegalStateException("Cannot get restart delay when the restarting is suppressed.");
+}
+}
+public Throwable getError() {
+if (canRestart()) {
+throw new IllegalStateException("Cannot get error when the restarting is accepted.");
+} else {
+return error;
+}
+}
+public boolean canRestart() {
+return error == null;
+}
+public static FailureHandlingResult restartable(Set<ExecutionVertexID> verticesToRestart, long restartDelayMS) {
+return new FailureHandlingResult(verticesToRestart, restartDelayMS);
+}
+public static FailureHandlingResult unrecoverable(Throwable error) {
+return new FailureHandlingResult(error);
+}
+}

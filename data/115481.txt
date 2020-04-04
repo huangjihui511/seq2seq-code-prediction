@@ -1,0 +1,293 @@
+package org.gnucash.android.model;
+import android.content.Context;
+import android.content.res.Resources;
+import android.support.annotation.NonNull;
+import org.gnucash.android.R;
+import org.gnucash.android.app.GnuCashApplication;
+import org.gnucash.android.ui.util.RecurrenceParser;
+import org.joda.time.Days;
+import org.joda.time.Hours;
+import org.joda.time.LocalDate;
+import org.joda.time.LocalDateTime;
+import org.joda.time.Months;
+import org.joda.time.ReadablePeriod;
+import org.joda.time.Weeks;
+import org.joda.time.Years;
+import java.sql.Timestamp;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+public class Recurrence extends BaseModel {
+private PeriodType mPeriodType;
+private Timestamp mPeriodStart;
+private Timestamp mPeriodEnd;
+private List<Integer> mByDays = Collections.emptyList();
+private int mMultiplier = 1; 
+public Recurrence(@NonNull PeriodType periodType){
+setPeriodType(periodType);
+mPeriodStart = new Timestamp(System.currentTimeMillis());
+}
+public PeriodType getPeriodType() {
+return mPeriodType;
+}
+public void setPeriodType(PeriodType periodType) {
+this.mPeriodType = periodType;
+}
+public Timestamp getPeriodStart() {
+return mPeriodStart;
+}
+public void setPeriodStart(Timestamp periodStart) {
+this.mPeriodStart = periodStart;
+}
+public long getPeriod(){
+long baseMillis = 0;
+switch (mPeriodType){
+case HOUR:
+baseMillis = RecurrenceParser.HOUR_MILLIS;
+break;
+case DAY:
+baseMillis = RecurrenceParser.DAY_MILLIS;
+break;
+case WEEK:
+baseMillis = RecurrenceParser.WEEK_MILLIS;
+break;
+case MONTH:
+baseMillis = RecurrenceParser.MONTH_MILLIS;
+break;
+case YEAR:
+baseMillis = RecurrenceParser.YEAR_MILLIS;
+break;
+}
+return mMultiplier * baseMillis;
+}
+public String getRepeatString(){
+StringBuilder repeatBuilder = new StringBuilder(getFrequencyRepeatString());
+Context context = GnuCashApplication.getAppContext();
+String dayOfWeek = new SimpleDateFormat("EEEE", GnuCashApplication.getDefaultLocale())
+.format(new Date(mPeriodStart.getTime()));
+if (mPeriodType == PeriodType.WEEK) {
+repeatBuilder.append(" ").
+append(context.getString(R.string.repeat_on_weekday, dayOfWeek));
+}
+if (mPeriodEnd != null){
+String endDateString = SimpleDateFormat.getDateInstance().format(new Date(mPeriodEnd.getTime()));
+repeatBuilder.append(", ").append(context.getString(R.string.repeat_until_date, endDateString));
+}
+return repeatBuilder.toString();
+}
+public String getRuleString(){
+String separator = ";";
+StringBuilder ruleBuilder = new StringBuilder();
+ruleBuilder.append("FREQ=").append(mPeriodType.getFrequencyDescription()).append(separator);
+ruleBuilder.append("INTERVAL=").append(mMultiplier).append(separator);
+if (getCount() > 0)
+ruleBuilder.append("COUNT=").append(getCount()).append(separator);
+ruleBuilder.append(mPeriodType.getByParts(mPeriodStart.getTime())).append(separator);
+return ruleBuilder.toString();
+}
+public int getDaysLeftInCurrentPeriod(){
+LocalDateTime startDate = new LocalDateTime(System.currentTimeMillis());
+int interval = mMultiplier - 1;
+LocalDateTime endDate = null;
+switch (mPeriodType){
+case HOUR:
+endDate = new LocalDateTime(System.currentTimeMillis()).plusHours(interval);
+break;
+case DAY:
+endDate = new LocalDateTime(System.currentTimeMillis()).plusDays(interval);
+break;
+case WEEK:
+endDate = startDate.dayOfWeek().withMaximumValue().plusWeeks(interval);
+break;
+case MONTH:
+endDate = startDate.dayOfMonth().withMaximumValue().plusMonths(interval);
+break;
+case YEAR:
+endDate = startDate.dayOfYear().withMaximumValue().plusYears(interval);
+break;
+}
+return Days.daysBetween(startDate, endDate).getDays();
+}
+public int getNumberOfPeriods(int numberOfPeriods) {
+LocalDateTime startDate = new LocalDateTime(mPeriodStart.getTime());
+LocalDateTime endDate;
+int interval = mMultiplier;
+switch (mPeriodType){
+case HOUR: 
+endDate = startDate.plusHours(numberOfPeriods);
+return Hours.hoursBetween(startDate, endDate).getHours();
+case DAY:
+endDate = startDate.plusDays(numberOfPeriods);
+return Days.daysBetween(startDate, endDate).getDays();
+case WEEK:
+endDate = startDate.dayOfWeek().withMaximumValue().plusWeeks(numberOfPeriods);
+return Weeks.weeksBetween(startDate, endDate).getWeeks() / interval;
+case MONTH:
+endDate = startDate.dayOfMonth().withMaximumValue().plusMonths(numberOfPeriods);
+return Months.monthsBetween(startDate, endDate).getMonths() / interval;
+case YEAR:
+endDate = startDate.dayOfYear().withMaximumValue().plusYears(numberOfPeriods);
+return Years.yearsBetween(startDate, endDate).getYears() / interval;
+}
+return 0;
+}
+public String getTextOfCurrentPeriod(int periodNum){
+LocalDate startDate = new LocalDate(mPeriodStart.getTime());
+switch (mPeriodType){
+case HOUR:
+break;
+case DAY:
+return startDate.dayOfWeek().getAsText();
+case WEEK:
+return startDate.weekOfWeekyear().getAsText();
+case MONTH:
+return startDate.monthOfYear().getAsText();
+case YEAR:
+return startDate.year().getAsText();
+}
+return "Period " + periodNum;
+}
+public @NonNull List<Integer> getByDays(){
+return Collections.unmodifiableList(mByDays);
+}
+public void setByDays(@NonNull List<Integer> byDays){
+mByDays = new ArrayList<>(byDays);
+}
+public int getCount(){
+if (mPeriodEnd == null)
+return -1;
+int multiple = mMultiplier;
+ReadablePeriod jodaPeriod;
+switch (mPeriodType){
+case HOUR:
+jodaPeriod = Hours.hours(multiple);
+break;
+case DAY:
+jodaPeriod = Days.days(multiple);
+break;
+case WEEK:
+jodaPeriod = Weeks.weeks(multiple);
+break;
+case MONTH:
+jodaPeriod = Months.months(multiple);
+break;
+case YEAR:
+jodaPeriod = Years.years(multiple);
+break;
+default:
+jodaPeriod = Months.months(multiple);
+}
+int count = 0;
+LocalDateTime startTime = new LocalDateTime(mPeriodStart.getTime());
+while (startTime.toDateTime().getMillis() < mPeriodEnd.getTime()){
+++count;
+startTime = startTime.plus(jodaPeriod);
+}
+return count;
+int multiplier = mMultiplier;
+LocalDateTime startDate = new LocalDateTime(mPeriodStart.getTime());
+LocalDateTime endDate = new LocalDateTime(mPeriodEnd.getTime());
+switch (mPeriodType){
+case DAY:
+return Days.daysBetween(startDate, endDate).dividedBy(multiplier).getDays();
+case WEEK:
+return Weeks.weeksBetween(startDate, endDate).dividedBy(multiplier).getWeeks();
+case MONTH:
+return Months.monthsBetween(startDate, endDate).dividedBy(multiplier).getMonths();
+case YEAR:
+return Years.yearsBetween(startDate, endDate).dividedBy(multiplier).getYears();
+default:
+return -1;
+}
+}
+public void setPeriodEnd(int numberOfOccurences){
+LocalDateTime localDate = new LocalDateTime(mPeriodStart.getTime());
+LocalDateTime endDate;
+int occurrenceDuration = numberOfOccurences * mMultiplier;
+switch (mPeriodType){
+case HOUR:
+endDate = localDate.plusHours(occurrenceDuration);
+break;
+case DAY:
+endDate = localDate.plusDays(occurrenceDuration);
+break;
+case WEEK:
+endDate = localDate.plusWeeks(occurrenceDuration);
+break;
+default:
+case MONTH:
+endDate = localDate.plusMonths(occurrenceDuration);
+break;
+case YEAR:
+endDate = localDate.plusYears(occurrenceDuration);
+break;
+}
+mPeriodEnd = new Timestamp(endDate.toDateTime().getMillis());
+}
+public Timestamp getPeriodEnd(){
+return mPeriodEnd;
+}
+public void setPeriodEnd(Timestamp endTimestamp){
+mPeriodEnd = endTimestamp;
+}
+public int getMultiplier(){
+return mMultiplier;
+}
+public void setMultiplier(int multiplier){
+mMultiplier = multiplier;
+}
+private String getFrequencyRepeatString(){
+Resources res = GnuCashApplication.getAppContext().getResources();
+switch (mPeriodType) {
+case HOUR:
+return res.getQuantityString(R.plurals.label_every_x_hours, mMultiplier, mMultiplier);
+case DAY:
+return res.getQuantityString(R.plurals.label_every_x_days, mMultiplier, mMultiplier);
+case WEEK:
+return res.getQuantityString(R.plurals.label_every_x_weeks, mMultiplier, mMultiplier);
+case MONTH:
+return res.getQuantityString(R.plurals.label_every_x_months, mMultiplier, mMultiplier);
+case YEAR:
+return res.getQuantityString(R.plurals.label_every_x_years, mMultiplier, mMultiplier);
+default:
+return "";
+}
+}
+public static Recurrence fromLegacyPeriod(long period) {
+int result = (int) (period/RecurrenceParser.YEAR_MILLIS);
+if (result > 0) {
+Recurrence recurrence = new Recurrence(PeriodType.YEAR);
+recurrence.setMultiplier(result);
+return recurrence;
+}
+result = (int) (period/RecurrenceParser.MONTH_MILLIS);
+if (result > 0) {
+Recurrence recurrence = new Recurrence(PeriodType.MONTH);
+recurrence.setMultiplier(result);
+return recurrence;
+}
+result = (int) (period/RecurrenceParser.WEEK_MILLIS);
+if (result > 0) {
+Recurrence recurrence = new Recurrence(PeriodType.WEEK);
+recurrence.setMultiplier(result);
+return recurrence;
+}
+result = (int) (period/RecurrenceParser.DAY_MILLIS);
+if (result > 0) {
+Recurrence recurrence = new Recurrence(PeriodType.DAY);
+recurrence.setMultiplier(result);
+return recurrence;
+}
+result = (int) (period/RecurrenceParser.HOUR_MILLIS);
+if (result > 0) {
+Recurrence recurrence = new Recurrence(PeriodType.HOUR);
+recurrence.setMultiplier(result);
+return recurrence;
+}
+return new Recurrence(PeriodType.DAY);
+}
+}

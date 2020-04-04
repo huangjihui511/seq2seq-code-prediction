@@ -1,0 +1,15 @@
+package net.pms.formats.image;
+public class PNG extends ImageBase {
+@Override
+public Identifier getIdentifier() {
+return Identifier.PNG;
+}
+@Override
+public String[] getSupportedExtensions() {
+return new String[] { "png" };
+}
+@Override
+public String mimeType() {
+return "image/png";
+}
+}

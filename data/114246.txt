@@ -1,0 +1,73 @@
+package com.datumbox.framework.core.common.dataobjects;
+import com.datumbox.framework.common.storage.interfaces.StorageEngine.MapType;
+import com.datumbox.framework.common.storage.interfaces.StorageEngine.StorageHint;
+import org.apache.commons.math3.exception.NotStrictlyPositiveException;
+import org.apache.commons.math3.exception.OutOfRangeException;
+import org.apache.commons.math3.linear.AbstractRealMatrix;
+import org.apache.commons.math3.linear.MatrixUtils;
+import org.apache.commons.math3.linear.RealMatrix;
+import org.apache.commons.math3.linear.SparseRealMatrix;
+import java.util.Map;
+public class MapRealMatrix extends AbstractRealMatrix implements SparseRealMatrix {
+private final int id;
+private final int rowDimension;
+private final int columnDimension;
+private final Map<Long, Double> entries;
+protected MapRealMatrix(int rowDimension, int columnDimension) throws NotStrictlyPositiveException {
+super(rowDimension, columnDimension);
+this.rowDimension = rowDimension;
+this.columnDimension = columnDimension;
+if(DataframeMatrix.storageEngine == null) {
+throw new NullPointerException("The DataframeMatrix storage engine is not initialized.");
+}
+id = DataframeMatrix.storageId.getAndIncrement();
+entries = DataframeMatrix.storageEngine.getBigMap("tmp_mrmentries"+id, Long.class, Double.class, MapType.HASHMAP, StorageHint.IN_DISK, false, true);
+}
+@Override
+protected void finalize() throws Throwable {
+try {
+DataframeMatrix.storageEngine.dropBigMap("tmp_mrmentries"+id, entries);
+}
+finally {
+super.finalize();
+}
+}
+@Override
+public RealMatrix createMatrix(int rowDimension, int columnDimension) throws NotStrictlyPositiveException {
+return new MapRealMatrix(rowDimension, columnDimension);
+}
+@Override
+public int getRowDimension() {
+return rowDimension;
+}
+@Override
+public int getColumnDimension() {
+return columnDimension;
+}
+@Override
+public RealMatrix copy() {
+MapRealMatrix copy = new MapRealMatrix(rowDimension, columnDimension);
+copy.entries.putAll(entries);
+return copy;
+}
+@Override
+public double getEntry(int row, int column) throws OutOfRangeException {
+MatrixUtils.checkRowIndex(this, row);
+MatrixUtils.checkColumnIndex(this, column);
+return entries.getOrDefault(computeKey(row, column), 0.0);
+}
+@Override
+public void setEntry(int row, int column, double value) throws OutOfRangeException {
+MatrixUtils.checkRowIndex(this, row);
+MatrixUtils.checkColumnIndex(this, column);
+if(value == 0.0) {
+entries.remove(computeKey(row, column)); 
+}
+else {
+entries.put(computeKey(row, column), value);
+}
+}
+private long computeKey(int row, int column) {
+return (long)row * columnDimension + column;
+}
+}

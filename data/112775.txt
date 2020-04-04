@@ -1,0 +1,40 @@
+package com.oath.cyclops.react.collectors.lazy;
+import java.util.Collection;
+import java.util.function.Function;
+import com.oath.cyclops.internal.react.async.future.FastFuture;
+import lombok.AllArgsConstructor;
+import lombok.experimental.Builder;
+import lombok.experimental.Wither;
+@AllArgsConstructor
+@Wither
+@Builder
+public class SamplingCollector<T> implements LazyResultConsumer<T> {
+private final int sampleRate;
+private long count = 0;
+private final LazyResultConsumer<T> consumer;
+public SamplingCollector(final int sampleRate, final LazyResultConsumer<T> consumer) {
+this.sampleRate = sampleRate;
+this.consumer = consumer;
+}
+@Override
+public void accept(final FastFuture<T> t) {
+if (count++ % sampleRate == 0)
+consumer.accept(t);
+}
+@Override
+public void block(final Function<FastFuture<T>, T> safeJoin) {
+consumer.block(safeJoin);
+}
+@Override
+public LazyResultConsumer<T> withResults(final Collection<FastFuture<T>> t) {
+return this.withConsumer(consumer.withResults(t));
+}
+@Override
+public Collection<FastFuture<T>> getResults() {
+return consumer.getResults();
+}
+@Override
+public Collection<FastFuture<T>> getAllResults() {
+return consumer.getResults();
+}
+}

@@ -1,0 +1,290 @@
+package org.apache.pdfbox.pdmodel.graphics.optionalcontent;
+import java.util.ArrayList;
+import java.util.Collection;
+import org.apache.pdfbox.cos.COSArray;
+import org.apache.pdfbox.cos.COSBase;
+import org.apache.pdfbox.cos.COSDictionary;
+import org.apache.pdfbox.cos.COSName;
+import org.apache.pdfbox.cos.COSObject;
+import org.apache.pdfbox.pdmodel.common.COSObjectable;
+public class PDOptionalContentProperties implements COSObjectable
+{
+public enum BaseState
+{
+ON(COSName.ON),
+OFF(COSName.OFF),
+UNCHANGED(COSName.UNCHANGED);
+private final COSName name;
+private BaseState(COSName value)
+{
+this.name = value;
+}
+public COSName getName()
+{
+return this.name;
+}
+public static BaseState valueOf(COSName state)
+{
+if (state == null)
+{
+return BaseState.ON;
+}
+return BaseState.valueOf(state.getName().toUpperCase());
+}
+}
+private final COSDictionary dict;
+public PDOptionalContentProperties()
+{
+this.dict = new COSDictionary();
+this.dict.setItem(COSName.OCGS, new COSArray());
+COSDictionary d = new COSDictionary();
+d.setString(COSName.NAME, "Top");
+this.dict.setItem(COSName.D, d);
+}
+public PDOptionalContentProperties(COSDictionary props)
+{
+this.dict = props;
+}
+@Override
+public COSBase getCOSObject()
+{
+return this.dict;
+}
+private COSArray getOCGs()
+{
+COSArray ocgs = this.dict.getCOSArray(COSName.OCGS);
+if (ocgs == null)
+{
+ocgs = new COSArray();
+this.dict.setItem(COSName.OCGS, ocgs); 
+}
+return ocgs;
+}
+private COSDictionary getD()
+{
+COSBase base = this.dict.getDictionaryObject(COSName.D);
+if (base instanceof COSDictionary)
+{
+return (COSDictionary) base;
+}
+COSDictionary d = new COSDictionary();
+d.setString(COSName.NAME, "Top");
+this.dict.setItem(COSName.D, d);
+return d;
+}
+public PDOptionalContentGroup getGroup(String name)
+{
+COSArray ocgs = getOCGs();
+for (COSBase o : ocgs)
+{
+COSDictionary ocg = toDictionary(o);
+String groupName = ocg.getString(COSName.NAME);
+if (groupName.equals(name))
+{
+return new PDOptionalContentGroup(ocg);
+}
+}
+return null;
+}
+public void addGroup(PDOptionalContentGroup ocg)
+{
+COSArray ocgs = getOCGs();
+ocgs.add(ocg.getCOSObject());
+COSArray order = (COSArray)getD().getDictionaryObject(COSName.ORDER);
+if (order == null)
+{
+order = new COSArray();
+getD().setItem(COSName.ORDER, order);
+}
+order.add(ocg);
+}
+public Collection<PDOptionalContentGroup> getOptionalContentGroups()
+{
+Collection<PDOptionalContentGroup> coll = new ArrayList<>();
+COSArray ocgs = getOCGs();
+for (COSBase base : ocgs)
+{
+coll.add(new PDOptionalContentGroup(toDictionary(base)));
+}
+return coll;
+}
+public BaseState getBaseState()
+{
+COSDictionary d = getD();
+COSName name = (COSName)d.getItem(COSName.BASE_STATE);
+return BaseState.valueOf(name);
+}
+public void setBaseState(BaseState state)
+{
+COSDictionary d = getD();
+d.setItem(COSName.BASE_STATE, state.getName());
+}
+public String[] getGroupNames()
+{
+COSArray ocgs = (COSArray)dict.getDictionaryObject(COSName.OCGS);
+int size = ocgs.size();
+String[] groups = new String[size];
+for (int i = 0; i < size; i++)
+{
+COSBase obj = ocgs.get(i);
+COSDictionary ocg = toDictionary(obj);
+groups[i] = ocg.getString(COSName.NAME);
+}
+return groups;
+}
+public boolean hasGroup(String groupName)
+{
+String[] layers = getGroupNames();
+for (String layer : layers)
+{
+if (layer.equals(groupName))
+{
+return true;
+}
+}
+return false;
+}
+public boolean isGroupEnabled(String groupName)
+{
+boolean result = false;
+COSArray ocgs = getOCGs();
+for (COSBase o : ocgs)
+{
+COSDictionary ocg = toDictionary(o);
+String name = ocg.getString(COSName.NAME);
+if (groupName.equals(name) && isGroupEnabled(new PDOptionalContentGroup(ocg)))
+{
+result = true;
+}
+}
+return result;
+}
+public boolean isGroupEnabled(PDOptionalContentGroup group)
+{
+PDOptionalContentProperties.BaseState baseState = getBaseState();
+boolean enabled = !baseState.equals(BaseState.OFF);
+if (group == null)
+{
+return enabled;
+}
+COSDictionary d = getD();
+COSBase base = d.getDictionaryObject(COSName.ON);
+if (base instanceof COSArray)
+{
+for (COSBase o : (COSArray) base)
+{
+COSDictionary dictionary = toDictionary(o);
+if (dictionary == group.getCOSObject())
+{
+return true;
+}
+}
+}
+base = d.getDictionaryObject(COSName.OFF);
+if (base instanceof COSArray)
+{
+for (COSBase o : (COSArray) base)
+{
+COSDictionary dictionary = toDictionary(o);
+if (dictionary == group.getCOSObject())
+{
+return false;
+}
+}
+}
+return enabled;
+}
+private COSDictionary toDictionary(COSBase o)
+{
+if (o instanceof COSObject)
+{
+return (COSDictionary)((COSObject)o).getObject();
+}
+else
+{
+return (COSDictionary)o;
+}
+}
+public boolean setGroupEnabled(String groupName, boolean enable)
+{
+boolean result = false;
+COSArray ocgs = getOCGs();
+for (COSBase o : ocgs)
+{
+COSDictionary ocg = toDictionary(o);
+String name = ocg.getString(COSName.NAME);
+if (groupName.equals(name) && setGroupEnabled(new PDOptionalContentGroup(ocg), enable))
+{
+result = true;
+}
+}
+return result;
+}
+public boolean setGroupEnabled(PDOptionalContentGroup group, boolean enable)
+{
+COSArray on;
+COSArray off;
+COSDictionary d = getD();
+COSBase base = d.getDictionaryObject(COSName.ON);
+if (!(base instanceof COSArray))
+{
+on = new COSArray();
+d.setItem(COSName.ON, on);
+}
+else
+{
+on = (COSArray) base;
+}
+base = d.getDictionaryObject(COSName.OFF);
+if (!(base instanceof COSArray))
+{
+off = new COSArray();
+d.setItem(COSName.OFF, off);
+}
+else
+{
+off = (COSArray) base;
+}
+boolean found = false;
+if (enable)
+{
+for (COSBase o : off)
+{
+COSDictionary groupDictionary = toDictionary(o);
+if (groupDictionary == group.getCOSObject())
+{
+off.remove(o);
+on.add(o);
+found = true;
+break;
+}
+}
+}
+else
+{
+for (COSBase o : on)
+{
+COSDictionary groupDictionary = toDictionary(o);
+if (groupDictionary == group.getCOSObject())
+{
+on.remove(o);
+off.add(o);
+found = true;
+break;
+}
+}
+}
+if (!found)
+{
+if (enable)
+{
+on.add(group.getCOSObject());
+}
+else
+{
+off.add(group.getCOSObject());
+}
+}
+return found;
+}
+}

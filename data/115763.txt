@@ -1,0 +1,37 @@
+package org.springframework.integration.channel.interceptor;
+import java.util.Arrays;
+import org.springframework.core.Ordered;
+import org.springframework.messaging.support.ChannelInterceptor;
+import org.springframework.util.Assert;
+public class GlobalChannelInterceptorWrapper implements Ordered {
+private final ChannelInterceptor channelInterceptor;
+private volatile String[] patterns = { "*" }; 
+private volatile int order = 0;
+public GlobalChannelInterceptorWrapper(ChannelInterceptor channelInterceptor) {
+Assert.notNull(channelInterceptor, "channelInterceptor must not be null");
+this.channelInterceptor = channelInterceptor;
+if (channelInterceptor instanceof Ordered) {
+this.order = ((Ordered) channelInterceptor).getOrder();
+}
+}
+public ChannelInterceptor getChannelInterceptor() {
+return this.channelInterceptor;
+}
+public void setOrder(int order) {
+this.order = order;
+}
+@Override
+public final int getOrder() {
+return this.order;
+}
+public void setPatterns(String[] patterns) {
+this.patterns = Arrays.copyOf(patterns, patterns.length);
+}
+public String[] getPatterns() {
+return this.patterns; 
+}
+@Override
+public String toString() {
+return this.channelInterceptor.toString();
+}
+}

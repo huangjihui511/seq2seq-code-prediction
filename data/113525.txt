@@ -1,0 +1,155 @@
+package com.pokegoapi.api.gym;
+import POGOProtos.Data.Gym.GymDefenderOuterClass.GymDefender;
+import POGOProtos.Data.Gym.GymStateOuterClass.GymState;
+import POGOProtos.Enums.PokemonIdOuterClass;
+import POGOProtos.Enums.TeamColorOuterClass;
+import POGOProtos.Enums.TutorialStateOuterClass.TutorialState;
+import POGOProtos.Map.Fort.FortDataOuterClass.FortData;
+import POGOProtos.Map.Pokemon.MotivatedPokemonOuterClass.MotivatedPokemon;
+import POGOProtos.Networking.Requests.Messages.FortDeployPokemonMessageOuterClass.FortDeployPokemonMessage;
+import POGOProtos.Networking.Requests.Messages.GymGetInfoMessageOuterClass.GymGetInfoMessage;
+import POGOProtos.Networking.Requests.RequestTypeOuterClass.RequestType;
+import POGOProtos.Networking.Responses.FortDeployPokemonResponseOuterClass.FortDeployPokemonResponse;
+import POGOProtos.Networking.Responses.GymGetInfoResponseOuterClass.GymGetInfoResponse;
+import com.google.protobuf.ByteString;
+import com.google.protobuf.InvalidProtocolBufferException;
+import com.pokegoapi.api.PokemonGo;
+import com.pokegoapi.api.map.fort.Fort;
+import com.pokegoapi.api.pokemon.Pokemon;
+import com.pokegoapi.exceptions.InsufficientLevelException;
+import com.pokegoapi.exceptions.request.RequestFailedException;
+import com.pokegoapi.main.ServerRequest;
+import com.pokegoapi.util.MapPoint;
+import rx.Observable;
+import rx.exceptions.Exceptions;
+import rx.functions.Func1;
+import java.util.ArrayList;
+import java.util.List;
+public class Gym extends Fort implements MapPoint {
+private GymGetInfoResponse details;
+private long points;
+public Gym(PokemonGo api, FortData proto) {
+super(api, proto);
+}
+public boolean getEnabled() {
+return fortData.getEnabled();
+}
+public TeamColorOuterClass.TeamColor getOwnedByTeam() {
+return fortData.getOwnedByTeam();
+}
+public PokemonIdOuterClass.PokemonId getGuardPokemonId() {
+return fortData.getGuardPokemonId();
+}
+public int getGuardPokemonCp() {
+return fortData.getGuardPokemonCp();
+}
+public long getPoints() {
+return points;
+}
+public boolean getIsInBattle() {
+return fortData.getIsInBattle();
+}
+public boolean isAttackable() throws RequestFailedException {
+return this.getGymMembers().size() != 0;
+}
+public Battle battle() {
+int minimumPlayerLevel = api.itemTemplates.battleSettings.getMinimumPlayerLevel();
+if (api.playerProfile.getStats().getLevel() < minimumPlayerLevel) {
+throw new InsufficientLevelException("You must be at least " + minimumPlayerLevel + " to battle a gym!");
+}
+return new Battle(api, this);
+}
+public void clearDetails() {
+details = null;
+}
+private GymGetInfoResponse details() throws RequestFailedException {
+List<TutorialState> tutorialStates = api.playerProfile.getTutorialState().getTutorialStates();
+if (!tutorialStates.contains(TutorialState.GYM_TUTORIAL)) {
+api.playerProfile.visitGymComplete();
+}
+if (details == null) {
+GymGetInfoMessage reqMsg = GymGetInfoMessage
+.newBuilder()
+.setGymId(this.getId())
+.setGymLatDegrees(this.getLatitude())
+.setGymLngDegrees(this.getLongitude())
+.setPlayerLatDegrees(api.latitude)
+.setPlayerLngDegrees(api.longitude)
+.build();
+ServerRequest serverRequest = new ServerRequest(RequestType.GYM_GET_INFO, reqMsg);
+api.requestHandler.sendServerRequests(serverRequest, true);
+try {
+details = GymGetInfoResponse.parseFrom(serverRequest.getData());
+} catch (InvalidProtocolBufferException e) {
+throw new RequestFailedException();
+}
+}
+return details;
+}
+public GymGetInfoResponse.Result getResult() throws RequestFailedException {
+return details().getResult();
+}
+public List<GymDefender> getGymMembers()
+throws RequestFailedException {
+return details().getGymStatusAndDefenders().getGymDefenderList();
+}
+public List<MotivatedPokemon> getDefendingPokemon() throws RequestFailedException {
+List<MotivatedPokemon> data = new ArrayList<MotivatedPokemon>();
+for (GymDefender gymMember : getGymMembers()) {
+data.add(gymMember.getMotivatedPokemon());
+}
+return data;
+}
+public FortDeployPokemonResponse.Result deployPokemon(Pokemon pokemon) throws RequestFailedException {
+FortDeployPokemonMessage reqMsg = FortDeployPokemonMessage.newBuilder()
+.setFortId(getId())
+.setPlayerLatitude(api.latitude)
+.setPlayerLongitude(api.longitude)
+.setPokemonId(pokemon.getId())
+.build();
+ServerRequest serverRequest = new ServerRequest(RequestType.FORT_DEPLOY_POKEMON, reqMsg);
+api.requestHandler.sendServerRequests(serverRequest, true);
+try {
+return FortDeployPokemonResponse.parseFrom(serverRequest.getData()).getResult();
+} catch (InvalidProtocolBufferException e) {
+throw new RequestFailedException();
+}
+}
+public Observable<FortDeployPokemonResponse.Result> deployPokemonAsync(Pokemon pokemon)
+throws RequestFailedException {
+FortDeployPokemonMessage reqMsg = FortDeployPokemonMessage.newBuilder()
+.setFortId(getId())
+.setPlayerLatitude(api.latitude)
+.setPlayerLongitude(api.longitude)
+.setPokemonId(pokemon.getId())
+.build();
+ServerRequest asyncServerRequest = new ServerRequest(RequestType.FORT_DEPLOY_POKEMON, reqMsg);
+return api.requestHandler
+.sendAsyncServerRequests(asyncServerRequest)
+.map(new Func1<ByteString, FortDeployPokemonResponse.Result>() {
+@Override
+public FortDeployPokemonResponse.Result call(ByteString response) {
+try {
+return FortDeployPokemonResponse.parseFrom(response).getResult();
+} catch (InvalidProtocolBufferException e) {
+throw Exceptions.propagate(e);
+}
+}
+});
+}
+public void updatePoints(int delta) {
+this.points += delta;
+}
+public void updateState(GymState state) {
+fortData =  state.getFortData();
+clearDetails();
+}
+@Override
+public int hashCode() {
+return getId().hashCode();
+}
+@Override
+public boolean equals(Object obj) {
+return obj instanceof Gym && ((Gym) obj).getId().equals(getId());
+}
+}

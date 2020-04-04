@@ -1,0 +1,84 @@
+package org.apache.struts2.jasper.runtime;
+import java.lang.reflect.InvocationTargetException;
+import java.util.Collections;
+import java.util.Map;
+import java.util.WeakHashMap;
+import javax.naming.NamingException;
+import javax.servlet.ServletConfig;
+import javax.servlet.ServletContext;
+import org.apache.tomcat.InstanceManager;
+import org.apache.tomcat.SimpleInstanceManager;
+public class InstanceHelper {
+private static final Map<ClassLoader, InstanceManager> INSTANCE_MANAGERS =
+Collections.synchronizedMap(new WeakHashMap<ClassLoader, InstanceManager>());
+private InstanceHelper() {}
+public static InstanceManager getServletInstanceManager(ServletConfig servletConfig) {
+if (servletConfig == null) {
+return null;
+}
+final ServletContext servletContext = servletConfig.getServletContext();
+if (servletContext == null) {
+return null;
+}
+final ClassLoader classLoader = servletContext.getClassLoader();
+final Object potentialInstanceManager = servletContext.getAttribute(InstanceManager.class.getName());
+InstanceManager instanceManager;
+if (potentialInstanceManager == null) {
+instanceManager = new SimpleInstanceManager();
+setClassLoaderInstanceManager(classLoader, instanceManager);
+servletContext.setAttribute(InstanceManager.class.getName(), instanceManager);
+return instanceManager;
+}
+else {
+instanceManager = getClassLoaderInstanceManager(classLoader);
+if (instanceManager == null || ! instanceManager.equals(potentialInstanceManager) ) {
+if (potentialInstanceManager instanceof InstanceManager) {
+instanceManager = (InstanceManager) potentialInstanceManager;
+setClassLoaderInstanceManager(classLoader, instanceManager);
+return instanceManager;
+} else {
+return null;
+}
+} else {
+return instanceManager;
+}
+}
+}
+public static InstanceManager getClassLoaderInstanceManager(ClassLoader classLoader) {
+if (classLoader == null) {
+return null;
+}
+InstanceManager instanceManager = INSTANCE_MANAGERS.get(classLoader);
+if (instanceManager == null) {
+instanceManager = new SimpleInstanceManager();
+setClassLoaderInstanceManager(classLoader, instanceManager);
+}
+return instanceManager;
+}
+protected static void setClassLoaderInstanceManager(ClassLoader classLoader, InstanceManager instanceManager) {
+if (classLoader != null) {
+INSTANCE_MANAGERS.put(classLoader, instanceManager);
+}
+}
+public static void postConstruct(InstanceManager instanceManager, Object instance)
+throws IllegalAccessException, IllegalArgumentException, InvocationTargetException,
+NamingException {
+if (instanceManager == null) {
+throw new IllegalArgumentException("postConstruct - instanceManager is null");
+} else if (instance == null) {
+throw new IllegalArgumentException("postConstruct - instanceClass is null");
+} else {
+instanceManager.newInstance(instance);
+}
+}
+public static void preDestroy(InstanceManager instanceManager, Object instance)
+throws IllegalAccessException, IllegalArgumentException, InvocationTargetException {
+if (instanceManager == null) {
+throw new IllegalArgumentException("preDestroy - instanceManager is null");
+} else if (instance == null) {
+throw new IllegalArgumentException("preDestroy - instance is null");
+} else {
+instanceManager.destroyInstance(instance);
+}
+}
+}

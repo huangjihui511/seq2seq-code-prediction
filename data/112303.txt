@@ -1,0 +1,25 @@
+package com.github.jknack.handlebars.internal.path;
+import com.github.jknack.handlebars.Context;
+import com.github.jknack.handlebars.PathExpression;
+import com.github.jknack.handlebars.ValueResolver;
+public class PropertyPath implements PathExpression {
+private String name;
+private boolean local;
+public PropertyPath(final String name, final boolean local) {
+this.name = name;
+this.local = local;
+}
+@Override
+public Object eval(final ValueResolver resolver, final Context ctx, final Object data,
+final Chain chain) {
+return chain.next(resolver, ctx, resolver.resolve(data, name));
+}
+@Override
+public boolean local() {
+return local;
+}
+@Override
+public String toString() {
+return name;
+}
+}

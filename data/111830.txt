@@ -1,0 +1,6 @@
+package org.jupiter.example;
+import org.jupiter.rpc.ServiceProvider;
+@ServiceProvider(name = "GenericServiceTest", group = "test")
+public interface GenericServiceTest {
+String sayHello(String name);
+}

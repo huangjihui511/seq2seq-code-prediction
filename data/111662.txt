@@ -1,0 +1,21 @@
+package net.glowstone.util.pathfinding;
+import org.bukkit.util.Vector;
+import org.jetbrains.annotations.NotNull;
+public class PathVector implements Comparable<PathVector> {
+private final double cost;
+private final Vector vector;
+public PathVector(double cost, Vector vector) {
+this.cost = cost;
+this.vector = vector;
+}
+public double getCost() {
+return cost;
+}
+public Vector getVector() {
+return vector;
+}
+@Override
+public int compareTo(@NotNull PathVector vector) {
+return Double.compare(cost, vector.getCost());
+}
+}

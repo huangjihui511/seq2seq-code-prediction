@@ -1,0 +1,111 @@
+package org.gnucash.android.model;
+import org.gnucash.android.app.GnuCashApplication;
+import org.gnucash.android.db.adapter.CommoditiesDbAdapter;
+public class Commodity extends BaseModel {
+public enum Namespace { ISO4217 } 
+private Namespace mNamespace = Namespace.ISO4217;
+public static Commodity DEFAULT_COMMODITY = new Commodity("US Dollars", "USD", 100); 
+public static Commodity USD = new Commodity("", "USD", 100);
+public static Commodity EUR = new Commodity("", "EUR", 100);
+public static Commodity GBP = new Commodity("", "GBP", 100);
+public static Commodity CHF = new Commodity("", "CHF", 100);
+public static Commodity CAD = new Commodity("", "CAD", 100);
+public static Commodity JPY = new Commodity("", "JPY", 1);
+public static Commodity AUD = new Commodity("", "AUD", 100);
+private String mMnemonic;
+private String mFullname;
+private String mCusip;
+private String mLocalSymbol = "";
+private int mSmallestFraction;
+private int mQuoteFlag;
+public Commodity(String fullname, String mnemonic, int smallestFraction){
+this.mFullname = fullname;
+this.mMnemonic = mnemonic;
+setSmallestFraction(smallestFraction);
+}
+public static Commodity getInstance(String currencyCode){
+switch (currencyCode){ 
+case "USD": return USD;
+case "EUR": return EUR;
+case "GBP": return GBP;
+case "CHF": return CHF;
+case "JPY": return JPY;
+case "AUD": return AUD;
+case "CAD": return CAD;
+default: return CommoditiesDbAdapter.getInstance().getCommodity(currencyCode);
+}
+}
+public Namespace getNamespace() {
+return mNamespace;
+}
+public void setNamespace(Namespace namespace) {
+this.mNamespace = namespace;
+}
+public String getMnemonic() {
+return mMnemonic;
+}
+public String getCurrencyCode(){
+return getMnemonic();
+}
+public void setMnemonic(String mMnemonic) {
+this.mMnemonic = mMnemonic;
+}
+public String getFullname() {
+return mFullname;
+}
+public void setFullname(String mFullname) {
+this.mFullname = mFullname;
+}
+public String getCusip() {
+return mCusip;
+}
+public void setCusip(String mCusip) {
+this.mCusip = mCusip;
+}
+public String getLocalSymbol() {
+return mLocalSymbol;
+}
+public String getSymbol(){
+if (mLocalSymbol == null || mLocalSymbol.isEmpty()){
+return mMnemonic;
+}
+return mLocalSymbol;
+}
+public void setLocalSymbol(String localSymbol) {
+this.mLocalSymbol = localSymbol;
+}
+public int getSmallestFraction() {
+return mSmallestFraction;
+}
+public int getSmallestFractionDigits(){
+if (mSmallestFraction == 0){
+return 0;
+} else {
+return Integer.numberOfTrailingZeros(mSmallestFraction);
+}
+}
+public void setSmallestFraction(int smallestFraction) {
+this.mSmallestFraction = smallestFraction;
+}
+public int getQuoteFlag() {
+return mQuoteFlag;
+}
+public void setQuoteFlag(int quoteFlag) {
+this.mQuoteFlag = quoteFlag;
+}
+@Override
+public String toString() {
+return mFullname == null || mFullname.isEmpty() ? mMnemonic : mFullname;
+}
+@Override
+public boolean equals(Object o) {
+if (this == o) return true;
+if (o == null || getClass() != o.getClass()) return false;
+Commodity commodity = (Commodity) o;
+return mMnemonic.equals(commodity.mMnemonic);
+}
+@Override
+public int hashCode() {
+return mMnemonic.hashCode();
+}
+}

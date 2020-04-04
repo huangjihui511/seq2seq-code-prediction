@@ -1,0 +1,5 @@
+package com.datumbox.framework.core.common.text.tokenizers;
+import java.util.List;
+public abstract class AbstractTokenizer {
+public abstract List<String> tokenize(String text);
+}

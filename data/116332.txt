@@ -1,0 +1,101 @@
+package org.spongepowered.api.data.manipulator.immutable.common;
+import static com.google.common.base.Preconditions.checkNotNull;
+import com.google.common.collect.ImmutableSet;
+import org.spongepowered.api.data.DataContainer;
+import org.spongepowered.api.data.Queries;
+import org.spongepowered.api.data.key.Key;
+import org.spongepowered.api.data.manipulator.DataManipulator;
+import org.spongepowered.api.data.manipulator.ImmutableDataManipulator;
+import org.spongepowered.api.data.value.BaseValue;
+import org.spongepowered.api.data.value.immutable.ImmutableValue;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
+@SuppressWarnings("unchecked")
+public abstract class AbstractImmutableData<I extends ImmutableDataManipulator<I, M>, M extends DataManipulator<M, I>>
+implements ImmutableDataManipulator<I, M> {
+private final Map<Key<?>, Supplier<ImmutableValue<?>>> keyValueMap = new HashMap<>();
+private final Map<Key<?>, Supplier<?>> keyFieldGetterMap = new HashMap<>();
+protected AbstractImmutableData() {
+}
+protected final void registerKeyValue(Key<?> key, Supplier<ImmutableValue<?>> function) {
+this.keyValueMap.put(checkNotNull(key), checkNotNull(function));
+}
+protected final void registerFieldGetter(Key<?> key, Supplier<?> function) {
+this.keyFieldGetterMap.put(checkNotNull(key), checkNotNull(function));
+}
+protected abstract void registerGetters();
+@Override
+public final I copy() {
+return (I) this;
+}
+@Override
+public <E> Optional<E> get(Key<? extends BaseValue<E>> key) {
+final Supplier<?> supplier = this.keyFieldGetterMap.get(checkNotNull(key));
+if (supplier == null) {
+return Optional.empty();
+}
+return Optional.of((E) supplier.get());
+}
+@Override
+public <E, V extends BaseValue<E>> Optional<V> getValue(Key<V> key) {
+final Supplier<ImmutableValue<?>> supplier = this.keyValueMap.get(checkNotNull(key));
+if (supplier == null) {
+return Optional.empty();
+}
+return Optional.of((V) supplier.get());
+}
+@Override
+public boolean supports(Key<?> key) {
+return this.keyFieldGetterMap.containsKey(checkNotNull(key));
+}
+@Override
+public Set<Key<?>> getKeys() {
+return ImmutableSet.copyOf(this.keyValueMap.keySet());
+}
+@Override
+public Set<ImmutableValue<?>> getValues() {
+ImmutableSet.Builder<ImmutableValue<?>> builder = ImmutableSet.builder();
+for (Supplier<ImmutableValue<?>> function : this.keyValueMap.values()) {
+builder.add(checkNotNull(function.get()));
+}
+return builder.build();
+}
+@Override
+public int hashCode() {
+return Objects.hashCode(this.keyFieldGetterMap.values().stream()
+.map(Supplier::get)
+.collect(Collectors.toList()));
+}
+@SuppressWarnings("rawtypes")
+@Override
+public boolean equals(Object obj) {
+if (this == obj) {
+return true;
+}
+if (obj == null || getClass() != obj.getClass()) {
+return false;
+}
+final AbstractImmutableData other = (AbstractImmutableData) obj;
+return Objects.equals(this.keyFieldGetterMap.values().stream()
+.map(Supplier::get)
+.collect(Collectors.toList()),
+((Map<Key<?>, Supplier<?>>) other.keyFieldGetterMap).values().stream()
+.map(Supplier::get)
+.collect(Collectors.toList()));
+}
+@Override
+public DataContainer toContainer() {
+final DataContainer dataContainer = DataContainer.createNew()
+.set(Queries.CONTENT_VERSION, getContentVersion());
+fillContainer(dataContainer);
+return dataContainer;
+}
+protected DataContainer fillContainer(DataContainer dataContainer) {
+return dataContainer;
+}
+}

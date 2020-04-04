@@ -1,0 +1,14 @@
+package org.apache.zookeeper.graph.filterops;
+import org.apache.zookeeper.graph.FilterOp.*;
+public class Arg<T> {
+private ArgType type;
+protected T value;
+protected Arg(ArgType type) {
+this.type = type;
+}
+public ArgType getType() { return type; }
+public T getValue() { return value; }
+public String toString() {
+return "[" + type + ":" + value + "]";
+}
+}

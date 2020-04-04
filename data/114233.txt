@@ -1,0 +1,29 @@
+package com.datumbox.framework.common.storage.abstracts;
+import com.datumbox.framework.common.storage.interfaces.BigMap;
+import com.datumbox.framework.common.storage.interfaces.StorageEngine;
+import com.datumbox.framework.common.utilities.ReflectionMethods;
+import java.io.Serializable;
+import java.lang.reflect.Field;
+import java.util.LinkedList;
+public abstract class BigMapHolder implements Serializable {
+protected BigMapHolder(StorageEngine storageEngine) {
+bigMapInitializer(storageEngine);
+}
+private void bigMapInitializer(StorageEngine storageEngine) {
+for(Field field : ReflectionMethods.getAllFields(new LinkedList<>(), this.getClass())){
+if (field.isAnnotationPresent(BigMap.class)) {
+initializeBigMapField(storageEngine, field);
+}
+}
+}
+private void initializeBigMapField(StorageEngine storageEngine, Field field) {
+field.setAccessible(true);
+try {
+BigMap a = field.getAnnotation(BigMap.class);
+field.set(this, storageEngine.getBigMap(field.getName(), a.keyClass(), a.valueClass(), a.mapType(), a.storageHint(), a.concurrent(), false));
+}
+catch (IllegalArgumentException | IllegalAccessException ex) {
+throw new RuntimeException(ex);
+}
+}
+}

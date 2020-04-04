@@ -1,0 +1,6 @@
+package org.pf4j;
+public class DevelopmentPluginLoader extends BasePluginLoader {
+public DevelopmentPluginLoader(PluginManager pluginManager) {
+super(pluginManager, new DevelopmentPluginClasspath());
+}
+}

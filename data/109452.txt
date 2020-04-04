@@ -1,0 +1,31 @@
+package com.facebook.presto.execution.resourceGroups;
+import com.google.common.collect.ImmutableList;
+import org.testng.annotations.Test;
+import java.util.List;
+import static com.facebook.presto.testing.assertions.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
+public class TestUpdateablePriorityQueue
+{
+@Test
+public void testFifoQueue()
+{
+assertEquals(populateAndExtract(new FifoQueue<>()), ImmutableList.of(1, 2, 3));
+}
+@Test
+public void testIndexedPriorityQueue()
+{
+assertEquals(populateAndExtract(new IndexedPriorityQueue<>()), ImmutableList.of(3, 2, 1));
+}
+@Test
+public void testStochasticPriorityQueue()
+{
+assertTrue(populateAndExtract(new StochasticPriorityQueue<>()).size() == 3);
+}
+private static List<Integer> populateAndExtract(UpdateablePriorityQueue<Integer> queue)
+{
+queue.addOrUpdate(1, 1);
+queue.addOrUpdate(2, 2);
+queue.addOrUpdate(3, 3);
+return ImmutableList.copyOf(queue);
+}
+}

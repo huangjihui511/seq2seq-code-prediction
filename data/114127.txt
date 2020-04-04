@@ -1,0 +1,21 @@
+package org.apache.parquet.avro;
+import org.apache.avro.generic.GenericData;
+import org.apache.hadoop.conf.Configuration;
+import org.junit.Assert;
+import org.junit.Test;
+public class TestAvroDataSupplier {
+public static class GenericDataSupplier implements AvroDataSupplier {
+@Override
+public GenericData get() {
+return GenericData.get();
+}
+}
+@Test
+public void testSetSupplierMethod() {
+Configuration conf = new Configuration(false);
+AvroReadSupport.setAvroDataSupplier(conf, GenericDataSupplier.class);
+Assert.assertEquals("Should contain the class name",
+"org.apache.parquet.avro.TestAvroDataSupplier$GenericDataSupplier",
+conf.get(AvroReadSupport.AVRO_DATA_SUPPLIER));
+}
+}

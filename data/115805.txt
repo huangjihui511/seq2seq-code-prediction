@@ -1,0 +1,70 @@
+package org.springframework.integration.zookeeper.config;
+import org.apache.curator.RetryPolicy;
+import org.apache.curator.framework.CuratorFramework;
+import org.apache.curator.framework.CuratorFrameworkFactory;
+import org.apache.curator.retry.ExponentialBackoffRetry;
+import org.apache.curator.utils.CloseableUtils;
+import org.springframework.beans.factory.FactoryBean;
+import org.springframework.context.SmartLifecycle;
+import org.springframework.util.Assert;
+public class CuratorFrameworkFactoryBean implements FactoryBean<CuratorFramework>, SmartLifecycle {
+private final Object lifecycleLock = new Object();
+private final CuratorFramework client;
+private boolean autoStartup = true;
+private int phase = Integer.MIN_VALUE + 1000;
+private volatile boolean running;
+public CuratorFrameworkFactoryBean(String connectionString) {
+this(connectionString, new ExponentialBackoffRetry(1000, 3));
+}
+public CuratorFrameworkFactoryBean(String connectionString, RetryPolicy retryPolicy) {
+Assert.notNull(connectionString, "'connectionString' cannot be null");
+Assert.notNull(retryPolicy, "'retryPolicy' cannot be null");
+this.client = CuratorFrameworkFactory.newClient(connectionString, retryPolicy);
+}
+@Override
+public int getPhase() {
+return this.phase;
+}
+public void setPhase(int phase) {
+this.phase = phase;
+}
+@Override
+public boolean isRunning() {
+return this.running;
+}
+@Override
+public boolean isAutoStartup() {
+return this.autoStartup;
+}
+public void setAutoStartup(boolean autoStartup) {
+this.autoStartup = autoStartup;
+}
+@Override
+public void start() {
+synchronized (this.lifecycleLock) {
+if (!this.running) {
+if (this.client != null) {
+this.client.start();
+}
+this.running = true;
+}
+}
+}
+@Override
+public void stop() {
+synchronized (this.lifecycleLock) {
+if (this.running) {
+CloseableUtils.closeQuietly(this.client);
+this.running = false;
+}
+}
+}
+@Override
+public CuratorFramework getObject() {
+return this.client;
+}
+@Override
+public Class<?> getObjectType() {
+return CuratorFramework.class;
+}
+}

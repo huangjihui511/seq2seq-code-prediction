@@ -1,0 +1,31 @@
+package org.springframework.data.mongodb.core.aggregation;
+import org.springframework.util.Assert;
+public class LiteralOperators {
+public static LiteralOperatorFactory valueOf(Object value) {
+Assert.notNull(value, "Value must not be null!");
+return new LiteralOperatorFactory(value);
+}
+public static class LiteralOperatorFactory {
+private final Object value;
+public LiteralOperatorFactory(Object value) {
+Assert.notNull(value, "Value must not be null!");
+this.value = value;
+}
+public Literal asLiteral() {
+return Literal.asLiteral(value);
+}
+}
+public static class Literal extends AbstractAggregationExpression {
+private Literal(Object value) {
+super(value);
+}
+@Override
+protected String getMongoMethod() {
+return "$literal";
+}
+public static Literal asLiteral(Object value) {
+Assert.notNull(value, "Value must not be null!");
+return new Literal(value);
+}
+}
+}

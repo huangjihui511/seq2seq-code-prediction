@@ -1,0 +1,29 @@
+package com.pokegoapi.auth;
+import com.squareup.moshi.Json;
+import lombok.Getter;
+import lombok.Setter;
+public class GoogleAuthTokenJson {
+@Getter
+@Setter
+public String error;
+@Getter
+@Setter
+@Json(name = "access_token")
+public String accessToken;
+@Getter
+@Setter
+@Json(name = "token_type")
+public String tokenType;
+@Getter
+@Setter
+@Json(name = "expires_in")
+public int expiresIn;
+@Getter
+@Setter
+@Json(name = "refresh_token")
+public String refreshToken;
+@Getter
+@Setter
+@Json(name = "id_token")
+public String idToken;
+}

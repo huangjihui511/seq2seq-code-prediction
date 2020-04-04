@@ -1,0 +1,34 @@
+package org.spongepowered.mod.tracker;
+import net.minecraft.item.ItemStack;
+import net.minecraftforge.items.IItemHandler;
+import net.minecraftforge.items.IItemHandlerModifiable;
+import org.spongepowered.common.launch.transformer.tracker.TrackerMethod;
+import javax.annotation.Nonnull;
+public final class ItemHandlerTracker {
+@TrackerMethod
+public static int getSlots(IItemHandler itemHandler) {
+return itemHandler.getSlots();
+}
+@TrackerMethod
+public static ItemStack getStackInSlot(IItemHandler itemHandler, int slot) {
+return itemHandler.getStackInSlot(slot);
+}
+@TrackerMethod
+public static ItemStack insertItem(IItemHandler itemHandler, int slot, @Nonnull ItemStack stack, boolean simulate) {
+return itemHandler.insertItem(slot, stack, simulate);
+}
+@TrackerMethod
+public static ItemStack extractItem(IItemHandler itemHandler, int slot, int amount, boolean simulate) {
+return itemHandler.extractItem(slot, amount, simulate);
+}
+@TrackerMethod
+public static int getSlotLimit(IItemHandler itemHandler, int slot) {
+return itemHandler.getSlotLimit(slot);
+}
+@TrackerMethod
+public static void setStackInSlot(IItemHandlerModifiable itemHandler, int slot, @Nonnull ItemStack stack) {
+itemHandler.setStackInSlot(slot, stack);
+}
+private ItemHandlerTracker() {
+}
+}

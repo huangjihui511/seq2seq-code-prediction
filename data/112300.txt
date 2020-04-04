@@ -1,0 +1,29 @@
+package com.github.jknack.handlebars.internal.path;
+import com.github.jknack.handlebars.Context;
+import com.github.jknack.handlebars.PathExpression;
+import com.github.jknack.handlebars.ValueResolver;
+public class DataPath implements PathExpression {
+private String name;
+private String nameWithoutAtSymbol;
+public DataPath(final String name) {
+this.name = name;
+this.nameWithoutAtSymbol = name.substring(1);
+}
+@Override
+public Object eval(final ValueResolver resolver, final Context context, final Object data,
+final Chain chain) {
+Object value = resolver.resolve(data, name);
+if (value == null) {
+value = resolver.resolve(data, nameWithoutAtSymbol);
+}
+return chain.next(resolver, context, value);
+}
+@Override
+public boolean local() {
+return false;
+}
+@Override
+public String toString() {
+return name;
+}
+}

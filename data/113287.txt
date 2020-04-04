@@ -1,0 +1,7 @@
+package org.pf4j.util;
+public class JarFileFilter extends ExtensionFileFilter {
+private static final String JAR_EXTENSION = ".JAR";
+public JarFileFilter() {
+super(JAR_EXTENSION);
+}
+}

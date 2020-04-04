@@ -1,0 +1,6 @@
+package io.kubernetes.client.extended.workqueue;
+public interface RateLimitingQueue<T> extends DelayingQueue<T> {
+void addRateLimited(T item);
+void forget(T item);
+int numRequeues(T item);
+}

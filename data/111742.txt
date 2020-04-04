@@ -1,0 +1,14 @@
+package org.jupiter.common.util.collection;
+import java.util.Map;
+public interface ByteObjectMap<V> extends Map<Byte, V> {
+interface PrimitiveEntry<V> {
+byte key();
+V value();
+void setValue(V value);
+}
+V get(byte key);
+V put(byte key, V value);
+V remove(byte key);
+Iterable<PrimitiveEntry<V>> entries();
+boolean containsKey(byte key);
+}

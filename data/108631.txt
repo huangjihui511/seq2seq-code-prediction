@@ -1,0 +1,8 @@
+package com.alibaba.csp.sentinel.node;
+public interface OccupySupport {
+long tryOccupyNext(long currentTime, int acquireCount, double threshold);
+long waiting();
+void addWaitingRequest(long futureTime, int acquireCount);
+void addOccupiedPass(int acquireCount);
+double occupiedPassQps();
+}

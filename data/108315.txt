@@ -1,0 +1,37 @@
+package org.apache.flink.runtime.rest.versioning;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+public enum RestAPIVersion {
+V0(0, false, false), 
+V1(1, true, true);
+private final int versionNumber;
+private final boolean isDefaultVersion;
+private final boolean isStable;
+RestAPIVersion(int versionNumber, boolean isDefaultVersion, boolean isStable) {
+this.versionNumber = versionNumber;
+this.isDefaultVersion = isDefaultVersion;
+this.isStable = isStable;
+}
+public String getURLVersionPrefix() {
+return name().toLowerCase();
+}
+public boolean isDefaultVersion() {
+return isDefaultVersion;
+}
+public boolean isStableVersion() {
+return isStable;
+}
+public static RestAPIVersion fromURLVersionPrefix(String prefix) {
+return valueOf(prefix.toUpperCase());
+}
+public static RestAPIVersion getLatestVersion(Collection<RestAPIVersion> versions) {
+return Collections.max(versions, new RestAPIVersionComparator());
+}
+public static class RestAPIVersionComparator implements Comparator<RestAPIVersion> {
+@Override
+public int compare(RestAPIVersion o1, RestAPIVersion o2) {
+return Integer.compare(o1.versionNumber, o2.versionNumber);
+}
+}
+}

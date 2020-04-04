@@ -1,0 +1,40 @@
+package com.oreilly.springdata.integration.ip.syslog;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import org.springframework.integration.ip.tcp.serializer.AbstractByteArraySerializer;
+import org.springframework.integration.ip.tcp.serializer.SoftEndOfStreamException;
+public class ByteArrayLfSerializer extends AbstractByteArraySerializer {
+private static final byte[] LF = "\n".getBytes();
+public byte[] deserialize(InputStream inputStream) throws IOException {
+byte[] buffer = new byte[this.maxMessageSize];
+int n = 0;
+int bite;
+if (logger.isDebugEnabled()) {
+logger.debug("Available to read:" + inputStream.available());
+}
+while (true) {
+bite = inputStream.read();
+if (bite < 0 && n == 0) {
+throw new SoftEndOfStreamException("Stream closed between payloads");
+}
+checkClosure(bite);
+if (n > 0 && bite == '\n') {
+break;
+}
+buffer[n++] = (byte) bite;
+if (n >= this.maxMessageSize) {
+throw new IOException("LF not found before max message length: "
++ this.maxMessageSize);
+}
+};
+byte[] assembledData = new byte[n-1];
+System.arraycopy(buffer, 0, assembledData, 0, n-1);
+return assembledData;
+}
+public void serialize(byte[] bytes, OutputStream outputStream) throws IOException {
+outputStream.write(bytes);
+outputStream.write(LF);
+outputStream.flush();
+}
+}

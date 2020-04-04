@@ -1,0 +1,109 @@
+package org.springframework.integration.util;
+import java.beans.PropertyEditor;
+import org.springframework.beans.BeansException;
+import org.springframework.beans.SimpleTypeConverter;
+import org.springframework.beans.factory.BeanFactory;
+import org.springframework.beans.factory.BeanFactoryAware;
+import org.springframework.beans.factory.config.ConfigurableBeanFactory;
+import org.springframework.core.convert.ConversionService;
+import org.springframework.core.convert.TypeDescriptor;
+import org.springframework.core.convert.support.DefaultConversionService;
+import org.springframework.expression.TypeConverter;
+import org.springframework.integration.history.MessageHistory;
+import org.springframework.messaging.MessageHeaders;
+import org.springframework.util.ClassUtils;
+public class BeanFactoryTypeConverter implements TypeConverter, BeanFactoryAware {
+private volatile SimpleTypeConverter delegate = new SimpleTypeConverter();
+private volatile boolean haveCalledDelegateGetDefaultEditor;
+private volatile ConversionService conversionService;
+public BeanFactoryTypeConverter() {
+this.conversionService = DefaultConversionService.getSharedInstance();
+}
+public BeanFactoryTypeConverter(ConversionService conversionService) {
+this.conversionService = conversionService;
+}
+public void setConversionService(ConversionService conversionService) {
+this.conversionService = conversionService;
+}
+@Override
+public void setBeanFactory(BeanFactory beanFactory) throws BeansException {
+if (beanFactory instanceof ConfigurableBeanFactory) {
+Object typeConverter = ((ConfigurableBeanFactory) beanFactory).getTypeConverter();
+if (typeConverter instanceof SimpleTypeConverter) {
+this.delegate = (SimpleTypeConverter) typeConverter;
+}
+}
+}
+public boolean canConvert(Class<?> sourceType, Class<?> targetType) {
+if (this.conversionService.canConvert(sourceType, targetType)) {
+return true;
+}
+if (!String.class.isAssignableFrom(sourceType) && !String.class.isAssignableFrom(targetType)) {
+return false;
+}
+if (!String.class.isAssignableFrom(sourceType)) {
+return this.delegate.findCustomEditor(sourceType, null) != null || this.getDefaultEditor(sourceType) != null;
+}
+return this.delegate.findCustomEditor(targetType, null) != null || this.getDefaultEditor(targetType) != null;
+}
+@Override
+public boolean canConvert(TypeDescriptor sourceTypeDescriptor, TypeDescriptor targetTypeDescriptor) {
+if (this.conversionService.canConvert(sourceTypeDescriptor, targetTypeDescriptor)) {
+return true;
+}
+Class<?> sourceType = sourceTypeDescriptor.getObjectType();
+Class<?> targetType = targetTypeDescriptor.getObjectType();
+return canConvert(sourceType, targetType);
+}
+@Override
+public Object convertValue(Object value, TypeDescriptor sourceType, TypeDescriptor targetType) {
+if ((targetType.getType() == Void.class || targetType.getType() == Void.TYPE) && value == null) {
+return null;
+}
+if (sourceType != null) {
+Class<?> sourceClass = sourceType.getType();
+Class<?> targetClass = targetType.getType();
+if ((sourceClass == MessageHeaders.class && targetClass == MessageHeaders.class) || 
+(sourceClass == MessageHistory.class && targetClass == MessageHistory.class) ||
+(sourceType.isAssignableTo(targetType) && ClassUtils.isPrimitiveArray(sourceClass))) {
+return value;
+}
+}
+if (this.conversionService.canConvert(sourceType, targetType)) {
+return this.conversionService.convert(value, sourceType, targetType);
+}
+if (!String.class.isAssignableFrom(sourceType.getType())) {
+PropertyEditor editor = this.delegate.findCustomEditor(sourceType.getType(), null);
+if (editor == null) {
+editor = this.getDefaultEditor(sourceType.getType());
+}
+if (editor != null) { 
+String text = null;
+synchronized (editor) {
+editor.setValue(value);
+text = editor.getAsText();
+}
+if (String.class.isAssignableFrom(targetType.getType())) {
+return text;
+}
+return convertValue(text, TypeDescriptor.valueOf(String.class), targetType);
+}
+}
+synchronized (this.delegate) {
+return this.delegate.convertIfNecessary(value, targetType.getType());
+}
+}
+private PropertyEditor getDefaultEditor(Class<?> sourceType) {
+PropertyEditor defaultEditor;
+if (this.haveCalledDelegateGetDefaultEditor) {
+defaultEditor = this.delegate.getDefaultEditor(sourceType);
+}
+else {
+synchronized (this) {
+defaultEditor = this.delegate.getDefaultEditor(sourceType);
+}
+this.haveCalledDelegateGetDefaultEditor = true;
+}
+return defaultEditor;
+}
+}

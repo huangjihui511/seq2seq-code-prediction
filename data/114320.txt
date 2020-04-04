@@ -1,0 +1,24 @@
+package mobi.hsz.idea.gitignore.actions;
+import com.intellij.openapi.vfs.VirtualFile;
+import mobi.hsz.idea.gitignore.file.type.IgnoreFileType;
+import mobi.hsz.idea.gitignore.util.Utils;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+@SuppressWarnings("ComponentNotRegistered")
+public class UnignoreFileAction extends IgnoreFileAction {
+public UnignoreFileAction() {
+this(null);
+}
+public UnignoreFileAction(@Nullable VirtualFile virtualFile) {
+this(Utils.getFileType(virtualFile), virtualFile);
+}
+public UnignoreFileAction(@Nullable IgnoreFileType fileType, @Nullable VirtualFile virtualFile) {
+super(fileType, virtualFile, "action.addToUnignore", "action.addToUnignore.description");
+}
+@NotNull
+@Override
+protected String getPath(@NotNull VirtualFile root, @NotNull VirtualFile file) {
+final String path = super.getPath(root, file);
+return path.isEmpty() ? path : '!' + path;
+}
+}

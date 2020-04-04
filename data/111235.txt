@@ -1,0 +1,23 @@
+package com.github.benmanes.caffeine.cache;
+import org.checkerframework.checker.nullness.qual.NonNull;
+public interface Ticker {
+long read();
+static @NonNull Ticker systemTicker() {
+return SystemTicker.INSTANCE;
+}
+static @NonNull Ticker disabledTicker() {
+return DisabledTicker.INSTANCE;
+}
+}
+enum SystemTicker implements Ticker {
+INSTANCE;
+@Override public long read() {
+return System.nanoTime();
+}
+}
+enum DisabledTicker implements Ticker {
+INSTANCE;
+@Override public long read() {
+return 0L;
+}
+}

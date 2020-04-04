@@ -1,0 +1,6 @@
+package io.realm.examples.newsreader;
+public class ReleaseNewsReaderApplication extends NewsReaderApplication {
+@Override
+protected void initializeTimber() {
+}
+}

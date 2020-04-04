@@ -1,0 +1,25 @@
+package org.apache.zookeeper.server.jersey.cfg;
+public class HostPort {
+private String host;
+private int port;
+public HostPort(String hostPort) {
+String[] parts = hostPort.split(":");
+host = parts[0];
+port = Integer.parseInt(parts[1]);
+}
+public String getHost() {
+return host;
+}
+public int getPort() {
+return port;
+}
+@Override
+public boolean equals(Object o) {
+HostPort p = (HostPort) o;
+return host.equals(p.host) && port == p.port;
+}
+@Override
+public int hashCode() {
+return String.format("%s:%d", host, port).hashCode();
+}
+}

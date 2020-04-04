@@ -1,0 +1,6 @@
+package com.pokegoapi.api.listener;
+import com.pokegoapi.api.PokemonGo;
+public interface LoginListener extends Listener {
+void onLogin(PokemonGo api);
+void onChallenge(PokemonGo api, String challengeURL);
+}

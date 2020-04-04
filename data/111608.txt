@@ -1,0 +1,21 @@
+package io.github.bonigarcia.wdm.test;
+import static org.junit.Assert.assertTrue;
+import java.io.File;
+import org.junit.Test;
+import io.github.bonigarcia.wdm.WebDriverManager;
+public class PropertiesTest {
+@Test
+public void testCustomProperties() {
+WebDriverManager chromedriver = WebDriverManager.chromedriver();
+chromedriver.config().setProperties("wdm-test.properties");
+chromedriver.setup();
+String binaryPath = chromedriver.getBinaryPath();
+File binary = new File(binaryPath);
+assertTrue(binary.exists());
+}
+@Test
+public void testEmptyProperties() {
+WebDriverManager.chromedriver().properties("").setup();
+assertTrue(true);
+}
+}

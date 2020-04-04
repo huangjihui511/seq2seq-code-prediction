@@ -1,0 +1,17 @@
+package io.grpc.alts;
+import static com.google.common.truth.Truth.assertThat;
+import io.grpc.netty.InternalProtocolNegotiator.ProtocolNegotiator;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
+@RunWith(JUnit4.class)
+public final class ComputeEngineChannelBuilderTest {
+@Test
+public void buildsNettyChannel() throws Exception {
+ComputeEngineChannelBuilder builder = ComputeEngineChannelBuilder.forTarget("localhost:8080");
+builder.build();
+ProtocolNegotiator protocolNegotiator = builder.getProtocolNegotiatorForTest();
+assertThat(protocolNegotiator.getClass().getSimpleName())
+.isEqualTo("GoogleDefaultProtocolNegotiator");
+}
+}

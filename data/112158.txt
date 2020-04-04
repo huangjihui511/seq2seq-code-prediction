@@ -1,0 +1,211 @@
+package org.menacheri.jetclient.util;
+import java.net.InetSocketAddress;
+import org.jboss.netty.buffer.ChannelBuffer;
+import org.jboss.netty.buffer.ChannelBuffers;
+import org.menacheri.jetclient.app.impl.SessionFactory;
+import org.menacheri.jetclient.communication.MessageBuffer;
+import org.menacheri.jetclient.communication.NettyMessageBuffer;
+public class LoginHelper
+{
+private final String username;
+private final String password;
+private final String connectionKey;
+private final InetSocketAddress tcpServerAddress;
+private final InetSocketAddress udpServerAddress;
+protected LoginHelper(LoginBuilder loginBuilder)
+{
+loginBuilder.validateAndSetValues();
+this.username = loginBuilder.username;
+this.password = loginBuilder.password;
+this.connectionKey = loginBuilder.connectionKey;
+this.tcpServerAddress = loginBuilder.tcpServerAddress;
+this.udpServerAddress = loginBuilder.udpServerAddress;
+}
+public static class LoginBuilder
+{
+private String username;
+private String password;
+private String connectionKey;
+private String jetserverTcpHostName;
+private Integer tcpPort;
+private String jetserverUdpHostName;
+private Integer udpPort;
+private InetSocketAddress tcpServerAddress;
+private InetSocketAddress udpServerAddress;
+public String getUsername()
+{
+return username;
+}
+public LoginBuilder username(String username)
+{
+this.username = username;
+return this;
+}
+public String getPassword()
+{
+return password;
+}
+public LoginBuilder password(String password)
+{
+this.password = password;
+return this;
+}
+public String getConnectionKey()
+{
+return connectionKey;
+}
+public LoginBuilder connectionKey(String connectionKey)
+{
+this.connectionKey = connectionKey;
+return this;
+}
+public String getJetserverTcpHostName()
+{
+return jetserverTcpHostName;
+}
+public LoginBuilder jetserverTcpHostName(String jetserverTcpHostName)
+{
+this.jetserverTcpHostName = jetserverTcpHostName;
+return this;
+}
+public int getTcpPort()
+{
+return tcpPort;
+}
+public LoginBuilder tcpPort(int tcpPort)
+{
+this.tcpPort = tcpPort;
+return this;
+}
+public String getJetserverUdpHostName()
+{
+return jetserverUdpHostName;
+}
+public LoginBuilder jetserverUdpHostName(String jetserverUdpHostName)
+{
+this.jetserverUdpHostName = jetserverUdpHostName;
+return this;
+}
+public int getUdpPort()
+{
+return udpPort;
+}
+public LoginBuilder udpPort(int udpPort)
+{
+this.udpPort = udpPort;
+return this;
+}
+public InetSocketAddress getTcpServerAddress()
+{
+return tcpServerAddress;
+}
+public LoginBuilder tcpServerAddress(InetSocketAddress tcpServerAddress)
+{
+this.tcpServerAddress = tcpServerAddress;
+return this;
+}
+public InetSocketAddress udpServerAddress()
+{
+return udpServerAddress;
+}
+public LoginBuilder udpServerAddress(InetSocketAddress updServerAddress)
+{
+this.udpServerAddress = updServerAddress;
+return this;
+}
+public LoginHelper build()
+{
+return new LoginHelper(this);
+}
+protected void validateAndSetValues()
+{
+if (null == username)
+{
+throw new IllegalArgumentException("Username cannot be null");
+}
+if (null == password)
+{
+throw new IllegalArgumentException("Password cannot be null");
+}
+if (null == connectionKey)
+{
+throw new IllegalArgumentException(
+"ConnectionKey cannot be null");
+}
+if (null == tcpServerAddress
+&& (null == jetserverTcpHostName || null == tcpPort))
+{
+throw new IllegalArgumentException(
+"tcpServerAddress cannot be null");
+}
+if (null == tcpServerAddress)
+{
+tcpServerAddress = new InetSocketAddress(jetserverTcpHostName,
+tcpPort);
+}
+if (null == udpServerAddress)
+{
+if (null != jetserverUdpHostName && null != udpPort)
+{
+udpServerAddress = new InetSocketAddress(
+jetserverUdpHostName, udpPort);
+}
+}
+}
+}
+public MessageBuffer<ChannelBuffer> getLoginBuffer(
+InetSocketAddress localUDPAddress) throws Exception
+{
+ChannelBuffer loginBuffer;
+ChannelBuffer credentials = NettyUtils.writeStrings(username, password,
+connectionKey);
+if (null != localUDPAddress)
+{
+ChannelBuffer udpAddressBuffer = NettyUtils
+.writeSocketAddress(localUDPAddress);
+loginBuffer = ChannelBuffers.wrappedBuffer(credentials,
+udpAddressBuffer);
+}
+else
+{
+loginBuffer = credentials;
+}
+return new NettyMessageBuffer(loginBuffer);
+}
+public MessageBuffer<ChannelBuffer> getReconnectBuffer(String reconnectKey,
+InetSocketAddress udpAddress)
+{
+ChannelBuffer reconnectBuffer = null;
+ChannelBuffer buffer = NettyUtils.writeString(reconnectKey);
+if (null != udpAddress)
+{
+reconnectBuffer = ChannelBuffers.wrappedBuffer(buffer,
+NettyUtils.writeSocketAddress(udpAddress));
+}
+else
+{
+reconnectBuffer = buffer;
+}
+return new NettyMessageBuffer(reconnectBuffer);
+}
+public String getUsername()
+{
+return username;
+}
+public String getPassword()
+{
+return password;
+}
+public String getConnectionKey()
+{
+return connectionKey;
+}
+public InetSocketAddress getTcpServerAddress()
+{
+return tcpServerAddress;
+}
+public InetSocketAddress getUdpServerAddress()
+{
+return udpServerAddress;
+}
+}

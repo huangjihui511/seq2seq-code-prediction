@@ -1,0 +1,81 @@
+package org.spongepowered.mod.tracker;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.World;
+import net.minecraftforge.fluids.Fluid;
+import net.minecraftforge.fluids.FluidStack;
+import net.minecraftforge.fluids.FluidTankInfo;
+import net.minecraftforge.fluids.IFluidBlock;
+import net.minecraftforge.fluids.IFluidTank;
+import net.minecraftforge.fluids.capability.IFluidHandler;
+import net.minecraftforge.fluids.capability.IFluidTankProperties;
+import org.spongepowered.common.launch.transformer.tracker.TrackerMethod;
+import javax.annotation.Nullable;
+public final class FluidTracker {
+@TrackerMethod
+public static IFluidTankProperties[] getTankProperties(IFluidHandler fluidHandler) {
+return fluidHandler.getTankProperties();
+}
+@TrackerMethod
+public static int fill(IFluidHandler fluidHandler, FluidStack resource, boolean doFill) {
+return fluidHandler.fill(resource, doFill);
+}
+@TrackerMethod
+@Nullable
+public static FluidStack drain(IFluidHandler fluidHandler, FluidStack resource, boolean doDrain) {
+return fluidHandler.drain(resource, doDrain);
+}
+@TrackerMethod
+@Nullable
+public static FluidStack drain(IFluidHandler fluidHandler, int maxDrain, boolean doDrain) {
+return fluidHandler.drain(maxDrain, doDrain);
+}
+@TrackerMethod
+public static Fluid getFluid(IFluidBlock fluidBlock) {
+return fluidBlock.getFluid();
+}
+@TrackerMethod
+public static int place(IFluidBlock fluidBlock, World world, BlockPos pos, FluidStack fluidStack, boolean doPlace) {
+return fluidBlock.place(world, pos, fluidStack, doPlace);
+}
+@TrackerMethod
+@Nullable
+public static FluidStack drain(IFluidBlock fluidBlock, World world, BlockPos pos, boolean doDrain) {
+return fluidBlock.drain(world, pos, doDrain);
+}
+@TrackerMethod
+public static boolean canDrain(IFluidBlock fluidBlock, World world, BlockPos pos) {
+return fluidBlock.canDrain(world, pos);
+}
+@TrackerMethod
+public static float getFilledPercentage(IFluidBlock fluidBlock, World world, BlockPos pos) {
+return fluidBlock.getFilledPercentage(world, pos);
+}
+@TrackerMethod
+@Nullable
+public static FluidStack getFluid(IFluidTank fluidTank) {
+return fluidTank.getFluid();
+}
+@TrackerMethod
+public static int getFluidAmount(IFluidTank fluidTank) {
+return fluidTank.getFluidAmount();
+}
+@TrackerMethod
+public static int getCapacity(IFluidTank fluidTank) {
+return fluidTank.getCapacity();
+}
+@TrackerMethod
+public static FluidTankInfo getInfo(IFluidTank fluidTank) {
+return fluidTank.getInfo();
+}
+@TrackerMethod
+public static int fill(IFluidTank fluidTank, FluidStack resource, boolean doFill) {
+return fluidTank.fill(resource, doFill);
+}
+@TrackerMethod
+@Nullable
+public static FluidStack drain(IFluidTank fluidTank, int maxDrain, boolean doDrain) {
+return fluidTank.drain(maxDrain, doDrain);
+}
+private FluidTracker() {
+}
+}

@@ -1,0 +1,16 @@
+package lombok.javac.apt;
+import javax.annotation.processing.Messager;
+import javax.tools.Diagnostic.Kind;
+import lombok.core.DiagnosticsReceiver;
+public class MessagerDiagnosticsReceiver implements DiagnosticsReceiver {
+private final Messager messager;
+public MessagerDiagnosticsReceiver(Messager messager) {
+this.messager = messager;
+}
+@Override public void addWarning(String message) {
+messager.printMessage(Kind.WARNING, message);
+}
+@Override public void addError(String message) {
+messager.printMessage(Kind.ERROR, message);
+}
+}

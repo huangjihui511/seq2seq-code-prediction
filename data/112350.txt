@@ -1,0 +1,321 @@
+package io.jooby;
+public final class StatusCode {
+public static final int CONTINUE_CODE = 100;
+public static final StatusCode CONTINUE = new StatusCode(CONTINUE_CODE, "Continue");
+public static final int SWITCHING_PROTOCOLS_CODE = 101;
+public static final StatusCode SWITCHING_PROTOCOLS = new StatusCode(SWITCHING_PROTOCOLS_CODE,
+"Switching Protocols");
+public static final int PROCESSING_CODE = 102;
+public static final StatusCode PROCESSING = new StatusCode(PROCESSING_CODE, "Processing");
+public static final int CHECKPOINT_CODE = 103;
+public static final StatusCode CHECKPOINT = new StatusCode(CHECKPOINT_CODE, "Checkpoint");
+public static final int OK_CODE = 200;
+public static final StatusCode OK = new StatusCode(OK_CODE, "Success");
+public static final int CREATED_CODE = 201;
+public static final StatusCode CREATED = new StatusCode(CREATED_CODE, "Created");
+public static final int ACCEPTED_CODE = 202;
+public static final StatusCode ACCEPTED = new StatusCode(ACCEPTED_CODE, "Accepted");
+public static final int NON_AUTHORITATIVE_INFORMATION_CODE = 203;
+public static final StatusCode NON_AUTHORITATIVE_INFORMATION = new StatusCode(
+NON_AUTHORITATIVE_INFORMATION_CODE,
+"Non-Authoritative Information");
+public static final int NO_CONTENT_CODE = 204;
+public static final StatusCode NO_CONTENT = new StatusCode(NO_CONTENT_CODE, "No Content");
+public static final int RESET_CONTENT_CODE = 205;
+public static final StatusCode RESET_CONTENT = new StatusCode(RESET_CONTENT_CODE,
+"Reset Content");
+public static final int PARTIAL_CONTENT_CODE = 206;
+public static final StatusCode PARTIAL_CONTENT = new StatusCode(PARTIAL_CONTENT_CODE,
+"Partial Content");
+public static final int MULTI_STATUS_CODE = 207;
+public static final StatusCode MULTI_STATUS = new StatusCode(MULTI_STATUS_CODE,
+"Multi-StatusCode");
+public static final int ALREADY_REPORTED_CODE = 208;
+public static final StatusCode ALREADY_REPORTED = new StatusCode(ALREADY_REPORTED_CODE,
+"Already Reported");
+public static final int IM_USED_CODE = 226;
+public static final StatusCode IM_USED = new StatusCode(IM_USED_CODE, "IM Used");
+public static final int MULTIPLE_CHOICES_CODE = 300;
+public static final StatusCode MULTIPLE_CHOICES = new StatusCode(MULTIPLE_CHOICES_CODE,
+"Multiple Choices");
+public static final int MOVED_PERMANENTLY_CODE = 301;
+public static final StatusCode MOVED_PERMANENTLY = new StatusCode(MOVED_PERMANENTLY_CODE,
+"Moved Permanently");
+public static final int FOUND_CODE = 302;
+public static final StatusCode FOUND = new StatusCode(FOUND_CODE, "Found");
+public static final int SEE_OTHER_CODE = 303;
+public static final StatusCode SEE_OTHER = new StatusCode(SEE_OTHER_CODE, "See Other");
+public static final int NOT_MODIFIED_CODE = 304;
+public static final StatusCode NOT_MODIFIED = new StatusCode(NOT_MODIFIED_CODE, "Not Modified");
+public static final int USE_PROXY_CODE = 305;
+public static final StatusCode USE_PROXY = new StatusCode(USE_PROXY_CODE, "Use Proxy");
+public static final int TEMPORARY_REDIRECT_CODE = 307;
+public static final StatusCode TEMPORARY_REDIRECT = new StatusCode(TEMPORARY_REDIRECT_CODE,
+"Temporary Redirect");
+public static final int RESUME_INCOMPLETE_CODE = 308;
+public static final StatusCode RESUME_INCOMPLETE = new StatusCode(RESUME_INCOMPLETE_CODE,
+"Resume Incomplete");
+public static final int BAD_REQUEST_CODE = 400;
+public static final StatusCode BAD_REQUEST = new StatusCode(BAD_REQUEST_CODE, "Bad Request");
+public static final int UNAUTHORIZED_CODE = 401;
+public static final StatusCode UNAUTHORIZED = new StatusCode(UNAUTHORIZED_CODE, "Unauthorized");
+public static final int PAYMENT_REQUIRED_CODE = 402;
+public static final StatusCode PAYMENT_REQUIRED = new StatusCode(PAYMENT_REQUIRED_CODE,
+"Payment Required");
+public static final int FORBIDDEN_CODE = 403;
+public static final StatusCode FORBIDDEN = new StatusCode(FORBIDDEN_CODE, "Forbidden");
+public static final int NOT_FOUND_CODE = 404;
+public static final StatusCode NOT_FOUND = new StatusCode(NOT_FOUND_CODE, "Not Found");
+public static final int METHOD_NOT_ALLOWED_CODE = 405;
+public static final StatusCode METHOD_NOT_ALLOWED = new StatusCode(METHOD_NOT_ALLOWED_CODE,
+"Method Not Allowed");
+public static final int NOT_ACCEPTABLE_CODE = 406;
+public static final StatusCode NOT_ACCEPTABLE = new StatusCode(NOT_ACCEPTABLE_CODE,
+"Not Acceptable");
+public static final int PROXY_AUTHENTICATION_REQUIRED_CODE = 407;
+public static final StatusCode PROXY_AUTHENTICATION_REQUIRED = new StatusCode(
+PROXY_AUTHENTICATION_REQUIRED_CODE,
+"Proxy Authentication Required");
+public static final int REQUEST_TIMEOUT_CODE = 408;
+public static final StatusCode REQUEST_TIMEOUT = new StatusCode(REQUEST_TIMEOUT_CODE,
+"Request Timeout");
+public static final int CONFLICT_CODE = 409;
+public static final StatusCode CONFLICT = new StatusCode(CONFLICT_CODE, "Conflict");
+public static final int GONE_CODE = 410;
+public static final StatusCode GONE = new StatusCode(GONE_CODE, "Gone");
+public static final int LENGTH_REQUIRED_CODE = 411;
+public static final StatusCode LENGTH_REQUIRED = new StatusCode(LENGTH_REQUIRED_CODE,
+"Length Required");
+public static final int PRECONDITION_FAILED_CODE = 412;
+public static final StatusCode PRECONDITION_FAILED = new StatusCode(PRECONDITION_FAILED_CODE,
+"Precondition Failed");
+public static final int REQUEST_ENTITY_TOO_LARGE_CODE = 413;
+public static final StatusCode REQUEST_ENTITY_TOO_LARGE = new StatusCode(
+REQUEST_ENTITY_TOO_LARGE_CODE,
+"Request Entity Too Large");
+public static final int REQUEST_URI_TOO_LONG_CODE = 414;
+public static final StatusCode REQUEST_URI_TOO_LONG = new StatusCode(REQUEST_URI_TOO_LONG_CODE,
+"Request-URI Too Long");
+public static final int UNSUPPORTED_MEDIA_TYPE_CODE = 415;
+public static final StatusCode UNSUPPORTED_MEDIA_TYPE = new StatusCode(
+UNSUPPORTED_MEDIA_TYPE_CODE,
+"Unsupported Media Type");
+public static final int REQUESTED_RANGE_NOT_SATISFIABLE_CODE = 416;
+public static final StatusCode REQUESTED_RANGE_NOT_SATISFIABLE = new StatusCode(
+REQUESTED_RANGE_NOT_SATISFIABLE_CODE,
+"Requested range not satisfiable");
+public static final int EXPECTATION_FAILED_CODE = 417;
+public static final StatusCode EXPECTATION_FAILED = new StatusCode(EXPECTATION_FAILED_CODE,
+"Expectation Failed");
+public static final int I_AM_A_TEAPOT_CODE = 418;
+public static final StatusCode I_AM_A_TEAPOT = new StatusCode(I_AM_A_TEAPOT_CODE, "I'm a teapot");
+public static final int UNPROCESSABLE_ENTITY_CODE = 422;
+public static final StatusCode UNPROCESSABLE_ENTITY = new StatusCode(UNPROCESSABLE_ENTITY_CODE,
+"Unprocessable Entity");
+public static final int LOCKED_CODE = 423;
+public static final StatusCode LOCKED = new StatusCode(LOCKED_CODE, "Locked");
+public static final int FAILED_DEPENDENCY_CODE = 424;
+public static final StatusCode FAILED_DEPENDENCY = new StatusCode(FAILED_DEPENDENCY_CODE,
+"Failed Dependency");
+public static final int UPGRADE_REQUIRED_CODE = 426;
+public static final StatusCode UPGRADE_REQUIRED = new StatusCode(UPGRADE_REQUIRED_CODE,
+"Upgrade Required");
+public static final int PRECONDITION_REQUIRED_CODE = 428;
+public static final StatusCode PRECONDITION_REQUIRED = new StatusCode(PRECONDITION_REQUIRED_CODE,
+"Precondition Required");
+public static final int TOO_MANY_REQUESTS_CODE = 429;
+public static final StatusCode TOO_MANY_REQUESTS = new StatusCode(TOO_MANY_REQUESTS_CODE,
+"Too Many Requests");
+public static final int REQUEST_HEADER_FIELDS_TOO_LARGE_CODE = 431;
+public static final StatusCode REQUEST_HEADER_FIELDS_TOO_LARGE = new StatusCode(
+REQUEST_HEADER_FIELDS_TOO_LARGE_CODE,
+"Request Header Fields Too Large");
+public static final int SERVER_ERROR_CODE = 500;
+public static final StatusCode SERVER_ERROR = new StatusCode(SERVER_ERROR_CODE, "Server Error");
+public static final int NOT_IMPLEMENTED_CODE = 501;
+public static final StatusCode NOT_IMPLEMENTED = new StatusCode(NOT_IMPLEMENTED_CODE,
+"Not Implemented");
+public static final int BAD_GATEWAY_CODE = 502;
+public static final StatusCode BAD_GATEWAY = new StatusCode(BAD_GATEWAY_CODE, "Bad Gateway");
+public static final int SERVICE_UNAVAILABLE_CODE = 503;
+public static final StatusCode SERVICE_UNAVAILABLE = new StatusCode(SERVICE_UNAVAILABLE_CODE,
+"Service Unavailable");
+public static final int GATEWAY_TIMEOUT_CODE = 504;
+public static final StatusCode GATEWAY_TIMEOUT = new StatusCode(GATEWAY_TIMEOUT_CODE,
+"Gateway Timeout");
+public static final int HTTP_VERSION_NOT_SUPPORTED_CODE = 505;
+public static final StatusCode HTTP_VERSION_NOT_SUPPORTED = new StatusCode(
+HTTP_VERSION_NOT_SUPPORTED_CODE,
+"HTTP Version not supported");
+public static final int VARIANT_ALSO_NEGOTIATES_CODE = 506;
+public static final StatusCode VARIANT_ALSO_NEGOTIATES = new StatusCode(
+VARIANT_ALSO_NEGOTIATES_CODE,
+"Variant Also Negotiates");
+public static final int INSUFFICIENT_STORAGE_CODE = 507;
+public static final StatusCode INSUFFICIENT_STORAGE = new StatusCode(INSUFFICIENT_STORAGE_CODE,
+"Insufficient Storage");
+public static final int LOOP_DETECTED_CODE = 508;
+public static final StatusCode LOOP_DETECTED = new StatusCode(LOOP_DETECTED_CODE,
+"Loop Detected");
+public static final int BANDWIDTH_LIMIT_EXCEEDED_CODE = 509;
+public static final StatusCode BANDWIDTH_LIMIT_EXCEEDED = new StatusCode(
+BANDWIDTH_LIMIT_EXCEEDED_CODE,
+"Bandwidth Limit Exceeded");
+public static final int NOT_EXTENDED_CODE = 510;
+public static final StatusCode NOT_EXTENDED = new StatusCode(NOT_EXTENDED_CODE, "Not Extended");
+public static final int NETWORK_AUTHENTICATION_REQUIRED_CODE = 511;
+public static final StatusCode NETWORK_AUTHENTICATION_REQUIRED = new StatusCode(
+NETWORK_AUTHENTICATION_REQUIRED_CODE,
+"Network Authentication Required");
+private final int value;
+private final String reason;
+private StatusCode(final int value, final String reason) {
+this.value = value;
+this.reason = reason;
+}
+public int value() {
+return this.value;
+}
+public String reason() {
+return reason;
+}
+@Override
+public String toString() {
+return reason() + " (" + value + ")";
+}
+@Override public boolean equals(Object obj) {
+if (obj instanceof StatusCode) {
+return this.value == ((StatusCode) obj).value;
+}
+return false;
+}
+@Override public int hashCode() {
+return value;
+}
+public static StatusCode valueOf(final int statusCode) {
+switch (statusCode) {
+case CONTINUE_CODE:
+return CONTINUE;
+case SWITCHING_PROTOCOLS_CODE:
+return SWITCHING_PROTOCOLS;
+case PROCESSING_CODE:
+return PROCESSING;
+case CHECKPOINT_CODE:
+return CHECKPOINT;
+case OK_CODE:
+return OK;
+case CREATED_CODE:
+return CREATED;
+case ACCEPTED_CODE:
+return ACCEPTED;
+case NON_AUTHORITATIVE_INFORMATION_CODE:
+return NON_AUTHORITATIVE_INFORMATION;
+case NO_CONTENT_CODE:
+return NO_CONTENT;
+case RESET_CONTENT_CODE:
+return RESET_CONTENT;
+case PARTIAL_CONTENT_CODE:
+return PARTIAL_CONTENT;
+case MULTI_STATUS_CODE:
+return MULTI_STATUS;
+case ALREADY_REPORTED_CODE:
+return ALREADY_REPORTED;
+case IM_USED_CODE:
+return IM_USED;
+case MULTIPLE_CHOICES_CODE:
+return MULTIPLE_CHOICES;
+case MOVED_PERMANENTLY_CODE:
+return MOVED_PERMANENTLY;
+case FOUND_CODE:
+return FOUND;
+case SEE_OTHER_CODE:
+return SEE_OTHER;
+case NOT_MODIFIED_CODE:
+return NOT_MODIFIED;
+case USE_PROXY_CODE:
+return USE_PROXY;
+case TEMPORARY_REDIRECT_CODE:
+return TEMPORARY_REDIRECT;
+case RESUME_INCOMPLETE_CODE:
+return RESUME_INCOMPLETE;
+case BAD_REQUEST_CODE:
+return BAD_REQUEST;
+case UNAUTHORIZED_CODE:
+return UNAUTHORIZED;
+case PAYMENT_REQUIRED_CODE:
+return PAYMENT_REQUIRED;
+case FORBIDDEN_CODE:
+return FORBIDDEN;
+case NOT_FOUND_CODE:
+return NOT_FOUND;
+case METHOD_NOT_ALLOWED_CODE:
+return METHOD_NOT_ALLOWED;
+case NOT_ACCEPTABLE_CODE:
+return NOT_ACCEPTABLE;
+case PROXY_AUTHENTICATION_REQUIRED_CODE:
+return PROXY_AUTHENTICATION_REQUIRED;
+case REQUEST_TIMEOUT_CODE:
+return REQUEST_TIMEOUT;
+case CONFLICT_CODE:
+return CONFLICT;
+case GONE_CODE:
+return GONE;
+case LENGTH_REQUIRED_CODE:
+return LENGTH_REQUIRED;
+case PRECONDITION_FAILED_CODE:
+return PRECONDITION_FAILED;
+case REQUEST_ENTITY_TOO_LARGE_CODE:
+return REQUEST_ENTITY_TOO_LARGE;
+case REQUEST_URI_TOO_LONG_CODE:
+return REQUEST_URI_TOO_LONG;
+case UNSUPPORTED_MEDIA_TYPE_CODE:
+return UNSUPPORTED_MEDIA_TYPE;
+case REQUESTED_RANGE_NOT_SATISFIABLE_CODE:
+return REQUESTED_RANGE_NOT_SATISFIABLE;
+case EXPECTATION_FAILED_CODE:
+return EXPECTATION_FAILED;
+case I_AM_A_TEAPOT_CODE:
+return I_AM_A_TEAPOT;
+case UNPROCESSABLE_ENTITY_CODE:
+return UNPROCESSABLE_ENTITY;
+case LOCKED_CODE:
+return LOCKED;
+case FAILED_DEPENDENCY_CODE:
+return FAILED_DEPENDENCY;
+case UPGRADE_REQUIRED_CODE:
+return UPGRADE_REQUIRED;
+case PRECONDITION_REQUIRED_CODE:
+return PRECONDITION_REQUIRED;
+case TOO_MANY_REQUESTS_CODE:
+return TOO_MANY_REQUESTS;
+case REQUEST_HEADER_FIELDS_TOO_LARGE_CODE:
+return REQUEST_HEADER_FIELDS_TOO_LARGE;
+case SERVER_ERROR_CODE:
+return SERVER_ERROR;
+case NOT_IMPLEMENTED_CODE:
+return NOT_IMPLEMENTED;
+case BAD_GATEWAY_CODE:
+return BAD_GATEWAY;
+case SERVICE_UNAVAILABLE_CODE:
+return SERVICE_UNAVAILABLE;
+case GATEWAY_TIMEOUT_CODE:
+return GATEWAY_TIMEOUT;
+case HTTP_VERSION_NOT_SUPPORTED_CODE:
+return HTTP_VERSION_NOT_SUPPORTED;
+case VARIANT_ALSO_NEGOTIATES_CODE:
+return VARIANT_ALSO_NEGOTIATES;
+case INSUFFICIENT_STORAGE_CODE:
+return INSUFFICIENT_STORAGE;
+case LOOP_DETECTED_CODE:
+return LOOP_DETECTED;
+case BANDWIDTH_LIMIT_EXCEEDED_CODE:
+return BANDWIDTH_LIMIT_EXCEEDED;
+case NOT_EXTENDED_CODE:
+return NOT_EXTENDED;
+case NETWORK_AUTHENTICATION_REQUIRED_CODE:
+return NETWORK_AUTHENTICATION_REQUIRED;
+default:
+return new StatusCode(statusCode, Integer.toString(statusCode));
+}
+}
+}

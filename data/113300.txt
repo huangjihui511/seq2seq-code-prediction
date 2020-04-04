@@ -1,0 +1,7 @@
+package org.ocpsoft.prettytime;
+public interface TimeUnit
+{
+public long getMillisPerUnit();
+public long getMaxQuantity();
+public boolean isPrecise();
+}

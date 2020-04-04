@@ -1,0 +1,11 @@
+package com.facebook.sample2;
+import android.app.Activity;
+import android.os.Bundle;
+import com.sample2.R;
+public class Sample extends Activity {
+@Override
+public void onCreate(Bundle savedInstanceState) {
+super.onCreate(savedInstanceState);
+setTitle(getString(R.string.sample2_string));
+}
+}

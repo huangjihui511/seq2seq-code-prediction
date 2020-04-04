@@ -1,0 +1,35 @@
+package net.glowstone.util.pathfinding;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import net.glowstone.block.GlowBlock;
+import org.bukkit.Material;
+import org.bukkit.util.Vector;
+public class Pathfinder {
+private final Map<Material, Double> materialWeights;
+private final Material[] blockedMaterials;
+private final GlowBlock startPoint;
+private final GlowBlock endPoint;
+public Pathfinder(final GlowBlock startPoint, final GlowBlock endPoint) {
+this(startPoint, endPoint, new HashMap<>(), new Material[0]);
+}
+public Pathfinder(final GlowBlock startPoint, final GlowBlock endPoint,
+final Material... blockedMaterials) {
+this(startPoint, endPoint, new HashMap<>(), blockedMaterials);
+}
+public Pathfinder(final GlowBlock startPoint, final GlowBlock endPoint,
+final Map<Material, Double> materialWeights) {
+this(startPoint, endPoint, materialWeights, new Material[0]);
+}
+public Pathfinder(final GlowBlock startPoint, final GlowBlock endPoint,
+final Map<Material, Double> materialWeights,
+final Material... blockedMaterials) {
+this.startPoint = startPoint;
+this.endPoint = endPoint;
+this.materialWeights = materialWeights;
+this.blockedMaterials = blockedMaterials;
+}
+public List<Vector> getPath(IAlgorithm algorithm) {
+return algorithm.calculatePath(startPoint, endPoint, materialWeights, blockedMaterials);
+}
+}

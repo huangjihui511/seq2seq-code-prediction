@@ -1,0 +1,49 @@
+package org.springframework.data.mongodb.gridfs;
+import org.bson.Document;
+import org.springframework.lang.Nullable;
+import com.mongodb.client.gridfs.model.GridFSFile;
+public interface GridFsObject<ID, CONTENT> {
+@Nullable
+ID getFileId();
+String getFilename();
+CONTENT getContent();
+Options getOptions();
+class Options {
+private final Document metadata;
+private final int chunkSize;
+private Options(Document metadata, int chunkSize) {
+this.metadata = metadata;
+this.chunkSize = chunkSize;
+}
+public static Options none() {
+return new Options(new Document(), -1);
+}
+public static Options typed(String contentType) {
+return new Options(new Document("_contentType", contentType), -1);
+}
+public static Options from(@Nullable GridFSFile gridFSFile) {
+return gridFSFile != null ? new Options(gridFSFile.getMetadata(), gridFSFile.getChunkSize()) : none();
+}
+public Options contentType(String contentType) {
+Options target = new Options(new Document(metadata), chunkSize);
+target.metadata.put("_contentType", contentType);
+return target;
+}
+public Options metadata(Document metadata) {
+return new Options(metadata, chunkSize);
+}
+public Options chunkSize(int chunkSize) {
+return new Options(metadata, chunkSize);
+}
+public Document getMetadata() {
+return metadata;
+}
+public int getChunkSize() {
+return chunkSize;
+}
+@Nullable
+String getContentType() {
+return (String) metadata.get("_contentType");
+}
+}
+}

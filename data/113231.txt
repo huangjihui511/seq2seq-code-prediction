@@ -1,0 +1,6 @@
+package org.pf4j;
+import java.nio.file.Path;
+public interface PluginDescriptorFinder {
+boolean isApplicable(Path pluginPath);
+PluginDescriptor find(Path pluginPath);
+}

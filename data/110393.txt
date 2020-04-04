@@ -1,0 +1,11 @@
+package org.jd.gui;
+import com.apple.eawt.Application;
+public class OsxApp extends App {
+@SuppressWarnings("unchecked")
+public static void main(String[] args) {
+Application application = Application.getApplication();
+App.main(args);
+application.setOpenFileHandler(e -> controller.openFiles(e.getFiles()));
+application.setQuitHandler((e, r) -> System.exit(0));
+}
+}

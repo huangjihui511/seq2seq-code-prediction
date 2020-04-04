@@ -1,0 +1,63 @@
+package com.alibaba.csp.sentinel.slots.block.flow;
+import java.util.Collections;
+import com.alibaba.csp.sentinel.EntryType;
+import com.alibaba.csp.sentinel.context.Context;
+import com.alibaba.csp.sentinel.context.ContextTestUtil;
+import com.alibaba.csp.sentinel.node.DefaultNode;
+import com.alibaba.csp.sentinel.slotchain.ResourceWrapper;
+import com.alibaba.csp.sentinel.slotchain.StringResourceWrapper;
+import com.alibaba.csp.sentinel.util.function.Function;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import static org.junit.Assert.*;
+import static org.mockito.Mockito.*;
+public class FlowSlotTest {
+@Before
+public void setUp() {
+ContextTestUtil.cleanUpContext();
+FlowRuleManager.loadRules(null);
+}
+@After
+public void tearDown() {
+ContextTestUtil.cleanUpContext();
+FlowRuleManager.loadRules(null);
+}
+@Test
+@SuppressWarnings("unchecked")
+public void testCheckFlowPass() throws Exception {
+FlowRuleChecker checker = mock(FlowRuleChecker.class);
+FlowSlot flowSlot = new FlowSlot(checker);
+Context context = mock(Context.class);
+DefaultNode node = mock(DefaultNode.class);
+doCallRealMethod().when(checker).checkFlow(any(Function.class), any(ResourceWrapper.class), any(Context.class),
+any(DefaultNode.class), anyInt(), anyBoolean());
+String resA = "resAK";
+String resB = "resBK";
+FlowRule rule1 = new FlowRule(resA).setCount(10);
+FlowRule rule2 = new FlowRule(resB).setCount(10);
+FlowRuleManager.loadRules(Collections.singletonList(rule1));
+when(checker.canPassCheck(eq(rule1), any(Context.class), any(DefaultNode.class), anyInt(), anyBoolean()))
+.thenReturn(true);
+when(checker.canPassCheck(eq(rule2), any(Context.class), any(DefaultNode.class), anyInt(), anyBoolean()))
+.thenReturn(false);
+flowSlot.checkFlow(new StringResourceWrapper(resA, EntryType.IN), context, node, 1, false);
+flowSlot.checkFlow(new StringResourceWrapper(resB, EntryType.IN), context, node, 1, false);
+}
+@Test(expected = FlowException.class)
+@SuppressWarnings("unchecked")
+public void testCheckFlowBlock() throws Exception {
+FlowRuleChecker checker = mock(FlowRuleChecker.class);
+FlowSlot flowSlot = new FlowSlot(checker);
+Context context = mock(Context.class);
+DefaultNode node = mock(DefaultNode.class);
+doCallRealMethod().when(checker).checkFlow(any(Function.class), any(ResourceWrapper.class), any(Context.class),
+any(DefaultNode.class), anyInt(), anyBoolean());
+String resA = "resAK";
+FlowRule rule = new FlowRule(resA).setCount(10);
+FlowRuleManager.loadRules(Collections.singletonList(rule));
+when(checker.canPassCheck(any(FlowRule.class), any(Context.class), any(DefaultNode.class), anyInt(), anyBoolean()))
+.thenReturn(false);
+flowSlot.checkFlow(new StringResourceWrapper(resA, EntryType.IN), context, node, 1, false);
+}
+}

@@ -1,0 +1,14 @@
+package com.twelvemonkeys.lang;
+public abstract class NativeResourceSPI {
+private final String mResourceName;
+protected NativeResourceSPI(String pResourceName) {
+if (pResourceName == null) {
+throw new IllegalArgumentException("resourceName == null");
+}
+mResourceName = pResourceName;
+}
+public final String getResourceName() {
+return mResourceName;
+}
+public abstract String getClassPathResource(final Platform pPlatform);
+}

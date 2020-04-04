@@ -1,0 +1,4 @@
+package org.jupiter.benchmark.unix.domain;
+public class UnixDomainPath {
+public static final String PATH = "domain_file";
+}

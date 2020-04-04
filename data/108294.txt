@@ -1,0 +1,40 @@
+package org.apache.flink.table.sinks;
+import org.apache.flink.annotation.PublicEvolving;
+import org.apache.flink.api.common.typeinfo.TypeInformation;
+import org.apache.flink.table.api.DataTypes;
+import org.apache.flink.table.api.TableException;
+import org.apache.flink.table.api.TableSchema;
+import org.apache.flink.table.types.DataType;
+import static org.apache.flink.table.types.utils.TypeConversions.fromLegacyInfoToDataType;
+@PublicEvolving
+public interface TableSink<T> {
+default DataType getConsumedDataType() {
+final TypeInformation<T> legacyType = getOutputType();
+if (legacyType == null) {
+throw new TableException("Table sink does not implement a consumed data type.");
+}
+return fromLegacyInfoToDataType(legacyType);
+}
+@Deprecated
+default TypeInformation<T> getOutputType() {
+return null;
+}
+default TableSchema getTableSchema() {
+final String[] fieldNames = getFieldNames();
+final TypeInformation[] legacyFieldTypes = getFieldTypes();
+if (fieldNames == null || legacyFieldTypes == null) {
+throw new TableException("Table sink does not implement a table schema.");
+}
+return new TableSchema(fieldNames, legacyFieldTypes);
+}
+@Deprecated
+default String[] getFieldNames() {
+return null;
+}
+@Deprecated
+default TypeInformation<?>[] getFieldTypes() {
+return null;
+}
+@Deprecated
+TableSink<T> configure(String[] fieldNames, TypeInformation<?>[] fieldTypes);
+}

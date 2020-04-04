@@ -1,0 +1,123 @@
+package com.google.api.client.extensions.android.json;
+import android.annotation.TargetApi;
+import android.util.JsonWriter;
+import com.google.api.client.json.JsonFactory;
+import com.google.api.client.json.JsonGenerator;
+import com.google.api.client.util.Beta;
+import java.io.IOException;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+@TargetApi(11)
+@Beta
+class AndroidJsonGenerator extends JsonGenerator {
+private final JsonWriter writer;
+private final AndroidJsonFactory factory;
+AndroidJsonGenerator(AndroidJsonFactory factory, JsonWriter writer) {
+this.factory = factory;
+this.writer = writer;
+writer.setLenient(true);
+}
+@Override
+public void flush() throws IOException {
+writer.flush();
+}
+@Override
+public void close() throws IOException {
+writer.close();
+}
+@Override
+public JsonFactory getFactory() {
+return factory;
+}
+@Override
+public void writeBoolean(boolean state) throws IOException {
+writer.value(state);
+}
+@Override
+public void writeEndArray() throws IOException {
+writer.endArray();
+}
+@Override
+public void writeEndObject() throws IOException {
+writer.endObject();
+}
+@Override
+public void writeFieldName(String name) throws IOException {
+writer.name(name);
+}
+@Override
+public void writeNull() throws IOException {
+writer.nullValue();
+}
+@Override
+public void writeNumber(int v) throws IOException {
+writer.value(v);
+}
+@Override
+public void writeNumber(long v) throws IOException {
+writer.value(v);
+}
+@Override
+public void writeNumber(BigInteger v) throws IOException {
+writer.value(v);
+}
+@Override
+public void writeNumber(double v) throws IOException {
+writer.value(v);
+}
+@Override
+public void writeNumber(float v) throws IOException {
+writer.value(v);
+}
+@Override
+public void writeNumber(BigDecimal v) throws IOException {
+writer.value(v);
+}
+static final class StringNumber extends Number {
+private static final long serialVersionUID = 1L;
+private final String encodedValue;
+StringNumber(String encodedValue) {
+this.encodedValue = encodedValue;
+}
+@Override
+public double doubleValue() {
+return 0;
+}
+@Override
+public float floatValue() {
+return 0;
+}
+@Override
+public int intValue() {
+return 0;
+}
+@Override
+public long longValue() {
+return 0;
+}
+@Override
+public String toString() {
+return encodedValue;
+}
+}
+@Override
+public void writeNumber(String encodedValue) throws IOException {
+writer.value(new StringNumber(encodedValue));
+}
+@Override
+public void writeStartArray() throws IOException {
+writer.beginArray();
+}
+@Override
+public void writeStartObject() throws IOException {
+writer.beginObject();
+}
+@Override
+public void writeString(String value) throws IOException {
+writer.value(value);
+}
+@Override
+public void enablePrettyPrint() throws IOException {
+writer.setIndent(" ");
+}
+}

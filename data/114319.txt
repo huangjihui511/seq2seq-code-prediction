@@ -1,0 +1,26 @@
+package mobi.hsz.idea.gitignore.actions;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.project.DumbAware;
+import mobi.hsz.idea.gitignore.IgnoreBundle;
+import mobi.hsz.idea.gitignore.file.type.IgnoreFileType;
+import mobi.hsz.idea.gitignore.lang.IgnoreLanguage;
+import mobi.hsz.idea.gitignore.util.Icons;
+public class NewFileGroupAction extends DefaultActionGroup implements DumbAware {
+@SuppressWarnings("checkstyle:whitespacearound")
+public NewFileGroupAction() {
+setPopup(true);
+Presentation presentation = getTemplatePresentation();
+presentation.setText(IgnoreBundle.message("action.newFile.group"));
+presentation.setIcon(Icons.IGNORE);
+for (final IgnoreLanguage language : IgnoreBundle.LANGUAGES) {
+final IgnoreFileType fileType = language.getFileType();
+add(new NewFileAction(fileType) {{
+Presentation p = getTemplatePresentation();
+p.setText(IgnoreBundle.message("action.newFile", language.getFilename(), language.getID()));
+p.setDescription(IgnoreBundle.message("action.newFile.description", language.getID()));
+p.setIcon(fileType.getIcon());
+}});
+}
+}
+}

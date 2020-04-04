@@ -1,0 +1,87 @@
+package org.gnucash.android.export;
+import android.net.Uri;
+import org.gnucash.android.ui.export.ExportFormFragment;
+import org.gnucash.android.util.TimestampHelper;
+import java.sql.Timestamp;
+public class ExportParams {
+public enum ExportTarget {SD_CARD("SD Card"), SHARING("External Service"),
+DROPBOX("Dropbox"), GOOGLE_DRIVE("Google Drive"), OWNCLOUD("ownCloud"),
+URI("Sync Service");
+private String mDescription;
+ExportTarget(String description){
+mDescription = description;
+}
+public String getDescription(){
+return mDescription;
+}
+}
+private ExportFormat mExportFormat      = ExportFormat.QIF;
+private Timestamp mExportStartTime = TimestampHelper.getTimestampFromEpochZero();
+private boolean mDeleteTransactionsAfterExport = false;
+private ExportTarget mExportTarget      = ExportTarget.SHARING;
+private String mExportLocation;
+private char mCsvSeparator = ',';
+public ExportParams(ExportFormat format){
+setExportFormat(format);
+}
+public ExportFormat getExportFormat() {
+return mExportFormat;
+}
+public void setExportFormat(ExportFormat exportFormat) {
+this.mExportFormat = exportFormat;
+}
+public Timestamp getExportStartTime(){
+return mExportStartTime;
+}
+public void setExportStartTime(Timestamp exportStartTime){
+this.mExportStartTime = exportStartTime;
+}
+public boolean shouldDeleteTransactionsAfterExport() {
+return mDeleteTransactionsAfterExport;
+}
+public void setDeleteTransactionsAfterExport(boolean deleteTransactions) {
+this.mDeleteTransactionsAfterExport = deleteTransactions;
+}
+public ExportTarget getExportTarget() {
+return mExportTarget;
+}
+public void setExportTarget(ExportTarget mExportTarget) {
+this.mExportTarget = mExportTarget;
+}
+public String getExportLocation(){
+return mExportLocation;
+}
+public void setExportLocation(String exportLocation){
+mExportLocation = exportLocation;
+}
+public char getCsvSeparator(){
+return mCsvSeparator;
+}
+public void setCsvSeparator(char separator) {
+mCsvSeparator = separator;
+}
+@Override
+public String toString() {
+return "Export all transactions created since " + TimestampHelper.getUtcStringFromTimestamp(mExportStartTime) + " UTC"
++ " as "+ mExportFormat.name() + " to " + mExportTarget.name() + (mExportLocation != null ? " (" + mExportLocation +")" : "");
+}
+public String toCsv(){
+String separator = ";";
+return mExportFormat.name() + separator
++ mExportTarget.name() + separator
++ TimestampHelper.getUtcStringFromTimestamp(mExportStartTime) + separator
++ Boolean.toString(mDeleteTransactionsAfterExport) + separator
++ (mExportLocation != null ? mExportLocation : "");
+}
+public static ExportParams parseCsv(String csvParams){
+String[] tokens = csvParams.split(";");
+ExportParams params = new ExportParams(ExportFormat.valueOf(tokens[0]));
+params.setExportTarget(ExportTarget.valueOf(tokens[1]));
+params.setExportStartTime(TimestampHelper.getTimestampFromUtcString(tokens[2]));
+params.setDeleteTransactionsAfterExport(Boolean.parseBoolean(tokens[3]));
+if (tokens.length == 5){
+params.setExportLocation(tokens[4]);
+}
+return params;
+}
+}

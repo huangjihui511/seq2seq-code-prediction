@@ -1,0 +1,22 @@
+package org.springframework.data.mongodb.config;
+import static org.assertj.core.api.Assertions.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import com.mongodb.WriteConcern;
+public class WriteConcernPropertyEditorUnitTests {
+WriteConcernPropertyEditor editor;
+@BeforeEach
+public void setUp() {
+editor = new WriteConcernPropertyEditor();
+}
+@Test 
+public void createsWriteConcernForWellKnownConstants() {
+editor.setAsText("JOURNALED");
+assertThat(editor.getValue()).isEqualTo(WriteConcern.JOURNALED);
+}
+@Test
+public void createsWriteConcernForUnknownConstants() {
+editor.setAsText("-1");
+assertThat(editor.getValue()).isEqualTo(new WriteConcern("-1"));
+}
+}

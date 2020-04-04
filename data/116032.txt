@@ -1,0 +1,5 @@
+package org.apache.rocketmq.spring.starter.enums;
+public enum ConsumeMode {
+CONCURRENTLY,
+ORDERLY
+}

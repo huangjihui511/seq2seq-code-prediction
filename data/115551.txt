@@ -1,0 +1,7 @@
+package com.netflix.astyanax;
+import com.netflix.astyanax.connectionpool.exceptions.ConnectionException;
+public interface CassandraOperationTracer {
+CassandraOperationTracer start();
+void success();
+void failure(ConnectionException e);
+}

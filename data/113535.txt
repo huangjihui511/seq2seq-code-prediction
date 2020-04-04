@@ -1,0 +1,9 @@
+package com.pokegoapi.api.listener;
+import com.pokegoapi.api.PokemonGo;
+import com.pokegoapi.api.player.Medal;
+import com.pokegoapi.api.player.PlayerProfile;
+public interface PlayerListener extends Listener {
+void onLevelUp(PokemonGo api, int oldLevel, int newLevel);
+void onMedalAwarded(PokemonGo api, PlayerProfile profile, Medal medal);
+void onWarningReceived(PokemonGo api);
+}

@@ -1,0 +1,27 @@
+package mobi.hsz.idea.gitignore.lang.kind;
+import mobi.hsz.idea.gitignore.IgnoreBundle;
+import mobi.hsz.idea.gitignore.file.type.IgnoreFileType;
+import mobi.hsz.idea.gitignore.file.type.kind.MercurialFileType;
+import mobi.hsz.idea.gitignore.lang.IgnoreLanguage;
+import mobi.hsz.idea.gitignore.util.Icons;
+import org.jetbrains.annotations.NotNull;
+public class MercurialLanguage extends IgnoreLanguage {
+public static final MercurialLanguage INSTANCE = new MercurialLanguage();
+private MercurialLanguage() {
+super("Mercurial", "hgignore", ".hg", Icons.MERCURIAL);
+}
+@NotNull
+@Override
+public IgnoreFileType getFileType() {
+return MercurialFileType.INSTANCE;
+}
+@Override
+public boolean isSyntaxSupported() {
+return true;
+}
+@Override
+@NotNull
+public IgnoreBundle.Syntax getDefaultSyntax() {
+return IgnoreBundle.Syntax.REGEXP;
+}
+}

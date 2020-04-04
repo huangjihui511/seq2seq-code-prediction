@@ -1,0 +1,22 @@
+import java.awt.BorderLayout;
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JTextField;
+import javax.swing.JToolBar;
+import org.jb2011.lnf.beautyeye.BeautyEyeLNFHelper;
+public class T
+{
+public static void main(String[] args)throws Exception
+{
+BeautyEyeLNFHelper.launchBeautyEyeLNF();
+JFrame f = new JFrame();
+f.setBounds(100,100,300,300);
+JToolBar tb = new JToolBar();
+tb.add(new JTextField("111111111111111111"));
+f.getContentPane().setLayout(new BorderLayout());
+f.getContentPane().add(tb, BorderLayout.NORTH);
+f.getContentPane().add(new JButton("1111111111111111111111"), BorderLayout.CENTER);
+f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+f.setVisible(true);
+}
+}

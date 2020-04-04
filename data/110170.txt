@@ -1,0 +1,34 @@
+package tests;
+import javax.annotation.processing.Generated;
+import javax.inject.Inject;
+import javax.inject.Provider;
+import org.checkerframework.checker.nullness.compatqual.NullableDecl;
+import org.checkerframework.checker.nullness.compatqual.NullableType;
+@Generated(
+value = "com.google.auto.factory.processor.AutoFactoryProcessor",
+comments = "https:
+)
+final class CheckerFrameworkNullableFactory {
+private final Provider<String> java_lang_StringProvider;
+@Inject
+CheckerFrameworkNullableFactory(
+Provider<String> java_lang_StringProvider) {
+this.java_lang_StringProvider = checkNotNull(java_lang_StringProvider, 1);
+}
+CheckerFrameworkNullable create(
+@NullableDecl String nullableDecl, @NullableType String nullableType) {
+return new CheckerFrameworkNullable(
+nullableDecl,
+java_lang_StringProvider.get(),
+nullableType,
+java_lang_StringProvider.get());
+}
+private static <T> T checkNotNull(T reference, int argumentIndex) {
+if (reference == null) {
+throw new NullPointerException(
+"@AutoFactory method argument is null but is not marked @Nullable. Argument index: "
++ argumentIndex);
+}
+return reference;
+}
+}

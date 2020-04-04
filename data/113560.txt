@@ -1,0 +1,17 @@
+package org.fusesource.mqtt.codec;
+import java.net.ProtocolException;
+import static org.fusesource.mqtt.codec.MessageSupport.*;
+public class PINGRESP extends MessageSupport.EmptyBase implements Message {
+public static final byte TYPE = 13;
+public byte messageType() {
+return TYPE;
+}
+@Override
+public PINGRESP decode(MQTTFrame frame) throws ProtocolException {
+return (PINGRESP) super.decode(frame);
+}
+@Override
+public String toString() {
+return "PINGRESP";
+}
+}

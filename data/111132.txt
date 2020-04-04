@@ -1,0 +1,15 @@
+package org.apereo.cas.services;
+import org.springframework.core.Ordered;
+import java.io.Serializable;
+public interface ServiceRegistryListener extends Serializable, Ordered {
+default RegisteredService preSave(final RegisteredService registeredService) {
+return registeredService;
+}
+default RegisteredService postLoad(final RegisteredService registeredService) {
+return registeredService;
+}
+@Override
+default int getOrder() {
+return 0;
+}
+}

@@ -1,0 +1,10 @@
+package com.xkcoding.rbac.security.config;
+import lombok.Data;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+@ConfigurationProperties(prefix = "jwt.config")
+@Data
+public class JwtConfig {
+private String key = "xkcoding";
+private Long ttl = 600000L;
+private Long remember = 604800000L;
+}

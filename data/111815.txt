@@ -1,0 +1,57 @@
+package org.jupiter.common.util;
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Method;
+import java.util.concurrent.TimeUnit;
+import net.bytebuddy.implementation.bind.annotation.AllArguments;
+import net.bytebuddy.implementation.bind.annotation.Origin;
+import net.bytebuddy.implementation.bind.annotation.RuntimeType;
+import org.openjdk.jmh.annotations.Benchmark;
+import org.openjdk.jmh.annotations.BenchmarkMode;
+import org.openjdk.jmh.annotations.Fork;
+import org.openjdk.jmh.annotations.Measurement;
+import org.openjdk.jmh.annotations.Mode;
+import org.openjdk.jmh.annotations.OutputTimeUnit;
+import org.openjdk.jmh.annotations.Warmup;
+import org.openjdk.jmh.runner.Runner;
+import org.openjdk.jmh.runner.RunnerException;
+import org.openjdk.jmh.runner.options.Options;
+import org.openjdk.jmh.runner.options.OptionsBuilder;
+@Fork(1)
+@Warmup(iterations = 5)
+@Measurement(iterations = 10)
+@BenchmarkMode(Mode.All)
+@OutputTimeUnit(TimeUnit.NANOSECONDS)
+public class ProxyTest {
+public static void main(String[] args) throws RunnerException {
+Options opt = new OptionsBuilder()
+.include(ProxyTest.class.getSimpleName())
+.build();
+new Runner(opt).run();
+}
+static class JdkProxyHandler implements InvocationHandler {
+@Override
+public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+return method.getName();
+}
+}
+static class ByteBuddyProxyHandler {
+@SuppressWarnings("UnusedParameters")
+@RuntimeType
+public Object invoke(@Origin Method method, @AllArguments @RuntimeType Object[] args) throws Throwable {
+return method.getName();
+}
+}
+static TestInterface jdkProxyObj = Proxies.JDK_PROXY.newProxy(TestInterface.class, new JdkProxyHandler());
+static TestInterface byteBuddyProxyObj = Proxies.BYTE_BUDDY.newProxy(TestInterface.class, new ByteBuddyProxyHandler());
+@Benchmark
+public static void jdkProxy() {
+jdkProxyObj.test1("hello");
+}
+@Benchmark
+public static void byteBuddyProxy() {
+byteBuddyProxyObj.test1("hello");
+}
+}
+interface TestInterface {
+String test1(String arg);
+}

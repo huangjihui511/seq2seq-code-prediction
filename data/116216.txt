@@ -1,0 +1,7 @@
+package org.apache.struts2.util;
+import javax.servlet.ServletContext;
+@Deprecated
+public interface ServletContextAware {
+@Deprecated
+public void setServletContext(ServletContext context);
+}

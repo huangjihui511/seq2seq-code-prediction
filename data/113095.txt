@@ -1,0 +1,79 @@
+package br.com.leonardoz.features.forkjoin;
+import java.lang.Thread.UncaughtExceptionHandler;
+import java.math.BigInteger;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.RecursiveAction;
+import java.util.concurrent.RecursiveTask;
+public class UsingForkJoinFramework {
+public ForkJoinPool getCommonPool() {
+return ForkJoinPool.commonPool();
+}
+public ForkJoinPool customForkJoinPool(int parallelism,
+ForkJoinPool.ForkJoinWorkerThreadFactory factory,
+UncaughtExceptionHandler handler,
+boolean asyncMode) {
+return new ForkJoinPool(parallelism, factory, handler, asyncMode);
+}
+static class RecSumTask extends RecursiveTask<BigInteger> {
+private static final long serialVersionUID = 1L;
+public static final int DIVIDE_AT = 500;
+private List<Integer> numbers;
+public RecSumTask(List<Integer> numbers) {
+this.numbers = numbers;
+}
+@Override
+protected BigInteger compute() {
+var subTasks = new LinkedList<RecSumTask>();
+if (numbers.size() < DIVIDE_AT) {
+var subSum = BigInteger.ZERO;
+for (Integer number : numbers) {
+subSum = subSum.add(BigInteger.valueOf(number));
+}
+return subSum;
+} else {
+var size = numbers.size();
+var numbersLeft = numbers.subList(0, size / 2);
+var numbersRight = numbers.subList(size / 2, size);
+var recSumLeft = new RecSumTask(numbersLeft);
+var recSumRight = new RecSumTask(numbersRight);
+subTasks.add(recSumRight);
+subTasks.add(recSumLeft);
+recSumLeft.fork();
+recSumRight.fork();
+}
+var sum = BigInteger.ZERO;
+for (var recSum : subTasks) {
+sum = sum.add(recSum.join());
+}
+return sum;
+}
+}
+public static void main(String[] args) {
+var numbers = new LinkedList<Integer>();
+for (int i = 0; i < 500_000; i++) {
+numbers.add(i);
+}
+var commonPool = ForkJoinPool.commonPool();
+var task = new RecSumTask(numbers);
+BigInteger result = commonPool.invoke(task);
+System.out.println("Result is: " + result);
+System.out.println("\n\n");
+}
+static class ARecursiveAction extends RecursiveAction {
+private static final long serialVersionUID = 1L;
+@Override
+protected void compute() {
+}
+}
+public static void debugPool(ForkJoinPool commonPool) {
+System.out.println("Debuggin ForJoinPool");
+System.out.println("Active Thread Count: " + commonPool.getActiveThreadCount());
+System.out.println("Pool Size: " + commonPool.getPoolSize());
+System.out.println("Parallelism level: " + commonPool.getParallelism());
+System.out.println("Queue submitted tasks: " + commonPool.getQueuedSubmissionCount());
+System.out.println("Steal count: " + commonPool.getStealCount());
+System.out.println("\n");
+}
+}

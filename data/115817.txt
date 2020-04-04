@@ -1,0 +1,5 @@
+package com.jeff.tianti.cms.dao;
+import com.jeff.tianti.cms.entity.Article;
+import com.jeff.tianti.common.dao.CommonDao;
+public interface ArticleDao extends ArticleDaoCustom,CommonDao<Article,String>{
+}

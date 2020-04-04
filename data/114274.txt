@@ -1,0 +1,233 @@
+package com.datumbox.framework.core.machinelearning.classification;
+import com.datumbox.framework.common.Configuration;
+import com.datumbox.framework.common.concurrency.ForkJoinStream;
+import com.datumbox.framework.common.concurrency.StreamMethods;
+import com.datumbox.framework.common.dataobjects.AssociativeArray;
+import com.datumbox.framework.core.common.dataobjects.Dataframe;
+import com.datumbox.framework.core.common.dataobjects.Record;
+import com.datumbox.framework.common.dataobjects.TypeInference;
+import com.datumbox.framework.common.storage.interfaces.BigMap;
+import com.datumbox.framework.common.storage.interfaces.StorageEngine;
+import com.datumbox.framework.common.storage.interfaces.StorageEngine.MapType;
+import com.datumbox.framework.common.storage.interfaces.StorageEngine.StorageHint;
+import com.datumbox.framework.core.machinelearning.common.abstracts.AbstractTrainer;
+import com.datumbox.framework.core.machinelearning.common.abstracts.modelers.AbstractClassifier;
+import com.datumbox.framework.core.machinelearning.common.interfaces.PredictParallelizable;
+import com.datumbox.framework.core.machinelearning.common.interfaces.TrainParallelizable;
+import com.datumbox.framework.core.statistics.descriptivestatistics.Descriptives;
+import com.datumbox.framework.core.mathematics.regularization.ElasticNetRegularizer;
+import com.datumbox.framework.core.mathematics.regularization.L1Regularizer;
+import com.datumbox.framework.core.mathematics.regularization.L2Regularizer;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+public class SoftMaxRegression extends AbstractClassifier<SoftMaxRegression.ModelParameters, SoftMaxRegression.TrainingParameters> implements PredictParallelizable, TrainParallelizable {
+public static class ModelParameters extends AbstractClassifier.AbstractModelParameters {
+private static final long serialVersionUID = 1L;
+@BigMap(keyClass=List.class, valueClass=Double.class, mapType=MapType.HASHMAP, storageHint=StorageHint.IN_MEMORY, concurrent=true)
+private Map<List<Object>, Double> thitas; 
+protected ModelParameters(StorageEngine storageEngine) {
+super(storageEngine);
+}
+public Map<List<Object>, Double> getThitas() {
+return thitas;
+}
+protected void setThitas(Map<List<Object>, Double> thitas) {
+this.thitas = thitas;
+}
+}
+public static class TrainingParameters extends AbstractClassifier.AbstractTrainingParameters {
+private static final long serialVersionUID = 1L;
+private int totalIterations=100;
+private double learningRate=0.1;
+private double l1=0.0;
+private double l2=0.0;
+public int getTotalIterations() {
+return totalIterations;
+}
+public void setTotalIterations(int totalIterations) {
+this.totalIterations = totalIterations;
+}
+public double getLearningRate() {
+return learningRate;
+}
+public void setLearningRate(double learningRate) {
+this.learningRate = learningRate;
+}
+public double getL1() {
+return l1;
+}
+public void setL1(double l1) {
+this.l1 = l1;
+}
+public double getL2() {
+return l2;
+}
+public void setL2(double l2) {
+this.l2 = l2;
+}
+}
+protected SoftMaxRegression(TrainingParameters trainingParameters, Configuration configuration) {
+super(trainingParameters, configuration);
+streamExecutor = new ForkJoinStream(knowledgeBase.getConfiguration().getConcurrencyConfiguration());
+}
+protected SoftMaxRegression(String storageName, Configuration configuration) {
+super(storageName, configuration);
+streamExecutor = new ForkJoinStream(knowledgeBase.getConfiguration().getConcurrencyConfiguration());
+}
+private boolean parallelized = true;
+protected final ForkJoinStream streamExecutor;
+@Override
+public boolean isParallelized() {
+return parallelized;
+}
+@Override
+public void setParallelized(boolean parallelized) {
+this.parallelized = parallelized;
+}
+@Override
+protected void _predict(Dataframe newData) {
+_predictDatasetParallel(newData, knowledgeBase.getStorageEngine(), knowledgeBase.getConfiguration().getConcurrencyConfiguration());
+}
+@Override
+public Prediction _predictRecord(Record r) {
+ModelParameters modelParameters = knowledgeBase.getModelParameters();
+Set<Object> classesSet = modelParameters.getClasses();
+Map<List<Object>, Double> thitas = modelParameters.getThitas();
+AssociativeArray predictionScores = new AssociativeArray();
+for(Object theClass : classesSet) {
+predictionScores.put(theClass, calculateClassScore(r.getX(), theClass, thitas));
+}
+Object predictedClass=getSelectedClassFromClassScores(predictionScores);
+Descriptives.normalizeExp(predictionScores);
+return new Prediction(predictedClass, predictionScores);
+}
+@Override
+protected void _fit(Dataframe trainingData) {
+ModelParameters modelParameters = knowledgeBase.getModelParameters();
+TrainingParameters trainingParameters = knowledgeBase.getTrainingParameters();
+Map<List<Object>, Double> thitas = modelParameters.getThitas();
+Set<Object> classesSet = modelParameters.getClasses();
+for(Record r : trainingData) {
+Object theClass=r.getY();
+classesSet.add(theClass);
+}
+for(Object theClass : classesSet) {
+thitas.put(Arrays.asList(Dataframe.COLUMN_NAME_CONSTANT, theClass), 0.0);
+}
+streamExecutor.forEach(StreamMethods.stream(trainingData.getXDataTypes().keySet().stream(), isParallelized()), feature -> {
+for(Object theClass : classesSet) {
+thitas.putIfAbsent(Arrays.asList(feature, theClass), 0.0);
+}
+});
+double minError = Double.POSITIVE_INFINITY;
+double learningRate = trainingParameters.getLearningRate();
+int totalIterations = trainingParameters.getTotalIterations();
+StorageEngine storageEngine = knowledgeBase.getStorageEngine();
+for(int iteration=0;iteration<totalIterations;++iteration) {
+logger.debug("Iteration {}", iteration);
+Map<List<Object>, Double> tmp_newThitas = storageEngine.getBigMap("tmp_newThitas", (Class<List<Object>>)(Class<?>)List.class, Double.class, MapType.HASHMAP, StorageHint.IN_MEMORY, true, true);
+tmp_newThitas.putAll(thitas);
+batchGradientDescent(trainingData, tmp_newThitas, learningRate);
+double newError = calculateError(trainingData,tmp_newThitas);
+if(newError>minError) {
+learningRate/=2.0;
+}
+else {
+learningRate*=1.05;
+minError=newError;
+thitas.clear();
+thitas.putAll(tmp_newThitas);
+}
+storageEngine.dropBigMap("tmp_newThitas", tmp_newThitas);
+}
+}
+private void batchGradientDescent(Dataframe trainingData, Map<List<Object>, Double> newThitas, double learningRate) {
+ModelParameters modelParameters = knowledgeBase.getModelParameters();
+double multiplier = learningRate/trainingData.size();
+Map<List<Object>, Double> thitas = modelParameters.getThitas();
+Set<Object> classesSet = modelParameters.getClasses();
+streamExecutor.forEach(StreamMethods.stream(trainingData.stream(), isParallelized()), r -> { 
+AssociativeArray classProbabilities = hypothesisFunction(r.getX(), thitas);
+for(Object theClass : classesSet) {
+double error;
+double score = classProbabilities.getDouble(theClass);
+if(r.getY().equals(theClass)) {
+error = 1 - score;
+}
+else {
+error = - score;
+}
+double errorMultiplier = multiplier*error;
+synchronized(newThitas) {
+for(Map.Entry<Object, Object> entry : r.getX().entrySet()) {
+Double value = TypeInference.toDouble(entry.getValue());
+Object feature = entry.getKey();
+List<Object> featureClassTuple = Arrays.asList(feature, theClass);
+newThitas.put(featureClassTuple, newThitas.get(featureClassTuple)+errorMultiplier*value);
+}
+List<Object> featureClassTuple = Arrays.asList(Dataframe.COLUMN_NAME_CONSTANT, theClass);
+newThitas.put(featureClassTuple, newThitas.get(featureClassTuple)+errorMultiplier); 
+}
+}
+});
+double l1 = knowledgeBase.getTrainingParameters().getL1();
+double l2 = knowledgeBase.getTrainingParameters().getL2();
+if(l1>0.0 && l2>0.0) {
+ElasticNetRegularizer.updateWeights(l1, l2, learningRate, thitas, newThitas);
+}
+else if(l1>0.0) {
+L1Regularizer.updateWeights(l1, learningRate, thitas, newThitas);
+}
+else if(l2>0.0) {
+L2Regularizer.updateWeights(l2, learningRate, thitas, newThitas);
+}
+}
+private Double calculateClassScore(AssociativeArray x, Object theClass, Map<List<Object>, Double> thitas) {
+double score = thitas.get(Arrays.asList(Dataframe.COLUMN_NAME_CONSTANT, theClass));
+for(Map.Entry<Object, Object> entry : x.entrySet()) {
+Double value = TypeInference.toDouble(entry.getValue());
+Object feature = entry.getKey();
+List<Object> featureClassTuple = Arrays.asList(feature, theClass);
+Double thitaWeight = thitas.get(featureClassTuple);
+if(thitaWeight!=null) {
+score+=thitaWeight*value;
+}
+}
+return score;
+}
+private double calculateError(Dataframe trainingData, Map<List<Object>, Double> thitas) {
+double error = streamExecutor.sum(StreamMethods.stream(trainingData.stream(), isParallelized()).mapToDouble(r -> {
+AssociativeArray classProbabilities = hypothesisFunction(r.getX(), thitas);
+Double score = classProbabilities.getDouble(r.getY());
+return Math.log(score); 
+}));
+error = -error/trainingData.size();
+double l1 = knowledgeBase.getTrainingParameters().getL1();
+double l2 = knowledgeBase.getTrainingParameters().getL2();
+if(l1>0.0 && l2>0.0) {
+error += ElasticNetRegularizer.estimatePenalty(l1, l2, thitas);
+}
+else if(l1>0.0) {
+error += L1Regularizer.estimatePenalty(l1, thitas);
+}
+else if(l2>0.0) {
+error += L2Regularizer.estimatePenalty(l2, thitas);
+}
+return error;
+}
+private AssociativeArray hypothesisFunction(AssociativeArray x, Map<List<Object>, Double> thitas) {
+Set<Object> classesSet = knowledgeBase.getModelParameters().getClasses();
+AssociativeArray predictionProbabilities = new AssociativeArray();
+for(Object theClass : classesSet) {
+double score=calculateClassScore(x, theClass, thitas);
+if(score<=0) {
+score=1e-8;
+}
+predictionProbabilities.put(theClass, score);
+}
+Descriptives.normalize(predictionProbabilities);
+return predictionProbabilities;
+}
+}

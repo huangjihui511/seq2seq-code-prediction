@@ -1,0 +1,10 @@
+package org.spongepowered.mod.bridge.event;
+import net.minecraftforge.fml.common.eventhandler.Event;
+import org.spongepowered.mod.event.SpongeToForgeEventData;
+import java.util.Set;
+public interface EventBusBridge_Forge {
+int forgeBridge$getBusID();
+boolean forgeBridge$post(SpongeToForgeEventData eventData);
+boolean forgeBridge$post(Event event, boolean forced);
+Set<Class<? extends Event>> forgeBridge$getEventListenerClassList();
+}

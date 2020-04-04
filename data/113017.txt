@@ -1,0 +1,81 @@
+package org.apache.pdfbox.debugger.treestatus;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.event.ActionEvent;
+import javax.swing.AbstractAction;
+import javax.swing.Action;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
+import javax.swing.JTree;
+import javax.swing.border.BevelBorder;
+import javax.swing.border.Border;
+import javax.swing.event.TreeSelectionEvent;
+import javax.swing.event.TreeSelectionListener;
+import javax.swing.tree.TreePath;
+public class TreeStatusPane implements TreeSelectionListener
+{
+private TreeStatus statusObj;
+private JTree tree;
+private JTextField statusField;
+private JPanel panel;
+private Border defaultBorder;
+private Border errorBorder;
+private final Action textInputAction = new AbstractAction()
+{
+@Override
+public void actionPerformed(ActionEvent actionEvent)
+{
+TreePath path = statusObj.getPathForString(statusField.getText());
+if (path != null)
+{
+tree.setSelectionPath(path);
+tree.scrollPathToVisible(path);
+tree.requestFocusInWindow();
+}
+else
+{
+statusField.setBorder(errorBorder);
+}
+}
+};
+public TreeStatusPane(JTree targetTree)
+{
+tree = targetTree;
+init();
+}
+private void init()
+{
+panel = new JPanel(new BorderLayout());
+statusField = new JTextField();
+statusField.setEditable(false);
+panel.add(statusField);
+defaultBorder = new BevelBorder(BevelBorder.LOWERED);
+errorBorder = new BevelBorder(BevelBorder.LOWERED, Color.RED, Color.RED);
+statusField.setAction(textInputAction);
+tree.addTreeSelectionListener(this);
+}
+public JPanel getPanel()
+{
+return panel;
+}
+public void updateTreeStatus(TreeStatus statusObj)
+{
+statusField.setEditable(true);
+this.statusObj = statusObj;
+updateText(null);
+}
+private void updateText(String statusString)
+{
+statusField.setText(statusString);
+if (!statusField.getBorder().equals(defaultBorder))
+{
+statusField.setBorder(defaultBorder);
+}
+}
+@Override
+public void valueChanged(TreeSelectionEvent treeSelectionEvent)
+{
+TreePath path = treeSelectionEvent.getPath();
+updateText(statusObj.getStringForPath(path));
+}
+}

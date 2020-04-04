@@ -1,0 +1,11 @@
+package com.datumbox.framework.core.machinelearning.common.abstracts.modelers;
+import com.datumbox.framework.common.Configuration;
+import com.datumbox.framework.core.machinelearning.common.abstracts.AbstractTrainer;
+public abstract class AbstractRecommender<MP extends AbstractRecommender.AbstractModelParameters, TP extends AbstractRecommender.AbstractTrainingParameters> extends AbstractModeler<MP, TP> {
+protected AbstractRecommender(TP trainingParameters, Configuration configuration) {
+super(trainingParameters, configuration);
+}
+protected AbstractRecommender(String storageName, Configuration configuration) {
+super(storageName, configuration);
+}
+}

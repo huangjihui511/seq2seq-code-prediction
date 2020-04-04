@@ -1,0 +1,52 @@
+package com.pokegoapi.api.map.pokemon;
+import lombok.Getter;
+public class ThrowProperties {
+@Getter
+public double normalizedHitPosition;
+@Getter
+public double normalizedReticleSize;
+@Getter
+public double spinModifier;
+private boolean hitPokemon = true;
+private ThrowProperties() {
+this.normalizedHitPosition = 1.0;
+this.normalizedReticleSize = 1.95 + Math.random() * 0.05;
+double spinType = Math.random();
+if (spinType > 0.5) {
+this.spinModifier = 1.0;
+} else if (spinType > 0.8) {
+this.spinModifier = 0.0;
+} else {
+this.spinModifier = 0.85 + Math.random() * 0.15;
+}
+}
+public ThrowProperties(double normalizedHitPosition, double normalizedReticleSize, double spinModifier,
+boolean hitPokemon) {
+this.normalizedHitPosition = normalizedHitPosition;
+this.normalizedReticleSize = normalizedReticleSize;
+this.spinModifier = spinModifier;
+this.hitPokemon = hitPokemon;
+}
+public static ThrowProperties random() {
+return new ThrowProperties();
+}
+public ThrowProperties withHitPosition(double normalizedHitPosition) {
+this.normalizedHitPosition = normalizedHitPosition;
+return this;
+}
+public ThrowProperties withReticleSize(double normalizedReticleSize) {
+this.normalizedReticleSize = normalizedReticleSize;
+return this;
+}
+public ThrowProperties withSpinModifier(double spinModifier) {
+this.spinModifier = spinModifier;
+return this;
+}
+public ThrowProperties withHit(boolean hitPokemon) {
+this.hitPokemon = hitPokemon;
+return this;
+}
+public boolean shouldHitPokemon() {
+return hitPokemon;
+}
+}

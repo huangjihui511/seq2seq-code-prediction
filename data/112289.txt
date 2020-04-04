@@ -1,0 +1,43 @@
+package com.github.jknack.handlebars.internal;
+import com.github.jknack.handlebars.Context;
+import com.github.jknack.handlebars.Handlebars;
+import com.github.jknack.handlebars.Template;
+import java.io.IOException;
+import java.io.Writer;
+import java.util.LinkedList;
+import java.util.Map;
+public class PartialBlockForwardingTemplate extends BaseTemplate {
+private final Template block;
+private final Template parentPartialBlock;
+private final Template callee;
+public PartialBlockForwardingTemplate(
+final Template parent,
+final Template block,
+final Template parentPartialBlock,
+final Template callee,
+final Handlebars handlebars
+) {
+super(handlebars);
+this.block = block;
+this.parentPartialBlock = parentPartialBlock;
+this.callee = callee;
+this.filename(parent.filename());
+this.position(parent.position()[0], parent.position()[1]);
+}
+@Override
+protected void merge(final Context context, final Writer writer) throws IOException {
+LinkedList<Map<String, Template>> partials = context.data(Context.INLINE_PARTIALS);
+Map<String, Template> inlineTemplates = partials.getLast();
+Template oldPartialBlock = inlineTemplates.get("@partial-block");
+Template oldCallee = context.data(Context.CALLEE);
+context.data(Context.CALLEE, callee);
+inlineTemplates.put("@partial-block", parentPartialBlock);
+block.apply(context, writer);
+inlineTemplates.put("@partial-block", oldPartialBlock);
+context.data(Context.CALLEE, oldCallee);
+}
+@Override
+public String text() {
+return block.text();
+}
+}

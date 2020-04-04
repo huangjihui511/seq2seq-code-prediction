@@ -1,0 +1,6 @@
+package com.datumbox.framework.common.storage.interfaces;
+import com.datumbox.framework.common.interfaces.Configurable;
+public interface StorageConfiguration extends Configurable {
+public String getStorageNameSeparator();
+public StorageEngine createStorageEngine(String storageName);
+}

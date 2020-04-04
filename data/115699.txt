@@ -1,0 +1,73 @@
+package com.graphhopper.jsprit.core.algorithm.recreate;
+import com.graphhopper.jsprit.core.problem.driver.Driver;
+import com.graphhopper.jsprit.core.problem.vehicle.Vehicle;
+import java.util.ArrayList;
+import java.util.List;
+public class InsertionData {
+public static class NoInsertionFound extends InsertionData {
+public NoInsertionFound() {
+super(Double.MAX_VALUE, NO_INDEX, NO_INDEX, null, null);
+}
+}
+private static InsertionData noInsertion = new NoInsertionFound();
+public static InsertionData createEmptyInsertionData() {
+return noInsertion;
+}
+static int NO_INDEX = -1;
+private final double insertionCost;
+private final int pickupInsertionIndex;
+private final int deliveryInsertionIndex;
+private final Vehicle selectedVehicle;
+private final Driver selectedDriver;
+private double departureTime;
+private double additionalTime;
+private List<Event> events = new ArrayList<Event>();
+List<Event> getEvents() {
+return events;
+}
+private List<String> reasons = new ArrayList<>();
+public double getAdditionalTime() {
+return additionalTime;
+}
+public void addFailedConstrainName(String name) {
+reasons.add(name);
+}
+public List<String> getFailedConstraintNames() {
+return reasons;
+}
+public void setAdditionalTime(double additionalTime) {
+this.additionalTime = additionalTime;
+}
+public InsertionData(double insertionCost, int pickupInsertionIndex, int deliveryInsertionIndex, Vehicle vehicle, Driver driver) {
+this.insertionCost = insertionCost;
+this.pickupInsertionIndex = pickupInsertionIndex;
+this.deliveryInsertionIndex = deliveryInsertionIndex;
+this.selectedVehicle = vehicle;
+this.selectedDriver = driver;
+}
+@Override
+public String toString() {
+return "[iCost=" + insertionCost + "][pickupIndex=" + pickupInsertionIndex + "][deliveryIndex=" + deliveryInsertionIndex + "][depTime=" + departureTime + "][vehicle=" + selectedVehicle + "][driver=" + selectedDriver + "]";
+}
+public int getDeliveryInsertionIndex() {
+return deliveryInsertionIndex;
+}
+public int getPickupInsertionIndex() {
+return pickupInsertionIndex;
+}
+public double getInsertionCost() {
+return insertionCost;
+}
+public Vehicle getSelectedVehicle() {
+return selectedVehicle;
+}
+public Driver getSelectedDriver() {
+return selectedDriver;
+}
+public double getVehicleDepartureTime() {
+return departureTime;
+}
+public void setVehicleDepartureTime(double departureTime) {
+this.departureTime = departureTime;
+}
+}

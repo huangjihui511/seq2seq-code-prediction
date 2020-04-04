@@ -1,0 +1,17 @@
+package org.apache.fontbox.ttf.model;
+import org.apache.fontbox.ttf.gsub.GsubWorker;
+import org.apache.fontbox.ttf.gsub.GsubWorkerFactory;
+import org.apache.fontbox.ttf.table.common.ScriptRecord;
+public enum Language
+{
+BENGALI(new String[] { "bng2", "beng" });
+private final String[] scriptNames;
+private Language(String[] scriptNames)
+{
+this.scriptNames = scriptNames;
+}
+public String[] getScriptNames()
+{
+return scriptNames;
+}
+}

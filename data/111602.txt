@@ -1,0 +1,14 @@
+package io.github.bonigarcia.wdm.test;
+import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.junit.Assert.assertThat;
+import org.junit.Test;
+import io.github.bonigarcia.wdm.WebDriverManager;
+public class ForceDownloadTest {
+@Test
+public void test() {
+WebDriverManager.chromedriver().forceDownload().avoidAutoVersion()
+.timeout(20).setup();
+assertThat(WebDriverManager.chromedriver().getBinaryPath(),
+notNullValue());
+}
+}

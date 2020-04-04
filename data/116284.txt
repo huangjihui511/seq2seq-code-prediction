@@ -1,0 +1,12 @@
+package org.spongepowered.api.data.manipulator.immutable.entity;
+import org.spongepowered.api.data.key.Keys;
+import org.spongepowered.api.data.manipulator.ImmutableDataManipulator;
+import org.spongepowered.api.data.manipulator.mutable.entity.DisabledSlotsData;
+import org.spongepowered.api.data.value.immutable.ImmutableSetValue;
+import org.spongepowered.api.entity.living.ArmorStand;
+import org.spongepowered.api.item.inventory.equipment.EquipmentType;
+public interface ImmutableDisabledSlotsData
+extends ImmutableDataManipulator<ImmutableDisabledSlotsData, DisabledSlotsData> {
+ImmutableSetValue<EquipmentType> takingDisabled();
+ImmutableSetValue<EquipmentType> placingDisabled();
+}

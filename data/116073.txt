@@ -1,0 +1,18 @@
+package org.apache.dubbo.spring.starter.context;
+import org.apache.dubbo.spring.starter.beans.factory.config.DubboConfigBeanDefinitionConflictProcessor;
+import org.springframework.context.ApplicationContextInitializer;
+import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.core.Ordered;
+public class DubboApplicationContextInitializer implements ApplicationContextInitializer, Ordered {
+@Override
+public void initialize(ConfigurableApplicationContext applicationContext) {
+overrideBeanDefinitions(applicationContext);
+}
+private void overrideBeanDefinitions(ConfigurableApplicationContext applicationContext) {
+applicationContext.addBeanFactoryPostProcessor(new DubboConfigBeanDefinitionConflictProcessor());
+}
+@Override
+public int getOrder() {
+return HIGHEST_PRECEDENCE;
+}
+}

@@ -1,0 +1,94 @@
+package org.spongepowered.api.data;
+import static com.google.common.base.Preconditions.checkNotNull;
+import com.google.common.collect.ImmutableList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import javax.annotation.Nullable;
+public class Transaction<T extends DataSerializable> implements DataSerializable {
+private final T original;
+private final T defaultReplacement;
+private boolean valid = true;
+@Nullable private final List<T> intermediary;
+@Nullable private T custom;
+public Transaction(T original, T defaultReplacement) {
+this.original = checkNotNull(original);
+this.defaultReplacement = checkNotNull(defaultReplacement);
+this.intermediary = null;
+}
+public Transaction(T original, T defaultReplacement, @Nullable List<? extends T> intermediary) {
+this.original = checkNotNull(original, "Original cannot be null");
+this.defaultReplacement = checkNotNull(defaultReplacement, "Default replacement cannot be null");
+this.intermediary = intermediary == null ? null : Collections.unmodifiableList(intermediary);
+}
+public final T getOriginal() {
+return this.original;
+}
+public final T getDefault() {
+return this.defaultReplacement;
+}
+public final List<? extends T> getIntermediary() {
+return this.intermediary == null ? Collections.emptyList() : this.intermediary;
+}
+public final Optional<T> getCustom() {
+return Optional.ofNullable(this.custom);
+}
+public final void setCustom(@Nullable T custom) {
+this.custom = custom;
+}
+public final T getFinal() {
+return this.custom == null ? this.defaultReplacement : this.custom;
+}
+public final boolean isValid() {
+return this.valid;
+}
+public final void setValid(boolean valid) {
+this.valid = valid;
+}
+@Override
+public int hashCode() {
+return Objects.hash(this.original, this.defaultReplacement, this.valid, this.custom);
+}
+@SuppressWarnings("rawtypes")
+@Override
+public boolean equals(Object obj) {
+if (this == obj) {
+return true;
+}
+if (obj == null || getClass() != obj.getClass()) {
+return false;
+}
+final Transaction other = (Transaction) obj;
+return Objects.equals(this.original, other.original)
+&& Objects.equals(this.defaultReplacement, other.defaultReplacement)
+&& Objects.equals(this.valid, other.valid)
+&& Objects.equals(this.custom, other.custom);
+}
+@Override
+public String toString() {
+return com.google.common.base.MoreObjects.toStringHelper(this)
+.add("original", this.original)
+.add("default", this.defaultReplacement)
+.add("custom", this.custom)
+.add("valid", this.valid)
+.toString();
+}
+@Override
+public int getContentVersion() {
+return 1;
+}
+@Override
+public DataContainer toContainer() {
+final DataContainer container = DataContainer.createNew()
+.set(Queries.CONTENT_VERSION, getContentVersion())
+.set(Queries.TYPE_CLASS, this.original.getClass().getName())
+.set(Queries.ORIGINAL, this.original)
+.set(Queries.DEFAULT_REPLACEMENT, this.defaultReplacement)
+.set(Queries.VALID, this.valid);
+if (this.custom != null) {
+container.set(Queries.CUSTOM_REPLACEMENT, this.custom);
+}
+return container;
+}
+}

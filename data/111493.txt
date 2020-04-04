@@ -1,0 +1,61 @@
+package io.grpc.internal;
+import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import io.grpc.Attributes;
+import io.grpc.EquivalentAddressGroup;
+import io.grpc.ForwardingTestUtil;
+import io.grpc.NameResolver;
+import io.grpc.NameResolver.ResolutionResult;
+import io.grpc.Status;
+import java.lang.reflect.Method;
+import java.util.Collections;
+import java.util.List;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
+@RunWith(JUnit4.class)
+public class ForwardingNameResolverTest {
+private final NameResolver delegate = mock(NameResolver.class);
+private final NameResolver forwarder = new ForwardingNameResolver(delegate) {
+};
+@Test
+public void allMethodsForwarded() throws Exception {
+ForwardingTestUtil.testMethodsForwarded(
+NameResolver.class,
+delegate,
+forwarder,
+Collections.<Method>emptyList());
+}
+@Test
+public void getServiceAuthority() {
+String auth = "example.com";
+when(delegate.getServiceAuthority()).thenReturn(auth);
+assertEquals(auth, forwarder.getServiceAuthority());
+}
+@Test
+@SuppressWarnings("deprecation") 
+public void start_listener() {
+NameResolver.Listener listener = new NameResolver.Listener() {
+@Override
+public void onAddresses(List<EquivalentAddressGroup> servers, Attributes attributes) { }
+@Override
+public void onError(Status error) { }
+};
+forwarder.start(listener);
+verify(delegate).start(listener);
+}
+@Test
+public void start_observer() {
+NameResolver.Listener2 listener = new NameResolver.Listener2() {
+@Override
+public void onResult(ResolutionResult result) {
+}
+@Override
+public void onError(Status error) { }
+};
+forwarder.start(listener);
+verify(delegate).start(listener);
+}
+}

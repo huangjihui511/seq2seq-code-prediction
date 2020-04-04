@@ -1,0 +1,26 @@
+package org.jb2011.lnf.beautyeye.ch14_combox;
+import java.awt.Color;
+import javax.swing.BorderFactory;
+import javax.swing.UIManager;
+import javax.swing.plaf.BorderUIResource;
+import javax.swing.plaf.ColorUIResource;
+import org.jb2011.lnf.beautyeye.BeautyEyeLNFHelper;
+public class __UI__
+{
+public static void uiImpl()
+{
+UIManager.put("ComboBox.scrollPaneBorder",new BorderUIResource(BorderFactory.createEmptyBorder(2,0,4,0)));
+UIManager.put("ComboBox.background",new ColorUIResource(Color.white));
+UIManager.put("ComboBox.disabledBackground",new ColorUIResource(BeautyEyeLNFHelper.commonBackgroundColor));
+UIManager.put("ComboBox.buttonBackground",new ColorUIResource(BeautyEyeLNFHelper.commonBackgroundColor));
+UIManager.put("ComboBox.selectionForeground",new ColorUIResource(BeautyEyeLNFHelper.commonSelectionForegroundColor));
+UIManager.put("ComboBox.selectionBackground",new ColorUIResource(BeautyEyeLNFHelper.commonSelectionBackgroundColor));
+UIManager.put("ComboBox.foreground",new ColorUIResource(BeautyEyeLNFHelper.commonForegroundColor));
+UIManager.put("ComboBox.padding",new javax.swing.plaf.InsetsUIResource(1,0,1,0));
+UIManager.put("ComboBox.squareButton",true);
+BorderUIResource border = new BorderUIResource(BorderFactory.createEmptyBorder(0, 4, 0, 0));
+UIManager.put("ComboBoxUI",org.jb2011.lnf.beautyeye.ch14_combox.BEComboBoxUI.class.getName());
+UIManager.put("ComboBox.popupOffsetX", -3);
+UIManager.put("ComboBox.popupOffsetY", 2);
+}
+}

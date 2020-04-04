@@ -1,0 +1,5 @@
+package spark;
+@FunctionalInterface
+public interface Filter {
+void handle(Request request, Response response) throws Exception;
+}

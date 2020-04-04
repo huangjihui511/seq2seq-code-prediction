@@ -1,0 +1,7 @@
+package com.github.benmanes.caffeine.cache;
+import org.checkerframework.checker.nullness.qual.NonNull;
+import org.checkerframework.checker.nullness.qual.Nullable;
+@FunctionalInterface
+public interface RemovalListener<K, V> {
+void onRemoval(@Nullable K key, @Nullable V value, @NonNull RemovalCause cause);
+}

@@ -1,0 +1,41 @@
+package com.facebook.presto.sql.planner.iterative.rule;
+import com.facebook.presto.spi.type.BigintType;
+import com.facebook.presto.sql.planner.iterative.rule.test.BaseRuleTest;
+import com.google.common.collect.ImmutableList;
+import org.testng.annotations.Test;
+import static com.facebook.presto.sql.planner.assertions.PlanMatchPattern.values;
+import static java.util.Collections.emptyList;
+public class TestRemoveUnreferencedScalarLateralNodes
+extends BaseRuleTest
+{
+@Test
+public void testRemoveUnreferencedInput()
+{
+tester().assertThat(new RemoveUnreferencedScalarLateralNodes())
+.on(p -> p.lateral(
+emptyList(),
+p.values(p.variable("x", BigintType.BIGINT)),
+p.values(emptyList(), ImmutableList.of(emptyList()))))
+.matches(values("x"));
+}
+@Test
+public void testRemoveUnreferencedSubquery()
+{
+tester().assertThat(new RemoveUnreferencedScalarLateralNodes())
+.on(p -> p.lateral(
+emptyList(),
+p.values(emptyList(), ImmutableList.of(emptyList())),
+p.values(p.variable("x", BigintType.BIGINT))))
+.matches(values("x"));
+}
+@Test
+public void testDoesNotFire()
+{
+tester().assertThat(new RemoveUnreferencedScalarLateralNodes())
+.on(p -> p.lateral(
+emptyList(),
+p.values(),
+p.values()))
+.doesNotFire();
+}
+}

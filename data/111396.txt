@@ -1,0 +1,85 @@
+package buck.exotest.meta;
+import android.app.Activity;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
+import android.os.Build;
+import android.os.Bundle;
+import android.os.Process;
+import android.util.Log;
+public class ExoMetaLogActivity extends Activity {
+@Override
+public void onCreate(Bundle bundle) {
+super.onCreate(bundle);
+try {
+ApplicationInfo appInfo =
+getPackageManager().getApplicationInfo("buck.exotest", PackageManager.GET_META_DATA);
+Bitmap icon = getIcon(appInfo);
+Bitmap defaultIcon =
+((BitmapDrawable) getPackageManager().getApplicationIcon(getApplicationInfo()))
+.getBitmap();
+if (icon == null) {
+Log.i("EXOPACKAGE_TEST_META", "Found no icon");
+} else if (icon.sameAs(defaultIcon)) {
+Log.i("EXOPACKAGE_TEST_META", "Found default icon");
+} else {
+Log.i("EXOPACKAGE_TEST_META", "META_ICON=" + icon.getWidth() + "_" + icon.getHeight());
+}
+String name = getName(appInfo);
+if (name == null) {
+Log.i("EXOPACKAGE_TEST_META", "Found no name");
+} else {
+Log.i("EXOPACKAGE_TEST_META", "META_NAME=" + name);
+}
+String[] meta = getMeta(appInfo);
+if (meta == null) {
+Log.i("EXOPACKAGE_TEST_META", "Found no metadata");
+} else {
+String metaStr = "<";
+for (int i = 0; i < meta.length; i++) {
+metaStr += (i == 0 ? "" : ",") + meta[i];
+}
+metaStr += ">";
+Log.i("EXOPACKAGE_TEST_META", "META_DATA=" + metaStr);
+}
+} catch (Exception e) {
+Log.i("EXOPACKAGE_TEST_META_DEBUG", "Got an exception", e);
+}
+Log.i("EXOPACKAGE_TEST_META", "FINISHED");
+finish();
+}
+public String getName(ApplicationInfo appInfo) {
+try {
+return getPackageManager().getApplicationLabel(appInfo).toString();
+} catch (Exception e) {
+Log.i("EXOPACKAGE_TEST_META_DEBUG", "getName threw exception", e);
+return null;
+}
+}
+public Bitmap getIcon(ApplicationInfo appInfo) {
+try {
+return ((BitmapDrawable) getPackageManager().getApplicationIcon(appInfo)).getBitmap();
+} catch (Exception e) {
+Log.i("EXOPACKAGE_TEST_META_DEBUG", "getIcon threw exception", e);
+return null;
+}
+}
+public String[] getMeta(ApplicationInfo appInfo) {
+try {
+return getPackageManager()
+.getResourcesForApplication(appInfo)
+.getStringArray(appInfo.metaData.getInt("app_meta"));
+} catch (Exception e) {
+Log.i("EXOPACKAGE_TEST_META_DEBUG", "getMeta threw exception", e);
+return null;
+}
+}
+@Override
+public void onDestroy() {
+super.onDestroy();
+if (Build.VERSION.SDK_INT < Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
+Process.killProcess(Process.myPid());
+}
+}
+}

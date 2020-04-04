@@ -1,0 +1,2 @@
+package com.google.auto.factory;
+public interface Dependency {}

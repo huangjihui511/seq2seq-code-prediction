@@ -1,0 +1,10 @@
+package us.codecraft.webmagic;
+import us.codecraft.webmagic.utils.Experimental;
+import java.util.Collection;
+@Experimental
+public interface MultiPageModel {
+public String getPageKey();
+public String getPage();
+public Collection<String> getOtherPages();
+public MultiPageModel combine(MultiPageModel multiPageModel);
+}

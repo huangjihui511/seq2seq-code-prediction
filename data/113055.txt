@@ -1,0 +1,47 @@
+package org.apache.fontbox.ttf.model;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+public class MapBackedGsubData implements GsubData
+{
+private final Language language;
+private final String activeScriptName;
+private final Map<String, Map<List<Integer>, Integer>> glyphSubstitutionMap;
+public MapBackedGsubData(Language language, String activeScriptName,
+Map<String, Map<List<Integer>, Integer>> glyphSubstitutionMap)
+{
+this.language = language;
+this.activeScriptName = activeScriptName;
+this.glyphSubstitutionMap = glyphSubstitutionMap;
+}
+@Override
+public Language getLanguage()
+{
+return language;
+}
+@Override
+public String getActiveScriptName()
+{
+return activeScriptName;
+}
+@Override
+public boolean isFeatureSupported(String featureName)
+{
+return glyphSubstitutionMap.containsKey(featureName);
+}
+@Override
+public ScriptFeature getFeature(String featureName)
+{
+if (!isFeatureSupported(featureName))
+{
+throw new UnsupportedOperationException(
+"The feature " + featureName + " is not supported!");
+}
+return new MapBackedScriptFeature(featureName, glyphSubstitutionMap.get(featureName));
+}
+@Override
+public Set<String> getSupportedFeatures()
+{
+return glyphSubstitutionMap.keySet();
+}
+}

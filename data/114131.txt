@@ -1,0 +1,24 @@
+package org.apache.parquet.benchmarks;
+import java.io.IOException;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
+public class BenchmarkUtils {
+public static void deleteIfExists(Configuration conf, Path path) {
+try {
+FileSystem fs = path.getFileSystem(conf);
+if (fs.exists(path)) {
+if (!fs.delete(path, true)) {
+System.err.println("Couldn't delete " + path);
+}
+}
+} catch (IOException e) {
+System.err.println("Couldn't delete " + path);
+e.printStackTrace();
+}
+}
+public static boolean exists(Configuration conf, Path path) throws IOException {
+FileSystem fs = path.getFileSystem(conf);
+return fs.exists(path);
+}
+}

@@ -1,0 +1,51 @@
+package mobi.hsz.idea.gitignore.file.type;
+import com.intellij.openapi.fileTypes.LanguageFileType;
+import mobi.hsz.idea.gitignore.lang.IgnoreLanguage;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import javax.swing.*;
+public class IgnoreFileType extends LanguageFileType {
+@NotNull
+public static final IgnoreFileType INSTANCE = new IgnoreFileType();
+@NotNull
+private final IgnoreLanguage language;
+protected IgnoreFileType() {
+this(IgnoreLanguage.INSTANCE);
+}
+protected IgnoreFileType(@NotNull IgnoreLanguage language) {
+super(language);
+this.language = language;
+}
+@NotNull
+@Override
+public String getName() {
+return language.getID() + " file";
+}
+@NotNull
+public String getLanguageName() {
+return language.getID();
+}
+@NotNull
+@Override
+public String getDescription() {
+return language.getDisplayName();
+}
+@NotNull
+@Override
+public String getDefaultExtension() {
+return language.getExtension();
+}
+@Nullable
+@Override
+public Icon getIcon() {
+return language.getIcon();
+}
+@NotNull
+public IgnoreLanguage getIgnoreLanguage() {
+return language;
+}
+@Override
+public int hashCode() {
+return language.hashCode();
+}
+}

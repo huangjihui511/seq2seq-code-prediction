@@ -1,0 +1,4 @@
+package io.hawt.log.support;
+public interface Predicate<T> {
+boolean matches(T t);
+}

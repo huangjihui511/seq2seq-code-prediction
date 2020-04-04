@@ -1,0 +1,10 @@
+package com.example.appengine.pubsub;
+import java.util.List;
+public interface MessageRepository {
+void save(Message message);
+List<Message> retrieve(int limit);
+void saveClaim(String claim);
+List<String> retrieveClaims(int limit);
+void saveToken(String token);
+List<String> retrieveTokens(int limit);
+}

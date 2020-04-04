@@ -1,0 +1,154 @@
+package com.oracle.svm.hosted.image;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
+import org.graalvm.compiler.core.common.NumUtil;
+import org.graalvm.compiler.serviceprovider.BufferUtil;
+import org.graalvm.nativeimage.c.function.CFunctionPointer;
+import org.graalvm.nativeimage.c.function.RelocatedPointer;
+import com.oracle.objectfile.ObjectFile;
+import com.oracle.svm.hosted.meta.MethodPointer;
+import jdk.vm.ci.meta.ResolvedJavaMethod;
+public final class RelocatableBuffer {
+public static RelocatableBuffer factory(final String name, final long size, final ByteOrder byteOrder) {
+return new RelocatableBuffer(name, size, byteOrder);
+}
+public RelocatableBuffer.Info getInfo(final int key) {
+return getMap().get(key);
+}
+public RelocatableBuffer.Info addDirectRelocationWithAddend(int key, int relocationSize, Long explicitAddend, Object targetObject) {
+final RelocatableBuffer.Info info = infoFactory(ObjectFile.RelocationKind.DIRECT, relocationSize, explicitAddend, targetObject);
+final RelocatableBuffer.Info result = putInfo(key, info);
+return result;
+}
+public RelocatableBuffer.Info addDirectRelocationWithoutAddend(int key, int relocationSize, Object targetObject) {
+final RelocatableBuffer.Info info = infoFactory(ObjectFile.RelocationKind.DIRECT, relocationSize, null, targetObject);
+final RelocatableBuffer.Info result = putInfo(key, info);
+return result;
+}
+public RelocatableBuffer.Info addPCRelativeRelocationWithAddend(int key, int relocationSize, Long explicitAddend, Object targetObject) {
+final RelocatableBuffer.Info info = infoFactory(ObjectFile.RelocationKind.PC_RELATIVE, relocationSize, explicitAddend, targetObject);
+final RelocatableBuffer.Info result = putInfo(key, info);
+return result;
+}
+public RelocatableBuffer.Info addRelocation(int key, ObjectFile.RelocationKind relocationKind, int relocationSize, Long explicitAddend, Object targetObject) {
+final RelocatableBuffer.Info info = infoFactory(relocationKind, relocationSize, explicitAddend, targetObject);
+final RelocatableBuffer.Info result = putInfo(key, info);
+return result;
+}
+public int mapSize() {
+return getMap().size();
+}
+public Set<Map.Entry<Integer, RelocatableBuffer.Info>> entrySet() {
+return getMap().entrySet();
+}
+private RelocatableBuffer.Info putInfo(final int key, final RelocatableBuffer.Info value) {
+return getMap().put(key, value);
+}
+protected Map<Integer, RelocatableBuffer.Info> getMap() {
+return map;
+}
+public byte getByte(final int index) {
+return getBuffer().get(index);
+}
+public RelocatableBuffer putByte(final byte value) {
+getBuffer().put(value);
+return this;
+}
+public RelocatableBuffer putByte(final int index, final byte value) {
+getBuffer().put(index, value);
+return this;
+}
+public RelocatableBuffer putBytes(final byte[] source, final int offset, final int length) {
+getBuffer().put(source, offset, length);
+return this;
+}
+public RelocatableBuffer putInt(final int index, final int value) {
+getBuffer().putInt(index, value);
+return this;
+}
+public int getPosition() {
+return getBuffer().position();
+}
+public RelocatableBuffer setPosition(final int newPosition) {
+BufferUtil.asBaseBuffer(getBuffer()).position(newPosition);
+return this;
+}
+protected byte[] getBytes() {
+return getBuffer().array();
+}
+protected ByteBuffer getBuffer() {
+return buffer;
+}
+private Info infoFactory(ObjectFile.RelocationKind kind, int relocationSize, Long explicitAddend, Object targetObject) {
+return new Info(kind, relocationSize, explicitAddend, targetObject);
+}
+public String getName() {
+return name;
+}
+protected static String targetObjectClassification(final Object targetObject) {
+final StringBuilder result = new StringBuilder();
+if (targetObject == null) {
+result.append("null");
+} else {
+if (targetObject instanceof CFunctionPointer) {
+result.append("pointer to function");
+if (targetObject instanceof MethodPointer) {
+final MethodPointer mp = (MethodPointer) targetObject;
+final ResolvedJavaMethod hm = mp.getMethod();
+result.append("  name: ");
+result.append(hm.getName());
+}
+} else {
+result.append("pointer to data");
+}
+}
+return result.toString();
+}
+private RelocatableBuffer(final String name, final long size, final ByteOrder byteOrder) {
+this.name = name;
+this.size = size;
+final int intSize = NumUtil.safeToInt(size);
+this.buffer = ByteBuffer.wrap(new byte[intSize]).order(byteOrder);
+this.map = new TreeMap<>();
+}
+protected final String name;
+protected final long size;
+protected final ByteBuffer buffer;
+private final TreeMap<Integer, RelocatableBuffer.Info> map;
+static final long serialVersionUID = 0;
+static final int WORD_SIZE = 8; 
+public class Info {
+public int getRelocationSize() {
+return relocationSize;
+}
+public ObjectFile.RelocationKind getRelocationKind() {
+return relocationKind;
+}
+public boolean hasExplicitAddend() {
+return (explicitAddend != null);
+}
+public Long getExplicitAddend() {
+return explicitAddend;
+}
+public Object getTargetObject() {
+return targetObject;
+}
+protected Info(ObjectFile.RelocationKind kind, int relocationSize, Long explicitAddend, Object targetObject) {
+this.relocationKind = kind;
+this.relocationSize = relocationSize;
+this.explicitAddend = explicitAddend;
+this.targetObject = targetObject;
+}
+private final int relocationSize;
+private final ObjectFile.RelocationKind relocationKind;
+private final Long explicitAddend;
+private final Object targetObject;
+@Override
+public String toString() {
+return "RelocatableBuffer.Info(targetObject=" + targetObject + " relocationSize=" + relocationSize + " relocationKind=" + relocationKind + " explicitAddend=" + explicitAddend + ")";
+}
+}
+}

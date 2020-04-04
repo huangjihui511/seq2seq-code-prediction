@@ -1,0 +1,4 @@
+package org.pf4j.plugin;
+public interface ClassDataProvider {
+byte[] getClassData(String className);
+}

@@ -1,0 +1,51 @@
+package org.pf4j.demo;
+import org.apache.commons.lang3.StringUtils;
+import org.pf4j.CompoundPluginDescriptorFinder;
+import org.pf4j.ManifestPluginDescriptorFinder;
+import org.pf4j.PropertiesPluginDescriptorFinder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.pf4j.DefaultPluginManager;
+import org.pf4j.PluginManager;
+import org.pf4j.PluginWrapper;
+import org.pf4j.demo.api.Greeting;
+import java.util.List;
+public class Boot {
+private static final Logger logger = LoggerFactory.getLogger(Boot.class);
+public static void main(String[] args) {
+printLogo();
+final PluginManager pluginManager = new DefaultPluginManager() {
+@Override
+protected CompoundPluginDescriptorFinder createPluginDescriptorFinder() {
+return new CompoundPluginDescriptorFinder()
+.add(new ManifestPluginDescriptorFinder());
+}
+};
+pluginManager.loadPlugins();
+pluginManager.startPlugins();
+logger.info("Plugindirectory: ");
+logger.info("\t" + System.getProperty("pf4j.pluginsDir", "plugins") + "\n");
+List<Greeting> greetings = pluginManager.getExtensions(Greeting.class);
+logger.info(String.format("Found %d extensions for extension point '%s'", greetings.size(), Greeting.class.getName()));
+for (Greeting greeting : greetings) {
+logger.info(">>> " + greeting.getGreeting());
+}
+List<PluginWrapper> startedPlugins = pluginManager.getStartedPlugins();
+for (PluginWrapper plugin : startedPlugins) {
+String pluginId = plugin.getDescriptor().getPluginId();
+logger.info(String.format("Extensions added by plugin '%s':", pluginId));
+}
+pluginManager.stopPlugins();
+Runtime.getRuntime().addShutdownHook(new Thread() {
+@Override
+public void run() {
+pluginManager.stopPlugins();
+}
+});
+}
+private static void printLogo() {
+logger.info(StringUtils.repeat("#", 40));
+logger.info(StringUtils.center("PF4J-DEMO", 40));
+logger.info(StringUtils.repeat("#", 40));
+}
+}

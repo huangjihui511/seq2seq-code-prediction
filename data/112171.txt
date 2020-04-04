@@ -1,0 +1,7 @@
+package org.menacheri.jetserver.app;
+import org.menacheri.jetserver.service.TaskManagerService;
+public interface Task extends Runnable
+{
+Object getId();
+void setId(Object id);
+}

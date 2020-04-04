@@ -1,0 +1,6 @@
+package com.site.blog.my.core.service;
+import java.util.Map;
+public interface ConfigService {
+int updateConfig(String configName, String configValue);
+Map<String,String> getAllConfigs();
+}

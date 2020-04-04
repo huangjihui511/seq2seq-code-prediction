@@ -1,0 +1,54 @@
+package com.example.appengine;
+import com.google.appengine.api.datastore.Cursor;
+import com.google.appengine.api.datastore.DatastoreService;
+import com.google.appengine.api.datastore.DatastoreServiceFactory;
+import com.google.appengine.api.datastore.Entity;
+import com.google.appengine.api.datastore.FetchOptions;
+import com.google.appengine.api.datastore.PreparedQuery;
+import com.google.appengine.api.datastore.Query;
+import com.google.appengine.api.datastore.Query.SortDirection;
+import com.google.appengine.api.datastore.QueryResultList;
+import java.io.IOException;
+import java.io.PrintWriter;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+public class ListPeopleServlet extends HttpServlet {
+static final int PAGE_SIZE = 15;
+private final DatastoreService datastore;
+public ListPeopleServlet() {
+datastore = DatastoreServiceFactory.getDatastoreService();
+}
+@Override
+protected void doGet(HttpServletRequest req, HttpServletResponse resp)
+throws ServletException, IOException {
+FetchOptions fetchOptions = FetchOptions.Builder.withLimit(PAGE_SIZE);
+String startCursor = req.getParameter("cursor");
+if (startCursor != null) {
+fetchOptions.startCursor(Cursor.fromWebSafeString(startCursor));
+}
+Query q = new Query("Person").addSort("name", SortDirection.ASCENDING);
+PreparedQuery pq = datastore.prepare(q);
+QueryResultList<Entity> results;
+try {
+results = pq.asQueryResultList(fetchOptions);
+} catch (IllegalArgumentException e) {
+resp.sendRedirect("/people");
+return;
+}
+resp.setContentType("text/html");
+resp.setCharacterEncoding("UTF-8");
+PrintWriter w = resp.getWriter();
+w.println("<!DOCTYPE html>");
+w.println("<meta charset=\"utf-8\">");
+w.println("<title>Cloud Datastore Cursor Sample</title>");
+w.println("<ul>");
+for (Entity entity : results) {
+w.println("<li>" + entity.getProperty("name") + "</li>");
+}
+w.println("</ul>");
+String cursorString = results.getCursor().toWebSafeString();
+w.println("<a href='/people?cursor=" + cursorString + "'>Next page</a>");
+}
+}

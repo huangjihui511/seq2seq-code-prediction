@@ -1,0 +1,10 @@
+package io.ebean;
+public enum CountDistinctOrder {
+NO_ORDERING,
+ATTR_ASC,
+ATTR_DESC,
+COUNT_ASC_ATTR_ASC,
+COUNT_ASC_ATTR_DESC,
+COUNT_DESC_ATTR_ASC,
+COUNT_DESC_ATTR_DESC,
+}

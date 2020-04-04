@@ -1,0 +1,18 @@
+package io.ebean.plugin;
+import io.ebean.bean.EntityBean;
+import io.ebean.text.StringParser;
+public interface ExpressionPath {
+boolean containsMany();
+Object pathGet(Object bean);
+void pathSet(Object bean, Object value);
+Object convert(Object value);
+StringParser getStringParser();
+Object parseDateTime(long systemTimeMillis);
+boolean isDateTimeCapable();
+int getJdbcType();
+boolean isAssocId();
+String getAssocIdExpression(String propName, String bindOperator);
+Object[] getAssocIdValues(EntityBean bean);
+Property getProperty();
+String getElName();
+}

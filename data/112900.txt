@@ -1,0 +1,13 @@
+package io.kubernetes.client.informer.cache;
+import java.util.List;
+public interface Store<ApiType> {
+void add(ApiType obj);
+void update(ApiType obj);
+void delete(ApiType obj);
+void replace(List<ApiType> list, String resourceVersion);
+void resync();
+List<String> listKeys();
+Object get(ApiType obj);
+ApiType getByKey(String key);
+List<ApiType> list();
+}

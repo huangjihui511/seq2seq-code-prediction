@@ -1,0 +1,7 @@
+package io.hawt.ide;
+import java.util.List;
+public interface IdeFacadeMBean {
+String findClassAbsoluteFileName(String fileName, String className, List<String> sourceRoots);
+String ideaOpenAndNavigate(String absoluteFileName, int line, int column) throws Exception;
+String ideaOpen(String absoluteFileName) throws Exception;
+}

@@ -1,0 +1,13 @@
+package org.apache.struts2.oval.interceptor;
+import com.opensymphony.xwork2.ActionSupport;
+import javax.persistence.Basic;
+public class SimpleFieldJPAAnnotations extends ActionSupport {
+@Basic(optional = false)
+private String firstName;
+public String getFirstName() {
+return firstName;
+}
+public void setFirstName(String firstName) {
+this.firstName = firstName;
+}
+}

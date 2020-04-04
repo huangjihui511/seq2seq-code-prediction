@@ -1,0 +1,15 @@
+package org.pf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+public class DefaultExtensionFactory implements ExtensionFactory {
+private static final Logger log = LoggerFactory.getLogger(DefaultExtensionFactory.class);
+@Override
+public <T> T create(Class<T> extensionClass) {
+log.debug("Create instance for extension '{}'", extensionClass.getName());
+try {
+return extensionClass.newInstance();
+} catch (Exception e) {
+throw new PluginRuntimeException(e);
+}
+}
+}

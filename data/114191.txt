@@ -1,0 +1,8 @@
+package com.jiang.android.rxjavaapp.database.helper;
+import com.jiang.android.rxjavaapp.database.operators;
+import de.greenrobot.dao.AbstractDao;
+public class OperatorsService extends BaseService<operators,Integer> {
+public OperatorsService(AbstractDao dao) {
+super(dao);
+}
+}

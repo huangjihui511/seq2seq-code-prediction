@@ -1,0 +1,8 @@
+package com.graphhopper.jsprit.core.algorithm.listener;
+import com.graphhopper.jsprit.core.algorithm.SearchStrategy;
+import com.graphhopper.jsprit.core.problem.VehicleRoutingProblem;
+import com.graphhopper.jsprit.core.problem.solution.VehicleRoutingProblemSolution;
+import java.util.Collection;
+public interface StrategySelectedListener extends VehicleRoutingAlgorithmListener {
+void informSelectedStrategy(SearchStrategy.DiscoveredSolution discoveredSolution, VehicleRoutingProblem vehicleRoutingProblem, Collection<VehicleRoutingProblemSolution> vehicleRoutingProblemSolutions);
+}

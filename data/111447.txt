@@ -1,0 +1,36 @@
+package io.grpc;
+import javax.annotation.Nullable;
+public abstract class ServerCall<ReqT, RespT> {
+public abstract static class Listener<ReqT> {
+public void onMessage(ReqT message) {}
+public void onHalfClose() {}
+public void onCancel() {}
+public void onComplete() {}
+public void onReady() {}
+}
+public abstract void request(int numMessages);
+public abstract void sendHeaders(Metadata headers);
+public abstract void sendMessage(RespT message);
+public boolean isReady() {
+return true;
+}
+public abstract void close(Status status, Metadata trailers);
+public abstract boolean isCancelled();
+@ExperimentalApi("https:
+public void setMessageCompression(boolean enabled) {
+}
+@ExperimentalApi("https:
+public void setCompression(String compressor) {
+}
+@ExperimentalApi("https:
+@Grpc.TransportAttr
+public Attributes getAttributes() {
+return Attributes.EMPTY;
+}
+@ExperimentalApi("https:
+@Nullable
+public String getAuthority() {
+return null;
+}
+public abstract MethodDescriptor<ReqT, RespT> getMethodDescriptor();
+}

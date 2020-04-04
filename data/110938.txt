@@ -1,0 +1,13 @@
+package io.dropwizard.auth;
+import org.glassfish.jersey.server.ContainerRequest;
+import java.security.Principal;
+import java.util.Optional;
+class OptionalPrincipalContainerRequestValueFactory {
+private final ContainerRequest request;
+public OptionalPrincipalContainerRequestValueFactory(ContainerRequest request) {
+this.request = request;
+}
+public Optional<Principal> provide() {
+return Optional.ofNullable(request.getSecurityContext().getUserPrincipal());
+}
+}

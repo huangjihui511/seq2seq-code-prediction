@@ -1,0 +1,19 @@
+package org.pf4j;
+import org.pf4j.util.StringUtils;
+public class PluginRuntimeException extends RuntimeException {
+public PluginRuntimeException() {
+super();
+}
+public PluginRuntimeException(String message) {
+super(message);
+}
+public PluginRuntimeException(Throwable cause) {
+super(cause);
+}
+public PluginRuntimeException(Throwable cause, String message, Object... args) {
+super(StringUtils.format(message, args), cause);
+}
+public PluginRuntimeException(String message, Object... args) {
+super(StringUtils.format(message, args));
+}
+}

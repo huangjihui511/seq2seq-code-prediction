@@ -1,0 +1,46 @@
+package com.google.cloud.tools.jib.hash;
+import com.google.cloud.tools.jib.api.DescriptorDigest;
+import com.google.cloud.tools.jib.blob.BlobDescriptor;
+import com.google.cloud.tools.jib.json.JsonTemplate;
+import com.google.cloud.tools.jib.json.JsonTemplateMapper;
+import com.google.common.io.ByteStreams;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.List;
+public class Digests {
+public static DescriptorDigest computeJsonDigest(JsonTemplate template) throws IOException {
+return computeDigest(template, ByteStreams.nullOutputStream()).getDigest();
+}
+public static DescriptorDigest computeJsonDigest(List<? extends JsonTemplate> templates)
+throws IOException {
+WritableContents contents = contentsOut -> JsonTemplateMapper.writeTo(templates, contentsOut);
+return computeDigest(contents, ByteStreams.nullOutputStream()).getDigest();
+}
+public static BlobDescriptor computeDigest(JsonTemplate template) throws IOException {
+return computeDigest(template, ByteStreams.nullOutputStream());
+}
+public static BlobDescriptor computeDigest(JsonTemplate template, OutputStream outStream)
+throws IOException {
+WritableContents contents = contentsOut -> JsonTemplateMapper.writeTo(template, contentsOut);
+return computeDigest(contents, outStream);
+}
+public static BlobDescriptor computeDigest(InputStream inStream) throws IOException {
+return computeDigest(inStream, ByteStreams.nullOutputStream());
+}
+public static BlobDescriptor computeDigest(WritableContents contents) throws IOException {
+return computeDigest(contents, ByteStreams.nullOutputStream());
+}
+public static BlobDescriptor computeDigest(InputStream inStream, OutputStream outStream)
+throws IOException {
+WritableContents contents = contentsOut -> ByteStreams.copy(inStream, contentsOut);
+return computeDigest(contents, outStream);
+}
+public static BlobDescriptor computeDigest(WritableContents contents, OutputStream outStream)
+throws IOException {
+CountingDigestOutputStream digestOutStream = new CountingDigestOutputStream(outStream);
+contents.writeTo(digestOutStream);
+digestOutStream.flush();
+return digestOutStream.computeDigest();
+}
+}

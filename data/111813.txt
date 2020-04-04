@@ -1,0 +1,18 @@
+package org.jupiter.common.util;
+import java.util.LinkedList;
+import java.util.List;
+import org.junit.Test;
+import static org.junit.Assert.assertEquals;
+public class ListsTest {
+@Test
+public void testTransform() throws Exception {
+List<String> fromList = new LinkedList<>();
+fromList.add("1");
+fromList.add("2");
+fromList.add("3");
+fromList.add("4");
+List<Integer> toList = Lists.transform(fromList, Integer::parseInt);
+assertEquals(toList.size(), fromList.size());
+System.out.println(toList);
+}
+}

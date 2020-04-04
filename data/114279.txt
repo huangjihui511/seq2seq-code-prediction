@@ -1,0 +1,115 @@
+package com.datumbox.framework.core.machinelearning.clustering;
+import com.datumbox.framework.common.Configuration;
+import com.datumbox.framework.core.common.dataobjects.DataframeMatrix;
+import com.datumbox.framework.core.common.dataobjects.Record;
+import com.datumbox.framework.common.storage.interfaces.StorageEngine;
+import com.datumbox.framework.core.machinelearning.common.abstracts.AbstractTrainer;
+import com.datumbox.framework.core.machinelearning.common.abstracts.algorithms.AbstractDPMM;
+import com.datumbox.framework.core.machinelearning.common.abstracts.modelers.AbstractClusterer;
+import com.datumbox.framework.core.statistics.distributions.ContinuousDistributions;
+import org.apache.commons.math3.linear.OpenMapRealVector;
+import org.apache.commons.math3.linear.RealVector;
+import java.util.Map;
+public class MultinomialDPMM extends AbstractDPMM<MultinomialDPMM.Cluster, MultinomialDPMM.ModelParameters, MultinomialDPMM.TrainingParameters> {
+public static class Cluster extends AbstractDPMM.AbstractCluster {
+private static final long serialVersionUID = 2L;
+private final double alphaWords; 
+private RealVector wordCounts;
+private Double wordcounts_plusalpha; 
+protected Cluster(Integer clusterId, int dimensions, double alphaWords) {
+super(clusterId);
+this.alphaWords = alphaWords;
+wordCounts = new OpenMapRealVector(dimensions);
+wordcounts_plusalpha = estimateWordCountsPlusAlpha();
+}
+@Override
+protected double posteriorLogPdf(Record r) {
+RealVector x_mu = DataframeMatrix.parseRecord(r, featureIds);
+RealVector wordCountsPlusAlpha = wordCounts.mapAdd(alphaWords);
+double logPdf = C(wordCountsPlusAlpha.add(x_mu))-wordcounts_plusalpha;
+return logPdf;
+}
+@Override
+protected Map<Object, Integer> getFeatureIds() {
+return featureIds;
+}
+@Override
+protected void setFeatureIds(Map<Object, Integer> featureIds) {
+this.featureIds = featureIds;
+}
+@Override
+protected void add(Record r) {
+RealVector rv = DataframeMatrix.parseRecord(r, featureIds);
+if(size==0) {
+wordCounts=rv;
+}
+else {
+wordCounts=wordCounts.add(rv);
+}
+size++;
+updateClusterParameters();
+}
+@Override
+protected void remove(Record r) {
+size--;
+RealVector rv = DataframeMatrix.parseRecord(r, featureIds);
+wordCounts=wordCounts.subtract(rv);
+updateClusterParameters();
+}
+@Override
+protected void updateClusterParameters() {
+wordcounts_plusalpha = estimateWordCountsPlusAlpha();
+}
+@Override
+protected void clear() {
+}
+private double estimateWordCountsPlusAlpha() {
+RealVector wordCountsPlusAlpha = wordCounts.mapAdd(alphaWords);
+return C(wordCountsPlusAlpha);
+}
+private double C(RealVector alphaVector) {
+double Cvalue;
+double sumAi=0.0;
+double sumLogGammaAi=0.0;
+int aLength=alphaVector.getDimension();
+double tmp;
+for(int i=0;i<aLength;++i) {
+tmp=alphaVector.getEntry(i);
+sumAi+= tmp;
+sumLogGammaAi+=ContinuousDistributions.logGamma(tmp);
+}
+Cvalue = sumLogGammaAi-ContinuousDistributions.logGamma(sumAi);
+return Cvalue;
+}
+}
+public static class ModelParameters extends AbstractDPMM.AbstractModelParameters<MultinomialDPMM.Cluster> {
+private static final long serialVersionUID = 1L;
+protected ModelParameters(StorageEngine storageEngine) {
+super(storageEngine);
+}
+}
+public static class TrainingParameters extends AbstractDPMM.AbstractTrainingParameters {
+private static final long serialVersionUID = 1L;
+private double alphaWords = 50.0; 
+public double getAlphaWords() {
+return alphaWords;
+}
+public void setAlphaWords(double alphaWords) {
+this.alphaWords = alphaWords;
+}
+}
+protected MultinomialDPMM(TrainingParameters trainingParameters, Configuration configuration) {
+super(trainingParameters, configuration);
+}
+protected MultinomialDPMM(String storageName, Configuration configuration) {
+super(storageName, configuration);
+}
+@Override
+protected Cluster createNewCluster(Integer clusterId) {
+ModelParameters modelParameters = knowledgeBase.getModelParameters();
+TrainingParameters trainingParameters = knowledgeBase.getTrainingParameters();
+Cluster c = new Cluster(clusterId, modelParameters.getD(), trainingParameters.getAlphaWords());
+c.setFeatureIds(modelParameters.getFeatureIds());
+return c;
+}
+}

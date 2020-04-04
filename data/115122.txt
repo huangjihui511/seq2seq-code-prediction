@@ -1,0 +1,58 @@
+package io.ebeaninternal.server.transaction;
+import io.ebean.cache.QueryCacheEntry;
+import io.ebean.cache.QueryCacheEntryValidate;
+import io.ebean.cache.ServerCacheNotification;
+import io.ebean.cache.ServerCacheNotify;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+public class TableModState implements QueryCacheEntryValidate, ServerCacheNotify {
+private static final Logger log = LoggerFactory.getLogger("io.ebean.cache.TABLEMOD");
+private final Map<String, Long> tableModStamp = new ConcurrentHashMap<>();
+public TableModState() {
+}
+void touch(Set<String> touchedTables) {
+long modNanoTime = System.nanoTime();
+for (String tableName : touchedTables) {
+tableModStamp.put(tableName, modNanoTime);
+}
+if (log.isDebugEnabled()) {
+log.debug("TableModState updated - touched:{} modNanoTime:{}", touchedTables, modNanoTime);
+}
+}
+boolean isValid(Set<String> tables, long sinceNanoTime) {
+for (String tableName : tables) {
+Long modTime = tableModStamp.get(tableName);
+if (modTime != null && modTime >= sinceNanoTime) {
+if (log.isTraceEnabled()) {
+log.trace("Invalidate on table:{}", tableName);
+}
+return false;
+}
+}
+return true;
+}
+@Override
+public boolean isValid(QueryCacheEntry entry) {
+Set<String> dependentTables = entry.getDependentTables();
+if (dependentTables != null && !dependentTables.isEmpty()) {
+return isValid(dependentTables, entry.getTimestamp());
+}
+return true;
+}
+@Override
+public void notify(ServerCacheNotification notification) {
+if (log.isDebugEnabled()) {
+log.debug("ServerCacheNotification:{}", notification);
+}
+touch(notification.getDependentTables());
+}
+public void notify(RemoteTableMod tableMod) {
+if (log.isDebugEnabled()) {
+log.debug("RemoteTableMod:{}", tableMod);
+}
+touch(tableMod.getTables());
+}
+}

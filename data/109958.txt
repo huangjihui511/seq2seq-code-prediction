@@ -1,0 +1,30 @@
+package us.codecraft.webmagic.utils;
+import org.junit.Assert;
+import org.junit.Test;
+import static org.assertj.core.api.Assertions.assertThat;
+public class UrlUtilsTest {
+@Test
+public void testFixRelativeUrl() {
+String absoluteUrl = UrlUtils.canonicalizeUrl("aa", "http:
+assertThat(absoluteUrl).isEqualTo("http:
+absoluteUrl = UrlUtils.canonicalizeUrl("../aa", "http:
+assertThat(absoluteUrl).isEqualTo("http:
+absoluteUrl = UrlUtils.canonicalizeUrl("../mshz", "http:
+assertThat(absoluteUrl).isEqualTo("http:
+absoluteUrl = UrlUtils.canonicalizeUrl("..aa", "http:
+assertThat(absoluteUrl).isEqualTo("http:
+absoluteUrl = UrlUtils.canonicalizeUrl("../../aa", "http:
+assertThat(absoluteUrl).isEqualTo("http:
+absoluteUrl = UrlUtils.canonicalizeUrl("../../aa", "http:
+assertThat(absoluteUrl).isEqualTo("http:
+}
+@Test
+public void testGetDomain(){
+String url = "http:
+Assert.assertEquals("www.dianping.com",UrlUtils.getDomain(url));
+url = "www.dianping.com/aa/";
+Assert.assertEquals("www.dianping.com",UrlUtils.getDomain(url));
+url = "http:
+Assert.assertEquals("www.dianping.com",UrlUtils.getDomain(url));
+}
+}

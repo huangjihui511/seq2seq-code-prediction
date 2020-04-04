@@ -1,0 +1,12 @@
+package com.maskyn.fileeditor;
+import android.app.Activity;
+import com.google.android.gms.ads.InterstitialAd;*/
+public class AdsHelper {
+public AdsHelper(Activity activity) {
+interstitial.setAdUnitId("ca-app-pub-5679083452234719/7178038180");
+AdRequest adRequest = new AdRequest.Builder().build();
+interstitial.loadAd(adRequest);*/
+}
+public void displayInterstitial() {
+}
+}

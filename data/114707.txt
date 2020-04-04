@@ -1,0 +1,7 @@
+package com.twelvemonkeys.servlet.jsp.droplet;
+import javax.servlet.ServletException;
+import javax.servlet.jsp.PageContext;
+import java.io.IOException;
+public interface JspFragment {
+public void service(PageContext pContext) throws ServletException, IOException;
+}

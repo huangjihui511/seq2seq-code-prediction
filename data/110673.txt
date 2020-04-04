@@ -1,0 +1,9 @@
+package org.junit.internal.management;
+final class FakeThreadMXBean implements ThreadMXBean {
+public long getThreadCpuTime(long id) {
+throw new UnsupportedOperationException();
+}
+public boolean isThreadCpuTimeSupported() {
+return false;
+}
+}

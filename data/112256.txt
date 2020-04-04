@@ -1,0 +1,6 @@
+package org.whispersystems.libsignal.util.guava;
+public interface Function<F, T> {
+T apply(F input);
+@Override
+boolean equals(Object object);
+}

@@ -1,0 +1,42 @@
+package com.github.jknack.handlebars.internal.path;
+import java.lang.reflect.Array;
+import java.util.List;
+import com.github.jknack.handlebars.Context;
+import com.github.jknack.handlebars.PathExpression;
+import com.github.jknack.handlebars.ValueResolver;
+public class IndexedPath implements PathExpression {
+private int idx;
+private String name;
+private boolean local;
+public IndexedPath(final int idx, final String name, final boolean local) {
+this.idx = idx;
+this.name = name;
+this.local = local;
+}
+@SuppressWarnings("rawtypes")
+@Override
+public Object eval(final ValueResolver resolver, final Context context, final Object data,
+final Chain chain) {
+try {
+Object value = data;
+if (data instanceof List) {
+value = ((List) value).get(idx);
+} else if (value.getClass().isArray()) {
+value = Array.get(value, idx);
+} else {
+value = resolver.resolve(value, name);
+}
+return chain.next(resolver, context, value);
+} catch (IndexOutOfBoundsException exception) {
+return null;
+}
+}
+@Override
+public boolean local() {
+return local;
+}
+@Override
+public String toString() {
+return "[" + idx + "]";
+}
+}

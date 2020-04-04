@@ -1,0 +1,18 @@
+package net.pms.formats.image;
+public class TIFF extends ImageBase {
+@Override
+public Identifier getIdentifier() {
+return Identifier.TIFF;
+}
+@Override
+public String[] getSupportedExtensions() {
+return new String[] {
+"tif",
+"tiff"
+};
+}
+@Override
+public String mimeType() {
+return "image/tiff";
+}
+}

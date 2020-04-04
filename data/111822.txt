@@ -1,0 +1,6 @@
+package org.jupiter.benchmark.unix.domain;
+import org.jupiter.rpc.ServiceProvider;
+@ServiceProvider(name = "service", group = "test")
+public interface Service {
+String hello(String arg);
+}

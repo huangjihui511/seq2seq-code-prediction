@@ -1,0 +1,19 @@
+package com.xkcoding.elasticsearch.template;
+import com.xkcoding.elasticsearch.SpringBootDemoElasticsearchApplicationTests;
+import com.xkcoding.elasticsearch.model.Person;
+import org.junit.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.elasticsearch.core.ElasticsearchTemplate;
+public class TemplateTest extends SpringBootDemoElasticsearchApplicationTests {
+@Autowired
+private ElasticsearchTemplate esTemplate;
+@Test
+public void testCreateIndex() {
+esTemplate.createIndex(Person.class);
+esTemplate.putMapping(Person.class);
+}
+@Test
+public void testDeleteIndex() {
+esTemplate.deleteIndex(Person.class);
+}
+}

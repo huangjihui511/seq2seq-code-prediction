@@ -1,0 +1,7 @@
+package org.openrefine.wikidata.updates.scheduler;
+import java.util.List;
+import org.openrefine.wikidata.updates.ItemUpdate;
+public interface UpdateScheduler {
+public List<ItemUpdate> schedule(List<ItemUpdate> updates)
+throws ImpossibleSchedulingException;
+}

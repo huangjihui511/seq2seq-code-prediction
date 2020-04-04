@@ -1,0 +1,11 @@
+package com.google.api.client.http;
+import com.google.api.client.util.Beta;
+import java.io.IOException;
+@Deprecated
+@Beta
+public interface BackOffPolicy {
+public static final long STOP = -1L;
+public boolean isBackOffRequired(int statusCode);
+public void reset();
+public long getNextBackOffMillis() throws IOException;
+}

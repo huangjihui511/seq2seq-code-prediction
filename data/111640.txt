@@ -1,0 +1,28 @@
+package io.github.bonigarcia.wdm.test;
+import static java.lang.invoke.MethodHandles.lookup;
+import static org.hamcrest.core.IsEqual.equalTo;
+import static org.hamcrest.core.IsNot.not;
+import static org.junit.Assert.assertThat;
+import static org.slf4j.LoggerFactory.getLogger;
+import org.junit.Ignore;
+import org.junit.Test;
+import org.slf4j.Logger;
+import io.github.bonigarcia.wdm.WebDriverManager;
+public class ChromeLatestTest {
+final Logger log = getLogger(lookup().lookupClass());
+@Ignore
+@Test
+public void testLatestAndBetaChromedriver() {
+WebDriverManager.chromedriver().avoidPreferences().avoidAutoVersion()
+.setup();
+String chromedriverStable = WebDriverManager.chromedriver()
+.getDownloadedVersion();
+log.debug("Chromedriver LATEST version: {}", chromedriverStable);
+WebDriverManager.chromedriver().avoidPreferences().avoidAutoVersion()
+.useBetaVersions().setup();
+String chromedriverBeta = WebDriverManager.chromedriver()
+.getDownloadedVersion();
+log.debug("Chromedriver BETA version: {}", chromedriverBeta);
+assertThat(chromedriverStable, not(equalTo(chromedriverBeta)));
+}
+}

@@ -1,0 +1,17 @@
+package com.oreilly.springdata.gemfire.order;
+import static org.hamcrest.Matchers.*;
+import org.hamcrest.Matcher;
+import com.oreilly.springdata.gemfire.core.Product;
+import com.oreilly.springdata.gemfire.order.LineItem;
+import com.oreilly.springdata.gemfire.order.Order;
+public class OrderMatchers {
+public static <T> Matcher<Iterable<? super T>> containsOrder(Matcher<? super T> matcher) {
+return hasItem(matcher);
+}
+public static Matcher<Order> LineItem(Matcher<LineItem> matcher) {
+return hasProperty("lineItems", hasItem(matcher));
+}
+public static Matcher<LineItem> ProductId(Matcher<Long> matcher) {
+return hasProperty("productId", matcher);
+}
+}

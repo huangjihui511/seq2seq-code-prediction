@@ -1,0 +1,38 @@
+package org.spongepowered.mod.test.integration.regression;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.spongepowered.api.data.key.Keys;
+import org.spongepowered.api.entity.living.player.gamemode.GameModes;
+import org.spongepowered.api.event.item.inventory.UseItemStackEvent;
+import org.spongepowered.api.item.ItemTypes;
+import org.spongepowered.api.item.inventory.ItemStack;
+import org.spongepowered.api.item.inventory.entity.Hotbar;
+import org.spongepowered.api.item.inventory.property.SlotIndex;
+import org.spongepowered.api.item.inventory.query.QueryOperationTypes;
+import org.spongepowered.common.test.RegressionTest;
+import org.spongepowered.mctester.api.junit.MinecraftRunner;
+import org.spongepowered.mctester.internal.BaseTest;
+import org.spongepowered.mctester.internal.event.StandaloneEventListener;
+import org.spongepowered.mctester.junit.TestUtils;
+@RegressionTest(ghIssue = "https:
+@RunWith(MinecraftRunner.class)
+public class UseItemStackFinishBug extends BaseTest {
+public UseItemStackFinishBug(TestUtils testUtils) {
+super(testUtils);
+}
+@Test
+public void testFinishEatingItem() throws Throwable {
+ItemStack stack = ItemStack.of(ItemTypes.GOLDEN_APPLE, 1);
+this.testUtils.runOnMainThread(() -> {
+this.testUtils.getThePlayer().offer(Keys.GAME_MODE, GameModes.SURVIVAL);
+Hotbar hotbar = this.testUtils.getThePlayer().getInventory().query(QueryOperationTypes.INVENTORY_TYPE.of(Hotbar.class));
+hotbar.set(new SlotIndex(hotbar.getSelectedSlotIndex()), stack);
+});
+this.testUtils.waitForInventoryPropagation();
+this.testUtils.listenTimeout(() -> this.client.holdRightClick(true),
+new StandaloneEventListener<>(UseItemStackEvent.Finish.class,
+(UseItemStackEvent.Finish event) -> UseItemStackFinishBug.this.testUtils.assertStacksEqual(stack, event.getItemStackInUse().createStack())),
+100);
+UseItemStackFinishBug.this.client.holdRightClick(false);
+}
+}

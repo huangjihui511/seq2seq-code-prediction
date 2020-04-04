@@ -1,0 +1,49 @@
+package com.google.auto.factory.processor;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
+import com.google.auto.value.AutoValue;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
+import javax.lang.model.type.TypeMirror;
+@AutoValue
+abstract class FactoryMethodDescriptor {
+abstract AutoFactoryDeclaration declaration();
+abstract String name();
+abstract TypeMirror returnType();
+abstract boolean publicMethod();
+abstract boolean overridingMethod();
+abstract ImmutableSet<Parameter> passedParameters();
+abstract ImmutableSet<Parameter> providedParameters();
+abstract ImmutableSet<Parameter> creationParameters();
+abstract Builder toBuilder();
+abstract boolean isVarArgs();
+final String factoryName() {
+return declaration().getFactoryName();
+}
+static Builder builder(AutoFactoryDeclaration declaration) {
+return new AutoValue_FactoryMethodDescriptor.Builder()
+.declaration(checkNotNull(declaration))
+.publicMethod(false)
+.overridingMethod(false)
+.isVarArgs(false);
+}
+@AutoValue.Builder
+static abstract class Builder {
+abstract Builder declaration(AutoFactoryDeclaration declaration);
+abstract Builder name(String name);
+abstract Builder returnType(TypeMirror returnType);
+abstract Builder publicMethod(boolean publicMethod);
+abstract Builder overridingMethod(boolean overridingMethod);
+abstract Builder passedParameters(Iterable<Parameter> passedParameters);
+abstract Builder providedParameters(Iterable<Parameter> providedParameters);
+abstract Builder creationParameters(Iterable<Parameter> creationParameters);
+abstract Builder isVarArgs(boolean isVarargs);
+abstract FactoryMethodDescriptor buildImpl();
+FactoryMethodDescriptor build() {
+FactoryMethodDescriptor descriptor = buildImpl();
+checkState(descriptor.creationParameters().equals(
+Sets.union(descriptor.passedParameters(), descriptor.providedParameters())));
+return descriptor;
+}
+}
+}

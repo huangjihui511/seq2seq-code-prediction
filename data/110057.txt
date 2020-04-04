@@ -1,0 +1,45 @@
+package spark;
+import spark.utils.Wrapper;
+public abstract class FilterImpl implements Filter, Wrapper {
+static final String DEFAULT_ACCEPT_TYPE = "*/*";
+private String path;
+private String acceptType;
+private Filter delegate;
+public FilterImpl withPrefix(String prefix) {
+this.path = prefix + this.path;
+return this;
+}
+static FilterImpl create(final String path, final Filter filter) {
+return create(path, DEFAULT_ACCEPT_TYPE, filter);
+}
+static FilterImpl create(final String path, String acceptType, final Filter filter) {
+if (acceptType == null) {
+acceptType = DEFAULT_ACCEPT_TYPE;
+}
+return new FilterImpl(path, acceptType, filter) {
+@Override
+public void handle(Request request, Response response) throws Exception {
+filter.handle(request, response);
+}
+};
+}
+protected FilterImpl(String path, String acceptType) {
+this.path = path;
+this.acceptType = acceptType;
+}
+protected FilterImpl(String path, String acceptType, Filter filter) {
+this(path, acceptType);
+this.delegate = filter;
+}
+public abstract void handle(Request request, Response response) throws Exception;
+public String getAcceptType() {
+return acceptType;
+}
+public String getPath() {
+return this.path;
+}
+@Override
+public Object delegate() {
+return this.delegate;
+}
+}

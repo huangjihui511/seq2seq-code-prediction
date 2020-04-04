@@ -1,0 +1,2 @@
+package mavendep;
+public class Foo {}

@@ -1,0 +1,36 @@
+package mobi.hsz.idea.gitignore.lang.kind;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
+import mobi.hsz.idea.gitignore.file.type.IgnoreFileType;
+import mobi.hsz.idea.gitignore.file.type.kind.FossilFileType;
+import mobi.hsz.idea.gitignore.lang.IgnoreLanguage;
+import mobi.hsz.idea.gitignore.outer.OuterIgnoreLoaderComponent.OuterFileFetcher;
+import mobi.hsz.idea.gitignore.util.Icons;
+import mobi.hsz.idea.gitignore.util.Utils;
+import org.jetbrains.annotations.NotNull;
+public class FossilLanguage extends IgnoreLanguage {
+public static final FossilLanguage INSTANCE = new FossilLanguage();
+private FossilLanguage() {
+super("Fossil", "ignore-glob", ".fossil-settings", Icons.FOSSIL, new OuterFileFetcher[]{
+project -> {
+final VirtualFile baseDir = Utils.guessProjectDir(project);
+return ContainerUtil.createMaybeSingletonList(baseDir == null ? null : baseDir
+.findFileByRelativePath(INSTANCE.getVcsDirectory() + "/" + INSTANCE.getFilename()));
+}
+});
+}
+@NotNull
+@Override
+public IgnoreFileType getFileType() {
+return FossilFileType.INSTANCE;
+}
+@NotNull
+@Override
+public String getFilename() {
+return getExtension();
+}
+@Override
+public boolean isOuterFileSupported() {
+return true;
+}
+}

@@ -1,0 +1,17 @@
+package org.graalvm.component.installer;
+public class UnknownVersionException extends InstallerStopException {
+private static final long serialVersionUID = 33;
+private final Version version;
+private final Version candidate;
+public UnknownVersionException(String s, Version v, Version c) {
+super(s);
+this.version = v;
+this.candidate = c;
+}
+public Version getCandidate() {
+return candidate;
+}
+public Version getVersion() {
+return version;
+}
+}

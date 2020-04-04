@@ -1,0 +1,4 @@
+package io.ebean.cache;
+public interface QueryCacheEntryValidate {
+boolean isValid(QueryCacheEntry queryCacheEntry);
+}

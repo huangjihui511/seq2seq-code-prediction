@@ -1,0 +1,52 @@
+package io.jooby.internal;
+import io.jooby.ByteRange;
+import io.jooby.Context;
+import io.jooby.StatusCode;
+import org.apache.commons.io.input.BoundedInputStream;
+import javax.annotation.Nonnull;
+import java.io.IOException;
+import java.io.InputStream;
+public class SingleByteRange implements ByteRange {
+private String value;
+private long start;
+private long end;
+private long contentLength;
+private String contentRange;
+public SingleByteRange(String value, long start, long end, long contentLength,
+String contentRange) {
+this.value = value;
+this.start = start;
+this.end = end;
+this.contentLength = contentLength;
+this.contentRange = contentRange;
+}
+@Override public long getStart() {
+return start;
+}
+@Override public long getEnd() {
+return end;
+}
+@Override public long getContentLength() {
+return contentLength;
+}
+@Override public @Nonnull String getContentRange() {
+return contentRange;
+}
+@Nonnull @Override public StatusCode getStatusCode() {
+return StatusCode.PARTIAL_CONTENT;
+}
+@Override public @Nonnull ByteRange apply(@Nonnull Context ctx) {
+ctx.setResponseHeader("Accept-Ranges", "bytes");
+ctx.setResponseHeader("Content-Range", contentRange);
+ctx.setResponseLength(contentLength);
+ctx.setResponseCode(StatusCode.PARTIAL_CONTENT);
+return this;
+}
+@Override public @Nonnull InputStream apply(@Nonnull InputStream input) throws IOException {
+input.skip(start);
+return new BoundedInputStream(input, end);
+}
+@Override public String toString() {
+return value;
+}
+}

@@ -1,0 +1,5 @@
+package com.datumbox.framework.core.common.interfaces;
+import java.util.Map;
+public interface Extractable<K, V, I> {
+public Map<K, V> extract(final I input);
+}

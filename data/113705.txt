@@ -1,0 +1,15 @@
+package net.pms.formats.image;
+public class PNM extends ImageBase {
+@Override
+public Identifier getIdentifier() {
+return Identifier.PNM;
+}
+@Override
+public String[] getSupportedExtensions() {
+return new String[] { "pbm", "pgm", "ppm", "pnm" };
+}
+@Override
+public String mimeType() {
+return "image/x-portable-anymap";
+}
+}

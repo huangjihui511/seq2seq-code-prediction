@@ -1,0 +1,9 @@
+package io.realm.examples.intro.model;
+import io.realm.RealmObject;
+import io.realm.RealmResults;
+import io.realm.annotations.LinkingObjects;
+public class Cat extends RealmObject {
+public String name;
+@LinkingObjects("cats")
+public final RealmResults<Person> owners = null;
+}

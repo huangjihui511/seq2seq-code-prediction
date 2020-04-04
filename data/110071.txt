@@ -1,0 +1,5 @@
+package spark;
+@FunctionalInterface
+public interface TemplateViewRoute {
+ModelAndView handle(Request request, Response response) throws Exception;
+}

@@ -1,0 +1,35 @@
+package com.sun.swingset3.utilities;
+import java.awt.Graphics;
+import javax.swing.JSplitPane;
+import javax.swing.UIManager;
+import javax.swing.border.Border;
+import javax.swing.border.EmptyBorder;
+import javax.swing.plaf.basic.BasicSplitPaneDivider;
+import javax.swing.plaf.basic.BasicSplitPaneUI;
+import org.jdesktop.animation.timing.Animator;
+import org.jdesktop.animation.timing.interpolation.PropertySetter;
+public class AnimatingSplitPane extends JSplitPane {
+private boolean firstExpanded = false;
+private int lastDividerLocation = -1;
+public AnimatingSplitPane(int orientation) {
+super(orientation);
+setOneTouchExpandable(false);
+}
+public void setExpanded(boolean expanded) {
+if (expanded != firstExpanded) {
+if (!firstExpanded) {
+lastDividerLocation = getDividerLocation();
+}
+this.firstExpanded = expanded;
+Animator animator = new Animator(500, new PropertySetter(this, "dividerLocation",
+getDividerLocation(), (expanded? getHeight() : lastDividerLocation)));
+animator.setStartDelay(10);
+animator.setAcceleration(.2f);
+animator.setDeceleration(.3f);
+animator.start();
+}
+}
+public void setDividerLocation(int dividerLocation) {
+super.setDividerLocation(dividerLocation);
+}
+}

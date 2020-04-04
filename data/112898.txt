@@ -1,0 +1,9 @@
+package io.kubernetes.client.informer;
+import io.kubernetes.client.informer.cache.Indexer;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+public interface SharedIndexInformer<ApiType> extends SharedInformer<ApiType> {
+void addIndexers(Map<String, Function<ApiType, List<String>>> indexers);
+Indexer<ApiType> getIndexer();
+}

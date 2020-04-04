@@ -1,0 +1,18 @@
+package com.google.cloud.tools.jib.image.json;
+import java.util.Optional;
+import javax.annotation.Nullable;
+public class ManifestAndConfig {
+private final ManifestTemplate manifest;
+@Nullable private final ContainerConfigurationTemplate config;
+public ManifestAndConfig(
+ManifestTemplate manifest, @Nullable ContainerConfigurationTemplate config) {
+this.manifest = manifest;
+this.config = config;
+}
+public ManifestTemplate getManifest() {
+return manifest;
+}
+public Optional<ContainerConfigurationTemplate> getConfig() {
+return Optional.ofNullable(config);
+}
+}

@@ -1,0 +1,11 @@
+package io.jooby;
+import io.jooby.internal.FlashMapImpl;
+import javax.annotation.Nonnull;
+import java.util.Map;
+public interface FlashMap extends Map<String, String> {
+String NAME = "flash";
+static @Nonnull FlashMap create(@Nonnull Context ctx, @Nonnull Cookie template) {
+return new FlashMapImpl(ctx, template);
+}
+@Nonnull FlashMap keep();
+}

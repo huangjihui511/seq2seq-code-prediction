@@ -1,0 +1,121 @@
+package org.apache.parquet.arrow.schema;
+import static java.util.Arrays.asList;
+import java.util.Collections;
+import java.util.List;
+import org.apache.arrow.vector.types.pojo.Field;
+import org.apache.arrow.vector.types.pojo.Schema;
+import org.apache.parquet.schema.GroupType;
+import org.apache.parquet.schema.MessageType;
+import org.apache.parquet.schema.PrimitiveType;
+import org.apache.parquet.schema.Type;
+public class SchemaMapping {
+private final Schema arrowSchema;
+private final MessageType parquetSchema;
+private final List<TypeMapping> children;
+SchemaMapping(Schema arrowSchema, MessageType parquetSchema, List<TypeMapping> children) {
+super();
+this.arrowSchema = arrowSchema;
+this.parquetSchema = parquetSchema;
+this.children = Collections.unmodifiableList(children);
+}
+public Schema getArrowSchema() {
+return arrowSchema;
+}
+public MessageType getParquetSchema() {
+return parquetSchema;
+}
+public List<TypeMapping> getChildren() {
+return children;
+}
+public interface TypeMappingVisitor<T> {
+T visit(PrimitiveTypeMapping primitiveTypeMapping);
+T visit(StructTypeMapping structTypeMapping);
+T visit(UnionTypeMapping unionTypeMapping);
+T visit(ListTypeMapping listTypeMapping);
+T visit(RepeatedTypeMapping repeatedTypeMapping);
+}
+public abstract static class TypeMapping {
+private final Field arrowField;
+private final Type parquetType;
+private List<TypeMapping> children;
+TypeMapping(Field arrowField, Type parquetType, List<TypeMapping> children) {
+super();
+this.arrowField = arrowField;
+this.parquetType = parquetType;
+this.children = children;
+}
+public Field getArrowField() {
+return arrowField;
+}
+public Type getParquetType() {
+return parquetType;
+}
+public List<TypeMapping> getChildren() {
+return children;
+}
+public abstract <T> T accept(TypeMappingVisitor<T> visitor);
+}
+public static class PrimitiveTypeMapping extends TypeMapping {
+public PrimitiveTypeMapping(Field arrowField, PrimitiveType parquetType) {
+super(arrowField, parquetType, Collections.<TypeMapping>emptyList());
+}
+@Override
+public <T> T accept(TypeMappingVisitor<T> visitor) {
+return visitor.visit(this);
+}
+}
+public static class StructTypeMapping extends TypeMapping {
+public StructTypeMapping(Field arrowField, GroupType parquetType, List<TypeMapping> children) {
+super(arrowField, parquetType, children);
+}
+@Override
+public <T> T accept(TypeMappingVisitor<T> visitor) {
+return visitor.visit(this);
+}
+}
+public static class UnionTypeMapping extends TypeMapping {
+public UnionTypeMapping(Field arrowField, GroupType parquetType, List<TypeMapping> children) {
+super(arrowField, parquetType, children);
+}
+@Override
+public <T> T accept(TypeMappingVisitor<T> visitor) {
+return visitor.visit(this);
+}
+}
+public static class ListTypeMapping extends TypeMapping {
+private final List3Levels list3Levels;
+private final TypeMapping child;
+public ListTypeMapping(Field arrowField, List3Levels list3Levels, TypeMapping child) {
+super(arrowField, list3Levels.getList(), asList(child));
+this.list3Levels = list3Levels;
+this.child = child;
+if (list3Levels.getElement() != child.getParquetType()) {
+throw new IllegalArgumentException(list3Levels + " <=> " + child);
+}
+}
+public List3Levels getList3Levels() {
+return list3Levels;
+}
+public TypeMapping getChild() {
+return child;
+}
+@Override
+public <T> T accept(TypeMappingVisitor<T> visitor) {
+return visitor.visit(this);
+}
+}
+public static class RepeatedTypeMapping extends TypeMapping {
+private final TypeMapping child;
+public RepeatedTypeMapping(Field arrowField, Type parquetType, TypeMapping child) {
+super(arrowField, parquetType, asList(child));
+this.child = child;
+}
+public TypeMapping getChild() {
+return child;
+}
+@Override
+public <T> T accept(TypeMappingVisitor<T> visitor) {
+return visitor.visit(this);
+}
+}
+}

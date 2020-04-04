@@ -1,0 +1,157 @@
+package com.facebook.presto.cost;
+import static com.google.common.base.Preconditions.checkArgument;
+import static java.lang.Double.NaN;
+import static java.lang.Double.isNaN;
+import static java.lang.Double.max;
+import static java.lang.Double.min;
+import static java.util.stream.Stream.concat;
+public class PlanNodeStatsEstimateMath
+{
+private PlanNodeStatsEstimateMath()
+{}
+public static PlanNodeStatsEstimate subtractSubsetStats(PlanNodeStatsEstimate superset, PlanNodeStatsEstimate subset)
+{
+if (superset.isOutputRowCountUnknown() || subset.isOutputRowCountUnknown()) {
+return PlanNodeStatsEstimate.unknown();
+}
+double supersetRowCount = superset.getOutputRowCount();
+double subsetRowCount = subset.getOutputRowCount();
+double outputRowCount = max(supersetRowCount - subsetRowCount, 0);
+if (outputRowCount == 0) {
+return createZeroStats(superset);
+}
+PlanNodeStatsEstimate.Builder result = PlanNodeStatsEstimate.builder();
+result.setOutputRowCount(outputRowCount);
+superset.getVariablesWithKnownStatistics().forEach(symbol -> {
+VariableStatsEstimate supersetSymbolStats = superset.getVariableStatistics(symbol);
+VariableStatsEstimate subsetSymbolStats = subset.getVariableStatistics(symbol);
+VariableStatsEstimate.Builder newSymbolStats = VariableStatsEstimate.builder();
+newSymbolStats.setAverageRowSize(supersetSymbolStats.getAverageRowSize());
+double supersetNullsCount = supersetSymbolStats.getNullsFraction() * supersetRowCount;
+double subsetNullsCount = subsetSymbolStats.getNullsFraction() * subsetRowCount;
+double newNullsCount = max(supersetNullsCount - subsetNullsCount, 0);
+newSymbolStats.setNullsFraction(min(newNullsCount, outputRowCount) / outputRowCount);
+double supersetDistinctValues = supersetSymbolStats.getDistinctValuesCount();
+double subsetDistinctValues = subsetSymbolStats.getDistinctValuesCount();
+double newDistinctValuesCount;
+if (isNaN(supersetDistinctValues) || isNaN(subsetDistinctValues)) {
+newDistinctValuesCount = NaN;
+}
+else if (supersetDistinctValues == 0) {
+newDistinctValuesCount = 0;
+}
+else if (subsetDistinctValues == 0) {
+newDistinctValuesCount = supersetDistinctValues;
+}
+else {
+double supersetNonNullsCount = supersetRowCount - supersetNullsCount;
+double subsetNonNullsCount = subsetRowCount - subsetNullsCount;
+double supersetValuesPerDistinctValue = supersetNonNullsCount / supersetDistinctValues;
+double subsetValuesPerDistinctValue = subsetNonNullsCount / subsetDistinctValues;
+if (supersetValuesPerDistinctValue <= subsetValuesPerDistinctValue) {
+newDistinctValuesCount = max(supersetDistinctValues - subsetDistinctValues, 0);
+}
+else {
+newDistinctValuesCount = supersetDistinctValues;
+}
+}
+newSymbolStats.setDistinctValuesCount(newDistinctValuesCount);
+newSymbolStats.setLowValue(supersetSymbolStats.getLowValue());
+newSymbolStats.setHighValue(supersetSymbolStats.getHighValue());
+result.addVariableStatistics(symbol, newSymbolStats.build());
+});
+return result.build();
+}
+public static PlanNodeStatsEstimate capStats(PlanNodeStatsEstimate stats, PlanNodeStatsEstimate cap)
+{
+if (stats.isOutputRowCountUnknown() || cap.isOutputRowCountUnknown()) {
+return PlanNodeStatsEstimate.unknown();
+}
+PlanNodeStatsEstimate.Builder result = PlanNodeStatsEstimate.builder();
+double cappedRowCount = min(stats.getOutputRowCount(), cap.getOutputRowCount());
+result.setOutputRowCount(cappedRowCount);
+stats.getVariablesWithKnownStatistics().forEach(symbol -> {
+VariableStatsEstimate symbolStats = stats.getVariableStatistics(symbol);
+VariableStatsEstimate capSymbolStats = cap.getVariableStatistics(symbol);
+VariableStatsEstimate.Builder newSymbolStats = VariableStatsEstimate.builder();
+newSymbolStats.setAverageRowSize(symbolStats.getAverageRowSize());
+newSymbolStats.setDistinctValuesCount(min(symbolStats.getDistinctValuesCount(), capSymbolStats.getDistinctValuesCount()));
+newSymbolStats.setLowValue(max(symbolStats.getLowValue(), capSymbolStats.getLowValue()));
+newSymbolStats.setHighValue(min(symbolStats.getHighValue(), capSymbolStats.getHighValue()));
+double numberOfNulls = stats.getOutputRowCount() * symbolStats.getNullsFraction();
+double capNumberOfNulls = cap.getOutputRowCount() * capSymbolStats.getNullsFraction();
+double cappedNumberOfNulls = min(numberOfNulls, capNumberOfNulls);
+double cappedNullsFraction = cappedRowCount == 0 ? 1 : cappedNumberOfNulls / cappedRowCount;
+newSymbolStats.setNullsFraction(cappedNullsFraction);
+result.addVariableStatistics(symbol, newSymbolStats.build());
+});
+return result.build();
+}
+private static PlanNodeStatsEstimate createZeroStats(PlanNodeStatsEstimate stats)
+{
+PlanNodeStatsEstimate.Builder result = PlanNodeStatsEstimate.builder();
+result.setOutputRowCount(0);
+stats.getVariablesWithKnownStatistics().forEach(symbol -> result.addVariableStatistics(symbol, VariableStatsEstimate.zero()));
+return result.build();
+}
+@FunctionalInterface
+private interface RangeAdditionStrategy
+{
+StatisticRange add(StatisticRange leftRange, StatisticRange rightRange);
+}
+public static PlanNodeStatsEstimate addStatsAndSumDistinctValues(PlanNodeStatsEstimate left, PlanNodeStatsEstimate right)
+{
+return addStats(left, right, StatisticRange::addAndSumDistinctValues);
+}
+public static PlanNodeStatsEstimate addStatsAndMaxDistinctValues(PlanNodeStatsEstimate left, PlanNodeStatsEstimate right)
+{
+return addStats(left, right, StatisticRange::addAndMaxDistinctValues);
+}
+public static PlanNodeStatsEstimate addStatsAndCollapseDistinctValues(PlanNodeStatsEstimate left, PlanNodeStatsEstimate right)
+{
+return addStats(left, right, StatisticRange::addAndCollapseDistinctValues);
+}
+private static PlanNodeStatsEstimate addStats(PlanNodeStatsEstimate left, PlanNodeStatsEstimate right, RangeAdditionStrategy strategy)
+{
+if (left.isOutputRowCountUnknown() || right.isOutputRowCountUnknown()) {
+return PlanNodeStatsEstimate.unknown();
+}
+PlanNodeStatsEstimate.Builder statsBuilder = PlanNodeStatsEstimate.builder();
+double newRowCount = left.getOutputRowCount() + right.getOutputRowCount();
+concat(left.getVariablesWithKnownStatistics().stream(), right.getVariablesWithKnownStatistics().stream())
+.distinct()
+.forEach(symbol -> {
+VariableStatsEstimate symbolStats = VariableStatsEstimate.zero();
+if (newRowCount > 0) {
+symbolStats = addColumnStats(
+left.getVariableStatistics(symbol),
+left.getOutputRowCount(),
+right.getVariableStatistics(symbol),
+right.getOutputRowCount(),
+newRowCount,
+strategy);
+}
+statsBuilder.addVariableStatistics(symbol, symbolStats);
+});
+return statsBuilder.setOutputRowCount(newRowCount).build();
+}
+private static VariableStatsEstimate addColumnStats(VariableStatsEstimate leftStats, double leftRows, VariableStatsEstimate rightStats, double rightRows, double newRowCount, RangeAdditionStrategy strategy)
+{
+checkArgument(newRowCount > 0, "newRowCount must be greater than zero");
+StatisticRange leftRange = StatisticRange.from(leftStats);
+StatisticRange rightRange = StatisticRange.from(rightStats);
+StatisticRange sum = strategy.add(leftRange, rightRange);
+double nullsCountRight = rightStats.getNullsFraction() * rightRows;
+double nullsCountLeft = leftStats.getNullsFraction() * leftRows;
+double totalSizeLeft = (leftRows - nullsCountLeft) * leftStats.getAverageRowSize();
+double totalSizeRight = (rightRows - nullsCountRight) * rightStats.getAverageRowSize();
+double newNullsFraction = (nullsCountLeft + nullsCountRight) / newRowCount;
+double newNonNullsRowCount = newRowCount * (1.0 - newNullsFraction);
+double newAverageRowSize = newNonNullsRowCount == 0 ? 0 : ((totalSizeLeft + totalSizeRight) / newNonNullsRowCount);
+return VariableStatsEstimate.builder()
+.setStatisticsRange(sum)
+.setAverageRowSize(newAverageRowSize)
+.setNullsFraction(newNullsFraction)
+.build();
+}
+}

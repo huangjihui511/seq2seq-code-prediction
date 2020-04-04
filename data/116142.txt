@@ -1,0 +1,59 @@
+package net.i2p.router.tasks;
+import net.i2p.crypto.CryptoCheck;
+import net.i2p.crypto.SigType;
+import net.i2p.router.RouterContext;
+import net.i2p.util.Log;
+import net.i2p.util.SystemVersion;
+public class CryptoChecker {
+private static String JRE6 = "http:
+public static void warnUnavailableCrypto(RouterContext ctx) {
+if (SystemVersion.isAndroid())
+return;
+boolean unavail = false;
+Log log = null;
+for (SigType t : SigType.values()) {
+if (!t.isAvailable()) {
+if (!unavail) {
+unavail = true;
+if (ctx != null)
+log = ctx.logManager().getLog(CryptoChecker.class);
+}
+String s = "Crypto " + t + " is not available";
+if (log != null)
+log.logAlways(Log.WARN, s);
+System.out.println("Warning: " + s);
+}
+}
+if (unavail) {
+String s = "Java version: " + System.getProperty("java.version") +
+" OS: " + System.getProperty("os.name") + ' ' +
+System.getProperty("os.arch") + ' ' +
+System.getProperty("os.version");
+if (log != null)
+log.logAlways(Log.WARN, s);
+System.out.println("Warning: " + s);
+if (!SystemVersion.isJava7()) {
+s = "Please consider upgrading to Java 7";
+if (log != null)
+log.logAlways(Log.WARN, s);
+System.out.println(s);
+}
+if (!CryptoCheck.isUnlimited() && !SystemVersion.isJava9()) {
+s = "Please consider installing the Java Cryptography Unlimited Strength Jurisdiction Policy Files from ";
+s  += JRE6;
+if (log != null)
+log.logAlways(Log.WARN, s);
+System.out.println(s);
+}
+s = "This crypto will be required in a future release";
+if (log != null)
+log.logAlways(Log.WARN, s);
+System.out.println("Warning: " + s);
+} else if (ctx == null) {
+System.out.println("All crypto available");
+}
+}
+public static void main(String[] args) {
+warnUnavailableCrypto(null);
+}
+}

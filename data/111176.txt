@@ -1,0 +1,55 @@
+package com.github.benmanes.caffeine.cache.simulator.policy.sketch.climbing;
+import static com.google.common.base.Preconditions.checkState;
+public abstract class AbstractClimber implements HillClimber {
+protected int sampleSize;
+protected int hitsInMain;
+protected int hitsInWindow;
+protected int hitsInSample;
+protected int missesInSample;
+protected double previousHitRate;
+static final boolean debug = false;
+@Override
+public void onMiss(long key, boolean isFull) {
+if (isFull) {
+missesInSample++;
+}
+}
+@Override
+public void onHit(long key, QueueType queueType, boolean isFull) {
+if (isFull) {
+hitsInSample++;
+if (queueType == QueueType.WINDOW) {
+hitsInWindow++;
+} else {
+hitsInMain++;
+}
+}
+}
+@Override
+public Adaptation adapt(double windowSize, double probationSize,
+double protectedSize, boolean isFull) {
+if (!isFull) {
+return Adaptation.hold();
+}
+checkState(sampleSize > 0, "Sample size may not be zero");
+int sampleCount = (hitsInSample + missesInSample);
+if (sampleCount < sampleSize) {
+return Adaptation.hold();
+}
+double hitRate = (double) hitsInSample / sampleCount;
+Adaptation adaption = Adaptation.adaptBy(adjust(hitRate));
+resetSample(hitRate);
+if (debug) {
+System.out.printf("%.2f\t%.2f%n", 100 * hitRate, windowSize);
+}
+return adaption;
+}
+protected abstract double adjust(double hitRate);
+protected void resetSample(double hitRate) {
+previousHitRate = hitRate;
+missesInSample = 0;
+hitsInSample = 0;
+hitsInWindow = 0;
+hitsInMain = 0;
+}
+}

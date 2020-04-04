@@ -1,0 +1,452 @@
+package com.datumbox.framework.core.machinelearning.clustering;
+import com.datumbox.framework.common.Configuration;
+import com.datumbox.framework.common.concurrency.ForkJoinStream;
+import com.datumbox.framework.common.concurrency.StreamMethods;
+import com.datumbox.framework.common.dataobjects.AssociativeArray;
+import com.datumbox.framework.core.common.dataobjects.Dataframe;
+import com.datumbox.framework.core.common.dataobjects.Record;
+import com.datumbox.framework.common.dataobjects.TypeInference;
+import com.datumbox.framework.common.storage.interfaces.BigMap;
+import com.datumbox.framework.common.storage.interfaces.StorageEngine;
+import com.datumbox.framework.common.storage.interfaces.StorageEngine.MapType;
+import com.datumbox.framework.common.storage.interfaces.StorageEngine.StorageHint;
+import com.datumbox.framework.core.common.utilities.MapMethods;
+import com.datumbox.framework.core.common.utilities.PHPMethods;
+import com.datumbox.framework.core.machinelearning.common.abstracts.AbstractTrainer;
+import com.datumbox.framework.core.machinelearning.common.abstracts.modelers.AbstractClusterer;
+import com.datumbox.framework.core.machinelearning.common.interfaces.PredictParallelizable;
+import com.datumbox.framework.core.machinelearning.common.interfaces.TrainParallelizable;
+import com.datumbox.framework.core.mathematics.distances.Distance;
+import com.datumbox.framework.core.statistics.descriptivestatistics.Descriptives;
+import com.datumbox.framework.core.statistics.sampling.SimpleRandomSampling;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+public class Kmeans extends AbstractClusterer<Kmeans.Cluster, Kmeans.ModelParameters, Kmeans.TrainingParameters> implements PredictParallelizable, TrainParallelizable {
+public static class Cluster extends AbstractClusterer.AbstractCluster {
+private static final long serialVersionUID = 1L;
+private Record centroid;
+private final AssociativeArray xi_sum;
+protected Cluster(int clusterId) {
+super(clusterId);
+centroid = new Record(new AssociativeArray(), null);
+xi_sum = new AssociativeArray();
+}
+public Record getCentroid() {
+return centroid;
+}
+protected boolean updateClusterParameters() {
+boolean changed=false;
+AssociativeArray centoidValues = xi_sum.copy();
+if(size>0) {
+centoidValues.multiplyValues(1.0/size);
+}
+if(!centroid.getX().equals(centoidValues)) {
+changed=true;
+centroid = new Record(centoidValues, centroid.getY());
+}
+return changed;
+}
+@Override
+protected void add(Record r) {
+size++;
+xi_sum.addValues(r.getX());
+}
+@Override
+protected void remove(Record r) {
+throw new UnsupportedOperationException("Remove operation is not supported.");
+}
+@Override
+protected void clear() {
+xi_sum.clear();
+}
+protected void reset() {
+xi_sum.clear();
+size = 0;
+}
+}
+public static class ModelParameters extends AbstractClusterer.AbstractModelParameters<Kmeans.Cluster> {
+private static final long serialVersionUID = 1L;
+private int totalIterations;
+@BigMap(keyClass=Object.class, valueClass=Double.class, mapType=MapType.HASHMAP, storageHint=StorageHint.IN_MEMORY, concurrent=true)
+private Map<Object, Double> featureWeights;
+protected ModelParameters(StorageEngine storageEngine) {
+super(storageEngine);
+}
+public int getTotalIterations() {
+return totalIterations;
+}
+protected void setTotalIterations(int totalIterations) {
+this.totalIterations = totalIterations;
+}
+public Map<Object, Double> getFeatureWeights() {
+return featureWeights;
+}
+protected void setFeatureWeights(Map<Object, Double> featureWeights) {
+this.featureWeights = featureWeights;
+}
+}
+public static class TrainingParameters extends AbstractClusterer.AbstractTrainingParameters {
+private static final long serialVersionUID = 1L;
+public enum Initialization {
+FORGY,
+RANDOM_PARTITION,
+SET_FIRST_K,
+FURTHEST_FIRST,
+SUBSET_FURTHEST_FIRST,
+PLUS_PLUS;
+}
+public enum Distance {
+EUCLIDIAN,
+MANHATTAN;
+}
+private int k = 2;
+private Initialization initializationMethod = Initialization.PLUS_PLUS;
+private Distance distanceMethod = Distance.EUCLIDIAN;
+private int maxIterations = 200;
+private double subsetFurthestFirstcValue = 2;
+private double categoricalGamaMultiplier = 1.0;  
+private boolean weighted = false; 
+public int getK() {
+return k;
+}
+public void setK(int k) {
+this.k = k;
+}
+public Initialization getInitializationMethod() {
+return initializationMethod;
+}
+public void setInitializationMethod(Initialization initializationMethod) {
+this.initializationMethod = initializationMethod;
+}
+public Distance getDistanceMethod() {
+return distanceMethod;
+}
+public void setDistanceMethod(Distance distanceMethod) {
+this.distanceMethod = distanceMethod;
+}
+public int getMaxIterations() {
+return maxIterations;
+}
+public void setMaxIterations(int maxIterations) {
+this.maxIterations = maxIterations;
+}
+public double getSubsetFurthestFirstcValue() {
+return subsetFurthestFirstcValue;
+}
+public void setSubsetFurthestFirstcValue(double subsetFurthestFirstcValue) {
+this.subsetFurthestFirstcValue = subsetFurthestFirstcValue;
+}
+public double getCategoricalGamaMultiplier() {
+return categoricalGamaMultiplier;
+}
+public void setCategoricalGamaMultiplier(double categoricalGamaMultiplier) {
+this.categoricalGamaMultiplier = categoricalGamaMultiplier;
+}
+public boolean isWeighted() {
+return weighted;
+}
+public void setWeighted(boolean weighted) {
+this.weighted = weighted;
+}
+}
+protected Kmeans(TrainingParameters trainingParameters, Configuration configuration) {
+super(trainingParameters, configuration);
+streamExecutor = new ForkJoinStream(knowledgeBase.getConfiguration().getConcurrencyConfiguration());
+}
+protected Kmeans(String storageName, Configuration configuration) {
+super(storageName, configuration);
+streamExecutor = new ForkJoinStream(knowledgeBase.getConfiguration().getConcurrencyConfiguration());
+}
+private boolean parallelized = true;
+protected final ForkJoinStream streamExecutor;
+@Override
+public boolean isParallelized() {
+return parallelized;
+}
+@Override
+public void setParallelized(boolean parallelized) {
+this.parallelized = parallelized;
+}
+@Override
+protected void _predict(Dataframe newData) {
+_predictDatasetParallel(newData, knowledgeBase.getStorageEngine(), knowledgeBase.getConfiguration().getConcurrencyConfiguration());
+}
+@Override
+public Prediction _predictRecord(Record r) {
+ModelParameters modelParameters = knowledgeBase.getModelParameters();
+Map<Integer, Cluster> clusterMap = modelParameters.getClusterMap();
+AssociativeArray clusterDistances = new AssociativeArray();
+for(Map.Entry<Integer, Cluster> e : clusterMap.entrySet()) {
+Integer clusterId = e.getKey();
+Cluster c= e.getValue();
+double distance = calculateDistance(r, c.getCentroid());
+clusterDistances.put(clusterId, distance);
+}
+Descriptives.normalize(clusterDistances);
+return new Prediction(getSelectedClusterFromDistances(clusterDistances), clusterDistances);
+}
+@Override
+protected void _fit(Dataframe trainingData) {
+ModelParameters modelParameters = knowledgeBase.getModelParameters();
+Set<Object> goldStandardClasses = modelParameters.getGoldStandardClasses();
+for(Record r : trainingData) {
+Object theClass=r.getY();
+if(theClass!=null) {
+goldStandardClasses.add(theClass);
+}
+}
+calculateFeatureWeights(trainingData);
+initializeClusters(trainingData);
+calculateClusters(trainingData);
+clearClusters();
+}
+private void calculateFeatureWeights(Dataframe trainingData) {
+ModelParameters modelParameters = knowledgeBase.getModelParameters();
+TrainingParameters trainingParameters = knowledgeBase.getTrainingParameters();
+Map<Object, TypeInference.DataType> columnTypes = trainingData.getXDataTypes();
+Map<Object, Double> featureWeights = modelParameters.getFeatureWeights();
+if(trainingParameters.isWeighted()==false) {
+double gammaWeight = trainingParameters.getCategoricalGamaMultiplier();
+streamExecutor.forEach(StreamMethods.stream(columnTypes.entrySet().stream(), isParallelized()), e -> {
+double weight = (e.getValue()!=TypeInference.DataType.NUMERICAL)?gammaWeight:1.0;
+featureWeights.put(e.getKey(), weight);
+});
+}
+else {
+int n = trainingData.size();
+StorageEngine storageEngine = knowledgeBase.getStorageEngine();
+Map<Object, Double> tmp_categoricalFrequencies = storageEngine.getBigMap("tmp_categoricalFrequencies", Object.class, Double.class, MapType.HASHMAP, StorageHint.IN_MEMORY, true, true);
+Map<Object, Double> tmp_varianceSumX = storageEngine.getBigMap("tmp_varianceSumX", Object.class, Double.class, MapType.HASHMAP, StorageHint.IN_MEMORY, true, true);
+Map<Object, Double> tmp_varianceSumXsquare = storageEngine.getBigMap("tmp_varianceSumXsquare", Object.class, Double.class, MapType.HASHMAP, StorageHint.IN_MEMORY, true, true);
+for(Record r : trainingData) {
+for(Map.Entry<Object, Object> e : r.getX().entrySet()) {
+Double value = TypeInference.toDouble(e.getValue());
+if (value!=null && value!=0.0) {
+Object feature = e.getKey();
+if(columnTypes.get(feature)!=TypeInference.DataType.NUMERICAL) {
+Double previousValue = tmp_categoricalFrequencies.getOrDefault(feature, 0.0);
+tmp_categoricalFrequencies.put(feature, previousValue+1.0);
+}
+else {
+Double previousValueSumX = tmp_varianceSumX.getOrDefault(feature, 0.0);
+Double previousValueSumXsquare = tmp_varianceSumXsquare.getOrDefault(feature, 0.0);
+tmp_varianceSumX.put(feature, previousValueSumX+value);
+tmp_varianceSumXsquare.put(feature, previousValueSumXsquare+value*value);
+}
+}
+}
+}
+double gammaWeight = trainingParameters.getCategoricalGamaMultiplier();
+streamExecutor.forEach(StreamMethods.stream(columnTypes.entrySet().stream(), isParallelized()), e -> {
+Object feature = e.getKey();
+TypeInference.DataType type = e.getValue();
+double weight;
+if(type!=TypeInference.DataType.NUMERICAL) {
+double percentage = tmp_categoricalFrequencies.get(feature)/n;
+weight = 1.0 -percentage*percentage;
+}
+else {
+double mean = tmp_varianceSumX.get(feature)/n;
+weight = 2.0*((tmp_varianceSumXsquare.get(feature)/n)-mean*mean);
+}
+if(weight>0) {
+weight = 1/weight;
+}
+if(type!=TypeInference.DataType.NUMERICAL) {
+weight *= gammaWeight;
+}
+featureWeights.put(feature, weight);
+});
+storageEngine.dropBigMap("tmp_categoricalFrequencies", tmp_categoricalFrequencies);
+storageEngine.dropBigMap("tmp_varianceSumX", tmp_categoricalFrequencies);
+storageEngine.dropBigMap("tmp_varianceSumXsquare", tmp_categoricalFrequencies);
+}
+}
+private double calculateDistance(Record r1, Record r2) {
+ModelParameters modelParameters = knowledgeBase.getModelParameters();
+TrainingParameters trainingParameters = knowledgeBase.getTrainingParameters();
+Map<Object, Double> featureWeights = modelParameters.getFeatureWeights();
+double distance;
+TrainingParameters.Distance distanceMethod = trainingParameters.getDistanceMethod();
+if(distanceMethod==TrainingParameters.Distance.EUCLIDIAN) {
+distance = Distance.euclideanWeighted(r1.getX(), r2.getX(), featureWeights);
+}
+else if(distanceMethod==TrainingParameters.Distance.MANHATTAN) {
+distance = Distance.manhattanWeighted(r1.getX(), r2.getX(), featureWeights);
+}
+else {
+throw new IllegalArgumentException("Unsupported Distance method.");
+}
+return distance;
+}
+private Object getSelectedClusterFromDistances(AssociativeArray clusterDistances) {
+Map.Entry<Object, Object> minEntry = MapMethods.selectMinKeyValue(clusterDistances);
+return minEntry.getKey();
+}
+private void initializeClusters(Dataframe trainingData) {
+ModelParameters modelParameters = knowledgeBase.getModelParameters();
+TrainingParameters trainingParameters = knowledgeBase.getTrainingParameters();
+int k = trainingParameters.getK();
+TrainingParameters.Initialization initializationMethod = trainingParameters.getInitializationMethod();
+Map<Integer, Cluster> clusterMap = modelParameters.getClusterMap();
+if(initializationMethod==TrainingParameters.Initialization.SET_FIRST_K ||
+initializationMethod==TrainingParameters.Initialization.FORGY) {
+int i = 0;
+for(Record r : trainingData.values()) {
+if(i>=k) {
+break;
+}
+Integer clusterId= i;
+Cluster c = new Cluster(clusterId);
+c.add(r);
+c.updateClusterParameters();
+clusterMap.put(clusterId, c);
+++i;
+}
+}
+else if(initializationMethod==TrainingParameters.Initialization.RANDOM_PARTITION) {
+int i = 0;
+for(Record r : trainingData.values()) {
+Integer clusterId = i%k;
+Cluster c = clusterMap.get(clusterId);
+if(c==null) {
+c = new Cluster(clusterId);
+}
+c.add(r);
+clusterMap.put(clusterId, c);
+++i;
+}
+for(Map.Entry<Integer, Cluster> e : clusterMap.entrySet()) {
+Integer clusterId = e.getKey();
+Cluster c = e.getValue();
+c.updateClusterParameters();
+clusterMap.put(clusterId, c);
+}
+}
+else if(initializationMethod==TrainingParameters.Initialization.FURTHEST_FIRST ||
+initializationMethod==TrainingParameters.Initialization.SUBSET_FURTHEST_FIRST) {
+int sampleSize = trainingData.size();
+if(initializationMethod==TrainingParameters.Initialization.SUBSET_FURTHEST_FIRST) {
+sampleSize = (int)Math.max(Math.ceil(trainingParameters.getSubsetFurthestFirstcValue()*k*PHPMethods.log(k, 2)), k);
+}
+Set<Integer> alreadyAddedPoints = new HashSet(); 
+for(int i = 0; i<k; ++i) {
+Integer selectedRecordId = null;
+double maxMinDistance = 0.0;
+int samplePointCounter = 0;
+for(Map.Entry<Integer, Record> e : trainingData.entries()) {
+Integer rId = e.getKey();
+Record r = e.getValue();
+if(samplePointCounter>sampleSize) {
+break; 
+}
+else if(alreadyAddedPoints.contains(rId)) {
+continue; 
+}
+double minClusterDistance = Double.MAX_VALUE;
+for(Cluster c : clusterMap.values()) {
+double distance = calculateDistance(r, c.getCentroid());
+if(distance<minClusterDistance) {
+minClusterDistance=distance;
+}
+}
+if(minClusterDistance>maxMinDistance) {
+maxMinDistance = minClusterDistance;
+selectedRecordId = rId;
+}
+++samplePointCounter;
+}
+alreadyAddedPoints.add(selectedRecordId);
+Integer clusterId = clusterMap.size();
+Cluster c = new Cluster(clusterId);
+c.add(trainingData.get(selectedRecordId));
+c.updateClusterParameters();
+clusterMap.put(clusterId, c);
+}
+}
+else if(initializationMethod==TrainingParameters.Initialization.PLUS_PLUS) {
+StorageEngine storageEngine = knowledgeBase.getStorageEngine();
+Set<Integer> alreadyAddedPoints = new HashSet(); 
+for(int i = 0; i < k; ++i) {
+Map<Object, Double> tmp_minClusterDistance = storageEngine.getBigMap("tmp_minClusterDistance", Object.class, Double.class, MapType.HASHMAP, StorageHint.IN_MEMORY, true, true);
+AssociativeArray minClusterDistanceArray = new AssociativeArray((Map)tmp_minClusterDistance);
+streamExecutor.forEach(StreamMethods.stream(trainingData.entries(), isParallelized()), e -> {
+Integer rId = e.getKey();
+Record r = e.getValue();
+if(alreadyAddedPoints.contains(rId)==false) {
+double minClusterDistance = 1.0;
+if(clusterMap.size()>0) {
+minClusterDistance = Double.MAX_VALUE;
+for(Cluster c : clusterMap.values()) {
+double distance = calculateDistance(r, c.getCentroid());
+if(distance<minClusterDistance) {
+minClusterDistance=distance;
+}
+}
+}
+minClusterDistanceArray.put(rId, minClusterDistance);
+}
+});
+Descriptives.normalize(minClusterDistanceArray);
+Integer selectedRecordId = (Integer) SimpleRandomSampling.weightedSampling(minClusterDistanceArray, 1, true).iterator().next();
+storageEngine.dropBigMap("tmp_minClusterDistance", tmp_minClusterDistance);
+alreadyAddedPoints.add(selectedRecordId);
+Integer clusterId = clusterMap.size();
+Cluster c = new Cluster(clusterId);
+c.add(trainingData.get(selectedRecordId));
+c.updateClusterParameters();
+clusterMap.put(clusterId, c);
+}
+}
+}
+private void calculateClusters(Dataframe trainingData) {
+ModelParameters modelParameters = knowledgeBase.getModelParameters();
+TrainingParameters trainingParameters = knowledgeBase.getTrainingParameters();
+Map<Integer, Cluster> clusterMap = modelParameters.getClusterMap();
+int maxIterations = trainingParameters.getMaxIterations();
+modelParameters.setTotalIterations(maxIterations);
+for(int iteration=0;iteration<maxIterations;++iteration) {
+logger.debug("Iteration {}", iteration);
+for(Map.Entry<Integer, Cluster> entry1 : clusterMap.entrySet()) {
+Integer clusterId = entry1.getKey();
+Cluster cluster = entry1.getValue();
+cluster.reset();
+clusterMap.put(clusterId, cluster);
+}
+Map<Integer, Integer> tmp_clusterAssignments = knowledgeBase.getStorageEngine().getBigMap("tmp_clusterAssignments", Integer.class, Integer.class, MapType.HASHMAP, StorageHint.IN_MEMORY, true, true);
+streamExecutor.forEach(StreamMethods.stream(trainingData.entries(), isParallelized()), e -> {
+Integer rId = e.getKey();
+Record r = e.getValue();
+AssociativeArray clusterDistances = new AssociativeArray();
+for(Map.Entry<Integer, Cluster> entry : clusterMap.entrySet()) {
+Integer cId = entry.getKey();
+Cluster c = entry.getValue();
+clusterDistances.put(cId, calculateDistance(r, c.getCentroid()));
+}
+Integer selectedClusterId = (Integer)getSelectedClusterFromDistances(clusterDistances);
+tmp_clusterAssignments.put(rId, selectedClusterId);
+});
+for(Map.Entry<Integer, Record> e : trainingData.entries()) {
+Integer rId = e.getKey();
+Record r = e.getValue();
+Integer selectedClusterId = tmp_clusterAssignments.get(rId);
+Cluster selectedCluster = clusterMap.get(selectedClusterId);
+selectedCluster.add(r);
+clusterMap.put(selectedClusterId, selectedCluster);
+}
+knowledgeBase.getStorageEngine().dropBigMap("tmp_clusterAssignments", tmp_clusterAssignments);
+boolean changed=false;
+for(Map.Entry<Integer, Cluster> e : clusterMap.entrySet()) {
+Integer cId = e.getKey();
+Cluster c = e.getValue();
+changed|=c.updateClusterParameters();
+clusterMap.put(cId, c);
+}
+if(changed==false) {
+modelParameters.setTotalIterations(iteration);
+break;
+}
+}
+}
+}

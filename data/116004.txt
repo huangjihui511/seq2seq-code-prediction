@@ -1,0 +1,4 @@
+package com.taobao.taokeeper.monitor.service;
+public interface ReportService {
+public String getReportContentOfServerConnectionByClusterIdAndServerAndStatDate( int clusterId, String server, String statDate ) throws Exception;
+}

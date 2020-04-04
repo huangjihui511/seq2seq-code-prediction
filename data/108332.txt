@@ -1,0 +1,8 @@
+package org.apache.flink.client.program;
+import org.apache.flink.util.FlinkException;
+public class ProgramMissingJobException extends FlinkException {
+private static final long serialVersionUID = -1964276369605091101L;
+public ProgramMissingJobException(String message) {
+super(message);
+}
+}

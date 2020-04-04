@@ -1,0 +1,29 @@
+package org.apache.zookeeper.server.jersey.jaxb;
+import javax.xml.bind.annotation.XmlRootElement;
+@XmlRootElement(name="session")
+public class ZSession {
+public String id;
+public String uri;
+public ZSession() {
+}
+public ZSession(String id, String uri) {
+this.id = id;
+this.uri = uri;
+}
+@Override
+public int hashCode() {
+return id.hashCode();
+}
+@Override
+public boolean equals(Object obj) {
+if(!(obj instanceof ZSession)) {
+return false;
+}
+ZSession s = (ZSession) obj;
+return id.equals(s.id);
+}
+@Override
+public String toString() {
+return "ZSession(" + id +")";
+}
+}

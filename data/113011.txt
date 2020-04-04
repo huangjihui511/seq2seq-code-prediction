@@ -1,0 +1,222 @@
+package org.apache.pdfbox.pdmodel.common;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.apache.pdfbox.cos.COSArray;
+import org.apache.pdfbox.cos.COSBase;
+import org.apache.pdfbox.cos.COSDictionary;
+import org.apache.pdfbox.cos.COSInteger;
+import org.apache.pdfbox.cos.COSName;
+import org.apache.pdfbox.cos.COSNull;
+public class PDNumberTreeNode implements COSObjectable
+{
+private static final Log LOG = LogFactory.getLog( PDNumberTreeNode.class );
+private final COSDictionary node;
+private Class<? extends COSObjectable> valueType = null;
+public PDNumberTreeNode( Class<? extends COSObjectable> valueClass )
+{
+node = new COSDictionary();
+valueType = valueClass;
+}
+public PDNumberTreeNode( COSDictionary dict, Class<? extends COSObjectable> valueClass )
+{
+node = dict;
+valueType = valueClass;
+}
+@Override
+public COSDictionary getCOSObject()
+{
+return node;
+}
+public List<PDNumberTreeNode> getKids()
+{
+List<PDNumberTreeNode> retval = null;
+COSArray kids = (COSArray)node.getDictionaryObject( COSName.KIDS );
+if( kids != null )
+{
+List<PDNumberTreeNode> pdObjects = new ArrayList<>();
+for( int i=0; i<kids.size(); i++ )
+{
+pdObjects.add( createChildNode( (COSDictionary)kids.getObject(i) ) );
+}
+retval = new COSArrayList<>(pdObjects,kids);
+}
+return retval;
+}
+public void setKids( List<? extends PDNumberTreeNode> kids )
+{
+if (kids != null && !kids.isEmpty())
+{
+PDNumberTreeNode firstKid = kids.get(0);
+PDNumberTreeNode lastKid = kids.get(kids.size() - 1);
+Integer lowerLimit = firstKid.getLowerLimit();
+this.setLowerLimit(lowerLimit);
+Integer upperLimit = lastKid.getUpperLimit();
+this.setUpperLimit(upperLimit);
+}
+else if ( node.getDictionaryObject( COSName.NUMS ) == null )
+{
+node.setItem( COSName.LIMITS, null);
+}
+node.setItem( COSName.KIDS, COSArrayList.converterToCOSArray( kids ) );
+}
+public Object getValue(Integer index) throws IOException
+{
+Map<Integer, COSObjectable> numbers = getNumbers();
+if (numbers != null)
+{
+return numbers.get(index);
+}
+Object retval = null;
+List<PDNumberTreeNode> kids = getKids();
+if (kids != null)
+{
+for (int i = 0; i < kids.size() && retval == null; i++)
+{
+PDNumberTreeNode childNode = kids.get(i);
+if (childNode.getLowerLimit().compareTo(index) <= 0 &&
+childNode.getUpperLimit().compareTo(index) >= 0)
+{
+retval = childNode.getValue(index);
+}
+}
+}
+else
+{
+LOG.warn("NumberTreeNode does not have \"nums\" nor \"kids\" objects.");
+}
+return retval;
+}
+public Map<Integer,COSObjectable> getNumbers()  throws IOException
+{
+Map<Integer, COSObjectable> indices = null;
+COSBase numBase = node.getDictionaryObject(COSName.NUMS);
+if (numBase instanceof COSArray)
+{
+COSArray numbersArray = (COSArray) numBase;
+indices = new HashMap<>();
+for (int i = 0; i < numbersArray.size(); i += 2)
+{
+COSBase base = numbersArray.getObject(i);
+if (!(base instanceof COSInteger))
+{
+LOG.error("page labels ignored, index " + i + " should be a number, but is " + base);
+return null;
+}
+COSInteger key = (COSInteger) base;
+COSBase cosValue = numbersArray.getObject(i + 1);
+indices.put(key.intValue(), cosValue == null ? null : convertCOSToPD(cosValue));
+}
+indices = Collections.unmodifiableMap(indices);
+}
+return indices;
+}
+protected COSObjectable convertCOSToPD(COSBase base) throws IOException
+{
+try
+{
+return valueType.getDeclaredConstructor(base.getClass()).newInstance(base);
+}
+catch( Exception t )
+{
+throw new IOException("Error while trying to create value in number tree:" + t.getMessage(), t);
+}
+}
+protected PDNumberTreeNode createChildNode( COSDictionary dic )
+{
+return new PDNumberTreeNode(dic,valueType);
+}
+public void setNumbers( Map<Integer, ? extends COSObjectable> numbers )
+{
+if( numbers == null )
+{
+node.setItem( COSName.NUMS, (COSObjectable)null );
+node.setItem( COSName.LIMITS, (COSObjectable)null);
+}
+else
+{
+List<Integer> keys = new ArrayList<>( numbers.keySet() );
+Collections.sort( keys );
+COSArray array = new COSArray();
+for (Integer key : keys)
+{
+array.add( COSInteger.get( key ) );
+COSObjectable obj = numbers.get( key );
+array.add(obj == null ? COSNull.NULL : obj);
+}
+Integer lower = null;
+Integer upper = null;
+if (!keys.isEmpty())
+{
+lower = keys.get( 0 );
+upper = keys.get( keys.size()-1 );
+}
+setUpperLimit( upper );
+setLowerLimit( lower );
+node.setItem( COSName.NUMS, array );
+}
+}
+public Integer getUpperLimit()
+{
+Integer retval = null;
+COSArray arr = (COSArray)node.getDictionaryObject( COSName.LIMITS );
+if( arr != null && arr.get(0) != null )
+{
+retval = arr.getInt( 1 );
+}
+return retval;
+}
+private void setUpperLimit( Integer upper )
+{
+COSArray arr = (COSArray)node.getDictionaryObject( COSName.LIMITS );
+if( arr == null )
+{
+arr = new COSArray();
+arr.add( null );
+arr.add( null );
+node.setItem( COSName.LIMITS, arr );
+}
+if ( upper != null)
+{
+arr.setInt( 1, upper);
+}
+else
+{
+arr.set( 1, null );
+}
+}
+public Integer getLowerLimit()
+{
+Integer retval = null;
+COSArray arr = (COSArray)node.getDictionaryObject( COSName.LIMITS );
+if( arr != null && arr.get(0) != null )
+{
+retval = arr.getInt( 0 );
+}
+return retval;
+}
+private void setLowerLimit( Integer lower )
+{
+COSArray arr = (COSArray)node.getDictionaryObject( COSName.LIMITS );
+if( arr == null )
+{
+arr = new COSArray();
+arr.add( null );
+arr.add( null );
+node.setItem( COSName.LIMITS, arr );
+}
+if ( lower != null )
+{
+arr.setInt( 0, lower);
+}
+else
+{
+arr.set( 0, null );
+}
+}
+}

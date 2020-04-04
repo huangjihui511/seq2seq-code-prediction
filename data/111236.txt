@@ -1,0 +1,42 @@
+package com.github.benmanes.caffeine.cache;
+import static java.util.Objects.requireNonNull;
+import java.io.Serializable;
+import org.checkerframework.checker.index.qual.NonNegative;
+import org.checkerframework.checker.nullness.qual.NonNull;
+@FunctionalInterface
+public interface Weigher<K, V> {
+@NonNegative
+int weigh(@NonNull K key, @NonNull V value);
+@NonNull
+static <K, V> Weigher<K, V> singletonWeigher() {
+@SuppressWarnings("unchecked")
+Weigher<K, V> self = (Weigher<K, V>) SingletonWeigher.INSTANCE;
+return self;
+}
+@NonNull
+static <K, V> Weigher<K, V> boundedWeigher(@NonNull Weigher<K, V> delegate) {
+return new BoundedWeigher<>(delegate);
+}
+}
+enum SingletonWeigher implements Weigher<Object, Object> {
+INSTANCE;
+@Override public int weigh(Object key, Object value) {
+return 1;
+}
+}
+final class BoundedWeigher<K, V> implements Weigher<K, V>, Serializable {
+static final long serialVersionUID = 1;
+final Weigher<? super K, ? super V> delegate;
+BoundedWeigher(Weigher<? super K, ? super V> delegate) {
+this.delegate = requireNonNull(delegate);
+}
+@Override
+public int weigh(K key, V value) {
+int weight = delegate.weigh(key, value);
+Caffeine.requireArgument(weight >= 0);
+return weight;
+}
+Object writeReplace() {
+return delegate;
+}
+}

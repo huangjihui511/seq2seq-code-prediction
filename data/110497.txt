@@ -1,0 +1,13 @@
+package com.baomidou.mybatisplus.core.conditions.update;
+import java.io.Serializable;
+public interface Update<Children, R> extends Serializable {
+default Children set(R column, Object val) {
+return set(true, column, val);
+}
+Children set(boolean condition, R column, Object val);
+default Children setSql(String sql) {
+return setSql(true, sql);
+}
+Children setSql(boolean condition, String sql);
+String getSqlSet();
+}

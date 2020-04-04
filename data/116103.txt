@@ -1,0 +1,290 @@
+package net.i2p.util;
+import java.io.FilterInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.zip.CRC32;
+import java.util.zip.Inflater;
+import java.util.zip.InflaterInputStream;
+import net.i2p.data.DataHelper;
+public class ResettableGZIPInputStream extends InflaterInputStream {
+private static final int FOOTER_SIZE = 8; 
+private final ExtraByteInputStream _extraByteInputStream;
+private final LookaheadInputStream _lookaheadStream;
+private final CRC32 _crc32;
+private final byte _buf1[] = new byte[1];
+private boolean _complete;
+public ResettableGZIPInputStream() {
+super(new ExtraByteInputStream(new LookaheadInputStream(FOOTER_SIZE)),
+new Inflater(true));
+_extraByteInputStream = (ExtraByteInputStream)in;
+_lookaheadStream = (LookaheadInputStream)_extraByteInputStream.getInputStream();
+_crc32 = new CRC32();
+}
+public ResettableGZIPInputStream(InputStream compressedStream) throws IOException {
+this();
+initialize(compressedStream);
+}
+public void initialize(InputStream compressedStream) throws IOException {
+len = 0;
+inf.reset();
+_complete = false;
+_crc32.reset();
+_buf1[0] = 0x0;
+_extraByteInputStream.reset();
+_lookaheadStream.initialize(compressedStream);
+verifyHeader();
+}
+@Override
+public int read() throws IOException {
+int read = read(_buf1, 0, 1);
+if (read == -1)
+return -1;
+return _buf1[0] & 0xff;
+}
+@Override
+public int read(byte buf[]) throws IOException {
+return read(buf, 0, buf.length);
+}
+@Override
+public int read(byte buf[], int off, int len) throws IOException {
+if (_complete) {
+return -1;
+}
+int read = super.read(buf, off, len);
+if (read == -1) {
+verifyFooter();
+return -1;
+} else {
+_crc32.update(buf, off, read);
+if (inf.finished()) {
+verifyFooter();
+inf.reset(); 
+_complete = true;
+}
+return read;
+}
+}
+public long getTotalRead() {
+try {
+return inf.getBytesRead();
+} catch (RuntimeException e) {
+return 0;
+}
+}
+public long getTotalExpanded() {
+try {
+return inf.getBytesWritten();
+} catch (RuntimeException e) {
+return 0;
+}
+}
+public long getRemaining() {
+try {
+return inf.getRemaining();
+} catch (RuntimeException e) {
+return 0;
+}
+}
+public boolean getFinished() {
+try {
+return inf.finished();
+} catch (RuntimeException e) {
+return true;
+}
+}
+public void destroy() throws IOException {
+close();
+super.close();
+}
+@Override
+public void close() throws IOException {
+len = 0;
+inf.reset();
+_complete = false;
+_crc32.reset();
+_buf1[0] = 0x0;
+_extraByteInputStream.close();
+}
+@Override
+public String toString() {
+return "Read: " + getTotalRead() + " expanded: " + getTotalExpanded() + " remaining: " + getRemaining() + " finished: " + getFinished();
+}
+private void verifyFooter() throws IOException {
+byte footer[] = _lookaheadStream.getFooter();
+long actualSize = inf.getTotalOut();
+long expectedSize = DataHelper.fromLongLE(footer, 4, 4);
+if (expectedSize != actualSize)
+throw new IOException("gunzip expected " + expectedSize + " bytes, got " + actualSize);
+long actualCRC = _crc32.getValue();
+long expectedCRC = DataHelper.fromLongLE(footer, 0, 4);
+if (expectedCRC != actualCRC)
+throw new IOException("gunzip CRC fail expected 0x" + Long.toHexString(expectedCRC) +
+" bytes, got 0x" + Long.toHexString(actualCRC));
+}
+private void verifyHeader() throws IOException {
+int c = in.read();
+if (c != 0x1F) throw new IOException("First magic byte was wrong [" + c + "]");
+c = in.read();
+if (c != 0x8B) throw new IOException("Second magic byte was wrong [" + c + "]");
+c = in.read();
+if (c != 0x08) throw new IOException("Compression format is invalid [" + c + "]");
+int flags = in.read();
+c = in.read();
+if (c == -1) throw new IOException("EOF on MTIME0 [" + c + "]");
+c = in.read();
+if (c == -1) throw new IOException("EOF on MTIME1 [" + c + "]");
+c = in.read();
+if (c == -1) throw new IOException("EOF on MTIME2 [" + c + "]");
+c = in.read();
+if (c == -1) throw new IOException("EOF on MTIME3 [" + c + "]");
+c = in.read();
+if ( (c != 0x00) && (c != 0x02) && (c != 0x04) )
+throw new IOException("Invalid extended flags [" + c + "]");
+c = in.read(); 
+if (0 != (flags & (1<<5))) {
+int _len = 0;
+c = in.read();
+if (c == -1) throw new IOException("EOF reading the extra header");
+_len = c;
+c = in.read();
+if (c == -1) throw new IOException("EOF reading the extra header");
+_len += (c << 8);
+for (int i = 0; i < _len; i++) {
+c = in.read();
+if (c == -1) throw new IOException("EOF reading the extra header's body");
+}
+}
+if (0 != (flags & (1 << 4))) {
+c = in.read();
+while (c != 0) {
+if (c == -1) throw new IOException("EOF reading the name");
+c = in.read();
+}
+}
+if (0 != (flags & (1 << 3))) {
+c = in.read();
+while (c != 0) {
+if (c == -1) throw new IOException("EOF reading the comment");
+c = in.read();
+}
+}
+if (0 != (flags & (1 << 6))) {
+c = in.read();
+if (c == -1) throw new IOException("EOF reading the CRC16");
+c = in.read();
+if (c == -1) throw new IOException("EOF reading the CRC16");
+}
+}
+private static class ExtraByteInputStream extends FilterInputStream {
+private static final byte DUMMY = 0;
+private boolean _extraSent;
+public ExtraByteInputStream(InputStream in) {
+super(in);
+}
+@Override
+public int read() throws IOException {
+if (_extraSent)
+return -1;
+int rv = in.read();
+if (rv >= 0)
+return rv;
+_extraSent = true;
+return DUMMY;
+}
+@Override
+public int read(byte buf[], int off, int len) throws IOException {
+if (len == 0)
+return 0;
+if (_extraSent)
+return -1;
+int rv = in.read(buf, off, len);
+if (rv >= 0)
+return rv;
+_extraSent = true;
+buf[off] = DUMMY;
+return 1;
+}
+@Override
+public void close() throws IOException {
+_extraSent = false;
+in.close();
+}
+@Override
+public void reset() {
+_extraSent = false;
+}
+public InputStream getInputStream() {
+return in;
+}
+}
+public static void main(String args[]) {
+java.util.Random r = new java.util.Random();
+for (int i = 129; i < 64*1024; i+= 17) {
+byte[] b = new byte[i];
+r.nextBytes(b);
+if (!test(b)) return;
+}
+try {
+ResettableGZIPInputStream i = new ResettableGZIPInputStream();
+for (int k = 1; k < 1599; k++) {
+byte orig[] = new byte[k];
+r.nextBytes(orig);
+java.io.ByteArrayOutputStream baos = new java.io.ByteArrayOutputStream(k+100);
+java.util.zip.GZIPOutputStream o = new java.util.zip.GZIPOutputStream(baos);
+o.write(orig);
+o.finish();
+o.flush();
+o.close();
+byte compressed[] = baos.toByteArray();
+i.initialize(new java.io.ByteArrayInputStream(compressed));
+byte readBuf[] = new byte[k];
+int read = DataHelper.read(i, readBuf);
+if (read != orig.length)
+throw new RuntimeException("read=" + read + " expected " + orig.length);
+for (int j = 0; j < read; j++) {
+if (readBuf[j] != orig[j])
+throw new RuntimeException("j=" + j + " readBuf=" + readBuf[j] + " orig=" + orig[j]);
+}
+boolean ok = (-1 == i.read());
+if (!ok) throw new RuntimeException("not EOF after the data?");
+if ((k % 2) != 0)
+i.close();
+}
+System.out.println("Match ok");
+} catch (Exception e) {
+e.printStackTrace();
+}
+}
+private static boolean test(byte[] b) {
+int size = b.length;
+try {
+java.io.ByteArrayOutputStream baos = new java.io.ByteArrayOutputStream(size);
+java.util.zip.GZIPOutputStream o = new java.util.zip.GZIPOutputStream(baos);
+o.write(b);
+o.finish();
+o.flush();
+byte compressed[] = baos.toByteArray();
+ResettableGZIPInputStream in = new ResettableGZIPInputStream(new java.io.ByteArrayInputStream(compressed));
+java.io.ByteArrayOutputStream baos2 = new java.io.ByteArrayOutputStream(size);
+byte rbuf[] = new byte[512];
+while (true) {
+int read = in.read(rbuf);
+if (read == -1)
+break;
+baos2.write(rbuf, 0, read);
+}
+byte rv[] = baos2.toByteArray();
+if (rv.length != b.length)
+throw new RuntimeException("read length: " + rv.length + " expected: " + b.length);
+if (!net.i2p.data.DataHelper.eq(rv, 0, b, 0, b.length)) {
+throw new RuntimeException("foo, read=" + rv.length);
+} else {
+return true;
+}
+} catch (Exception e) {
+System.out.println("Error dealing with size=" + size + ": " + e.getMessage());
+e.printStackTrace();
+return false;
+}
+}
+}

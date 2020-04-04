@@ -1,0 +1,9 @@
+package com.twelvemonkeys.io;
+import java.io.File;
+public class FileMonitor {
+public interface FileChangeListener {
+public void fileCreated(File pFile) throws Exception; 
+public void fileUpdated(File pFile) throws Exception;
+public void fileDeleted(File pFile) throws Exception;
+}
+}

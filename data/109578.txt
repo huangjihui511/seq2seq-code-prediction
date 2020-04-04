@@ -1,0 +1,205 @@
+package org.wltea.analyzer.core;
+import java.io.IOException;
+import java.io.Reader;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.Map;
+import java.util.Set;
+import org.wltea.analyzer.cfg.Configuration;
+import org.wltea.analyzer.dic.Dictionary;
+class AnalyzeContext {
+private static final int BUFF_SIZE = 4096;
+private static final int BUFF_EXHAUST_CRITICAL = 100;
+private char[] segmentBuff;
+private int[] charTypes;
+private int buffOffset;
+private int cursor;
+private int available;
+private Set<String> buffLocker;
+private QuickSortSet orgLexemes;
+private Map<Integer , LexemePath> pathMap;
+private LinkedList<Lexeme> results;
+private Configuration cfg;
+public AnalyzeContext(Configuration configuration){
+this.cfg = configuration;
+this.segmentBuff = new char[BUFF_SIZE];
+this.charTypes = new int[BUFF_SIZE];
+this.buffLocker = new HashSet<String>();
+this.orgLexemes = new QuickSortSet();
+this.pathMap = new HashMap<Integer , LexemePath>();
+this.results = new LinkedList<Lexeme>();
+}
+int getCursor(){
+return this.cursor;
+}
+char[] getSegmentBuff(){
+return this.segmentBuff;
+}
+char getCurrentChar(){
+return this.segmentBuff[this.cursor];
+}
+int getCurrentCharType(){
+return this.charTypes[this.cursor];
+}
+int getBufferOffset(){
+return this.buffOffset;
+}
+int fillBuffer(Reader reader) throws IOException{
+int readCount = 0;
+if(this.buffOffset == 0){
+readCount = reader.read(segmentBuff);
+}else{
+int offset = this.available - this.cursor;
+if(offset > 0){
+System.arraycopy(this.segmentBuff , this.cursor , this.segmentBuff , 0 , offset);
+readCount = offset;
+}
+readCount += reader.read(this.segmentBuff , offset , BUFF_SIZE - offset);
+}
+this.available = readCount;
+this.cursor = 0;
+return readCount;
+}
+void initCursor(){
+this.cursor = 0;
+this.segmentBuff[this.cursor] = CharacterUtil.regularize(this.segmentBuff[this.cursor],cfg.isEnableLowercase());
+this.charTypes[this.cursor] = CharacterUtil.identifyCharType(this.segmentBuff[this.cursor]);
+}
+boolean moveCursor(){
+if(this.cursor < this.available - 1){
+this.cursor++;
+this.segmentBuff[this.cursor] = CharacterUtil.regularize(this.segmentBuff[this.cursor],cfg.isEnableLowercase());
+this.charTypes[this.cursor] = CharacterUtil.identifyCharType(this.segmentBuff[this.cursor]);
+return true;
+}else{
+return false;
+}
+}
+void lockBuffer(String segmenterName){
+this.buffLocker.add(segmenterName);
+}
+void unlockBuffer(String segmenterName){
+this.buffLocker.remove(segmenterName);
+}
+boolean isBufferLocked(){
+return this.buffLocker.size() > 0;
+}
+boolean isBufferConsumed(){
+return this.cursor == this.available - 1;
+}
+boolean needRefillBuffer(){
+return this.available == BUFF_SIZE
+&& this.cursor < this.available - 1
+&& this.cursor  > this.available - BUFF_EXHAUST_CRITICAL
+&& !this.isBufferLocked();
+}
+void markBufferOffset(){
+this.buffOffset += this.cursor;
+}
+void addLexeme(Lexeme lexeme){
+this.orgLexemes.addLexeme(lexeme);
+}
+void addLexemePath(LexemePath path){
+if(path != null){
+this.pathMap.put(path.getPathBegin(), path);
+}
+}
+QuickSortSet getOrgLexemes(){
+return this.orgLexemes;
+}
+void outputToResult(){
+int index = 0;
+for( ; index <= this.cursor ;){
+if(CharacterUtil.CHAR_USELESS == this.charTypes[index]){
+index++;
+continue;
+}
+LexemePath path = this.pathMap.get(index);
+if(path != null){
+Lexeme l = path.pollFirst();
+while(l != null){
+this.results.add(l);
+for (; innerIndex < index + l.getLength(); innerIndex++) {
+Lexeme innerL = path.peekFirst();
+if (innerL != null && innerIndex == innerL.getBegin()) {
+this.outputSingleCJK(innerIndex - 1);
+}
+}*/
+index = l.getBegin() + l.getLength();
+l = path.pollFirst();
+if(l != null){
+for(;index < l.getBegin();index++){
+this.outputSingleCJK(index);
+}
+}
+}
+this.outputSingleCJK(index);
+index++;
+}
+}
+this.pathMap.clear();
+}
+private void outputSingleCJK(int index){
+if(CharacterUtil.CHAR_CHINESE == this.charTypes[index]){
+Lexeme singleCharLexeme = new Lexeme(this.buffOffset , index , 1 , Lexeme.TYPE_CNCHAR);
+this.results.add(singleCharLexeme);
+}else if(CharacterUtil.CHAR_OTHER_CJK == this.charTypes[index]){
+Lexeme singleCharLexeme = new Lexeme(this.buffOffset , index , 1 , Lexeme.TYPE_OTHER_CJK);
+this.results.add(singleCharLexeme);
+}
+}
+Lexeme getNextLexeme(){
+Lexeme result = this.results.pollFirst();
+while(result != null){
+this.compound(result);
+if(Dictionary.getSingleton().isStopWord(this.segmentBuff ,  result.getBegin() , result.getLength())){
+result = this.results.pollFirst();
+}else{
+result.setLexemeText(String.valueOf(segmentBuff , result.getBegin() , result.getLength()));
+break;
+}
+}
+return result;
+}
+void reset(){
+this.buffLocker.clear();
+this.orgLexemes = new QuickSortSet();
+this.available =0;
+this.buffOffset = 0;
+this.charTypes = new int[BUFF_SIZE];
+this.cursor = 0;
+this.results.clear();
+this.segmentBuff = new char[BUFF_SIZE];
+this.pathMap.clear();
+}
+private void compound(Lexeme result){
+if(!this.cfg.isUseSmart()){
+return ;
+}
+if(!this.results.isEmpty()){
+if(Lexeme.TYPE_ARABIC == result.getLexemeType()){
+Lexeme nextLexeme = this.results.peekFirst();
+boolean appendOk = false;
+if(Lexeme.TYPE_CNUM == nextLexeme.getLexemeType()){
+appendOk = result.append(nextLexeme, Lexeme.TYPE_CNUM);
+}else if(Lexeme.TYPE_COUNT == nextLexeme.getLexemeType()){
+appendOk = result.append(nextLexeme, Lexeme.TYPE_CQUAN);
+}
+if(appendOk){
+this.results.pollFirst();
+}
+}
+if(Lexeme.TYPE_CNUM == result.getLexemeType() && !this.results.isEmpty()){
+Lexeme nextLexeme = this.results.peekFirst();
+boolean appendOk = false;
+if(Lexeme.TYPE_COUNT == nextLexeme.getLexemeType()){
+appendOk = result.append(nextLexeme, Lexeme.TYPE_CQUAN);
+}
+if(appendOk){
+this.results.pollFirst();
+}
+}
+}
+}
+}

@@ -1,0 +1,75 @@
+package mobi.hsz.idea.gitignore.lang;
+import com.intellij.lang.ASTNode;
+import com.intellij.lang.Language;
+import com.intellij.lang.ParserDefinition;
+import com.intellij.lang.PsiParser;
+import com.intellij.lexer.Lexer;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.FileViewProvider;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.TokenType;
+import com.intellij.psi.tree.IFileElementType;
+import com.intellij.psi.tree.TokenSet;
+import mobi.hsz.idea.gitignore.file.type.IgnoreFileType;
+import mobi.hsz.idea.gitignore.lexer.IgnoreLexerAdapter;
+import mobi.hsz.idea.gitignore.parser.IgnoreParser;
+import mobi.hsz.idea.gitignore.psi.IgnoreFile;
+import mobi.hsz.idea.gitignore.psi.IgnoreTypes;
+import org.jetbrains.annotations.NotNull;
+public class IgnoreParserDefinition implements ParserDefinition {
+public static final TokenSet WHITE_SPACES = TokenSet.create(TokenType.WHITE_SPACE);
+public static final TokenSet COMMENTS = TokenSet.create(IgnoreTypes.COMMENT);
+public static final TokenSet SECTIONS = TokenSet.create(IgnoreTypes.SECTION);
+public static final TokenSet HEADERS = TokenSet.create(IgnoreTypes.HEADER);
+public static final TokenSet NEGATIONS = TokenSet.create(IgnoreTypes.NEGATION);
+public static final TokenSet BRACKETS = TokenSet.create(IgnoreTypes.BRACKET_LEFT, IgnoreTypes.BRACKET_RIGHT);
+public static final TokenSet SLASHES = TokenSet.create(IgnoreTypes.SLASH);
+public static final TokenSet SYNTAXES = TokenSet.create(IgnoreTypes.SYNTAX_KEY);
+public static final TokenSet VALUES = TokenSet.create(IgnoreTypes.VALUE);
+public static final IFileElementType FILE = new IFileElementType(Language.findInstance(IgnoreLanguage.class));
+@NotNull
+@Override
+public Lexer createLexer(Project project) {
+return new IgnoreLexerAdapter(project);
+}
+@Override
+public PsiParser createParser(Project project) {
+return new IgnoreParser();
+}
+@Override
+public IFileElementType getFileNodeType() {
+return FILE;
+}
+@NotNull
+@Override
+public TokenSet getWhitespaceTokens() {
+return WHITE_SPACES;
+}
+@NotNull
+@Override
+public TokenSet getCommentTokens() {
+return COMMENTS;
+}
+@NotNull
+@Override
+public TokenSet getStringLiteralElements() {
+return TokenSet.EMPTY;
+}
+@NotNull
+@Override
+public PsiElement createElement(ASTNode node) {
+return IgnoreTypes.Factory.createElement(node);
+}
+@Override
+public PsiFile createFile(FileViewProvider viewProvider) {
+if (viewProvider.getBaseLanguage() instanceof IgnoreLanguage) {
+return ((IgnoreLanguage) viewProvider.getBaseLanguage()).createFile(viewProvider);
+}
+return new IgnoreFile(viewProvider, IgnoreFileType.INSTANCE);
+}
+@Override
+public SpaceRequirements spaceExistenceTypeBetweenTokens(ASTNode left, ASTNode right) {
+return SpaceRequirements.MAY;
+}
+}

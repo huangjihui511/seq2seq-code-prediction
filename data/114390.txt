@@ -1,0 +1,33 @@
+package com.oreilly.springdata.gemfire.order;
+import java.math.BigDecimal;
+import org.springframework.util.Assert;
+import com.oreilly.springdata.gemfire.core.Product;
+public class LineItem {
+private BigDecimal price;
+private int amount;
+private Long productId;
+public LineItem(Product product) {
+this(product, 1);
+}
+public LineItem(Product product, int amount) {
+Assert.notNull(product, "The given Product must not be null!");
+Assert.isTrue(amount > 0, "The amount of Products to be bought must be greater than 0!");
+this.productId = product.getId();
+this.amount = amount;
+this.price = product.getPrice();
+}
+protected LineItem() {
+}
+public Long getProductId() {
+return productId;
+}
+public int getAmount() {
+return amount;
+}
+public BigDecimal getUnitPrice() {
+return price;
+}
+public BigDecimal getTotal() {
+return price.multiply(BigDecimal.valueOf(amount));
+}
+}

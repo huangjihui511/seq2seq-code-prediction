@@ -1,0 +1,11 @@
+package org.apache.zookeeper.graph;
+import java.util.Iterator;
+public interface LogSource extends Iterable<LogEntry> {
+public LogIterator iterator(long starttime, long endtime, FilterOp filter) throws IllegalArgumentException, FilterException;
+public LogIterator iterator(long starttime, long endtime) throws IllegalArgumentException;
+public LogIterator iterator() throws IllegalArgumentException;
+public boolean overlapsRange(long starttime, long endtime);
+public long size();
+public long getStartTime();
+public long getEndTime();
+}

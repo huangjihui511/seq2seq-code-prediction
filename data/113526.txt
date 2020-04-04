@@ -1,0 +1,16 @@
+package com.pokegoapi.api.device;
+public interface DeviceInfos {
+String getAndroidBoardName();
+String getAndroidBootloader();
+String getDeviceBrand();
+String getDeviceId();
+String getDeviceModel();
+String getDeviceModelIdentifier();
+String getDeviceModelBoot();
+String getHardwareManufacturer();
+String getHardwareModel();
+String getFirmwareBrand();
+String getFirmwareTags();
+String getFirmwareType();
+String getFirmwareFingerprint();
+}

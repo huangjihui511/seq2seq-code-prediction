@@ -1,0 +1,56 @@
+package org.ocpsoft.prettytime.i18n;
+import java.util.ListResourceBundle;
+public class Resources_zh_HK extends ListResourceBundle
+{
+private static final Object[][] OBJECTS = new Object[][] {
+{ "CenturyPattern", "%n %u" },
+{ "CenturyFuturePrefix", "" },
+{ "CenturyPastPrefix", "" },
+{ "DayPattern", "%n %u" },
+{ "DayFuturePrefix", "" },
+{ "DayPastPrefix", "" },
+{ "DecadePattern", "%n%u" },
+{ "DecadeFuturePrefix", "" },
+{ "DecadePastPrefix", "" },
+{ "HourPattern", "%n %u" },
+{ "HourFuturePrefix", "" },
+{ "HourPastPrefix", "" },
+{ "JustNowPattern", "%u" },
+{ "JustNowFuturePrefix", "" },
+{ "JustNowPastSuffix", "" },
+{ "JustNowSingularName", "" },
+{ "JustNowPluralName", "" },
+{ "MillenniumPattern", "%n %u" },
+{ "MillenniumFuturePrefix", "" },
+{ "MillenniumPastPrefix", "" },
+{ "MillisecondPattern", "%n %u" },
+{ "MillisecondFuturePrefix", "" },
+{ "MillisecondPastPrefix", "" },
+{ "MinutePattern", "%n %u" },
+{ "MinuteFuturePrefix", "" },
+{ "MinutePastPrefix", "" },
+{ "MonthPattern", "%n %u" },
+{ "MonthFuturePrefix", "" },
+{ "MonthPastPrefix", "" },
+{ "SecondPattern", "%n %u" },
+{ "SecondFuturePrefix", "" },
+{ "SecondPastPrefix", "" },
+{ "WeekPattern", "%n %u" },
+{ "WeekFuturePrefix", "" },
+{ "WeekPastPrefix", "" },
+{ "YearPattern", "%n %u" },
+{ "YearFuturePrefix", "" },
+{ "YearPastPrefix", "" },
+{ "AbstractTimeUnitPattern", "" },
+{ "AbstractTimeUnitFuturePrefix", "" },
+{ "AbstractTimeUnitFutureSuffix", "" },
+{ "AbstractTimeUnitPastPrefix", "" },
+{ "AbstractTimeUnitPastSuffix", "" },
+{ "AbstractTimeUnitSingularName", "" },
+{ "AbstractTimeUnitPluralName", "" } };
+@Override
+protected Object[][] getContents()
+{
+return OBJECTS;
+}
+}

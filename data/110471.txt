@@ -1,0 +1,5 @@
+package com.baomidou.mybatisplus.dts.listener;
+import com.baomidou.mybatisplus.dts.DtsMeta;
+public interface IDtsListener {
+void process(DtsMeta dtsMeta);
+}

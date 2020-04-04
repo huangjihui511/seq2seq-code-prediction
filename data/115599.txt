@@ -1,0 +1,23 @@
+package com.netflix.astyanax.model;
+import java.nio.ByteBuffer;
+import java.util.Collection;
+import java.util.Date;
+import java.util.Map;
+import java.util.UUID;
+public interface ColumnMap<C> extends Iterable<Column<C>> {
+Map<C, Column<C>> asMap();
+Column<C> get(C columnName);
+String getString(C columnName, String defaultValue);
+Integer getInteger(C columnName, Integer defaultValue);
+Double getDouble(C columnName, Double defaultValue);
+Long getLong(C columnName, Long defaultValue);
+byte[] getByteArray(C columnName, byte[] defaultValue);
+Boolean getBoolean(C columnName, Boolean defaultValue);
+ByteBuffer getByteBuffer(C columnName, ByteBuffer defaultValue);
+Date getDate(C columnName, Date defaultValue);
+UUID getUUID(C columnName, UUID defaultValue);
+boolean isEmpty();
+int size();
+OrderedColumnMap<C> add(Column<C> column);
+OrderedColumnMap<C> addAll(Collection<Column<C>> columns);
+}

@@ -1,0 +1,61 @@
+package net.i2p.router.networkdb.kademlia;
+import net.i2p.data.DatabaseEntry;
+import net.i2p.data.LeaseSet;
+import net.i2p.data.i2np.DatabaseSearchReplyMessage;
+import net.i2p.data.i2np.DatabaseStoreMessage;
+import net.i2p.data.i2np.I2NPMessage;
+import net.i2p.data.router.RouterInfo;
+import net.i2p.router.JobImpl;
+import net.i2p.router.ReplyJob;
+import net.i2p.router.RouterContext;
+import net.i2p.util.Log;
+class FloodOnlyLookupMatchJob extends JobImpl implements ReplyJob {
+private final Log _log;
+private final FloodSearchJob _search;
+public FloodOnlyLookupMatchJob(RouterContext ctx, FloodSearchJob job) {
+super(ctx);
+_log = ctx.logManager().getLog(getClass());
+_search = job;
+}
+public void runJob() {
+if (getContext().netDb().lookupLocally(_search.getKey()) != null) {
+if (_log.shouldLog(Log.INFO))
+_log.info(_search.getJobId() + ": search match and found locally");
+_search.success();
+} else {
+_search.failed();
+}
+}
+public String getName() { return "NetDb flood search match"; }
+public void setMessage(I2NPMessage message) {
+if (message.getType() == DatabaseSearchReplyMessage.MESSAGE_TYPE) {
+_search.failed();
+return;
+}
+try {
+DatabaseStoreMessage dsm = (DatabaseStoreMessage)message;
+if (_log.shouldLog(Log.INFO))
+_log.info(_search.getJobId() + ": got a DSM for "
++ dsm.getKey().toBase64());
+DatabaseEntry entry = dsm.getEntry();
+int type = entry.getType();
+if (DatabaseEntry.isLeaseSet(type)) {
+LeaseSet ls = (LeaseSet) dsm.getEntry();
+ls.setReceivedAsReply();
+getContext().netDb().store(dsm.getKey(), ls);
+} else if (type == DatabaseEntry.KEY_TYPE_ROUTERINFO) {
+getContext().netDb().store(dsm.getKey(), (RouterInfo) dsm.getEntry());
+} else {
+if (_log.shouldWarn())
+_log.warn(_search.getJobId() + ": got a DSM of unknown type " + type
++ " for " + dsm.getKey().toBase64());
+}
+} catch (UnsupportedCryptoException uce) {
+_search.failed();
+return;
+} catch (IllegalArgumentException iae) {
+if (_log.shouldLog(Log.WARN))
+_log.warn(_search.getJobId() + ": Received an invalid store reply", iae);
+}
+}
+}

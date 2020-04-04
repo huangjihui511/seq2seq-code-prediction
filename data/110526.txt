@@ -1,0 +1,15 @@
+package com.baomidou.mybatisplus.core.toolkit;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.util.Base64;
+public class EncryptUtils {
+public static String md5Base64(String str) {
+try {
+MessageDigest md5 = MessageDigest.getInstance(Constants.MD5);
+byte[] src = md5.digest(str.getBytes(StandardCharsets.UTF_8));
+return Base64.getEncoder().encodeToString(src);
+} catch (Exception e) {
+throw ExceptionUtils.mpe(e);
+}
+}
+}

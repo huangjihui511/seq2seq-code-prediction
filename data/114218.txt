@@ -1,0 +1,20 @@
+package com.datumbox.framework.common.dataobjects;
+import java.util.Map;
+Object.
+public abstract class AbstractDataStructureMap<T extends Map<?,?>> extends AbstractDataStructure<T> {
+public AbstractDataStructureMap(T data) {
+super(data);
+}
+public final int size() {
+return internalData.size();
+}
+public final void clear() {
+internalData.clear();
+}
+public final boolean isEmpty() {
+return internalData.isEmpty();
+}
+public final boolean containsKey(Object key) {
+return internalData.containsKey(key);
+}
+}

@@ -1,0 +1,16 @@
+package com.google.cloud.tools.jib.plugins.common;
+public class IncompatibleBaseImageJavaVersionException extends Exception {
+private final int baseImageMajorJavaVersion;
+private final int projectMajorJavaVersion;
+public IncompatibleBaseImageJavaVersionException(
+int baseImageMajorJavaVersion, int projectMajorJavaVersion) {
+this.baseImageMajorJavaVersion = baseImageMajorJavaVersion;
+this.projectMajorJavaVersion = projectMajorJavaVersion;
+}
+public int getBaseImageMajorJavaVersion() {
+return baseImageMajorJavaVersion;
+}
+public int getProjectMajorJavaVersion() {
+return projectMajorJavaVersion;
+}
+}

@@ -1,0 +1,25 @@
+package org.smssecure.smssecure.util;
+import org.smssecure.smssecure.sms.SmsTransportDetails;
+public class EncryptedSmsCharacterCalculator extends CharacterCalculator {
+private CharacterState calculateSingleRecordCharacters(int charactersSpent) {
+int charactersRemaining = SmsTransportDetails.ENCRYPTED_SINGLE_MESSAGE_BODY_MAX_SIZE - charactersSpent;
+return new CharacterState(1, charactersRemaining, SmsTransportDetails.ENCRYPTED_SINGLE_MESSAGE_BODY_MAX_SIZE);
+}
+private CharacterState calculateMultiRecordCharacters(int charactersSpent) {
+int charactersInFirstRecord = SmsTransportDetails.ENCRYPTED_SINGLE_MESSAGE_BODY_MAX_SIZE;
+int spillover               = charactersSpent - charactersInFirstRecord;
+int spilloverMessagesSpent  = spillover / SmsTransportDetails.MULTI_MESSAGE_MAX_BYTES;
+if ((spillover % SmsTransportDetails.MULTI_MESSAGE_MAX_BYTES) > 0)
+spilloverMessagesSpent++;
+int charactersRemaining = (SmsTransportDetails.MULTI_MESSAGE_MAX_BYTES * spilloverMessagesSpent) - spillover;
+return new CharacterState(spilloverMessagesSpent+1, charactersRemaining, SmsTransportDetails.MULTI_MESSAGE_MAX_BYTES);
+}
+@Override
+public CharacterState calculateCharacters(String messageBody) {
+if (messageBody.length() <= SmsTransportDetails.ENCRYPTED_SINGLE_MESSAGE_BODY_MAX_SIZE) {
+return calculateSingleRecordCharacters(messageBody.length());
+} else {
+return calculateMultiRecordCharacters(messageBody.length());
+}
+}
+}

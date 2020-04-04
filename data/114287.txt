@@ -1,0 +1,34 @@
+package com.datumbox.framework.core.machinelearning.common.abstracts.modelers;
+import com.datumbox.framework.common.Configuration;
+import com.datumbox.framework.common.dataobjects.AssociativeArray;
+import com.datumbox.framework.common.storage.interfaces.StorageEngine;
+import com.datumbox.framework.core.common.utilities.MapMethods;
+import com.datumbox.framework.core.machinelearning.common.abstracts.AbstractTrainer;
+import java.util.*;
+public abstract class AbstractClassifier<MP extends AbstractClassifier.AbstractModelParameters, TP extends AbstractClassifier.AbstractTrainingParameters> extends AbstractModeler<MP, TP> {
+public static abstract class AbstractModelParameters extends AbstractModeler.AbstractModelParameters {
+private Set<Object> classes = new LinkedHashSet<>();
+protected AbstractModelParameters(StorageEngine storageEngine) {
+super(storageEngine);
+}
+public Integer getC() {
+return classes.size();
+}
+public Set<Object> getClasses() {
+return classes;
+}
+protected void setClasses(Set<Object> classes) {
+this.classes = classes;
+}
+}
+protected AbstractClassifier(TP trainingParameters, Configuration configuration) {
+super(trainingParameters, configuration);
+}
+protected AbstractClassifier(String storageName, Configuration configuration) {
+super(storageName, configuration);
+}
+protected Object getSelectedClassFromClassScores(AssociativeArray predictionScores) {
+Map.Entry<Object, Object> maxEntry = MapMethods.selectMaxKeyValue(predictionScores);
+return maxEntry.getKey();
+}
+}

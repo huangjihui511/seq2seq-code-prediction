@@ -1,0 +1,47 @@
+package com.datumbox.framework.core.common.text.extractors;
+import com.datumbox.framework.core.common.interfaces.Extractable;
+import com.datumbox.framework.core.common.interfaces.Parameterizable;
+import com.datumbox.framework.core.common.text.tokenizers.AbstractTokenizer;
+import com.datumbox.framework.core.common.text.tokenizers.WhitespaceTokenizer;
+import java.lang.reflect.InvocationTargetException;
+import java.util.Map;
+with a AbstractParameters class and they take as input strings.
+public abstract class AbstractTextExtractor<TP extends AbstractTextExtractor.AbstractParameters, K, V> implements Extractable<K, V, String> {
+public static abstract class AbstractParameters implements Parameterizable {
+private Class<? extends AbstractTokenizer> tokenizer = WhitespaceTokenizer.class;
+public Class<? extends AbstractTokenizer> getTokenizer() {
+return tokenizer;
+}
+public void setTokenizer(Class<? extends AbstractTokenizer> tokenizer) {
+this.tokenizer = tokenizer;
+}
+}
+protected final TP parameters;
+public AbstractTextExtractor(TP parameters) {
+this.parameters = parameters;
+}
+protected AbstractTokenizer generateTokenizer() {
+Class<? extends AbstractTokenizer> tokenizer = parameters.getTokenizer();
+if(tokenizer==null) {
+return null;
+}
+try {
+return tokenizer.newInstance();
+}
+catch (InstantiationException | IllegalAccessException ex) {
+throw new RuntimeException(ex);
+}
+}
+@Override
+public abstract Map<K, V> extract(final String text);
+AbstractTextExtractor.
+public static <T extends AbstractTextExtractor, TP extends AbstractTextExtractor.AbstractParameters> T newInstance(TP parameters) {
+try {
+Class<T> tClass = (Class<T>) parameters.getClass().getEnclosingClass();
+return tClass.getConstructor(parameters.getClass()).newInstance(parameters);
+}
+catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException | SecurityException | NoSuchMethodException ex) {
+throw new RuntimeException(ex);
+}
+}
+}

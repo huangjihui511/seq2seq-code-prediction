@@ -1,0 +1,9 @@
+package com.google.api.client.test.util.store;
+import com.google.api.client.util.store.DataStoreFactory;
+import com.google.api.client.util.store.MemoryDataStoreFactory;
+public class MemoryDataStoreFactoryTest extends AbstractDataStoreFactoryTest {
+@Override
+protected DataStoreFactory newDataStoreFactory() {
+return MemoryDataStoreFactory.getDefaultInstance();
+}
+}

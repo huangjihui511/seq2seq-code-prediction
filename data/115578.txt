@@ -1,0 +1,10 @@
+package com.netflix.astyanax.impl;
+import java.util.concurrent.TimeUnit;
+import com.netflix.astyanax.MutationBatch;
+public interface AckingQueue {
+MutationBatch getNextMutation(long timeout, TimeUnit units) throws InterruptedException;
+void pushMutation(MutationBatch m) throws Exception;
+void ackMutation(MutationBatch m) throws Exception;
+void repushMutation(MutationBatch m) throws Exception;
+int size();
+}

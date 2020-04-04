@@ -1,0 +1,98 @@
+package com.twelvemonkeys.servlet.image;
+import com.twelvemonkeys.lang.StringUtil;
+import com.twelvemonkeys.servlet.ServletUtil;
+import javax.servlet.ServletRequest;
+import javax.servlet.http.HttpServletRequest;
+import java.awt.*;
+import java.awt.geom.Rectangle2D;
+class TextRenderer /*extends ImageServlet implements ImagePainterServlet*/ {
+public final static String FONT_STYLE_ITALIC = "italic";
+public final static String FONT_STYLE_PLAIN = "plain";
+public final static String FONT_STYLE_BOLD = "bold";
+public final static String PARAM_TEXT = "text";
+public final static String PARAM_MARGIN_LEFT = "marginLeft";
+public final static String PARAM_MARGIN_TOP = "marginTop";
+public final static String PARAM_FONT_FAMILY = "fontFamily";
+public final static String PARAM_FONT_SIZE = "fontSize";
+public final static String PARAM_FONT_STYLE = "fontStyle";
+public final static String PARAM_TEXT_ROTATION = "textRotation";
+public final static String PARAM_TEXT_ROTATION_UNITS = "textRotationUnits";
+public final static String PARAM_BGCOLOR = "bgcolor";
+public final static String PARAM_FGCOLOR = "fgcolor";
+protected final static String ROTATION_DEGREES = "DEGREES";
+protected final static String ROTATION_RADIANS = "RADIANS";
+public TextRenderer() {
+}
+private void paint(ServletRequest pReq, Graphics2D pRes, int pWidth, int pHeight)
+throws ImageServletException {
+String text = pReq.getParameter(PARAM_TEXT);
+String[] lines = StringUtil.toStringArray(text, "\n\r");
+String fontFamily = pReq.getParameter(PARAM_FONT_FAMILY);
+String fontSize = pReq.getParameter(PARAM_FONT_SIZE);
+String fontStyle = pReq.getParameter(PARAM_FONT_STYLE);
+String bgcolor = pReq.getParameter(PARAM_BGCOLOR);
+String fgcolor = pReq.getParameter(PARAM_FGCOLOR);
+pRes.addRenderingHints(new RenderingHints(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON));
+pRes.addRenderingHints(new RenderingHints(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY));
+pRes.addRenderingHints(new RenderingHints(RenderingHints.KEY_COLOR_RENDERING, RenderingHints.VALUE_COLOR_RENDER_QUALITY));
+if (!StringUtil.isEmpty(bgcolor)) {
+pRes.setBackground(StringUtil.toColor(bgcolor));
+pRes.clearRect(0, 0, pWidth, pHeight);
+}
+Font font = new Font(
+fontFamily != null ? fontFamily : "Helvetica",
+getFontStyle(fontStyle),
+fontSize != null ? Integer.parseInt(fontSize) : 12
+);
+pRes.setFont(font);
+double angle = getAngle(pReq);
+pRes.rotate(angle, pWidth / 2.0, pHeight / 2.0);
+pRes.setColor(fgcolor != null ? StringUtil.toColor(fgcolor) : Color.black);
+float x = ServletUtil.getFloatParameter(pReq, PARAM_MARGIN_LEFT, Float.MIN_VALUE);
+Rectangle2D[] bounds = new Rectangle2D[lines.length];
+if (x <= Float.MIN_VALUE) {
+float longest = 0f;
+for (int i = 0; i < lines.length; i++) {
+bounds[i] = font.getStringBounds(lines[i], pRes.getFontRenderContext());
+if (bounds[i].getWidth() > longest) {
+longest = (float) bounds[i].getWidth();
+}
+}
+x = (float) ((pWidth - longest) / 2f);
+}
+float y = ServletUtil.getFloatParameter(pReq, PARAM_MARGIN_TOP, Float.MIN_VALUE);
+float lineHeight = (float) (bounds[0] != null ?
+bounds[0].getHeight() : font.getStringBounds(lines[0], pRes.getFontRenderContext()).getHeight());
+if (y <= Float.MIN_VALUE) {
+y = (float) ((pHeight - lineHeight) / 2f)
+- (lineHeight * (lines.length - 2.5f) / 2f);
+}
+else {
+y += font.getSize2D();
+}
+for (int i = 0; i < lines.length; i++) {
+pRes.drawString(lines[i], x, y + lineHeight * i);
+}
+}
+private int getFontStyle(String pStyle) {
+if (pStyle == null || StringUtil.containsIgnoreCase(pStyle, FONT_STYLE_PLAIN)) {
+return Font.PLAIN;
+}
+int style = Font.PLAIN;
+if (StringUtil.containsIgnoreCase(pStyle, FONT_STYLE_BOLD)) {
+style |= Font.BOLD;
+}
+if (StringUtil.containsIgnoreCase(pStyle, FONT_STYLE_ITALIC)) {
+style |= Font.ITALIC;
+}
+return style;
+}
+private double getAngle(ServletRequest pRequest) {
+double angle = ServletUtil.getDoubleParameter(pRequest, PARAM_TEXT_ROTATION, 0.0);
+String units = pRequest.getParameter(PARAM_TEXT_ROTATION_UNITS);
+if (!StringUtil.isEmpty(units) && ROTATION_DEGREES.equalsIgnoreCase(units)) {
+angle = Math.toRadians(angle);
+}
+return angle;
+}
+}

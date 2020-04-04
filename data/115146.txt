@@ -1,0 +1,5 @@
+package io.ebean.cache;
+import io.ebean.config.ServerConfig;
+public interface ServerCacheNotifyPlugin {
+ServerCacheNotify create(ServerConfig serverConfig);
+}

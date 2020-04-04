@@ -1,0 +1,31 @@
+package com.github.jknack.handlebars.io;
+import static org.apache.commons.lang3.Validate.isTrue;
+import static org.apache.commons.lang3.Validate.notNull;
+import java.io.File;
+import java.io.IOException;
+import java.net.URL;
+public class FileTemplateLoader extends URLTemplateLoader {
+public FileTemplateLoader(final File basedir, final String suffix) {
+notNull(basedir, "The base dir is required.");
+isTrue(basedir.exists(), "File not found: %s", basedir);
+isTrue(basedir.isDirectory(), "A directory is required: %s",
+basedir);
+setPrefix(basedir.toString());
+setSuffix(suffix);
+}
+public FileTemplateLoader(final File basedir) {
+this(basedir, DEFAULT_SUFFIX);
+}
+public FileTemplateLoader(final String basedir, final String suffix) {
+setPrefix(basedir);
+setSuffix(suffix);
+}
+public FileTemplateLoader(final String basedir) {
+this(basedir, DEFAULT_SUFFIX);
+}
+@Override
+protected URL getResource(final String location) throws IOException {
+File file = new File(location);
+return file.exists() ? file.toURI().toURL() : null;
+}
+}

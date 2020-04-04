@@ -1,0 +1,232 @@
+package com.google.inject.internal;
+import static com.google.inject.internal.InternalFlags.getCustomClassLoadingOption;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
+import com.google.inject.internal.InternalFlags.CustomClassLoadingOption;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Member;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+public final class BytecodeGen {
+static final Logger logger = Logger.getLogger(BytecodeGen.class.getName());
+static final ClassLoader GUICE_CLASS_LOADER = canonicalize(BytecodeGen.class.getClassLoader());
+private static class SystemBridgeHolder {
+static final BridgeClassLoader SYSTEM_BRIDGE = new BridgeClassLoader();
+}
+static final String GUICE_INTERNAL_PACKAGE =
+BytecodeGen.class.getName().replaceFirst("\\.internal\\..*$", ".internal");
+static final String CGLIB_PACKAGE =
+net.sf.cglib.proxy.Enhancer.class.getName().replaceFirst("\\.cglib\\..*$", ".cglib");
+static final net.sf.cglib.core.NamingPolicy FASTCLASS_NAMING_POLICY =
+new net.sf.cglib.core.DefaultNamingPolicy() {
+@Override
+protected String getTag() {
+return "ByGuice";
+}
+@Override
+public String getClassName(
+String prefix, String source, Object key, net.sf.cglib.core.Predicate names) {
+return super.getClassName(prefix, "FastClass", key, names);
+}
+};
+static final net.sf.cglib.core.NamingPolicy ENHANCER_NAMING_POLICY =
+new net.sf.cglib.core.DefaultNamingPolicy() {
+@Override
+protected String getTag() {
+return "ByGuice";
+}
+@Override
+public String getClassName(
+String prefix, String source, Object key, net.sf.cglib.core.Predicate names) {
+return super.getClassName(prefix, "Enhancer", key, names);
+}
+};
+private static final String CGLIB_PACKAGE = " "; 
+end[NO_AOP]*/
+private static final LoadingCache<ClassLoader, ClassLoader> CLASS_LOADER_CACHE;
+static {
+CacheBuilder<Object, Object> builder = CacheBuilder.newBuilder().weakKeys().weakValues();
+if (getCustomClassLoadingOption() == CustomClassLoadingOption.OFF) {
+builder.maximumSize(0);
+}
+CLASS_LOADER_CACHE =
+builder.build(
+new CacheLoader<ClassLoader, ClassLoader>() {
+@Override
+public ClassLoader load(final ClassLoader typeClassLoader) {
+logger.fine("Creating a bridge ClassLoader for " + typeClassLoader);
+return AccessController.doPrivileged(
+new PrivilegedAction<ClassLoader>() {
+@Override
+public ClassLoader run() {
+return new BridgeClassLoader(typeClassLoader);
+}
+});
+}
+});
+}
+private static ClassLoader canonicalize(ClassLoader classLoader) {
+return classLoader != null ? classLoader : SystemBridgeHolder.SYSTEM_BRIDGE.getParent();
+}
+public static ClassLoader getClassLoader(Class<?> type) {
+return getClassLoader(type, type.getClassLoader());
+}
+private static ClassLoader getClassLoader(Class<?> type, ClassLoader delegate) {
+if (getCustomClassLoadingOption() == CustomClassLoadingOption.OFF) {
+return delegate;
+}
+if (type.getName().startsWith("java.")) {
+return GUICE_CLASS_LOADER;
+}
+delegate = canonicalize(delegate);
+if (delegate == GUICE_CLASS_LOADER || delegate instanceof BridgeClassLoader) {
+return delegate;
+}
+if (Visibility.forType(type) == Visibility.PUBLIC) {
+if (delegate != SystemBridgeHolder.SYSTEM_BRIDGE.getParent()) {
+return CLASS_LOADER_CACHE.getUnchecked(delegate);
+}
+return SystemBridgeHolder.SYSTEM_BRIDGE;
+}
+return delegate; 
+}
+public static net.sf.cglib.reflect.FastClass newFastClassForMember(Member member) {
+return newFastClassForMember(member.getDeclaringClass(), member);
+}
+public static net.sf.cglib.reflect.FastClass newFastClassForMember(Class<?> type, Member member) {
+if (!new net.sf.cglib.core.VisibilityPredicate(type, false).evaluate(member)) {
+return null;
+}
+boolean publiclyCallable = isPubliclyCallable(member);
+if (!publiclyCallable && !hasSameVersionOfCglib(type.getClassLoader())) {
+return null;
+}
+net.sf.cglib.reflect.FastClass.Generator generator =
+new net.sf.cglib.reflect.FastClass.Generator();
+if (publiclyCallable) {
+generator.setClassLoader(getClassLoader(type));
+}
+generator.setType(type);
+generator.setNamingPolicy(FASTCLASS_NAMING_POLICY);
+if (logger.isLoggable(Level.FINE)) {
+logger.fine("Loading " + type + " FastClass with " + generator.getClassLoader());
+}
+return generator.create();
+}
+private static boolean hasSameVersionOfCglib(ClassLoader classLoader) {
+Class<?> fc = net.sf.cglib.reflect.FastClass.class;
+try {
+return classLoader.loadClass(fc.getName()) == fc;
+} catch (ClassNotFoundException e) {
+return false;
+}
+}
+private static boolean isPubliclyCallable(Member member) {
+if (!Modifier.isPublic(member.getModifiers())) {
+return false;
+}
+Class<?>[] parameterTypes;
+if (member instanceof Constructor) {
+parameterTypes = ((Constructor) member).getParameterTypes();
+} else {
+Method method = (Method) member;
+if (!Modifier.isPublic(method.getReturnType().getModifiers())) {
+return false;
+}
+parameterTypes = method.getParameterTypes();
+}
+for (Class<?> type : parameterTypes) {
+if (!Modifier.isPublic(type.getModifiers())) {
+return false;
+}
+}
+return true;
+}
+public static net.sf.cglib.proxy.Enhancer newEnhancer(Class<?> type, Visibility visibility) {
+net.sf.cglib.proxy.Enhancer enhancer = new net.sf.cglib.proxy.Enhancer();
+enhancer.setSuperclass(type);
+enhancer.setUseFactory(false);
+if (visibility == Visibility.PUBLIC) {
+enhancer.setClassLoader(getClassLoader(type));
+}
+enhancer.setNamingPolicy(ENHANCER_NAMING_POLICY);
+logger.fine("Loading " + type + " Enhancer with " + enhancer.getClassLoader());
+return enhancer;
+}
+public enum Visibility {
+PUBLIC {
+@Override
+public Visibility and(Visibility that) {
+return that;
+}
+},
+SAME_PACKAGE {
+@Override
+public Visibility and(Visibility that) {
+return this;
+}
+};
+public static Visibility forMember(Member member) {
+if ((member.getModifiers() & (Modifier.PROTECTED | Modifier.PUBLIC)) == 0) {
+return SAME_PACKAGE;
+}
+Class[] parameterTypes;
+if (member instanceof Constructor) {
+parameterTypes = ((Constructor) member).getParameterTypes();
+} else {
+Method method = (Method) member;
+if (forType(method.getReturnType()) == SAME_PACKAGE) {
+return SAME_PACKAGE;
+}
+parameterTypes = method.getParameterTypes();
+}
+for (Class<?> type : parameterTypes) {
+if (forType(type) == SAME_PACKAGE) {
+return SAME_PACKAGE;
+}
+}
+return PUBLIC;
+}
+public static Visibility forType(Class<?> type) {
+return (type.getModifiers() & (Modifier.PROTECTED | Modifier.PUBLIC)) != 0
+? PUBLIC
+: SAME_PACKAGE;
+}
+public abstract Visibility and(Visibility that);
+}
+private static class BridgeClassLoader extends ClassLoader {
+BridgeClassLoader() {
+}
+BridgeClassLoader(ClassLoader usersClassLoader) {
+super(usersClassLoader);
+}
+@Override
+protected Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
+if (name.startsWith("sun.reflect") || name.startsWith("jdk.internal.reflect")) {
+return SystemBridgeHolder.SYSTEM_BRIDGE.classicLoadClass(name, resolve);
+}
+if (name.startsWith(GUICE_INTERNAL_PACKAGE) || name.startsWith(CGLIB_PACKAGE)) {
+if (null == GUICE_CLASS_LOADER) {
+return SystemBridgeHolder.SYSTEM_BRIDGE.classicLoadClass(name, resolve);
+}
+try {
+Class<?> clazz = GUICE_CLASS_LOADER.loadClass(name);
+if (resolve) {
+resolveClass(clazz);
+}
+return clazz;
+} catch (Throwable e) {
+}
+}
+return classicLoadClass(name, resolve);
+}
+Class<?> classicLoadClass(String name, boolean resolve) throws ClassNotFoundException {
+return super.loadClass(name, resolve);
+}
+}
+}

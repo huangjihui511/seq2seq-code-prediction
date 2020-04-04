@@ -1,0 +1,64 @@
+package org.msgpack.value.impl;
+import org.msgpack.core.MessagePacker;
+import org.msgpack.value.ImmutableBinaryValue;
+import org.msgpack.value.Value;
+import org.msgpack.value.ValueType;
+import java.io.IOException;
+import java.util.Arrays;
+public class ImmutableBinaryValueImpl
+extends AbstractImmutableRawValue
+implements ImmutableBinaryValue
+{
+public ImmutableBinaryValueImpl(byte[] data)
+{
+super(data);
+}
+@Override
+public ValueType getValueType()
+{
+return ValueType.BINARY;
+}
+@Override
+public ImmutableBinaryValue immutableValue()
+{
+return this;
+}
+@Override
+public ImmutableBinaryValue asBinaryValue()
+{
+return this;
+}
+@Override
+public void writeTo(MessagePacker pk)
+throws IOException
+{
+pk.packBinaryHeader(data.length);
+pk.writePayload(data);
+}
+@Override
+public boolean equals(Object o)
+{
+if (this == o) {
+return true;
+}
+if (!(o instanceof Value)) {
+return false;
+}
+Value v = (Value) o;
+if (!v.isBinaryValue()) {
+return false;
+}
+if (v instanceof ImmutableBinaryValueImpl) {
+ImmutableBinaryValueImpl bv = (ImmutableBinaryValueImpl) v;
+return Arrays.equals(data, bv.data);
+}
+else {
+return Arrays.equals(data, v.asBinaryValue().asByteArray());
+}
+}
+@Override
+public int hashCode()
+{
+return Arrays.hashCode(data);
+}
+}

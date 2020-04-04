@@ -1,0 +1,9 @@
+package org.apache.zookeeper.inspector.logger;
+public class LoggerFactory
+{
+private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger("org.apache.zookeeper.inspector"); 
+public static org.slf4j.Logger getLogger()
+{
+return logger;
+}
+}

@@ -1,0 +1,6 @@
+package org.apache.struts2.interceptor;
+@Deprecated
+public interface PrincipalAware {
+@Deprecated
+void setPrincipalProxy(PrincipalProxy principalProxy);
+}

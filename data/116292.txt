@@ -1,0 +1,88 @@
+package org.spongepowered.api.world.schematic;
+import com.flowpowered.math.vector.Vector3d;
+import com.google.common.collect.ImmutableListMultimap;
+import com.google.common.collect.ListMultimap;
+import org.spongepowered.api.Sponge;
+import org.spongepowered.api.block.BlockState;
+import org.spongepowered.api.data.DataView;
+import org.spongepowered.api.data.Queries;
+import org.spongepowered.api.data.persistence.DataTranslator;
+import org.spongepowered.api.entity.EntityArchetype;
+import org.spongepowered.api.util.ResettableBuilder;
+import org.spongepowered.api.world.biome.BiomeType;
+import org.spongepowered.api.world.extent.ArchetypeVolume;
+import org.spongepowered.api.world.extent.Extent;
+import org.spongepowered.api.world.extent.MutableBiomeVolume;
+import org.spongepowered.api.world.extent.worker.MutableBlockVolumeWorker;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Optional;
+public interface Schematic extends ArchetypeVolume {
+String METADATA_NAME = "Name";
+String METADATA_AUTHOR = "Author";
+String METADATA_DATE = "Date";
+String METADATA_REQUIRED_MODS = "RequiredMods";
+static Builder builder() {
+return Sponge.getRegistry().createBuilder(Builder.class);
+}
+@Deprecated
+BlockPalette getPalette();
+@SuppressWarnings("deprecation")
+default Palette<BlockState> getBlockPalette() {
+return getPalette();
+}
+default Palette<BiomeType> getBiomePalette() {
+return PaletteTypes.GLOBAL_BIOMES.create();
+}
+DataView getMetadata();
+@Override
+MutableBlockVolumeWorker<Schematic> getBlockWorker();
+default Optional<MutableBiomeVolume> getBiomes() {
+return Optional.empty();
+}
+@Override
+default ListMultimap<Vector3d, EntityArchetype> getEntitiesByPosition() {
+return ImmutableListMultimap.of();
+}
+@Override
+default Collection<EntityArchetype> getEntityArchetypes() {
+return Collections.emptyList();
+}
+interface Builder extends ResettableBuilder<Schematic, Builder> {
+Builder volume(ArchetypeVolume volume);
+Builder volume(Extent volume);
+@Deprecated
+Builder palette(BlockPalette palette);
+@SuppressWarnings("deprecation")
+default Builder blockPalette(Palette<BlockState> palette) {
+return palette((BlockPalette) palette);
+}
+default Builder biomePalette(Palette<BiomeType> palette) {
+return this;
+}
+@Deprecated
+Builder paletteType(BlockPaletteType type);
+@SuppressWarnings("deprecation")
+default Builder blockPaletteType(PaletteType<BlockState> type) {
+return paletteType((BlockPaletteType) type);
+}
+default Builder biomePaletteType(PaletteType<BiomeType> type) {
+return this;
+}
+default Builder entity(EntityArchetype entityArchetype) {
+if (!entityArchetype.getEntityData().contains(Queries.POSITION_X, Queries.POSITION_Y, Queries.POSITION_Z)) {
+throw new IllegalArgumentException("EntityArchetype is missing position information!");
+}
+return this;
+}
+default Builder entity(EntityArchetype entityArchetype, Vector3d position) {
+return this;
+}
+default Builder entities(Collection<EntityArchetype> entities) {
+return this;
+}
+Builder metadata(DataView metadata);
+Builder metaValue(String key, Object value);
+Schematic build() throws IllegalArgumentException;
+}
+}

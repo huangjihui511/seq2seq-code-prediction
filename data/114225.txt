@@ -1,0 +1,42 @@
+package com.datumbox.framework.common.dataobjects;
+import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Set;
+public class TransposeDataCollection2D extends AbstractDataStructureMap<Map<Object, TransposeDataCollection>> {
+private static final long serialVersionUID = 1L;
+public TransposeDataCollection2D() {
+super(new LinkedHashMap<>());
+}
+public TransposeDataCollection2D(Map<Object, TransposeDataCollection> internalData) {
+super(internalData);
+}
+public final TransposeDataCollection remove(Object key) {
+return internalData.remove(key);
+}
+public final TransposeDataCollection get(Object key) {
+return internalData.get(key);
+}
+public final TransposeDataCollection put(Object key, TransposeDataCollection value) {
+return internalData.put(key, value);
+}
+public final Set<Map.Entry<Object, TransposeDataCollection>> entrySet() {
+return internalData.entrySet();
+}
+public final Set<Object> keySet() {
+return internalData.keySet();
+}
+public final Collection<TransposeDataCollection> values() {
+return internalData.values();
+}
+@Override
+public boolean equals(Object o) {
+if ( this == o ) return true;
+if ( !(o instanceof TransposeDataCollection2D) ) return false;
+return internalData.equals(((TransposeDataCollection2D)o).internalData);
+}
+@Override
+public int hashCode() {
+return internalData.hashCode();
+}
+}

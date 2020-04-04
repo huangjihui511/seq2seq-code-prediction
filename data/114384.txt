@@ -1,0 +1,48 @@
+package com.oreilly.springdata.gemfire.core;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+import org.springframework.data.gemfire.mapping.Region;
+import org.springframework.util.Assert;
+@Region
+public class Customer extends AbstractPersistentEntity {
+private EmailAddress emailAddress;
+private String firstname, lastname;
+private Set<Address> addresses = new HashSet<Address>();
+public Customer(Long id, EmailAddress emailAddress, String firstname, String lastname) {
+super(id);
+Assert.hasText(firstname);
+Assert.hasText(lastname);
+Assert.notNull(emailAddress);
+this.firstname = firstname;
+this.lastname = lastname;
+this.emailAddress = emailAddress;
+}
+protected Customer() {
+}
+public void add(Address address) {
+Assert.notNull(address);
+this.addresses.add(address);
+}
+public String getFirstname() {
+return firstname;
+}
+public void setFirstname(String firstname) {
+this.firstname = firstname;
+}
+public String getLastname() {
+return lastname;
+}
+public void setLastname(String lastname) {
+this.lastname = lastname;
+}
+public EmailAddress getEmailAddress() {
+return emailAddress;
+}
+public void setEmailAddress(EmailAddress emailAddress) {
+this.emailAddress = emailAddress;
+}
+public Set<Address> getAddresses() {
+return Collections.unmodifiableSet(addresses);
+}
+}

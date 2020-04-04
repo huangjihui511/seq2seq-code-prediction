@@ -1,0 +1,5 @@
+package org.spongepowered.mod.bridge.util;
+import org.spongepowered.api.block.BlockSnapshot;
+public interface ForgeBlockSnapshotBridge_Forge {
+BlockSnapshot forgeBridge$toSpongeSnapshot();
+}

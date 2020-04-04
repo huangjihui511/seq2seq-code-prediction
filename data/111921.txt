@@ -1,0 +1,5 @@
+package io.hawt.config;
+import java.io.InputStream;
+public interface URLHandler {
+InputStream openStream(String url);
+}

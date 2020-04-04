@@ -1,0 +1,11 @@
+package com.github.jknack.handlebars.cache;
+import java.io.IOException;
+import com.github.jknack.handlebars.Parser;
+import com.github.jknack.handlebars.Template;
+import com.github.jknack.handlebars.io.TemplateSource;
+public interface TemplateCache {
+void clear();
+void evict(TemplateSource source);
+Template get(TemplateSource source, Parser parser) throws IOException;
+TemplateCache setReload(boolean reload);
+}

@@ -1,0 +1,25 @@
+package org.apereo.cas.couchdb.tickets;
+import org.ektorp.BulkDeleteDocument;
+import org.ektorp.CouchDbConnector;
+import org.ektorp.support.CouchDbRepositorySupport;
+import org.ektorp.support.View;
+import java.util.List;
+import java.util.stream.Collectors;
+@View(name = "all", map = "function(doc) { emit(null, doc._id) }")
+public class TicketRepository extends CouchDbRepositorySupport<TicketDocument> {
+public TicketRepository(final CouchDbConnector db) {
+this(db, true);
+}
+public TicketRepository(final CouchDbConnector db, final boolean createIfNotExists) {
+super(TicketDocument.class, db, createIfNotExists);
+}
+public long delete(final List<TicketDocument> ticketDocuments) {
+return db.executeBulk(ticketDocuments.stream()
+.map(BulkDeleteDocument::of)
+.collect(Collectors.toList()))
+.size();
+}
+public String getCurrentRevision(final String id) {
+return db.getCurrentRevision(id);
+}
+}

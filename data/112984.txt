@@ -1,0 +1,368 @@
+package org.apache.pdfbox.preflight.metadata;
+import java.io.IOException;
+import java.util.Calendar;
+import java.util.GregorianCalendar;
+import java.util.List;
+import org.junit.Assert;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.PDDocumentInformation;
+import org.apache.pdfbox.preflight.PreflightConstants;
+import org.apache.pdfbox.preflight.ValidationResult.ValidationError;
+import org.apache.pdfbox.preflight.exception.ValidationException;
+import org.apache.xmpbox.XMPMetadata;
+import org.apache.xmpbox.schema.AdobePDFSchema;
+import org.apache.xmpbox.schema.DublinCoreSchema;
+import org.apache.xmpbox.schema.XMPBasicSchema;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
+public class TestSynchronizedMetadataValidation
+{
+protected PDDocument doc;
+protected PDDocumentInformation dico;
+protected XMPMetadata metadata;
+protected String title, author, subject, keywords, creator, producer;
+protected Calendar creationDate, modifyDate;
+protected static SynchronizedMetaDataValidation sync;
+protected List<ValidationError> ve;
+@BeforeClass
+public static void initSynchronizedMetadataValidation()
+{
+sync = new SynchronizedMetaDataValidation();
+}
+@Before
+public void initNewDocumentInformation() throws Exception
+{
+doc = new PDDocument();
+dico = doc.getDocumentInformation();
+metadata = XMPMetadata.createXMPMetadata();
+}
+@Test(expected = ValidationException.class)
+public void TestNullDocument() throws ValidationException
+{
+sync.validateMetadataSynchronization(null, metadata);
+}
+@Test(expected = ValidationException.class)
+public void TestNullMetaData() throws ValidationException
+{
+sync.validateMetadataSynchronization(doc, null);
+}
+@Test
+public void TestDocumentWithoutInformation() throws Exception
+{
+try
+{
+ve = sync.validateMetadataSynchronization(doc, metadata);
+Assert.assertEquals(0, ve.size());
+}
+catch (ValidationException e)
+{
+throw new Exception(e.getMessage());
+}
+}
+@Test
+public void testEmptyXMP() throws Exception
+{
+initValues();
+dico.setTitle(title);
+dico.setAuthor(author);
+dico.setSubject(subject);
+dico.setKeywords(keywords);
+dico.setCreator(creator);
+dico.setProducer(producer);
+dico.setCreationDate(creationDate);
+dico.setModificationDate(modifyDate);
+try
+{
+ve = sync.validateMetadataSynchronization(doc, metadata);
+for (ValidationError valid : ve)
+{
+Assert.assertEquals(PreflightConstants.ERROR_METADATA_MISMATCH, valid.getErrorCode());
+}
+}
+catch (ValidationException e)
+{
+throw new Exception(e.getMessage());
+}
+}
+@Test
+public void testEmptyXMPSchemas() throws Exception
+{
+initValues();
+metadata.createAndAddDublinCoreSchema();
+metadata.createAndAddAdobePDFSchema();
+metadata.createAndAddXMPBasicSchema();
+dico.setTitle(title);
+dico.setAuthor(author);
+dico.setSubject(subject);
+dico.setKeywords(keywords);
+dico.setCreator(creator);
+dico.setProducer(producer);
+dico.setCreationDate(creationDate);
+dico.setModificationDate(modifyDate);
+try
+{
+ve = sync.validateMetadataSynchronization(doc, metadata);
+Assert.assertEquals(8, ve.size());
+}
+catch (ValidationException e)
+{
+throw new Exception(e.getMessage());
+}
+}
+@Test(expected = IllegalArgumentException.class)
+public void testNullArrayValue() throws Exception
+{
+DublinCoreSchema dc = metadata.createAndAddDublinCoreSchema();
+dico.setAuthor("dicoAuthor");
+dc.addCreator(null);
+dico.setSubject("dicoSubj");
+dc.addSubject(null);
+try
+{
+ve = sync.validateMetadataSynchronization(doc, metadata);
+Assert.assertEquals(2, ve.size());
+}
+catch (ValidationException e)
+{
+throw new Exception(e.getMessage());
+}
+}
+@Test
+public void testBadSizeOfArrays() throws Exception
+{
+DublinCoreSchema dc = metadata.createAndAddDublinCoreSchema();
+AdobePDFSchema pdf = metadata.createAndAddAdobePDFSchema();
+XMPBasicSchema xmp = metadata.createAndAddXMPBasicSchema();
+dico.setTitle("dicoTitle");
+dc.setTitle("x-default", "XMPTitle");
+dico.setAuthor("dicoAuthor");
+dc.addCreator("XMPAuthor");
+dc.addCreator("2ndCreator");
+dico.setSubject("dicoSubj");
+dc.addSubject("XMPSubj");
+dc.addSubject("2ndSubj");
+dico.setKeywords("DicoKeywords");
+pdf.setKeywords("XMPkeywords");
+dico.setCreator("DicoCreator");
+xmp.setCreatorTool("XMPCreator");
+dico.setProducer("DicoProducer");
+pdf.setProducer("XMPProducer");
+dico.setCreationDate(Calendar.getInstance());
+GregorianCalendar XMPCreate = new GregorianCalendar(2008, 11, 05);
+xmp.setCreateDate(XMPCreate);
+dico.setModificationDate(Calendar.getInstance());
+GregorianCalendar XMPModify = new GregorianCalendar(2009, 10, 15);
+xmp.setModifyDate(XMPModify);
+try
+{
+ve = sync.validateMetadataSynchronization(doc, metadata);
+Assert.assertEquals(8, ve.size());
+}
+catch (ValidationException e)
+{
+throw new Exception(e.getMessage());
+}
+}
+@Test
+public void testAllInfoUnsynchronized() throws Exception
+{
+DublinCoreSchema dc = metadata.createAndAddDublinCoreSchema();
+AdobePDFSchema pdf = metadata.createAndAddAdobePDFSchema();
+XMPBasicSchema xmp = metadata.createAndAddXMPBasicSchema();
+dico.setTitle("dicoTitle");
+dc.setTitle("x-default", "XMPTitle");
+dico.setAuthor("dicoAuthor");
+dc.addCreator("XMPAuthor");
+dico.setSubject("dicoSubj");
+dc.addSubject("XMPSubj");
+dico.setKeywords("DicoKeywords");
+pdf.setKeywords("XMPkeywords");
+dico.setCreator("DicoCreator");
+xmp.setCreatorTool("XMPCreator");
+dico.setProducer("DicoProducer");
+pdf.setProducer("XMPProducer");
+dico.setCreationDate(Calendar.getInstance());
+GregorianCalendar XMPCreate = new GregorianCalendar(2008, 11, 05);
+xmp.setCreateDate(XMPCreate);
+dico.setModificationDate(Calendar.getInstance());
+GregorianCalendar XMPModify = new GregorianCalendar(2009, 10, 15);
+xmp.setModifyDate(XMPModify);
+try
+{
+ve = sync.validateMetadataSynchronization(doc, metadata);
+Assert.assertEquals(8, ve.size());
+}
+catch (ValidationException e)
+{
+throw new Exception(e.getMessage());
+}
+}
+@Test
+public void testAllInfoSynchronized() throws Exception
+{
+initValues();
+DublinCoreSchema dc = metadata.createAndAddDublinCoreSchema();
+XMPBasicSchema xmp = metadata.createAndAddXMPBasicSchema();
+AdobePDFSchema pdf = metadata.createAndAddAdobePDFSchema();
+dico.setTitle(title);
+dc.setTitle("x-default", title);
+dico.setAuthor(author);
+dc.addCreator(author);
+dico.setSubject(subject);
+dc.addDescription("x-default", subject);
+dico.setKeywords(keywords);
+pdf.setKeywords(keywords);
+dico.setCreator(creator);
+xmp.setCreatorTool(creator);
+dico.setProducer(producer);
+pdf.setProducer(producer);
+dico.setCreationDate(creationDate);
+xmp.setCreateDate(creationDate);
+dico.setModificationDate(modifyDate);
+xmp.setModifyDate(modifyDate);
+try
+{
+ve = sync.validateMetadataSynchronization(doc, metadata);
+Assert.assertEquals(0, ve.size());
+}
+catch (ValidationException e)
+{
+throw new Exception(e.getMessage());
+}
+}
+@Test
+public void checkSchemaAccessException() throws Exception
+{
+Throwable cause = new Throwable();
+Assert.assertSame(cause, sync.schemaAccessException("test", cause).getCause());
+}
+@Test
+public void testBadPrefixSchemas() throws Exception
+{
+initValues();
+DublinCoreSchema dc = new DublinCoreSchema(metadata, "dctest");
+metadata.addSchema(dc);
+XMPBasicSchema xmp = new XMPBasicSchema(metadata, "xmptest");
+metadata.addSchema(xmp);
+AdobePDFSchema pdf = new AdobePDFSchema(metadata, "pdftest");
+metadata.addSchema(pdf);
+dico.setTitle(title);
+dc.setTitle("x-default", title);
+dico.setAuthor(author);
+dc.addCreator(author);
+dico.setSubject(subject);
+dc.addDescription("x-default", subject);
+dico.setKeywords(keywords);
+pdf.setKeywords(keywords);
+dico.setCreator(creator);
+xmp.setCreatorTool(creator);
+dico.setProducer(producer);
+pdf.setProducer(producer);
+dico.setCreationDate(creationDate);
+xmp.setCreateDate(creationDate);
+dico.setModificationDate(modifyDate);
+xmp.setModifyDate(modifyDate);
+try
+{
+ve = sync.validateMetadataSynchronization(doc, metadata);
+for (ValidationError valid : ve)
+{
+Assert.assertEquals(PreflightConstants.ERROR_METADATA_WRONG_NS_PREFIX, valid.getErrorCode());
+}
+}
+catch (ValidationException e)
+{
+throw new Exception(e.getMessage());
+}
+}
+@Test
+public void testdoublePrefixSchemas() throws Exception
+{
+initValues();
+DublinCoreSchema dc = metadata.createAndAddDublinCoreSchema();
+DublinCoreSchema dc2 = new DublinCoreSchema(metadata, "dctest");
+metadata.addSchema(dc2);
+XMPBasicSchema xmp = metadata.createAndAddXMPBasicSchema();
+XMPBasicSchema xmp2 = new XMPBasicSchema(metadata, "xmptest");
+metadata.addSchema(xmp2);
+AdobePDFSchema pdf = metadata.createAndAddAdobePDFSchema();
+AdobePDFSchema pdf2 = new AdobePDFSchema(metadata, "pdftest");
+metadata.addSchema(pdf2);
+dc2.setCoverage("tmpcover");
+xmp2.setCreatorTool("tmpcreator");
+pdf2.setKeywords("tmpkeys");
+dico.setTitle(title);
+dc.setTitle("x-default", title);
+dico.setAuthor(author);
+dc.addCreator(author);
+dico.setSubject(subject);
+dc.addDescription("x-default", subject);
+dico.setKeywords(keywords);
+pdf.setKeywords(keywords);
+dico.setCreator(creator);
+xmp.setCreatorTool(creator);
+dico.setProducer(producer);
+pdf.setProducer(producer);
+dico.setCreationDate(creationDate);
+xmp.setCreateDate(creationDate);
+dico.setModificationDate(modifyDate);
+xmp.setModifyDate(modifyDate);
+try
+{
+ve = sync.validateMetadataSynchronization(doc, metadata);
+Assert.assertTrue(ve.isEmpty());
+}
+catch (ValidationException e)
+{
+throw new Exception(e.getMessage());
+}
+}
+@Test
+public void testPDFBox4292() throws Exception
+{
+initValues();
+Calendar cal1 = org.apache.pdfbox.util.DateConverter.toCalendar("20180817115837+02'00'");
+Calendar cal2 = org.apache.xmpbox.DateConverter.toCalendar("2018-08-17T09:58:37Z");
+XMPBasicSchema xmp = metadata.createAndAddXMPBasicSchema();
+dico.setCreationDate(cal1);
+xmp.setCreateDate(cal2);
+dico.setModificationDate(cal1);
+xmp.setModifyDate(cal2);
+try
+{
+ve = sync.validateMetadataSynchronization(doc, metadata);
+Assert.assertEquals(0, ve.size());
+}
+catch (ValidationException e)
+{
+throw new Exception(e.getMessage());
+}
+}
+@After
+public void checkErrors() throws Exception
+{
+try
+{
+doc.close();
+}
+catch (IOException e)
+{
+throw new Exception("Error while closing PDF Document");
+}
+}
+private void initValues()
+{
+title = "TITLE";
+author = "AUTHOR(S)";
+subject = "SUBJECTS";
+keywords = "KEYWORD(S)";
+creator = "CREATOR";
+producer = "PRODUCER";
+creationDate = Calendar.getInstance();
+modifyDate = Calendar.getInstance();
+creationDate.set(Calendar.MILLISECOND, 0);
+modifyDate.set(Calendar.MILLISECOND, 0);
+}
+}

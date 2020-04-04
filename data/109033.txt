@@ -1,0 +1,38 @@
+package org.androidannotations.test;
+import org.androidannotations.annotations.CheckedChange;
+import org.androidannotations.annotations.EActivity;
+import android.widget.CheckBox;
+import android.widget.CompoundButton;
+@EActivity(R.layout.checkable_widgets)
+public class CheckedChangeHandledActivity extends EventsHandledAbstractActivity {
+CompoundButton button;
+boolean checked;
+@CheckedChange
+public void conventionButton(CompoundButton evt, boolean checked) {
+conventionButtonEventHandled = true;
+button = evt;
+this.checked = checked;
+}
+@CheckedChange
+public void checkBox(CheckBox evt, boolean checked) {
+button = evt;
+}
+@CheckedChange
+public void snakeCaseButton(boolean checked, CompoundButton evt) {
+snakeCaseButtonEventHandled = true;
+}
+@CheckedChange
+public void extendedConventionButton(CompoundButton evt) {
+extendedConventionButtonEventHandled = true;
+}
+@CheckedChange(R.id.configurationOverConventionButton)
+public void overridenConventionButton() {
+overridenConventionButtonEventHandled = true;
+}
+@CheckedChange
+public void buttonWithViewArgument(boolean checked) {
+}
+@CheckedChange({ R.id.button1, R.id.button2 })
+public void multipleButtonWithViewArgument(CompoundButton v, boolean checked) {
+}
+}

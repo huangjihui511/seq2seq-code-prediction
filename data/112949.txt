@@ -1,0 +1,42 @@
+package io.kubernetes.client.extended.controller.reconciler;
+public class Request {
+private String name;
+private String namespace;
+public Request(String name) {
+this(null, name);
+}
+public Request(String namespace, String name) {
+this.name = name;
+this.namespace = namespace;
+}
+public String getNamespace() {
+return namespace;
+}
+public void setNamespace(String namespace) {
+this.namespace = namespace;
+}
+public String getName() {
+return name;
+}
+@Override
+public String toString() {
+return "Request{" + "name='" + name + '\'' + ", namespace='" + namespace + '\'' + '}';
+}
+@Override
+public boolean equals(Object o) {
+if (this == o) return true;
+if (o == null || getClass() != o.getClass()) return false;
+Request request = (Request) o;
+if (name != null ? !name.equals(request.name) : request.name != null) return false;
+return namespace != null ? namespace.equals(request.namespace) : request.namespace == null;
+}
+@Override
+public int hashCode() {
+int result = name != null ? name.hashCode() : 0;
+result = 31 * result + (namespace != null ? namespace.hashCode() : 0);
+return result;
+}
+public void setName(String name) {
+this.name = name;
+}
+}

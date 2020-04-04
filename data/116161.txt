@@ -1,0 +1,13 @@
+package org.cybergarage.upnp.event;
+import java.util.*;
+public class PropertyList extends Vector<Property>
+{
+public final static String ELEM_NAME = "PropertyList";
+public PropertyList()
+{
+}
+public Property getProperty(int n)
+{
+return get(n);
+}
+}

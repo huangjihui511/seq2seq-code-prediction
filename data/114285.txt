@@ -1,0 +1,47 @@
+package com.datumbox.framework.core.machinelearning.common.abstracts.featureselectors;
+import com.datumbox.framework.common.Configuration;
+import com.datumbox.framework.common.concurrency.ForkJoinStream;
+import com.datumbox.framework.core.common.dataobjects.Dataframe;
+import com.datumbox.framework.common.dataobjects.TypeInference;
+import com.datumbox.framework.core.machinelearning.common.abstracts.AbstractTrainer;
+import com.datumbox.framework.core.machinelearning.common.interfaces.Parallelizable;
+import java.util.Set;
+public abstract class AbstractFeatureSelector<MP extends AbstractFeatureSelector.AbstractModelParameters, TP extends AbstractFeatureSelector.AbstractTrainingParameters> extends AbstractTrainer<MP, TP> implements Parallelizable {
+protected AbstractFeatureSelector(TP trainingParameters, Configuration configuration) {
+super(trainingParameters, configuration);
+streamExecutor = new ForkJoinStream(knowledgeBase.getConfiguration().getConcurrencyConfiguration());
+}
+protected AbstractFeatureSelector(String storageName, Configuration configuration) {
+super(storageName, configuration);
+streamExecutor = new ForkJoinStream(knowledgeBase.getConfiguration().getConcurrencyConfiguration());
+}
+private boolean parallelized = true;
+protected final ForkJoinStream streamExecutor;
+@Override
+public boolean isParallelized() {
+return parallelized;
+}
+@Override
+public void setParallelized(boolean parallelized) {
+this.parallelized = parallelized;
+}
+public void fit_transform(Dataframe trainingData) {
+fit(trainingData);
+transform(trainingData);
+}
+@Override
+public void fit(Dataframe trainingData) {
+Set<TypeInference.DataType> supportedYDataTypes = getSupportedYDataTypes();
+if(supportedYDataTypes != null && !supportedYDataTypes.contains(trainingData.getYDataType())) {
+throw new IllegalArgumentException("The response variable DataType of the Dataframe is not supported by this method.");
+}
+super.fit(trainingData);
+}
+public void transform(Dataframe newData) {
+logger.info("transform()");
+_transform(newData);
+}
+protected abstract void _transform(Dataframe newData);
+protected abstract Set<TypeInference.DataType> getSupportedXDataTypes();
+protected abstract Set<TypeInference.DataType> getSupportedYDataTypes();
+}

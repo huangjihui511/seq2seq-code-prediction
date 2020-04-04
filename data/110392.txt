@@ -1,0 +1,9 @@
+package org.jd.gui.spi;
+import org.jd.gui.api.API;
+import org.jd.gui.api.feature.UriGettable;
+import org.jd.gui.api.model.Container;
+import javax.swing.*;
+public interface PanelFactory {
+String[] getTypes();
+<T extends JComponent & UriGettable> T make(API api, Container container);
+}

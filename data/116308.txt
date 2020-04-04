@@ -1,0 +1,31 @@
+package org.spongepowered.api.data;
+import org.spongepowered.api.data.manipulator.DataManipulator;
+import org.spongepowered.api.data.manipulator.DataManipulatorBuilder;
+import org.spongepowered.api.data.manipulator.ImmutableDataManipulator;
+import org.spongepowered.api.data.manipulator.ImmutableDataManipulatorBuilder;
+import org.spongepowered.api.data.persistence.DataBuilder;
+import org.spongepowered.api.data.persistence.DataContentUpdater;
+import org.spongepowered.api.data.persistence.DataTranslator;
+import org.spongepowered.api.plugin.PluginContainer;
+import java.util.Collection;
+import java.util.Optional;
+public interface DataManager {
+<T extends DataSerializable> void registerBuilder(Class<T> clazz, DataBuilder<T> builder);
+<T extends DataSerializable> void registerContentUpdater(Class<T> clazz, DataContentUpdater updater);
+<T extends DataSerializable> Optional<DataContentUpdater> getWrappedContentUpdater(Class<T> clazz, int fromVersion, int toVersion);
+<T extends DataSerializable> Optional<DataBuilder<T>> getBuilder(Class<T> clazz);
+<T extends DataSerializable> Optional<T> deserialize(Class<T> clazz, DataView dataView);
+<T extends ImmutableDataHolder<T>, B extends ImmutableDataBuilder<T, B>> void register(Class<T> holderClass, B builder);
+void registerLegacyManipulatorIds(String legacyId, DataRegistration<?, ?> registration);
+<T extends ImmutableDataHolder<T>, B extends ImmutableDataBuilder<T, B>> Optional<B> getImmutableBuilder(Class<T> holderClass);
+<T extends DataManipulator<T, I>, I extends ImmutableDataManipulator<I, T>>
+Optional<DataManipulatorBuilder<T, I>> getManipulatorBuilder(Class<T> manipulatorClass);
+<T extends DataManipulator<T, I>, I extends ImmutableDataManipulator<I, T>>
+Optional<DataManipulatorBuilder<T, I>> getImmutableManipulatorBuilder(Class<I> immutableManipulatorClass);
+@Deprecated
+<T> void registerTranslator(Class<T> objectClass, DataTranslator<T> translator);
+<T> Optional<DataTranslator<T>> getTranslator(Class<T> objectClass);
+Collection<Class<? extends DataManipulator<?, ?>>> getAllRegistrationsFor(PluginContainer container);
+DataContainer createContainer();
+DataContainer createContainer(DataView.SafetyMode safety);
+}

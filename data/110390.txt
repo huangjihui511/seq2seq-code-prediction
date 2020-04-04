@@ -1,0 +1,14 @@
+package org.jd.gui.api.feature;
+import org.jd.gui.api.API;
+import java.nio.file.Path;
+public interface SourcesSavable {
+String getSourceFileName();
+int getFileCount();
+void save(API api, Controller controller, Listener listener, Path path);
+interface Controller {
+boolean isCancelled();
+}
+interface Listener {
+void pathSaved(Path path);
+}
+}

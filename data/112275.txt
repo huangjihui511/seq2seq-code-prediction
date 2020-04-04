@@ -1,0 +1,5 @@
+package com.github.jknack.handlebars;
+public interface ParserFactory {
+Parser create(final Handlebars handlebars, final String startDelimiter,
+final String endDelimiter);
+}

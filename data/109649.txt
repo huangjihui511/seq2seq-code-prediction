@@ -1,0 +1,89 @@
+package com.google.inject.internal;
+import com.google.common.collect.ImmutableSet;
+import com.google.inject.internal.ProvisionListenerStackCallback.ProvisionCallback;
+import com.google.inject.spi.Dependency;
+import com.google.inject.spi.InjectionPoint;
+import java.lang.reflect.InvocationTargetException;
+import java.util.Set;
+final class ConstructorInjector<T> {
+private final ImmutableSet<InjectionPoint> injectableMembers;
+private final SingleParameterInjector<?>[] parameterInjectors;
+private final ConstructionProxy<T> constructionProxy;
+private final MembersInjectorImpl<T> membersInjector;
+ConstructorInjector(
+Set<InjectionPoint> injectableMembers,
+ConstructionProxy<T> constructionProxy,
+SingleParameterInjector<?>[] parameterInjectors,
+MembersInjectorImpl<T> membersInjector) {
+this.injectableMembers = ImmutableSet.copyOf(injectableMembers);
+this.constructionProxy = constructionProxy;
+this.parameterInjectors = parameterInjectors;
+this.membersInjector = membersInjector;
+}
+public ImmutableSet<InjectionPoint> getInjectableMembers() {
+return injectableMembers;
+}
+ConstructionProxy<T> getConstructionProxy() {
+return constructionProxy;
+}
+Object construct(
+final InternalContext context,
+Dependency<?> dependency,
+throws InternalProvisionException {
+final ConstructionContext<T> constructionContext = context.getConstructionContext(this);
+if (constructionContext.isConstructing()) {
+return constructionContext.createProxy(
+context.getInjectorOptions(), dependency.getKey().getTypeLiteral().getRawType());
+}
+T t = constructionContext.getCurrentReference();
+if (t != null) {
+if (context.getInjectorOptions().disableCircularProxies) {
+throw InternalProvisionException.circularDependenciesDisabled(
+dependency.getKey().getTypeLiteral().getRawType());
+} else {
+return t;
+}
+}
+constructionContext.startConstruction();
+try {
+if (provisionCallback == null) {
+return provision(context, constructionContext);
+} else {
+return provisionCallback.provision(
+context,
+new ProvisionCallback<T>() {
+@Override
+public T call() throws InternalProvisionException {
+return provision(context, constructionContext);
+}
+});
+}
+} finally {
+constructionContext.finishConstruction();
+}
+}
+private T provision(InternalContext context, ConstructionContext<T> constructionContext)
+throws InternalProvisionException {
+try {
+T t;
+try {
+Object[] parameters = SingleParameterInjector.getAll(context, parameterInjectors);
+t = constructionProxy.newInstance(parameters);
+constructionContext.setProxyDelegates(t);
+} finally {
+constructionContext.finishConstruction();
+}
+constructionContext.setCurrentReference(t);
+MembersInjectorImpl<T> localMembersInjector = membersInjector;
+localMembersInjector.injectMembers(t, context, false);
+localMembersInjector.notifyListeners(t);
+return t;
+} catch (InvocationTargetException userException) {
+Throwable cause = userException.getCause() != null ? userException.getCause() : userException;
+throw InternalProvisionException.errorInjectingConstructor(cause)
+.addSource(constructionProxy.getInjectionPoint());
+} finally {
+constructionContext.removeCurrentReference();
+}
+}
+}

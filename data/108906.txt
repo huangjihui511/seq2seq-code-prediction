@@ -1,0 +1,4 @@
+package the.bytecode.club.bytecodeviewer.api;
+public abstract class BytecodeHook {
+public abstract void callHook(String information);
+}

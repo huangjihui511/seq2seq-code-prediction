@@ -1,0 +1,9 @@
+package org.apache.flink.runtime.io.network;
+import java.io.IOException;
+public interface ConnectionManager {
+int start() throws IOException;
+PartitionRequestClient createPartitionRequestClient(ConnectionID connectionId) throws IOException, InterruptedException;
+void closeOpenChannelConnections(ConnectionID connectionId);
+int getNumberOfActiveConnections();
+void shutdown() throws IOException;
+}

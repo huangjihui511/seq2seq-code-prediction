@@ -1,0 +1,43 @@
+package com.oath.cyclops.types.futurestream;
+import java.util.Optional;
+import java.util.concurrent.ExecutionException;
+import java.util.function.Consumer;
+import java.util.stream.Collector;
+import com.oath.cyclops.internal.react.stream.EagerStreamWrapper;
+import com.oath.cyclops.internal.react.stream.LazyStreamWrapper;
+import com.oath.cyclops.util.ThrowsSoftened;
+import cyclops.reactive.collections.mutable.ListX;
+import cyclops.reactive.companion.CyclopsCollectors;
+public interface BlockingStream<U> {
+Optional<Consumer<Throwable>> getErrorHandler();
+List<String> strings = new SimpleReact().<Integer, Integer> react(() -> 1, () -> 2, () -> 3)
+.applyHKT((it) -> it * 100)
+.applyHKT((it) -> "*" + it)
+.block();
+}
+</pre>
+@ThrowsSoftened({ InterruptedException.class, ExecutionException.class })
+default ListX<U> block() {
+final Object lastActive = getLastActive();
+if (lastActive instanceof EagerStreamWrapper) {
+final EagerStreamWrapper last = (EagerStreamWrapper) lastActive;
+return BlockingStreamHelper.block(this, CyclopsCollectors.toListX(), last);
+} else {
+final LazyStreamWrapper<U> last = (LazyStreamWrapper) lastActive;
+return BlockingStreamHelper.block(this, CyclopsCollectors.toListX(), last);
+}
+}
+Object getLastActive();
+@SuppressWarnings({ "unchecked", "rawtypes" })
+@ThrowsSoftened({ InterruptedException.class, ExecutionException.class })
+default <R, A> R block(final Collector<? super U, A, R> collector) {
+final Object lastActive = getLastActive();
+if (lastActive instanceof EagerStreamWrapper) {
+final EagerStreamWrapper last = (EagerStreamWrapper) lastActive;
+return (R) BlockingStreamHelper.block(this, collector, last);
+} else {
+final LazyStreamWrapper last = (LazyStreamWrapper) lastActive;
+return (R) BlockingStreamHelper.block(this, collector, last);
+}
+}
+}

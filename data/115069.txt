@@ -1,0 +1,64 @@
+package com.example.time.testing;
+import com.example.time.Clock;
+import java.util.concurrent.atomic.AtomicLong;
+import org.joda.time.Instant;
+import org.joda.time.ReadableDuration;
+import org.joda.time.ReadableInstant;
+public class FakeClock implements Clock {
+private static final Instant DEFAULT_TIME = new Instant(1000000000L);
+private final long baseTimeMs;
+private final AtomicLong fakeNowMs;
+private volatile long autoIncrementStepMs;
+public FakeClock() {
+this(DEFAULT_TIME);
+}
+public FakeClock(ReadableInstant now) {
+baseTimeMs = now.getMillis();
+fakeNowMs = new AtomicLong(baseTimeMs);
+}
+public FakeClock setNow(ReadableInstant now) {
+fakeNowMs.set(now.getMillis());
+return this;
+}
+@Override
+public Instant now() {
+return getAndAdd(autoIncrementStepMs);
+}
+public Instant peek() {
+return new Instant(fakeNowMs.get());
+}
+public FakeClock resetTime() {
+fakeNowMs.set(baseTimeMs);
+return this;
+}
+public FakeClock incrementTime(ReadableDuration duration) {
+incrementTime(duration.getMillis());
+return this;
+}
+public FakeClock incrementTime(long durationMs) {
+fakeNowMs.addAndGet(durationMs);
+return this;
+}
+public FakeClock decrementTime(ReadableDuration duration) {
+incrementTime(-duration.getMillis());
+return this;
+}
+public FakeClock decrementTime(long durationMs) {
+incrementTime(-durationMs);
+return this;
+}
+public FakeClock setAutoIncrementStep(ReadableDuration autoIncrementStep) {
+setAutoIncrementStep(autoIncrementStep.getMillis());
+return this;
+}
+public FakeClock setAutoIncrementStep(long autoIncrementStepMs) {
+this.autoIncrementStepMs = autoIncrementStepMs;
+return this;
+}
+protected final Instant addAndGet(long durationMs) {
+return new Instant(fakeNowMs.addAndGet(durationMs));
+}
+protected final Instant getAndAdd(long durationMs) {
+return new Instant(fakeNowMs.getAndAdd(durationMs));
+}
+}

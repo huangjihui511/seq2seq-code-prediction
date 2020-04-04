@@ -1,0 +1,30 @@
+package com.pokegoapi.api.settings;
+import com.pokegoapi.api.inventory.Pokeball;
+import java.util.List;
+public interface PokeballSelector {
+PokeballSelector LOWEST = new PokeballSelector() {
+@Override
+public Pokeball select(List<Pokeball> pokeballs, double captureProbability) {
+return pokeballs.get(0);
+}
+};
+PokeballSelector HIGHEST = new PokeballSelector() {
+@Override
+public Pokeball select(List<Pokeball> pokeballs, double captureProbability) {
+return pokeballs.get(pokeballs.size() - 1);
+}
+};
+PokeballSelector SMART = new PokeballSelector() {
+@Override
+public Pokeball select(List<Pokeball> pokeballs, double captureProbability) {
+Pokeball desired = pokeballs.get(0);
+for (Pokeball pokeball : pokeballs) {
+if (captureProbability <= pokeball.captureProbability) {
+desired = pokeball;
+}
+}
+return desired;
+}
+};
+Pokeball select(List<Pokeball> pokeballs, double captureProbability);
+}

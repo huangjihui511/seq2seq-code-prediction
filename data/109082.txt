@@ -1,0 +1,95 @@
+package io.vertx.core.cli;
+import io.vertx.codegen.annotations.DataObject;
+import io.vertx.core.json.JsonObject;
+import java.util.Objects;
+@DataObject(generateConverter = true, publicConverter = false)
+public class Argument {
+public static final String DEFAULT_ARG_NAME = "value";
+protected int index = -1;
+protected String argName = DEFAULT_ARG_NAME;
+protected String description;
+protected boolean hidden;
+protected boolean required = true;
+protected String defaultValue;
+protected boolean multiValued = false;
+public Argument() {
+}
+public Argument(Argument other) {
+this();
+index = other.index;
+argName = other.argName;
+description = other.description;
+hidden = other.hidden;
+required = other.required;
+defaultValue = other.defaultValue;
+multiValued = other.multiValued;
+}
+public Argument(JsonObject json) {
+this();
+ArgumentConverter.fromJson(json, this);
+}
+public JsonObject toJson() {
+JsonObject json = new JsonObject();
+ArgumentConverter.toJson(this, json);
+return json;
+}
+public String getArgName() {
+return argName;
+}
+public Argument setArgName(String argName) {
+Objects.requireNonNull(argName);
+this.argName = argName;
+return this;
+}
+public String getDescription() {
+return description;
+}
+public Argument setDescription(String description) {
+Objects.requireNonNull(description);
+this.description = description;
+return this;
+}
+public boolean isHidden() {
+return hidden;
+}
+public Argument setHidden(boolean hidden) {
+this.hidden = hidden;
+return this;
+}
+public int getIndex() {
+return index;
+}
+public Argument setIndex(int index) {
+if (index < 0) {
+throw new IllegalArgumentException("Argument index cannot be negative");
+}
+this.index = index;
+return this;
+}
+public boolean isRequired() {
+return required;
+}
+public Argument setRequired(boolean required) {
+this.required = required;
+return this;
+}
+public String getDefaultValue() {
+return defaultValue;
+}
+public Argument setDefaultValue(String defaultValue) {
+this.defaultValue = defaultValue;
+return this;
+}
+public boolean isMultiValued() {
+return multiValued;
+}
+public Argument setMultiValued(boolean multiValued) {
+this.multiValued = multiValued;
+return this;
+}
+public void ensureValidity() {
+if (index < 0) {
+throw new IllegalArgumentException("The index cannot be negative");
+}
+}
+}

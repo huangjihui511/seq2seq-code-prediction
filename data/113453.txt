@@ -1,0 +1,71 @@
+package com.pokegoapi.api.inventory;
+import POGOProtos.Enums.ItemCategoryOuterClass.ItemCategory;
+import POGOProtos.Inventory.AppliedItemOuterClass.AppliedItem;
+import POGOProtos.Inventory.Item.ItemDataOuterClass;
+import POGOProtos.Inventory.Item.ItemDataOuterClass.ItemData;
+import POGOProtos.Inventory.Item.ItemIdOuterClass.ItemId;
+import POGOProtos.Settings.Master.ItemSettingsOuterClass.ItemSettings;
+import com.pokegoapi.api.PokemonGo;
+import lombok.Getter;
+public class Item {
+private ItemData proto;
+private PokemonGo api;
+@Getter
+private final ItemSettings settings;
+@Getter
+public int count;
+@Getter
+private ItemBag itemBag;
+private boolean applied;
+@Getter
+private long appliedTime;
+@Getter
+private long appliedExpiration;
+public Item(PokemonGo api, ItemDataOuterClass.ItemData proto, ItemBag itemBag) {
+this.api = api;
+this.proto = proto;
+this.count = proto.getCount();
+this.itemBag = itemBag;
+this.settings = api.itemTemplates.getItemSettings(getItemId());
+}
+public ItemId getItemId() {
+return proto.getItemId();
+}
+public boolean isUnseen() {
+return proto.getUnseen();
+}
+public boolean isPotion() {
+return settings.hasPotion();
+}
+public boolean isRevive() {
+return settings.hasRevive();
+}
+public boolean isLuckyEgg() {
+return settings.hasXpBoost();
+}
+public boolean isIncense() {
+return settings.hasIncense();
+}
+public void setCount(int count) {
+this.count = count;
+if (count <= 0) {
+itemBag.removeItem(getItemId());
+} else {
+itemBag.addItem(this);
+}
+}
+public ItemCategory getCategory() {
+return settings.getCategory();
+}
+public void setApplied(AppliedItem item) {
+this.applied = true;
+this.appliedTime = item.getAppliedMs();
+this.appliedExpiration = item.getExpireMs();
+}
+public boolean isApplied() {
+return api.currentTimeMillis() <= appliedExpiration && applied;
+}
+public void removeApplied() {
+applied = false;
+}
+}

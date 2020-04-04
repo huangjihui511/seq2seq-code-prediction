@@ -1,0 +1,33 @@
+package org.apache.zookeeper.server.jersey;
+import java.util.Arrays;
+import javax.ws.rs.core.MediaType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.apache.zookeeper.data.Stat;
+import org.apache.zookeeper.server.jersey.jaxb.ZPath;
+import org.junit.Assert;
+import org.junit.Test;
+import com.sun.jersey.api.client.ClientResponse;
+import com.sun.jersey.api.client.WebResource;
+import com.sun.jersey.api.client.WebResource.Builder;
+public class RootTest extends Base {
+protected static final Logger LOG = LoggerFactory.getLogger(RootTest.class);
+@Test
+public void testCreate() throws Exception {
+String path = "/";
+String name = "roottest-create";
+byte[] data = "foo".getBytes();
+WebResource wr = znodesr.path(path).queryParam("dataformat", "utf8")
+.queryParam("name", name);
+Builder builder = wr.accept(MediaType.APPLICATION_JSON);
+ClientResponse cr;
+cr = builder.post(ClientResponse.class, data);
+Assert.assertEquals(ClientResponse.Status.CREATED, cr.getClientResponseStatus());
+ZPath zpath = cr.getEntity(ZPath.class);
+Assert.assertEquals(new ZPath(path + name), zpath);
+Assert.assertEquals(znodesr.path(path).toString(), zpath.uri);
+byte[] rdata = zk.getData(zpath.path, false, new Stat());
+Assert.assertTrue(new String(rdata) + " == " + new String(data),
+Arrays.equals(rdata, data));
+}
+}

@@ -1,0 +1,14 @@
+package tests;
+import java.util.RandomAccess;
+import javax.annotation.processing.Generated;
+import javax.inject.Inject;
+@Generated(
+value = "com.google.auto.factory.processor.AutoFactoryProcessor",
+comments = "https:
+)
+final class SimpleClassImplementingMarkerFactory implements RandomAccess {
+@Inject SimpleClassImplementingMarkerFactory() {}
+SimpleClassImplementingMarker create() {
+return new SimpleClassImplementingMarker();
+}
+}

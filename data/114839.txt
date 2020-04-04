@@ -1,0 +1,27 @@
+package com.google.api.client.protobuf;
+import com.google.api.client.util.Beta;
+import com.google.api.client.util.Throwables;
+import com.google.protobuf.MessageLite;
+import java.io.IOException;
+import java.io.InputStream;
+import java.lang.reflect.Method;
+@Beta
+public class ProtocolBuffers {
+public static final String CONTENT_TYPE = "application/x-protobuf";
+public static final String ALT_CONTENT_TYPE = "application/x-protobuffer";
+public static <T extends MessageLite> T parseAndClose(
+InputStream inputStream, Class<T> messageClass) throws IOException {
+try {
+Method newBuilder = messageClass.getDeclaredMethod("parseFrom", InputStream.class);
+return messageClass.cast(newBuilder.invoke(null, inputStream));
+} catch (Exception e) {
+Throwables.propagateIfPossible(e, IOException.class);
+IOException io = new IOException("Error parsing message of type " + messageClass);
+io.initCause(e);
+throw io;
+} finally {
+inputStream.close();
+}
+}
+private ProtocolBuffers() {}
+}

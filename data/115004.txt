@@ -1,0 +1,138 @@
+package com.google.samples;
+import com.google.api.client.googleapis.batch.BatchRequest;
+import com.google.api.client.googleapis.batch.json.JsonBatchCallback;
+import com.google.api.client.googleapis.json.GoogleJsonError;
+import com.google.api.client.http.HttpHeaders;
+import com.google.api.services.jobs.v3.CloudTalentSolution;
+import com.google.api.services.jobs.v3.model.ApplicationInfo;
+import com.google.api.services.jobs.v3.model.Company;
+import com.google.api.services.jobs.v3.model.CreateJobRequest;
+import com.google.api.services.jobs.v3.model.Empty;
+import com.google.api.services.jobs.v3.model.Job;
+import com.google.api.services.jobs.v3.model.UpdateJobRequest;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+public final class BatchOperationSample {
+private static final String DEFAULT_PROJECT_ID =
+"projects/" + System.getenv("GOOGLE_CLOUD_PROJECT");
+private static CloudTalentSolution talentSolutionClient = JobServiceQuickstart
+.getTalentSolutionClient();
+public static List<Job> batchCreateJobs(String companyName) throws IOException {
+List<Job> createdJobs = new ArrayList<>();
+JsonBatchCallback<Job> createCallback =
+new JsonBatchCallback<Job>() {
+@Override
+public void onFailure(GoogleJsonError e,
+HttpHeaders responseHeaders) {
+System.out.println("Create Error Message: " + e.getMessage());
+}
+@Override
+public void onSuccess(Job response, HttpHeaders responseHeaders) {
+System.out.println("Create Job: " + response);
+createdJobs.add(response);
+}
+};
+ApplicationInfo applicationInfo =
+new ApplicationInfo().setUris(Arrays.asList("http:
+Job softwareEngineerJob =
+new Job()
+.setCompanyName(companyName)
+.setRequisitionId("123456")
+.setTitle("Software Engineer")
+.setApplicationInfo(applicationInfo)
+.setDescription(
+"Design, develop, test, deploy, maintain and improve software.");
+Job hardwareEngineerJob =
+new Job()
+.setCompanyName(companyName)
+.setRequisitionId("1234567")
+.setTitle("Hardware Engineer")
+.setApplicationInfo(applicationInfo)
+.setDescription(
+"Design prototype PCBs or modify existing board designs "
++ "to prototype new features or functions.");
+BatchRequest batchCreate = talentSolutionClient.batch();
+talentSolutionClient
+.projects()
+.jobs()
+.create(DEFAULT_PROJECT_ID, new CreateJobRequest().setJob(softwareEngineerJob))
+.queue(batchCreate, createCallback);
+talentSolutionClient
+.projects()
+.jobs()
+.create(DEFAULT_PROJECT_ID, new CreateJobRequest().setJob(hardwareEngineerJob))
+.queue(batchCreate, createCallback);
+batchCreate.execute();
+return createdJobs;
+}
+public static List<Job> batchJobUpdate(List<Job> jobsToBeUpdate) throws IOException {
+List<Job> updatedJobs = new ArrayList<>();
+JsonBatchCallback<Job> updateCallback =
+new JsonBatchCallback<Job>() {
+@Override
+public void onFailure(GoogleJsonError e, HttpHeaders responseHeaders) {
+System.out.println("Update Error Message: " + e.getMessage());
+}
+@Override
+public void onSuccess(Job job, HttpHeaders responseHeaders) {
+System.out.println("Update Job: " + job);
+updatedJobs.add(job);
+}
+};
+BatchRequest batchUpdate = talentSolutionClient.batch();
+for (int i = 0; i < jobsToBeUpdate.size(); i += 2) {
+Job toBeUpdated = jobsToBeUpdate.get(i);
+toBeUpdated.setTitle("Engineer in Mountain View");
+talentSolutionClient
+.projects()
+.jobs()
+.patch(toBeUpdated.getName(), new UpdateJobRequest().setJob(toBeUpdated))
+.queue(batchUpdate, updateCallback);
+}
+for (int i = 1; i < jobsToBeUpdate.size(); i += 2) {
+Job toBeUpdated = new Job().setTitle("Engineer in Mountain View")
+.setName(jobsToBeUpdate.get(i).getName());
+talentSolutionClient
+.projects()
+.jobs()
+.patch(toBeUpdated.getName(),
+new UpdateJobRequest().setJob(toBeUpdated).setUpdateMask("title"))
+.queue(batchUpdate, updateCallback);
+}
+batchUpdate.execute();
+return updatedJobs;
+}
+public static void batchDeleteJobs(List<Job> jobsToBeDeleted) throws IOException {
+BatchRequest batchDelete = talentSolutionClient.batch();
+for (Job job : jobsToBeDeleted) {
+talentSolutionClient
+.projects()
+.jobs()
+.delete(job.getName())
+.queue(
+batchDelete,
+new JsonBatchCallback<Empty>() {
+@Override
+public void onFailure(GoogleJsonError e,
+HttpHeaders responseHeaders) {
+System.out.println("Delete Error Message: " + e.getMessage());
+}
+@Override
+public void onSuccess(Empty empty, HttpHeaders responseHeaders) {
+System.out.println("Job deleted");
+}
+});
+batchDelete.execute();
+}
+}
+public static void main(String... args) throws Exception {
+Company company = BasicCompanySample
+.createCompany(BasicCompanySample.generateCompany());
+List<Job> createdJobs = batchCreateJobs(company.getName());
+List<Job> updatedJobs = batchJobUpdate(createdJobs);
+batchDeleteJobs(updatedJobs);
+BasicCompanySample.deleteCompany(company.getName());
+}
+}

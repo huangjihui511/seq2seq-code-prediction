@@ -1,0 +1,104 @@
+package com.twelvemonkeys.util;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.net.URL;
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.Map;
+import java.util.HashMap;
+public abstract class ResourceMonitor {
+private static final ResourceMonitor INSTANCE = new ResourceMonitor() {};
+private Timer timer;
+private final Map<Object, ResourceMonitorTask> timerEntries;
+public static ResourceMonitor getInstance() {
+return INSTANCE;
+}
+protected ResourceMonitor() {
+timer = new Timer(true);
+timerEntries = new HashMap<Object, ResourceMonitorTask>();
+}
+public void addResourceChangeListener(ResourceChangeListener pListener,
+Object pResourceId, long pPeriod) throws IOException {
+ResourceMonitorTask task = new ResourceMonitorTask(pListener, pResourceId);
+Object resourceId = getResourceId(pResourceId, pListener);
+synchronized (timerEntries) {
+removeListenerInternal(resourceId);
+timerEntries.put(resourceId, task);
+}
+timer.schedule(task, pPeriod, pPeriod);
+}
+public void removeResourceChangeListener(ResourceChangeListener pListener, Object pResourceId) {
+synchronized (timerEntries) {
+removeListenerInternal(getResourceId(pResourceId, pListener));
+}
+}
+private void removeListenerInternal(Object pResourceId) {
+ResourceMonitorTask task = timerEntries.remove(pResourceId);
+if (task != null) {
+task.cancel();
+}
+}
+private Object getResourceId(Object pResourceName, ResourceChangeListener pListener) {
+return pResourceName.toString() + System.identityHashCode(pListener);
+}
+private void fireResourceChangeEvent(ResourceChangeListener pListener, Resource pResource) {
+pListener.resourceChanged(pResource);
+}
+private class ResourceMonitorTask extends TimerTask {
+ResourceChangeListener listener;
+Resource monitoredResource;
+long lastModified;
+public ResourceMonitorTask(ResourceChangeListener pListener, Object pResourceId) throws IOException {
+listener = pListener;
+lastModified = 0;
+String resourceId = null;
+File file = null;
+URL url = null;
+if (pResourceId instanceof File) {
+file = (File) pResourceId;
+resourceId = file.getAbsolutePath(); 
+}
+else if (pResourceId instanceof URL) {
+url = (URL) pResourceId;
+if ("file".equals(url.getProtocol())) {
+file = new File(url.getFile());
+}
+resourceId = url.toExternalForm();  
+}
+else if (pResourceId instanceof String) {
+resourceId = (String) pResourceId; 
+file = new File(resourceId);
+}
+if (file != null && file.exists()) {
+monitoredResource = new FileResource(pResourceId, file);
+}
+else {
+if (url == null) {
+url = pListener.getClass().getClassLoader().getResource(resourceId);
+}
+if (url == null) {
+url = Thread.currentThread().getContextClassLoader().getResource(resourceId);
+}
+if (url != null && "file".equals(url.getProtocol())
+&& (file = new File(url.getFile())).exists()) {
+monitoredResource = new FileResource(pResourceId, file);
+}
+else if (url != null) {
+monitoredResource = new URLResource(pResourceId, url);
+}
+else {
+throw new FileNotFoundException(resourceId);
+}
+}
+lastModified = monitoredResource.lastModified();
+}
+public void run() {
+long lastModified = monitoredResource.lastModified();
+if (lastModified != this.lastModified) {
+this.lastModified = lastModified;
+fireResourceChangeEvent(listener, monitoredResource);
+}
+}
+}
+}

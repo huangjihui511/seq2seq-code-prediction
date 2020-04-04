@@ -1,0 +1,29 @@
+package com.netflix.astyanax.ddl;
+import java.nio.ByteBuffer;
+import java.util.Collection;
+import java.util.Map;
+public interface ColumnDefinition {
+ColumnDefinition setName(String name);
+ColumnDefinition setName(byte[] name);
+ColumnDefinition setName(ByteBuffer name);
+ColumnDefinition setValidationClass(String value);
+ColumnDefinition setIndex(String name, String type);
+ColumnDefinition setKeysIndex(String name);
+ColumnDefinition setKeysIndex();
+ColumnDefinition setIndexWithType(String type);
+String getName();
+ByteBuffer getRawName();
+String getValidationClass();
+String getIndexName();
+String getIndexType();
+boolean hasIndex();
+Map<String, String> getOptions();
+String getOption(String name, String defaultValue);
+ColumnDefinition setOptions(Map<String, String> index_options);
+String setOption(String name, String value);
+Collection<String> getFieldNames();
+Collection<FieldMetadata> getFieldsMetadata();
+Object getFieldValue(String name);
+ColumnDefinition setFieldValue(String name, Object value);
+ColumnDefinition setFields(Map<String, Object> fields);
+}

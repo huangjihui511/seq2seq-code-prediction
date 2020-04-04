@@ -1,0 +1,65 @@
+package com.datumbox.framework.common.dataobjects;
+import com.datumbox.framework.common.interfaces.Copyable;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+public class FlatDataList extends AbstractDataStructureList<List<Object>> implements Iterable<Object>, Copyable<FlatDataList> {
+private static final long serialVersionUID = 1L;
+public FlatDataList() {
+super(new ArrayList<>());
+}
+public FlatDataList(List<Object> internalData) {
+super(internalData);
+}
+@Override
+public FlatDataList copy() {
+FlatDataList copy = new FlatDataList();
+copy.internalData.addAll(this.internalData);
+return copy;
+}
+public final Object remove(int index) {
+return internalData.remove(index);
+}
+public final Object get(int index) {
+return internalData.get(index);
+}
+public final Double getDouble(int index) {
+return TypeInference.toDouble(internalData.get(index));
+}
+public final boolean add(Object e) {
+return internalData.add(e);
+}
+public final Object set(int index, Object element) {
+return internalData.set(index, element);
+}
+public final boolean addAll(Collection<Object> c) {
+return internalData.addAll(c);
+}
+@Override
+public final Iterator<Object> iterator() {
+return internalData.iterator();
+}
+public final FlatDataCollection toFlatDataCollection() {
+return new FlatDataCollection(internalData);
+}
+public final boolean remove(Object o) {
+return internalData.remove(o);
+}
+public final void add(int index, Object element) {
+internalData.add(index, element);
+}
+public final boolean addAll(int index, Collection<Object> c) {
+return internalData.addAll(index, c);
+}
+@Override
+public boolean equals(Object o) {
+if ( this == o ) return true;
+if ( !(o instanceof FlatDataList) ) return false;
+return internalData.equals( ((FlatDataList)o).internalData );
+}
+@Override
+public int hashCode() {
+return internalData.hashCode();
+}
+}

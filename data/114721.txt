@@ -1,0 +1,116 @@
+package com.twelvemonkeys.servlet.jsp.taglib;
+import javax.servlet.jsp.JspException;
+import javax.servlet.jsp.JspWriter;
+import javax.servlet.jsp.tagext.BodyContent;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.Reader;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.StringTokenizer;
+public class CSVToTableTag extends ExBodyTagSupport {
+public final static String TAB = "\t";
+protected String delimiter = null;
+protected boolean firstRowIsHeader = false;
+protected boolean firstColIsHeader = false;
+public void setDelimiter(String pDelimiter) {
+delimiter = pDelimiter;
+}
+public String getDelimiter() {
+return delimiter != null ? delimiter : TAB;
+}
+public void setFirstRowIsHeader(String pBoolean) {
+firstRowIsHeader = Boolean.valueOf(pBoolean);
+}
+public void setFirstColIsHeader(String pBoolean) {
+firstColIsHeader = Boolean.valueOf(pBoolean);
+}
+public int doEndTag() throws JspException {
+BodyContent content = getBodyContent();
+try {
+Table table =
+Table.parseContent(content.getReader(), getDelimiter());
+JspWriter out = pageContext.getOut();
+if (table.getRows() > 0) {
+out.println("<TABLE>");
+for (int row = 0; row < table.getRows(); row++) {
+out.println("<TR>");
+for (int col = 0; col < table.getCols(); col++) {
+if (firstRowIsHeader && row == 0 || firstColIsHeader && col == 0) {
+out.println("<TH>" + table.get(row, col) + " </TH>");
+}
+else {
+out.println("<TD>" + table.get(row, col) + " </TD>");
+}
+}
+out.println("</TR>");
+}
+out.println("</TABLE>");
+}
+}
+catch (IOException ioe) {
+throw new JspException(ioe);
+}
+return super.doEndTag();
+}
+static class Table {
+List rows = null;
+int cols = 0;
+private Table(List pRows, int pCols) {
+rows = pRows;
+cols = pCols;
+}
+int getRows() {
+return rows != null ? rows.size() : 0;
+}
+int getCols() {
+return cols;
+}
+List getTableRows() {
+return rows;
+}
+List getTableRow(int pRow) {
+return rows != null
+? (List) rows.get(pRow)
+: Collections.EMPTY_LIST;
+}
+String get(int pRow, int pCol) {
+List row = getTableRow(pRow);
+return (row.size() > pCol) ? (String) row.get(pCol) : "";
+}
+static Table parseContent(Reader pContent, String pDelim) throws IOException {
+List<List<String>> tableRows = new ArrayList<List<String>>();
+int tdsPerTR = 0;
+BufferedReader reader = new BufferedReader(pContent);
+String tr;
+while ((tr = reader.readLine()) != null) {
+if (tr.trim().length() <= 0 && tr.indexOf(pDelim) < 0) {
+continue;
+}
+List<String> tableDatas = new ArrayList<String>();
+StringTokenizer tableRow = new StringTokenizer(tr, pDelim,
+true);
+boolean lastWasDelim = false;
+while (tableRow.hasMoreTokens()) {
+String td = tableRow.nextToken();
+if (td.equals(pDelim)) {
+if (lastWasDelim) {
+tableDatas.add("");
+}
+lastWasDelim = true;
+}
+else {
+lastWasDelim = false;
+tableDatas.add(td);
+}
+} 
+if (tableDatas.size() > tdsPerTR) {
+tdsPerTR = tableDatas.size();
+}
+tableRows.add(tableDatas);
+}
+return new Table(tableRows, tdsPerTR);
+}
+}
+}

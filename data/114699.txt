@@ -1,0 +1,57 @@
+package com.twelvemonkeys.lang;
+import org.junit.Ignore;
+import org.junit.Test;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.sql.SQLException;
+@Ignore("Under development")
+public class ExceptionUtilTest {
+@Test(expected = BadException.class)
+@SuppressWarnings({"InfiniteLoopStatement"})
+public void test() {
+while (true) {
+foo();
+}
+}
+@SuppressWarnings({"unchecked", "varargs"})
+private static void foo() {
+try {
+bar();
+}
+catch (Throwable t) {
+ExceptionUtil.handle(t,
+new ExceptionUtil.ThrowableHandler<IOException>(IOException.class) {
+public void handle(final IOException pThrowable) {
+System.out.println("IOException: " + pThrowable + " handled");
+}
+},
+new ExceptionUtil.ThrowableHandler<Exception>(SQLException.class, NumberFormatException.class) {
+public void handle(final Exception pThrowable) {
+System.out.println("Exception: " + pThrowable + " handled");
+}
+}
+);
+}
+}
+private static void bar() {
+baz();
+}
+@SuppressWarnings({"ThrowableInstanceNeverThrown"})
+private static void baz() {
+double random = Math.random();
+if (random < (2.0 / 3.0)) {
+ExceptionUtil.throwUnchecked(new FileNotFoundException("FNF Boo"));
+}
+if (random < (5.0 / 6.0)) {
+ExceptionUtil.throwUnchecked(new SQLException("SQL Boo"));
+}
+else {
+ExceptionUtil.throwUnchecked(new BadException("Some Boo"));
+}
+}
+static final class BadException extends Exception {
+public BadException(String s) {
+super(s);
+}
+}
+}

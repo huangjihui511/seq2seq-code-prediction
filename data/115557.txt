@@ -1,0 +1,6 @@
+package com.netflix.astyanax;
+import com.netflix.astyanax.model.ColumnFamily;
+public interface KeyspaceTracerFactory {
+CassandraOperationTracer newTracer(CassandraOperationType type);
+CassandraOperationTracer newTracer(CassandraOperationType type, ColumnFamily<?, ?> columnFamily);
+}

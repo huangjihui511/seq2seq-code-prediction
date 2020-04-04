@@ -1,0 +1,185 @@
+package com.undefined.testing;
+import java.io.BufferedReader;
+import java.io.OutputStream;
+import java.io.PrintWriter;
+import java.io.StringReader;
+import java.io.StringWriter;
+import java.text.NumberFormat;
+import java.util.Hashtable;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import junit.framework.AssertionFailedError;
+import junit.framework.Test;
+import org.apache.tools.ant.taskdefs.optional.junit.JUnitResultFormatter;
+import org.apache.tools.ant.taskdefs.optional.junit.JUnitTest;
+import org.apache.tools.ant.taskdefs.optional.junit.JUnitVersionHelper;
+import org.apache.tools.ant.util.FileUtils;
+import org.apache.tools.ant.util.StringUtils;
+public class OneLinerFormatter implements JUnitResultFormatter {
+private final String TAB_STR = " ";
+private final boolean showCausesLines = true;
+private final Pattern traceLinePattern = Pattern.compile("(\\w+\\.)+(\\w+)\\((\\w+).(?:\\w+):(\\d+)\\)");
+private OutputStream out;
+private PrintWriter output;
+private StringWriter results;
+private PrintWriter resultWriter;
+private NumberFormat numberFormat = NumberFormat.getInstance();
+private String systemOutput = null;
+private String systemError = null;
+private Hashtable failedTests = new Hashtable();
+private Hashtable testStarts = new Hashtable();
+public OneLinerFormatter() {
+results = new StringWriter();
+resultWriter = new PrintWriter(results);
+}
+public void setOutput(OutputStream out) {
+this.out = out;
+output = new PrintWriter(out);
+}
+public void setSystemOutput(String out) {
+systemOutput = out;
+}
+public void setSystemError(String err) {
+systemError = err;
+}
+public void startTestSuite(JUnitTest suite) {
+if (output == null) {
+return; 
+}
+StringBuffer sb = new StringBuffer(StringUtils.LINE_SEP);
+sb.append("----------------------------------------------------------");
+sb.append(StringUtils.LINE_SEP);
+sb.append("Testsuite: ");
+sb.append(suite.getName());
+sb.append(StringUtils.LINE_SEP);
+output.write(sb.toString());
+output.flush();
+}
+public void endTestSuite(JUnitTest suite) {
+StringBuffer sb = new StringBuffer("Tests run: ");
+sb.append(suite.runCount());
+sb.append(", Failures: ");
+sb.append(suite.failureCount());
+sb.append(", Errors: ");
+sb.append(suite.errorCount());
+sb.append(", Time elapsed: ");
+sb.append(numberFormat.format(suite.getRunTime() / 1000.0));
+sb.append(" sec");
+sb.append(StringUtils.LINE_SEP);
+sb.append(StringUtils.LINE_SEP);
+if (systemOutput != null && systemOutput.length() > 0) {
+sb.append("------------- Standard Output ---------------")
+.append(StringUtils.LINE_SEP)
+.append(systemOutput)
+.append("------------- ---------------- ---------------")
+.append(StringUtils.LINE_SEP);
+}
+if (systemError != null && systemError.length() > 0) {
+sb.append("------------- Standard Error -----------------")
+.append(StringUtils.LINE_SEP)
+.append(systemError)
+.append("------------- ---------------- ---------------")
+.append(StringUtils.LINE_SEP);
+}
+if (output != null) {
+try {
+output.write(sb.toString());
+resultWriter.close();
+output.write(results.toString());
+output.flush();
+} finally {
+if (out != System.out && out != System.err) {
+FileUtils.close(out);
+}
+}
+}
+}
+public void startTest(Test test) {
+testStarts.put(test, new Long(System.currentTimeMillis()));
+}
+public void endTest(Test test) {
+if (!testStarts.containsKey(test)) {
+startTest(test);
+}
+boolean failed = failedTests.containsKey(test);
+Long l = (Long) testStarts.get(test);
+output.write("Ran [");
+output.write(((System.currentTimeMillis() - l.longValue()) / 1000.0) + "] ");
+output.write(getTestName(test) + " ... " + (failed ? "FAILED" : "OK"));
+output.write(StringUtils.LINE_SEP);
+output.flush();
+}
+public void addFailure(Test test, Throwable t) {
+formatError("\tFAILED", test, t);
+}
+public void addFailure(Test test, AssertionFailedError t) {
+addFailure(test, (Throwable) t);
+}
+public void addError(Test test, Throwable error) {
+formatError("\tCaused an ERROR", test, error);
+}
+protected String getTestName(Test test) {
+if (test == null) {
+return "null";
+} else {
+return /* JUnitVersionHelper.getTestCaseClassName(test) + ": " + */
+JUnitVersionHelper.getTestCaseName(test);
+}
+}
+protected String getTestCaseClassName(Test test) {
+if (test == null) {
+return "null";
+} else {
+return JUnitVersionHelper.getTestCaseClassName(test);
+}
+}
+protected String formatTest(Test test) {
+if (test == null) {
+return "Null Test: ";
+} else {
+return "Testcase: " + test.toString() + ":";
+}
+}
+protected synchronized void formatError(String type, Test test,
+Throwable error) {
+if (test != null) {
+failedTests.put(test, test);
+endTest(test);
+}
+resultWriter.println(formatTest(test) + type);
+resultWriter.println(TAB_STR + "(" + error.getClass().getSimpleName() + "): " +
+((error.getMessage() != null) ? error.getMessage() : error));
+if (showCausesLines) {
+resultWriter.println(filterErrorTrace(test, error));
+}
+resultWriter.println();
+resultWriter.println(strace);
+resultWriter.println(); */
+}
+protected String filterErrorTrace(Test test, Throwable error) {
+String trace = StringUtils.getStackTrace(error);
+StringWriter sw = new StringWriter();
+PrintWriter pw = new PrintWriter(sw);
+StringReader sr = new StringReader(trace);
+BufferedReader br = new BufferedReader(sr);
+String line;
+try {
+while ((line = br.readLine()) != null) {
+if (line.indexOf(getTestCaseClassName(test)) != -1) {
+Matcher matcher = traceLinePattern.matcher(line);
+if (matcher.find()) {
+pw.print(TAB_STR);
+pw.print("(" + matcher.group(3) + ") ");
+pw.print(matcher.group(2) + ": ");
+pw.println(matcher.group(4));
+} else {
+pw.println(line);
+}
+}
+}
+} catch (Exception e) {
+return trace; 
+}
+return sw.toString();
+}
+}

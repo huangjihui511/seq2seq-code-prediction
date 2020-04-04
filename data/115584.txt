@@ -1,0 +1,10 @@
+package com.netflix.astyanax.mapping;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Field;
+@Deprecated
+public interface AnnotationSet<ID extends Annotation, COLUMN extends Annotation> {
+public Class<ID> getIdAnnotation();
+public Class<COLUMN> getColumnAnnotation();
+public String getIdName(Field field, ID annotation);
+public String getColumnName(Field field, COLUMN annotation);
+}

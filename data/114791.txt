@@ -1,0 +1,14 @@
+package com.briup.service;
+import java.util.Map;
+import com.briup.bean.Book;
+import com.briup.bean.OrderLine;
+import com.briup.bean.Orderform;
+import com.briup.common.exception.OrderServiceException;
+public interface IOrderService {
+void saveOrder(Orderform order) throws OrderServiceException;
+void delOrder(Long orderid) throws OrderServiceException;
+Map<Long,Orderform> listAllOrder(Long customerid) throws OrderServiceException;
+Orderform findOrderById(Long orderid) throws OrderServiceException;
+Map<Long,Book> listAllBook() throws OrderServiceException;
+void saveOrderLine(OrderLine line);
+}

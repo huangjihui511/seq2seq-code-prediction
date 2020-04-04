@@ -1,0 +1,17 @@
+package org.gnucash.android.app;
+import android.app.Application;
+import android.os.Build;
+import com.facebook.stetho.Stetho;
+import org.gnucash.android.BuildConfig;
+public class StethoUtils {
+public static void install(Application application){
+if (!BuildConfig.DEBUG || isRoboUnitTest())
+return;
+Stetho.initialize(Stetho.newInitializerBuilder(application)
+.enableWebKitInspector(Stetho.defaultInspectorModulesProvider(application))
+.build());
+}
+private static boolean isRoboUnitTest(){
+return "robolectric".equals(Build.FINGERPRINT);
+}
+}

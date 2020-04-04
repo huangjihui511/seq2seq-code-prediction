@@ -1,0 +1,28 @@
+package org.apache.zookeeper.inspector.manager;
+import java.io.File;
+import java.io.IOException;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import javax.swing.JComboBox;
+import javax.swing.JTextField;
+public interface ZooInspectorManager extends ZooInspectorNodeManager,
+ZooInspectorNodeTreeManager {
+public boolean connect(Properties connectionProps);
+public boolean disconnect();
+public Pair<Map<String, List<String>>, Map<String, String>> getConnectionPropertiesTemplate();
+public void addWatchers(Collection<String> selectedNodes,
+NodeListener nodeListener);
+public void removeWatchers(Collection<String> selectedNodes);
+public List<String> loadNodeViewersFile(File selectedFile)
+throws IOException;
+public void saveNodeViewersFile(File selectedFile,
+List<String> nodeViewersClassNames) throws IOException;
+public void setDefaultNodeViewerConfiguration(
+List<String> nodeViewersClassNames) throws IOException;
+List<String> getDefaultNodeViewerConfiguration() throws IOException;
+public void setLastConnectionProps(Properties connectionProps);
+public Properties getLastConnectionProps();
+public void saveDefaultConnectionFile(Properties props) throws IOException;
+}

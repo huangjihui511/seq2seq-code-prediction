@@ -1,0 +1,5 @@
+package com.roughike.bottombar;
+import android.support.annotation.IdRes;
+public interface OnTabReselectListener {
+void onTabReSelected(@IdRes int tabId);
+}

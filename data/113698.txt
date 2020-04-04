@@ -1,0 +1,15 @@
+package net.pms.formats.image;
+public class ICO extends ImageBase {
+@Override
+public Identifier getIdentifier() {
+return Identifier.ICO;
+}
+@Override
+public String[] getSupportedExtensions() {
+return new String[] { "ico", "cur" };
+}
+@Override
+public String mimeType() {
+return "image/x-icon";
+}
+}

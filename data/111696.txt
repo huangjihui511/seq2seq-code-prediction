@@ -1,0 +1,13 @@
+package net.glowstone;
+import lombok.Getter;
+import lombok.Setter;
+import org.bukkit.Bukkit;
+import org.bukkit.Server;
+public final class ServerProvider {
+@Getter
+@Setter
+private static volatile Server mockServer;
+public static Server getServer() {
+return mockServer == null ? Bukkit.getServer() : mockServer;
+}
+}

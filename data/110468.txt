@@ -1,0 +1,9 @@
+package com.baomidou.mybatisplus.dts;
+public interface DtsConstants {
+String RABBIT_EXCHANGE = "dts-rmt-exchange";
+String RABBIT_QUEUE = "dts-rmt-queue";
+String RABBIT_ROUTINGKEY = "dts-rmt-routingkey";
+String RABBIT_DEADLETTER_EXCHANGE = "dts-rmt-deadletter-exchange";
+String RABBIT_DEADLETTER_QUEUE = "dts-rmt-deadletter-queue";
+String RABBIT_DEADLETTER_ROUTINGKEY = "dts-rmt-deadletter-routingkey";
+}

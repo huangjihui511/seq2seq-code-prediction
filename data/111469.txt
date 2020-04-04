@@ -1,0 +1,69 @@
+package io.grpc.internal;
+import static com.google.common.base.Preconditions.checkState;
+import io.grpc.NameResolver.ConfigOrError;
+import javax.annotation.Nullable;
+final class ServiceConfigState {
+@Nullable private final ConfigOrError defaultServiceConfig;
+private final boolean lookUpServiceConfig;
+@Nullable private ConfigOrError currentServiceConfigOrError;
+private boolean updated;
+ServiceConfigState(
+@Nullable ManagedChannelServiceConfig defaultServiceConfig,
+boolean lookUpServiceConfig) {
+if (defaultServiceConfig == null) {
+this.defaultServiceConfig = null;
+} else {
+this.defaultServiceConfig = ConfigOrError.fromConfig(defaultServiceConfig);
+}
+this.lookUpServiceConfig = lookUpServiceConfig;
+if (!lookUpServiceConfig) {
+this.currentServiceConfigOrError = this.defaultServiceConfig;
+}
+}
+boolean shouldWaitOnServiceConfig() {
+return !(updated || !expectUpdates());
+}
+@Nullable
+ConfigOrError getCurrent() {
+checkState(!shouldWaitOnServiceConfig(), "still waiting on service config");
+return currentServiceConfigOrError;
+}
+void update(@Nullable ConfigOrError coe) {
+checkState(expectUpdates(), "unexpected service config update");
+boolean firstUpdate = !updated;
+updated = true;
+if (firstUpdate) {
+if (coe == null) {
+currentServiceConfigOrError = defaultServiceConfig;
+} else if (coe.getError() != null) {
+if (defaultServiceConfig != null) {
+currentServiceConfigOrError = defaultServiceConfig;
+} else {
+currentServiceConfigOrError = coe;
+}
+} else {
+assert coe.getConfig() != null;
+currentServiceConfigOrError = coe;
+}
+} else {
+if (coe == null) {
+if (defaultServiceConfig != null) {
+currentServiceConfigOrError = defaultServiceConfig;
+} else {
+currentServiceConfigOrError = null;
+}
+} else if (coe.getError() != null) {
+if (currentServiceConfigOrError != null && currentServiceConfigOrError.getError() != null) {
+currentServiceConfigOrError = coe;
+} else {
+}
+} else {
+assert coe.getConfig() != null;
+currentServiceConfigOrError = coe;
+}
+}
+}
+boolean expectUpdates() {
+return lookUpServiceConfig;
+}
+}

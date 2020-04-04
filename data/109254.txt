@@ -1,0 +1,14 @@
+package org.jeecg.modules.message.handle.enums;
+public enum SendMsgStatusEnum {
+WAIT("0"), SUCCESS("1"), FAIL("2");
+private String code;
+private SendMsgStatusEnum(String code) {
+this.code = code;
+}
+public String getCode() {
+return code;
+}
+public void setStatusCode(String code) {
+this.code = code;
+}
+}

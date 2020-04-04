@@ -1,0 +1,47 @@
+package net.pms.image;
+import java.awt.color.ColorSpace;
+import java.util.HashMap;
+import java.util.Map;
+public enum ColorSpaceType {
+TYPE_XYZ(0),
+TYPE_Lab(1),
+TYPE_Luv(2),
+TYPE_YCbCr(3),
+TYPE_Yxy(4),
+TYPE_RGB(5),
+TYPE_GRAY(6),
+TYPE_HSV(7),
+TYPE_HLS(8),
+TYPE_CMYK(9),
+TYPE_CMY(11),
+TYPE_2CLR(12),
+TYPE_3CLR(13),
+TYPE_4CLR(14),
+TYPE_5CLR(15),
+TYPE_6CLR(16),
+TYPE_7CLR(17),
+TYPE_8CLR(18),
+TYPE_9CLR(19),
+TYPE_ACLR(20),
+TYPE_BCLR(21),
+TYPE_CCLR(22),
+TYPE_DCLR(23),
+TYPE_ECLR(24),
+TYPE_FCLR(25);
+private static final Map<Integer, ColorSpaceType> map = new HashMap<>();
+static {
+for (ColorSpaceType colorSpaceType : ColorSpaceType.values()) {
+map.put(colorSpaceType.typeId, colorSpaceType);
+}
+}
+public static ColorSpaceType toColorSpaceType(int typeId) {
+return map.get(typeId);
+}
+private final int typeId;
+private ColorSpaceType(int typeId) {
+this.typeId = typeId;
+}
+public int getTypeId() {
+return typeId;
+}
+}

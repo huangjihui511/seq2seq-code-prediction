@@ -1,0 +1,6 @@
+package org.pf4j;
+import java.nio.file.Path;
+public interface PluginLoader {
+boolean isApplicable(Path pluginPath);
+ClassLoader loadPlugin(Path pluginPath, PluginDescriptor pluginDescriptor);
+}

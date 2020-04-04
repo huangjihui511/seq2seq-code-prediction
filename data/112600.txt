@@ -1,0 +1,55 @@
+package org.jb2011.lnf.beautyeye.ch15_slider;
+import javax.swing.ImageIcon;
+import org.jb2011.lnf.beautyeye.utils.RawCache;
+public class __IconFactory__ extends RawCache<ImageIcon>
+{
+public final static String IMGS_ROOT="imgs";
+private static __IconFactory__ instance = null;
+public static __IconFactory__ getInstance()
+{
+if(instance==null)
+instance = new __IconFactory__();
+return instance;
+}
+@Override
+protected ImageIcon getResource(String relativePath, Class baseClass)
+{
+return new ImageIcon(baseClass.getResource(relativePath));
+}
+public ImageIcon getImage(String relativePath)
+{
+return  getRaw(relativePath,this.getClass());
+}
+public ImageIcon getSliderTick1()
+{
+return getImage(IMGS_ROOT+"/slider_tick1.png");
+}
+public ImageIcon getSliderTick1_notrangle()
+{
+return getImage(IMGS_ROOT+"/slider_tick1_notrangle.png");
+}
+public ImageIcon getSliderTick1_disable()
+{
+return getImage(IMGS_ROOT+"/slider_tick1_dark.png");
+}
+public ImageIcon getSliderTick1_notrangle_disable()
+{
+return getImage(IMGS_ROOT+"/slider_tick1_notrangle_dark.png");
+}
+public ImageIcon getSliderTick1_vertical()
+{
+return getImage(IMGS_ROOT+"/slider_tick1_v.png");
+}
+public ImageIcon getSliderTick1_notrangle_vertical()
+{
+return getImage(IMGS_ROOT+"/slider_tick1_notrangle_v.png");
+}
+public ImageIcon getSliderTick1_VERTICAL_disable()
+{
+return getImage(IMGS_ROOT+"/slider_tick1_v_dark.png");
+}
+public ImageIcon getSliderTick1_notrangle_VERTICAL_disable()
+{
+return getImage(IMGS_ROOT+"/slider_tick1_notrangle_v_dark.png");
+}
+}

@@ -1,0 +1,48 @@
+package org.apache.parquet.cli.json;
+import java.io.Closeable;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Iterator;
+import com.google.common.collect.Iterators;
+import org.apache.avro.Schema;
+import org.apache.avro.generic.GenericData;
+import org.apache.parquet.cli.util.RuntimeIOException;
+public class AvroJsonReader<E> implements Iterator<E>, Iterable<E>, Closeable {
+private final GenericData model;
+private final Schema schema;
+private final InputStream stream;
+private Iterator<E> iterator;
+@SuppressWarnings("unchecked")
+public AvroJsonReader(InputStream stream, Schema schema) {
+this.stream = stream;
+this.schema = schema;
+this.model = GenericData.get();
+this.iterator = Iterators.transform(AvroJson.parser(stream),
+node -> (E) AvroJson.convertToAvro(model, node, AvroJsonReader.this.schema));
+}
+@Override
+public boolean hasNext() {
+return iterator.hasNext();
+}
+@Override
+public E next() {
+return iterator.next();
+}
+@Override
+public void close() {
+iterator = null;
+try {
+stream.close();
+} catch (IOException e) {
+throw new RuntimeIOException("Cannot close reader", e);
+}
+}
+@Override
+public void remove() {
+throw new UnsupportedOperationException("Remove is not implemented.");
+}
+@Override
+public Iterator<E> iterator() {
+return this;
+}
+}

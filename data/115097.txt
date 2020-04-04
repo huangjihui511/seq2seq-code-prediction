@@ -1,0 +1,96 @@
+package io.ebeaninternal.api;
+import io.ebeaninternal.server.cache.CacheChangeSet;
+import io.ebeaninternal.server.core.PersistRequestBean;
+import io.ebeaninternal.server.deploy.BeanDescriptor;
+import io.ebeaninternal.server.deploy.BeanDescriptorManager;
+import io.ebeaninternal.server.transaction.DeleteByIdMap;
+import io.ebeaninternal.server.transaction.TransactionManager;
+import io.ebeanservice.docstore.api.DocStoreUpdates;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
+public class TransactionEvent implements Serializable {
+private static final long serialVersionUID = 7230903304106097120L;
+private final transient boolean local;
+private TransactionEventTable eventTables;
+private transient List<PersistRequestBean<?>> listenerNotify;
+private transient DeleteByIdMap deleteByIdMap;
+private transient CacheChangeSet changeSet;
+public TransactionEvent() {
+this.local = true;
+}
+public void addDeleteById(BeanDescriptor<?> desc, Object id) {
+if (deleteByIdMap == null) {
+deleteByIdMap = new DeleteByIdMap();
+}
+deleteByIdMap.add(desc, id);
+}
+public void addDeleteByIdList(BeanDescriptor<?> desc, List<Object> idList) {
+if (deleteByIdMap == null) {
+deleteByIdMap = new DeleteByIdMap();
+}
+deleteByIdMap.addList(desc, idList);
+}
+public DeleteByIdMap getDeleteByIdMap() {
+return deleteByIdMap;
+}
+public boolean isLocal() {
+return local;
+}
+public List<PersistRequestBean<?>> getListenerNotify() {
+return listenerNotify;
+}
+public TransactionEventTable getEventTables() {
+return eventTables;
+}
+public void add(String tableName, boolean inserts, boolean updates, boolean deletes) {
+if (eventTables == null) {
+eventTables = new TransactionEventTable();
+}
+eventTables.add(tableName, inserts, updates, deletes);
+}
+public void add(TransactionEventTable table) {
+if (eventTables == null) {
+eventTables = new TransactionEventTable();
+}
+eventTables.add(table);
+}
+public void addListenerNotify(PersistRequestBean<?> request) {
+if (listenerNotify == null) {
+listenerNotify = new ArrayList<>();
+}
+listenerNotify.add(request);
+}
+public CacheChangeSet buildCacheChanges(TransactionManager manager) {
+if (changeSet == null && deleteByIdMap == null && eventTables == null) {
+return null;
+}
+if (changeSet == null) {
+changeSet = new CacheChangeSet();
+}
+if (eventTables != null && !eventTables.isEmpty()) {
+BeanDescriptorManager dm = manager.getBeanDescriptorManager();
+for (TransactionEventTable.TableIUD tableIUD : eventTables.values()) {
+dm.cacheNotify(tableIUD, changeSet);
+}
+}
+if (deleteByIdMap != null) {
+deleteByIdMap.notifyCache(changeSet);
+}
+return changeSet;
+}
+public void addDocStoreUpdates(DocStoreUpdates docStoreUpdates) {
+List<PersistRequestBean<?>> requests = getListenerNotify();
+if (requests != null) {
+for (PersistRequestBean<?> persistRequestBean : requests) {
+persistRequestBean.addDocStoreUpdates(docStoreUpdates);
+}
+}
+}
+public CacheChangeSet obtainCacheChangeSet() {
+if (changeSet == null) {
+changeSet = new CacheChangeSet();
+}
+return changeSet;
+}
+}

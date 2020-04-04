@@ -1,0 +1,6 @@
+package the.bytecode.club.bytecodeviewer.decompilers.bytecode;
+import org.objectweb.asm.Type;
+public class TypeAndName {
+public Type type = null;
+public String name = null;
+}

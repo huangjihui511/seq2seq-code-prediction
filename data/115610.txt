@@ -1,0 +1,7 @@
+package com.netflix.astyanax.model;
+public interface CqlResult<K, C> {
+Rows<K, C> getRows();
+int getNumber();
+boolean hasRows();
+boolean hasNumber();
+}

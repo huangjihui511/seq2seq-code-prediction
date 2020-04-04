@@ -1,0 +1,12 @@
+package com.twelvemonkeys.util;
+import java.io.Serializable;
+public class IntegerKey extends TypedMap.AbstractKey implements Serializable {
+public IntegerKey(String pName) {
+super(pName);
+}
+public IntegerKey() {
+}
+public boolean isCompatibleValue(Object pValue) {
+return pValue instanceof Integer;
+}
+}

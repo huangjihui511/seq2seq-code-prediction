@@ -1,0 +1,46 @@
+package mobi.hsz.idea.gitignore.codeInspection;
+import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
+import com.intellij.lang.ASTNode;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.source.tree.TreeUtil;
+import mobi.hsz.idea.gitignore.IgnoreBundle;
+import mobi.hsz.idea.gitignore.psi.IgnoreEntry;
+import mobi.hsz.idea.gitignore.psi.IgnoreTypes;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+public class IgnoreRemoveEntryFix extends LocalQuickFixAndIntentionActionOnPsiElement {
+public IgnoreRemoveEntryFix(@NotNull IgnoreEntry entry) {
+super(entry);
+}
+@NotNull
+@Override
+public String getText() {
+return IgnoreBundle.message("quick.fix.remove.entry");
+}
+@Override
+public void invoke(@NotNull Project project, @NotNull PsiFile file,
+@Nullable("is null when called from inspection") Editor editor,
+@NotNull PsiElement startElement, @NotNull PsiElement endElement) {
+if (startElement instanceof IgnoreEntry) {
+removeCrlf(startElement);
+startElement.delete();
+}
+}
+private void removeCrlf(PsiElement startElement) {
+ASTNode node = TreeUtil.findSibling(startElement.getNode(), IgnoreTypes.CRLF);
+if (node == null) {
+node = TreeUtil.findSiblingBackward(startElement.getNode(), IgnoreTypes.CRLF);
+}
+if (node != null) {
+node.getPsi().delete();
+}
+}
+@NotNull
+@Override
+public String getFamilyName() {
+return IgnoreBundle.message("codeInspection.group");
+}
+}

@@ -1,0 +1,8 @@
+package io.grpc;
+import java.io.Closeable;
+@ExperimentalApi("https:
+public abstract class BinaryLog implements Closeable {
+public abstract <ReqT, RespT> ServerMethodDefinition<?, ?> wrapMethodDefinition(
+ServerMethodDefinition<ReqT, RespT> oMethodDef);
+public abstract Channel wrapChannel(Channel channel);
+}

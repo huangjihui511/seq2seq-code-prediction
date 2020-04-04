@@ -1,0 +1,28 @@
+package org.spongepowered.mod.inject;
+import org.spongepowered.api.Platform;
+import org.spongepowered.api.event.EventManager;
+import org.spongepowered.api.network.ChannelRegistrar;
+import org.spongepowered.api.plugin.PluginManager;
+import org.spongepowered.common.SpongeGame;
+import org.spongepowered.common.inject.SpongeImplementationModule;
+import org.spongepowered.mod.SpongeMod;
+import org.spongepowered.mod.SpongeModGame;
+import org.spongepowered.mod.SpongeModPlatform;
+import org.spongepowered.mod.event.SpongeModEventManager;
+import org.spongepowered.mod.network.SpongeModNetworkManager;
+import org.spongepowered.mod.plugin.SpongeModPluginContainer;
+import org.spongepowered.mod.plugin.SpongeModPluginManager;
+public class SpongeForgeModule extends SpongeImplementationModule {
+@Override
+protected void configure() {
+super.configure();
+this.bind(SpongeMod.class).toInstance(SpongeMod.instance);
+this.bind(SpongeGame.class).to(SpongeModGame.class);
+this.bind(Platform.class).to(SpongeModPlatform.class);
+this.bind(PluginManager.class).to(SpongeModPluginManager.class);
+this.bind(EventManager.class).to(SpongeModEventManager.class);
+this.bind(ChannelRegistrar.class).to(SpongeModNetworkManager.class);
+this.requestInjection(SpongeMod.instance);
+this.requestStaticInjection(SpongeModPluginContainer.class);
+}
+}

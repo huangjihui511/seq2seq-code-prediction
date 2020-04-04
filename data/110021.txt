@@ -1,0 +1,6 @@
+package com.google.cloud.tools.jib.plugins.common;
+public class BuildStepsExecutionException extends Exception {
+BuildStepsExecutionException(String message, Throwable cause) {
+super(message, cause);
+}
+}

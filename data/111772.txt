@@ -1,0 +1,47 @@
+package org.jupiter.common.util;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicInteger;
+public abstract class ConstantPool<T extends Constant<T>> {
+private final ConcurrentMap<String, T> constants = Maps.newConcurrentMap();
+private final AtomicInteger nextId = new AtomicInteger(1);
+public T valueOf(Class<?> firstNameComponent, String secondNameComponent) {
+Requires.requireNotNull(firstNameComponent, "firstNameComponent");
+Requires.requireNotNull(secondNameComponent, "secondNameComponent");
+return valueOf(firstNameComponent.getName() + '#' + secondNameComponent);
+}
+public T valueOf(String name) {
+Requires.requireTrue(!Strings.isNullOrEmpty(name), "empty name");
+return getOrCreate(name);
+}
+private T getOrCreate(String name) {
+T constant = constants.get(name);
+if (constant == null) {
+final T newConstant = newConstant(nextId.getAndIncrement(), name);
+constant = constants.putIfAbsent(name, newConstant);
+if (constant == null) {
+constant = newConstant;
+}
+}
+return constant;
+}
+public boolean exists(String name) {
+Requires.requireTrue(!Strings.isNullOrEmpty(name), "empty name");
+return constants.containsKey(name);
+}
+public T newInstance(String name) {
+Requires.requireTrue(!Strings.isNullOrEmpty(name), "empty name");
+return createOrThrow(name);
+}
+private T createOrThrow(String name) {
+T constant = constants.get(name);
+if (constant == null) {
+final T newConstant = newConstant(nextId.getAndIncrement(), name);
+constant = constants.putIfAbsent(name, newConstant);
+if (constant == null) {
+return newConstant;
+}
+}
+throw new IllegalArgumentException(String.format("'%s' is already in use", name));
+}
+protected abstract T newConstant(int id, String name);
+}

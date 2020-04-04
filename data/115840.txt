@@ -1,0 +1,47 @@
+package com.jeff.tianti.common.entity;
+import java.io.Serializable;
+import java.util.List;
+public class PageModel<E> implements Serializable {
+private static final long serialVersionUID = 3265524976080127173L;
+public PageModel() {
+}
+public PageModel(int pageSize) {
+this.pageSize = pageSize;
+}
+public int getTotalCount() {
+return totalCount;
+}
+public void setTotalCount(int totalCount) {
+this.totalCount = totalCount;
+}
+public int getPageSize() {
+return pageSize;
+}
+public void setPageSize(int pageSize) {
+this.pageSize = pageSize;
+}
+public int getTotalPage() {
+return totalPage;
+}
+public void setTotalPage(int totalPage) {
+this.totalPage = totalPage;
+}
+public int getCurrentPage() {
+return currentPage;
+}
+public void setCurrentPage(int currentPage) {
+this.currentPage = currentPage;
+}
+public List<E> getList() {
+return list;
+}
+public void setList(List<E> list) {
+this.list = list;
+}
+public String getUrl() {
+return url;
+}
+public void setUrl(String url) {
+this.url = url;
+}
+}

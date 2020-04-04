@@ -1,0 +1,56 @@
+package com.JUtils.beanConvert;
+import java.beans.BeanInfo;
+import java.beans.IntrospectionException;
+import java.beans.Introspector;
+import java.beans.PropertyDescriptor;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.HashMap;
+import java.util.Map;
+public class BeanMapConvert {
+public static Map<String,Object> bean2MapObject(Object object){
+if(object == null){
+return null;
+}
+Map<String, Object> map = new HashMap<String, Object>();
+try {
+BeanInfo beanInfo = Introspector.getBeanInfo(object.getClass());
+PropertyDescriptor[] propertyDescriptors = beanInfo.getPropertyDescriptors();
+for (PropertyDescriptor property : propertyDescriptors) {
+String key = property.getName();
+if (!key.equals("class")) {
+Method getter = property.getReadMethod();
+Object value = getter.invoke(object);
+map.put(key, value);
+}
+}
+} catch (Exception e) {
+e.printStackTrace();
+}
+return map;
+}
+public static Object map2Bean(Map map,Object object){
+if(map == null || object == null){
+return null;
+}
+try {
+BeanInfo beanInfo = Introspector.getBeanInfo(object.getClass());
+PropertyDescriptor[] propertyDescriptors = beanInfo.getPropertyDescriptors();
+for (PropertyDescriptor property : propertyDescriptors) {
+String key = property.getName();
+if (map.containsKey(key)) {
+Object value = map.get(key);
+Method setter = property.getWriteMethod();
+setter.invoke(object, value);
+}
+}
+} catch (IntrospectionException e) {
+e.printStackTrace();
+} catch (InvocationTargetException e) {
+e.printStackTrace();
+} catch (IllegalAccessException e) {
+e.printStackTrace();
+}
+return object;
+}
+}

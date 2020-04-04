@@ -1,0 +1,19 @@
+package io.grpc.internal;
+import io.grpc.Attributes;
+import io.grpc.Deadline;
+import io.grpc.DecompressorRegistry;
+import io.grpc.Status;
+import javax.annotation.Nonnull;
+public interface ClientStream extends Stream {
+void cancel(Status reason);
+void halfClose();
+void setAuthority(String authority);
+void setFullStreamDecompression(boolean fullStreamDecompression);
+void setDecompressorRegistry(DecompressorRegistry decompressorRegistry);
+void start(ClientStreamListener listener);
+void setMaxInboundMessageSize(int maxSize);
+void setMaxOutboundMessageSize(int maxSize);
+void setDeadline(@Nonnull Deadline deadline);
+Attributes getAttributes();
+void appendTimeoutInsight(InsightBuilder insight);
+}

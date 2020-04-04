@@ -1,0 +1,53 @@
+package bean;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import spider.Spider;
+public class Imooc {
+public String question;
+public String quesUrl;
+public String quesDescription;
+public Map<String,String> answers;
+public String nextUrl;
+public Imooc(String url) {
+question="";
+quesUrl=url;
+quesDescription="";
+answers = new HashMap<String,String>();
+nextUrl="";
+String codeSource = Spider.getSource(url);
+Pattern pattern=Pattern.compile("js-qa-wenda-title.+?>(.+?)</h1>");
+Matcher matcher=pattern.matcher(codeSource);
+if(matcher.find()){
+question = matcher.group(1);
+}
+pattern=Pattern.compile("js-qa-wenda.+?rich-text\">(.+?)</div>");
+matcher=pattern.matcher(codeSource);
+if(matcher.find()){
+quesDescription = matcher.group(1).replace("<p>", "").replace("</p>", "");
+}
+matcher=pattern.matcher(codeSource);
+while(matcher.find()){
+String answer = matcher.group(2).replace("<p>", "");
+answer = answer.replace("</p>", "");
+answer = answer.replace("<br />", "");
+answers.put(matcher.group(1),answer);
+}
+matcher=pattern.matcher(codeSource);
+while(matcher.find()){
+nextUrl="http:
+if(!nextUrl.equals(quesUrl)){
+break;
+}
+}
+}
+@Override
+public String toString() {
+}
+public static void main(String[] args) {
+String url = "http:
+Imooc imooc = new Imooc(url);
+System.out.println(imooc);
+}
+}

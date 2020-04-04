@@ -1,0 +1,35 @@
+package com.twelvemonkeys.util;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
+import java.net.URLConnection;
+final class URLResource extends AbstractResource {
+private long lastModified = -1;
+public URLResource(Object pResourceId, URL pURL) {
+super(pResourceId, pURL);
+}
+private URL getURL() {
+return (URL) wrappedResource;
+}
+public URL asURL() {
+return getURL();
+}
+public InputStream asStream() throws IOException {
+URLConnection connection = getURL().openConnection();
+connection.setAllowUserInteraction(false);
+connection.setUseCaches(true);
+return connection.getInputStream();
+}
+public long lastModified() {
+try {
+URLConnection connection = getURL().openConnection();
+connection.setAllowUserInteraction(false);
+connection.setUseCaches(true);
+connection.setIfModifiedSince(lastModified);
+lastModified = connection.getLastModified();
+}
+catch (IOException ignore) {
+}
+return lastModified;
+}
+}

@@ -1,0 +1,57 @@
+package org.nd4j.linalg.api.ops.impl.shape;
+import org.apache.commons.lang3.ArrayUtils;
+import org.nd4j.autodiff.samediff.SDVariable;
+import org.nd4j.autodiff.samediff.SameDiff;
+import org.nd4j.imports.NoOpNameFoundException;
+import org.nd4j.linalg.api.ndarray.INDArray;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+public class Permute extends Transpose {
+private int[] reverseDims;
+public Permute(SameDiff sameDiff, SDVariable i_v, int... permuteDims) {
+super(sameDiff, i_v);
+this.permuteDims = permuteDims;
+this.reverseDims = new int[permuteDims.length];
+for (int i = 0; i < reverseDims.length; i++) {
+reverseDims[i] = ArrayUtils.indexOf(permuteDims, i);
+}
+addIArgument(permuteDims);
+}
+public Permute(INDArray input, INDArray result, int... permuteDims){
+super(input, result);
+this.permuteDims = permuteDims;
+this.reverseDims = new int[permuteDims.length];
+for (int i = 0; i < reverseDims.length; i++) {
+reverseDims[i] = ArrayUtils.indexOf(permuteDims, i);
+}
+addIArgument(permuteDims);
+}
+public Permute(SameDiff sd, SDVariable input, SDVariable permuteDims){
+super(sd, input, permuteDims);
+}
+public Permute() {
+}
+@Override
+public String opName() {
+return "permute";
+}
+@Override
+public List<SDVariable> doDiff(List<SDVariable> i_v) {
+SDVariable ret;
+if(args().length == 1) {
+ret = f().permute(i_v.get(0), reverseDims);
+} else {
+ret = f().permute(i_v.get(0), sameDiff.invertPermutation(arg(1)));
+}
+return Collections.singletonList(ret);
+}
+@Override
+public String tensorflowName() {
+throw new NoOpNameFoundException("No tensorflow op opName found for " + opName());
+}
+@Override
+public String onnxName() {
+throw new NoOpNameFoundException("No onnx op opName found for " + opName());
+}
+}

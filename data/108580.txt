@@ -1,0 +1,15 @@
+package org.deeplearning4j.arbiter.optimize.generator.genetic.culling;
+public class LeastFitCullOperator extends RatioCullOperator {
+public LeastFitCullOperator() {
+super();
+}
+public LeastFitCullOperator(double cullRatio) {
+super(cullRatio);
+}
+@Override
+public void cullPopulation() {
+while (population.size() > culledSize) {
+population.remove(population.size() - 1);
+}
+}
+}

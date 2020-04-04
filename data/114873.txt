@@ -1,0 +1,188 @@
+package com.google.api.client.http;
+import com.google.api.client.util.Preconditions;
+import java.nio.charset.Charset;
+import java.util.Collections;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.SortedMap;
+import java.util.TreeMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+public final class HttpMediaType {
+private static final Pattern TYPE_REGEX;
+private static final Pattern TOKEN_REGEX;
+private static final Pattern FULL_MEDIA_TYPE_REGEX;
+private static final Pattern PARAMETER_REGEX;
+private String type = "application";
+private String subType = "octet-stream";
+private final SortedMap<String, String> parameters = new TreeMap<String, String>();
+private String cachedBuildResult;
+static {
+TYPE_REGEX = Pattern.compile("[\\w!#$&.+\\-\\^_]+|[*]");
+TOKEN_REGEX =
+Pattern.compile("[\\p{ASCII}&&[^\\p{Cntrl} ;/=\\[\\]\\(\\)\\<\\>\\@\\,\\:\\\"\\?\\=]]+");
+String typeOrKey = "[^\\s/=;\"]+"; 
+String wholeParameterSection = ";.*";
+FULL_MEDIA_TYPE_REGEX =
+Pattern.compile(
+"\\s*("
++ typeOrKey
++ ")/("
++ typeOrKey
++ ")"
++ 
+"\\s*("
++ wholeParameterSection
++ ")?",
+Pattern.DOTALL); 
+String quotedParameterValue = "\"([^\"]*)\"";
+String unquotedParameterValue = "[^\\s;\"]*";
+String parameterValue = quotedParameterValue + "|" + unquotedParameterValue;
+PARAMETER_REGEX =
+Pattern.compile(
+"\\s*;\\s*("
++ typeOrKey
++ ")"
++ 
+"=("
++ parameterValue
++ ")"); 
+}
+public HttpMediaType(String type, String subType) {
+setType(type);
+setSubType(subType);
+}
+public HttpMediaType(String mediaType) {
+fromString(mediaType);
+}
+public HttpMediaType setType(String type) {
+Preconditions.checkArgument(
+TYPE_REGEX.matcher(type).matches(), "Type contains reserved characters");
+this.type = type;
+cachedBuildResult = null;
+return this;
+}
+public String getType() {
+return type;
+}
+public HttpMediaType setSubType(String subType) {
+Preconditions.checkArgument(
+TYPE_REGEX.matcher(subType).matches(), "Subtype contains reserved characters");
+this.subType = subType;
+cachedBuildResult = null;
+return this;
+}
+public String getSubType() {
+return subType;
+}
+private HttpMediaType fromString(String combinedType) {
+Matcher matcher = FULL_MEDIA_TYPE_REGEX.matcher(combinedType);
+Preconditions.checkArgument(
+matcher.matches(), "Type must be in the 'maintype/subtype; parameter=value' format");
+setType(matcher.group(1));
+setSubType(matcher.group(2));
+String params = matcher.group(3);
+if (params != null) {
+matcher = PARAMETER_REGEX.matcher(params);
+while (matcher.find()) {
+String key = matcher.group(1);
+String value = matcher.group(3);
+if (value == null) {
+value = matcher.group(2);
+}
+setParameter(key, value);
+}
+}
+return this;
+}
+public HttpMediaType setParameter(String name, String value) {
+if (value == null) {
+removeParameter(name);
+return this;
+}
+Preconditions.checkArgument(
+TOKEN_REGEX.matcher(name).matches(), "Name contains reserved characters");
+cachedBuildResult = null;
+parameters.put(name.toLowerCase(Locale.US), value);
+return this;
+}
+public String getParameter(String name) {
+return parameters.get(name.toLowerCase(Locale.US));
+}
+public HttpMediaType removeParameter(String name) {
+cachedBuildResult = null;
+parameters.remove(name.toLowerCase(Locale.US));
+return this;
+}
+public void clearParameters() {
+cachedBuildResult = null;
+parameters.clear();
+}
+public Map<String, String> getParameters() {
+return Collections.unmodifiableMap(parameters);
+}
+static boolean matchesToken(String value) {
+return TOKEN_REGEX.matcher(value).matches();
+}
+private static String quoteString(String unquotedString) {
+String escapedString = unquotedString.replace("\\", "\\\\"); 
+escapedString = escapedString.replace("\"", "\\\""); 
+return "\"" + escapedString + "\"";
+}
+public String build() {
+if (cachedBuildResult != null) {
+return cachedBuildResult;
+}
+StringBuilder str = new StringBuilder();
+str.append(type);
+str.append('/');
+str.append(subType);
+if (parameters != null) {
+for (Entry<String, String> entry : parameters.entrySet()) {
+String value = entry.getValue();
+str.append("; ");
+str.append(entry.getKey());
+str.append("=");
+str.append(!matchesToken(value) ? quoteString(value) : value);
+}
+}
+cachedBuildResult = str.toString();
+return cachedBuildResult;
+}
+@Override
+public String toString() {
+return build();
+}
+public boolean equalsIgnoreParameters(HttpMediaType mediaType) {
+return mediaType != null
+&& getType().equalsIgnoreCase(mediaType.getType())
+&& getSubType().equalsIgnoreCase(mediaType.getSubType());
+}
+public static boolean equalsIgnoreParameters(String mediaTypeA, String mediaTypeB) {
+return (mediaTypeA == null && mediaTypeB == null)
+|| mediaTypeA != null
+&& mediaTypeB != null
+&& new HttpMediaType(mediaTypeA).equalsIgnoreParameters(new HttpMediaType(mediaTypeB));
+}
+public HttpMediaType setCharsetParameter(Charset charset) {
+setParameter("charset", charset == null ? null : charset.name());
+return this;
+}
+public Charset getCharsetParameter() {
+String value = getParameter("charset");
+return value == null ? null : Charset.forName(value);
+}
+@Override
+public int hashCode() {
+return build().hashCode();
+}
+@Override
+public boolean equals(Object obj) {
+if (!(obj instanceof HttpMediaType)) {
+return false;
+}
+HttpMediaType otherType = (HttpMediaType) obj;
+return equalsIgnoreParameters(otherType) && parameters.equals(otherType.parameters);
+}
+}

@@ -1,0 +1,14 @@
+package org.spongepowered.mod;
+import org.spongepowered.api.Platform;
+import org.spongepowered.common.SpongeImpl;
+import org.spongepowered.mod.plugin.MetaModContainer;
+import java.io.File;
+public class SpongeApiModContainer extends MetaModContainer {
+public SpongeApiModContainer() {
+super(SpongeModMetadata.get(Platform.API_ID, SpongeImpl.API_NAME));
+}
+@Override
+public File getSource() {
+return SpongeCoremod.modFile;
+}
+}

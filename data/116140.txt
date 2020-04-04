@@ -1,0 +1,297 @@
+package net.i2p.router.networkdb.kademlia;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
+import net.i2p.data.Hash;
+import net.i2p.data.router.RouterAddress;
+import net.i2p.data.router.RouterInfo;
+import net.i2p.kademlia.KBucketSet;
+import net.i2p.kademlia.SelectionCollector;
+import net.i2p.kademlia.XORComparator;
+import net.i2p.router.RouterContext;
+import net.i2p.router.peermanager.PeerProfile;
+import net.i2p.router.util.MaskedIPSet;
+import net.i2p.router.util.RandomIterator;
+import net.i2p.stat.Rate;
+import net.i2p.stat.RateStat;
+import net.i2p.util.Log;
+class FloodfillPeerSelector extends PeerSelector {
+public FloodfillPeerSelector(RouterContext ctx) {
+super(ctx);
+}
+@Override
+List<Hash> selectMostReliablePeers(Hash key, int maxNumRouters, Set<Hash> peersToIgnore, KBucketSet<Hash> kbuckets) {
+return selectNearestExplicitThin(key, maxNumRouters, peersToIgnore, kbuckets, true);
+}
+@Override
+List<Hash> selectNearestExplicitThin(Hash key, int maxNumRouters, Set<Hash> peersToIgnore, KBucketSet<Hash> kbuckets) {
+return selectNearestExplicitThin(key, maxNumRouters, peersToIgnore, kbuckets, false);
+}
+List<Hash> selectNearestExplicitThin(Hash key, int maxNumRouters, Set<Hash> peersToIgnore, KBucketSet<Hash> kbuckets, boolean preferConnected) {
+if (peersToIgnore == null)
+peersToIgnore = Collections.singleton(_context.routerHash());
+else
+peersToIgnore.add(_context.routerHash());
+FloodfillSelectionCollector matches = new FloodfillSelectionCollector(key, peersToIgnore, maxNumRouters);
+if (kbuckets == null) return new ArrayList<Hash>();
+kbuckets.getAll(matches);
+List<Hash> rv = matches.get(maxNumRouters, preferConnected);
+if (_log.shouldLog(Log.DEBUG))
+_log.debug("Searching for " + maxNumRouters + " peers close to " + key + ": "
++ rv + " (not including " + peersToIgnore + ") [allHashes.size = "
++ matches.size() + "]", new Exception("Search by"));
+return rv;
+}
+List<Hash> selectFloodfillParticipants(KBucketSet<Hash> kbuckets) {
+Set<Hash> ignore = Collections.singleton(_context.routerHash());
+return selectFloodfillParticipants(ignore, kbuckets);
+}
+private List<Hash> selectFloodfillParticipants(Set<Hash> toIgnore, KBucketSet<Hash> kbuckets) {
+if (kbuckets == null) return Collections.EMPTY_LIST;
+_context.statManager().addRateData("netDb.newFSC", 0, 0);
+FloodfillSelectionCollector matches = new FloodfillSelectionCollector(null, toIgnore, 0);
+kbuckets.getAll(matches);
+return matches.getFloodfillParticipants();
+Set<Hash> set = _context.peerManager().getPeersByCapability(FloodfillNetworkDatabaseFacade.CAPABILITY_FLOODFILL);
+List<Hash> rv = new ArrayList<Hash>(set.size());
+for (Hash h : set) {
+if ((toIgnore != null && toIgnore.contains(h)) ||
+_context.banlist().isBanlistedForever(h))
+continue;
+rv.add(h);
+}
+return rv;
+}
+List<Hash> selectFloodfillParticipants(Hash key, int maxNumRouters, KBucketSet<Hash> kbuckets) {
+Set<Hash> ignore = Collections.singleton(_context.routerHash());
+return selectFloodfillParticipants(key, maxNumRouters, ignore, kbuckets);
+}
+private static final int NO_FAIL_STORE_OK = 10*60*1000;
+private static final int NO_FAIL_STORE_GOOD = NO_FAIL_STORE_OK * 2;
+private static final int NO_FAIL_LOOKUP_OK = 75*1000;
+private static final int NO_FAIL_LOOKUP_GOOD = NO_FAIL_LOOKUP_OK * 3;
+private static final int MAX_GOOD_RESP_TIME = 5*1000;
+private static final long HEARD_AGE = 60*60*1000L;
+private static final long INSTALL_AGE = HEARD_AGE + (60*60*1000L);
+List<Hash> selectFloodfillParticipants(Hash key, int howMany, Set<Hash> toIgnore, KBucketSet<Hash> kbuckets) {
+if (toIgnore == null) {
+toIgnore = Collections.singleton(_context.routerHash());
+} else if (!toIgnore.contains(_context.routerHash())) {
+toIgnore = new HashSet<Hash>(toIgnore);
+toIgnore.add(_context.routerHash());
+}
+return selectFloodfillParticipantsIncludingUs(key, howMany, toIgnore, kbuckets);
+}
+private List<Hash> selectFloodfillParticipantsIncludingUs(Hash key, int howMany, Set<Hash> toIgnore, KBucketSet<Hash> kbuckets) {
+List<Hash> ffs = selectFloodfillParticipants(toIgnore, kbuckets);
+TreeSet<Hash> sorted = new TreeSet<Hash>(new XORComparator<Hash>(key));
+sorted.addAll(ffs);
+List<Hash> rv = new ArrayList<Hash>(howMany);
+List<Hash> okff = new ArrayList<Hash>(ffs.size());
+List<Hash> badff = new ArrayList<Hash>(ffs.size());
+int found = 0;
+long now = _context.clock().now();
+long installed = _context.getProperty("router.firstInstalled", 0L);
+boolean enforceHeard = installed > 0 && (now - installed) > INSTALL_AGE;
+double maxFailRate = 100;
+if (_context.router().getUptime() > 60*60*1000) {
+RateStat rs = _context.statManager().getRate("peer.failedLookupRate");
+if (rs != null) {
+Rate r = rs.getRate(60*60*1000);
+if (r != null) {
+double currentFailRate = r.getAverageValue();
+maxFailRate = Math.max(0.20d, 1.5d * currentFailRate);
+}
+}
+}
+int limit = Math.max(5, howMany);
+limit = Math.min(limit, ffs.size());
+MaskedIPSet maskedIPs = new MaskedIPSet(limit * 3);
+for (int i = 0; found < howMany && i < limit; i++) {
+Hash entry = sorted.first();
+if (entry == null)
+break;  
+sorted.remove(entry);
+RouterInfo info = _context.netDb().lookupRouterInfoLocally(entry);
+MaskedIPSet entryIPs = new MaskedIPSet(_context, entry, info, 2);
+boolean sameIP = false;
+for (String ip : entryIPs) {
+if (!maskedIPs.add(ip))
+sameIP = true;
+}
+if (sameIP) {
+badff.add(entry);
+if (_log.shouldLog(Log.DEBUG))
+_log.debug("Same /16, family, or port: " + entry);
+} else if (info != null && now - info.getPublished() > 3*60*60*1000) {
+badff.add(entry);
+if (_log.shouldLog(Log.DEBUG))
+_log.debug("Old: " + entry);
+} else if (info != null && _context.commSystem().isInStrictCountry(info)) {
+badff.add(entry);
+if (_log.shouldLog(Log.DEBUG))
+_log.debug("Bad country: " + entry);
+} else if (info != null && info.getBandwidthTier().equals("L")) {
+badff.add(entry);
+if (_log.shouldLog(Log.DEBUG))
+_log.debug("Slow: " + entry);
+} else {
+PeerProfile prof = _context.profileOrganizer().getProfile(entry);
+double maxGoodRespTime = MAX_GOOD_RESP_TIME;
+RateStat ttst = _context.statManager().getRate("tunnel.testSuccessTime");
+if (ttst != null) {
+Rate tunnelTestTime = ttst.getRate(10*60*1000);
+if (tunnelTestTime != null && tunnelTestTime.getAverageValue() > 500)
+maxGoodRespTime = 2 * tunnelTestTime.getAverageValue();
+}
+if (prof != null) {
+if (enforceHeard && prof.getFirstHeardAbout() > now - HEARD_AGE) {
+if (_log.shouldLog(Log.DEBUG))
+_log.debug("Bad (new): " + entry);
+badff.add(entry);
+} else if (prof.getDBHistory() != null) {
+if (prof.getDbResponseTime().getRate(10*60*1000).getAverageValue() < maxGoodRespTime
+&& prof.getDBHistory().getLastStoreFailed() < now - NO_FAIL_STORE_GOOD
+&& prof.getDBHistory().getLastLookupFailed() < now - NO_FAIL_LOOKUP_GOOD
+&& prof.getDBHistory().getFailedLookupRate().getRate(60*60*1000).getAverageValue() < maxFailRate) {
+if (_log.shouldLog(Log.DEBUG))
+_log.debug("Good: " + entry);
+rv.add(entry);
+found++;
+} else if (prof.getDBHistory().getLastStoreFailed() <= prof.getDBHistory().getLastStoreSuccessful()
+|| prof.getDBHistory().getLastLookupFailed() <= prof.getDBHistory().getLastLookupSuccessful()
+|| (prof.getDBHistory().getLastStoreFailed() < now - NO_FAIL_STORE_OK
+&& prof.getDBHistory().getLastLookupFailed() < now - NO_FAIL_LOOKUP_OK)) {
+if (_log.shouldLog(Log.DEBUG))
+_log.debug("OK: " + entry);
+okff.add(entry);
+} else {
+if (_log.shouldLog(Log.DEBUG))
+_log.debug("Bad (DB): " + entry);
+badff.add(entry);
+}
+} else {
+if (_log.shouldLog(Log.DEBUG))
+_log.debug("Bad (no hist): " + entry);
+badff.add(entry);
+}
+} else {
+if (_log.shouldLog(Log.DEBUG))
+_log.debug("Bad (no prof): " + entry);
+badff.add(entry);
+}
+}
+}
+if (_log.shouldLog(Log.INFO))
+_log.info("Good: " + rv + " OK: " + okff + " Bad: " + badff);
+for (int i = 0; found < howMany && i < okff.size(); i++) {
+rv.add(okff.get(i));
+found++;
+}
+for (int i = 0; found < howMany && i < badff.size(); i++) {
+rv.add(badff.get(i));
+found++;
+}
+return rv;
+}
+private class FloodfillSelectionCollector implements SelectionCollector<Hash> {
+private final TreeSet<Hash> _sorted;
+private final List<Hash>  _floodfillMatches;
+private final Hash _key;
+private final Set<Hash> _toIgnore;
+private int _matches;
+private final int _wanted;
+public FloodfillSelectionCollector(Hash key, Set<Hash> toIgnore, int wanted) {
+_key = key;
+_sorted = new TreeSet<Hash>(new XORComparator<Hash>(key));
+_floodfillMatches = new ArrayList<Hash>(8);
+_toIgnore = toIgnore;
+_wanted = wanted;
+}
+private static final int EXTRA_MATCHES = 100;
+public void add(Hash entry) {
+if ( (_toIgnore != null) && (_toIgnore.contains(entry)) )
+return;
+if (_context.banlist().isBanlistedForever(entry))
+return;
+RouterInfo info = _context.netDb().lookupRouterInfoLocally(entry);
+if (info != null && FloodfillNetworkDatabaseFacade.isFloodfill(info)) {
+_floodfillMatches.add(entry);
+} else {
+if ( (!SearchJob.onlyQueryFloodfillPeers(_context)) && (_wanted + EXTRA_MATCHES > _matches) && (_key != null) ) {
+_sorted.add(entry);
+} else {
+return;
+}
+}
+_matches++;
+}
+public List<Hash> get(int howMany) {
+return get(howMany, false);
+}
+public List<Hash> get(int howMany, boolean preferConnected) {
+List<Hash> rv = new ArrayList<Hash>(howMany);
+List<Hash> badff = new ArrayList<Hash>(howMany);
+List<Hash> unconnectedff = new ArrayList<Hash>(howMany);
+int found = 0;
+long now = _context.clock().now();
+for (Iterator<Hash> iter = new RandomIterator<Hash>(_floodfillMatches); (found < howMany) && iter.hasNext(); ) {
+Hash entry = iter.next();
+RouterInfo info = _context.netDb().lookupRouterInfoLocally(entry);
+if (info != null && now - info.getPublished() > 3*60*60*1000) {
+badff.add(entry);
+if (_log.shouldLog(Log.DEBUG))
+_log.debug("Skipping, published a while ago: " + entry);
+} else {
+PeerProfile prof = _context.profileOrganizer().getProfile(entry);
+if (prof != null && now - prof.getLastSendFailed() < 30*60*1000) {
+badff.add(entry);
+if (_log.shouldLog(Log.DEBUG))
+_log.debug("Skipping, recent failed send: " + entry);
+} else if (preferConnected && !_context.commSystem().isEstablished(entry)) {
+unconnectedff.add(entry);
+if (_log.shouldLog(Log.DEBUG))
+_log.debug("Skipping, unconnected: " + entry);
+} else {
+rv.add(entry);
+found++;
+}
+}
+}
+for (int i = 0; found < howMany && i < unconnectedff.size(); i++) {
+rv.add(unconnectedff.get(i));
+found++;
+}
+for (int i = 0; found < howMany && i < badff.size(); i++) {
+rv.add(badff.get(i));
+found++;
+}
+for (int i = rv.size(); i < howMany; i++) {
+if (_sorted.isEmpty())
+break;
+Hash entry = _sorted.first();
+rv.add(entry);
+_sorted.remove(entry);
+}
+return rv;
+}
+public int size() { return _matches; }
+}
+@Override
+List<Hash> selectNearest(Hash key, int maxNumRouters, Set<Hash> peersToIgnore, KBucketSet<Hash> kbuckets) {
+Hash rkey = _context.routingKeyGenerator().getRoutingKey(key);
+if (peersToIgnore != null && peersToIgnore.contains(Hash.FAKE_HASH)) {
+peersToIgnore.addAll(selectFloodfillParticipants(peersToIgnore, kbuckets));
+FloodfillSelectionCollector matches = new FloodfillSelectionCollector(rkey, peersToIgnore, maxNumRouters);
+kbuckets.getAll(matches);
+return matches.get(maxNumRouters);
+} else {
+return selectFloodfillParticipantsIncludingUs(rkey, maxNumRouters, peersToIgnore, kbuckets);
+}
+}
+}

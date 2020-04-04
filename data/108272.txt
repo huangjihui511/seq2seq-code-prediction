@@ -1,0 +1,58 @@
+package org.apache.flink.streaming.connectors.kinesis.internals;
+import org.apache.flink.api.common.functions.RuntimeContext;
+import org.apache.flink.streaming.api.functions.source.SourceFunction;
+import org.apache.flink.streaming.connectors.kinesis.KinesisShardAssigner;
+import org.apache.flink.streaming.connectors.kinesis.metrics.ShardMetricsReporter;
+import org.apache.flink.streaming.connectors.kinesis.model.DynamoDBStreamsShardHandle;
+import org.apache.flink.streaming.connectors.kinesis.model.SequenceNumber;
+import org.apache.flink.streaming.connectors.kinesis.model.StreamShardHandle;
+import org.apache.flink.streaming.connectors.kinesis.proxy.DynamoDBStreamsProxy;
+import org.apache.flink.streaming.connectors.kinesis.serialization.KinesisDeserializationSchema;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Properties;
+import java.util.concurrent.atomic.AtomicReference;
+public class DynamoDBStreamsDataFetcher<T> extends KinesisDataFetcher<T> {
+private boolean shardIdFormatCheck = false;
+public DynamoDBStreamsDataFetcher(List<String> streams,
+SourceFunction.SourceContext<T> sourceContext,
+RuntimeContext runtimeContext,
+Properties configProps,
+KinesisDeserializationSchema<T> deserializationSchema,
+KinesisShardAssigner shardAssigner) {
+super(streams,
+sourceContext,
+sourceContext.getCheckpointLock(),
+runtimeContext,
+configProps,
+deserializationSchema,
+shardAssigner,
+null,
+null,
+new AtomicReference<>(),
+new ArrayList<>(),
+createInitialSubscribedStreamsToLastDiscoveredShardsState(streams),
+DynamoDBStreamsProxy::create);
+}
+@Override
+protected boolean shouldAdvanceLastDiscoveredShardId(String shardId, String lastSeenShardIdOfStream) {
+if (DynamoDBStreamsShardHandle.compareShardIds(shardId, lastSeenShardIdOfStream) <= 0) {
+return false;
+}
+return true;
+}
+@Override
+protected ShardConsumer createShardConsumer(
+Integer subscribedShardStateIndex,
+StreamShardHandle handle,
+SequenceNumber lastSeqNum,
+ShardMetricsReporter shardMetricsReporter) {
+return new ShardConsumer(
+this,
+subscribedShardStateIndex,
+handle,
+lastSeqNum,
+DynamoDBStreamsProxy.create(getConsumerConfiguration()),
+shardMetricsReporter);
+}
+}

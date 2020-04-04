@@ -1,0 +1,10 @@
+package com.facebook.presto.operator.aggregation;
+public class TestBooleanMinAggregation
+extends TestBooleanAndAggregation
+{
+@Override
+protected String getFunctionName()
+{
+return "min";
+}
+}

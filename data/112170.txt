@@ -1,0 +1,41 @@
+package org.menacheri.jetserver.app;
+import java.util.List;
+import org.menacheri.jetserver.communication.MessageSender;
+import org.menacheri.jetserver.communication.MessageSender.Fast;
+import org.menacheri.jetserver.communication.MessageSender.Reliable;
+import org.menacheri.jetserver.event.Events;
+import org.menacheri.jetserver.event.Event;
+import org.menacheri.jetserver.event.EventDispatcher;
+import org.menacheri.jetserver.event.EventHandler;
+public interface Session
+{
+enum Status
+{
+NOT_CONNECTED, CONNECTING, CONNECTED, CLOSED
+}
+Object getId();
+void setId(Object id);
+void setAttribute(String key, Object value);
+Object getAttribute(String key);
+void removeAttribute(String key);
+void onEvent(Event event);
+EventDispatcher getEventDispatcher();
+boolean isWriteable();
+void setWriteable(boolean writeable);
+boolean isUDPEnabled();
+void setUDPEnabled(boolean isEnabled);
+boolean isShuttingDown();
+long getCreationTime();
+long getLastReadWriteTime();
+void setStatus(Status status);
+Status getStatus();
+boolean isConnected();
+void addHandler(EventHandler eventHandler);
+void removeHandler(EventHandler eventHandler);
+List<EventHandler> getEventHandlers(int eventType);
+void close();
+public abstract void setUdpSender(Fast udpSender);
+public abstract Fast getUdpSender();
+public abstract void setTcpSender(Reliable tcpSender);
+public abstract Reliable getTcpSender();
+}

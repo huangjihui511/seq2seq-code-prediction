@@ -1,0 +1,14 @@
+package com.xkcoding.websocket.payload.server;
+import com.google.common.collect.Lists;
+import com.xkcoding.websocket.model.server.Sys;
+import com.xkcoding.websocket.payload.KV;
+import lombok.Data;
+import java.util.List;
+@Data
+public class SysVO {
+List<KV> data = Lists.newArrayList();
+public static SysVO create(Sys sys) {
+SysVO vo = new SysVO();
+return vo;
+}
+}

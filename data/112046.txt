@@ -1,0 +1,20 @@
+package org.springframework.data.mongodb.core.aggregation;
+import org.springframework.util.Assert;
+public class DataTypeOperators {
+public static Type typeOf(String fieldReference) {
+return Type.typeOf(fieldReference);
+}
+public static class Type extends AbstractAggregationExpression {
+private Type(Object value) {
+super(value);
+}
+@Override
+protected String getMongoMethod() {
+return "$type";
+}
+public static Type typeOf(String field) {
+Assert.notNull(field, "Field must not be null!");
+return new Type(Fields.field(field));
+}
+}
+}

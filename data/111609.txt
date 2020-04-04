@@ -1,0 +1,49 @@
+package io.github.bonigarcia.wdm;
+import static io.github.bonigarcia.wdm.DriverManagerType.IEXPLORER;
+import static java.util.Optional.empty;
+import java.io.IOException;
+import java.net.URL;
+import java.util.List;
+import java.util.Optional;
+public class InternetExplorerDriverManager extends WebDriverManager {
+@Override
+protected DriverManagerType getDriverManagerType() {
+return IEXPLORER;
+}
+@Override
+protected String getDriverName() {
+return "IEDriverServer";
+}
+@Override
+protected String getDriverVersion() {
+return config().getInternetExplorerDriverVersion();
+}
+@Override
+protected URL getDriverUrl() {
+return config().getInternetExplorerDriverUrl();
+}
+@Override
+protected Optional<URL> getMirrorUrl() {
+return empty();
+}
+@Override
+protected Optional<String> getExportParameter() {
+return Optional.of(config().getInternetExplorerDriverExport());
+}
+@Override
+protected void setDriverVersion(String version) {
+config().setInternetExplorerDriverVersion(version);
+}
+@Override
+protected void setDriverUrl(URL url) {
+config().setInternetExplorerDriverUrl(url);
+}
+@Override
+protected List<URL> getDrivers() throws IOException {
+return getDriversFromXml(getDriverUrl());
+}
+@Override
+protected Optional<String> getBrowserVersion() {
+return empty();
+}
+}

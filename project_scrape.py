@@ -79,7 +79,7 @@ def main():
     first_url = "https://github.com"
     start_url_part1 = "https://github.com/search?l=Java&o=desc&p="
     start_url_part2 = "&q=Java&s=stars&type=Repositories"
-    for i in range(100):
+    for i in range(8, 1000):
         print(str(i)+"\n")
         s = 1
         start_url = start_url_part1 + str(i) + start_url_part2
@@ -101,3 +101,5 @@ def main():
 
 
 main()
+
+# next begin 9

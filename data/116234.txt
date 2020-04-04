@@ -1,0 +1,7 @@
+package org.apache.struts2.portlet.interceptor;
+import javax.portlet.PortletResponse;
+@Deprecated
+public interface PortletResponseAware {
+@Deprecated
+void setPortletResponse(PortletResponse response);
+}

@@ -1,0 +1,37 @@
+package io.jooby.internal.asm;
+import io.jooby.SneakyThrows;
+import java.lang.invoke.SerializedLambda;
+import java.lang.reflect.Method;
+public class Lambdas {
+private static SerializedLambda getSerializedLambda(Object function)
+throws NoSuchMethodException {
+for (Class<?> clazz = function.getClass(); clazz != null; clazz = clazz.getSuperclass()) {
+try {
+Method replaceMethod = clazz.getDeclaredMethod("writeReplace");
+replaceMethod.setAccessible(true);
+Object serializedForm = replaceMethod.invoke(function);
+if (serializedForm instanceof SerializedLambda) {
+return (SerializedLambda) serializedForm;
+}
+} catch (NoSuchMethodException e) {
+} catch (Exception t) {
+throw SneakyThrows.propagate(t);
+}
+}
+return null;
+}
+public static Method getLambdaMethod(ClassLoader loader, Object function) throws Exception {
+SerializedLambda lambda = getSerializedLambda(function);
+if (lambda != null) {
+String implClassName = lambda.getImplClass().replace('/', '.');
+Class<?> implClass = loader.loadClass(implClassName);
+String lambdaName = lambda.getImplMethodName();
+for (Method m : implClass.getDeclaredMethods()) {
+if (m.getName().equals(lambdaName)) {
+return m;
+}
+}
+}
+return null;
+}
+}

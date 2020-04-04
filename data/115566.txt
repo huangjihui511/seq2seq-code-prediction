@@ -1,0 +1,6 @@
+package com.netflix.astyanax;
+import com.netflix.astyanax.connectionpool.exceptions.WalException;
+public interface WriteAheadEntry {
+void readMutation(MutationBatch mutation) throws WalException;
+void writeMutation(MutationBatch mutation) throws WalException;
+}

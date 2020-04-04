@@ -1,0 +1,8 @@
+package com.taobao.taokeeper.dao;
+import com.taobao.taokeeper.model.AlarmSettings;
+import common.toolkit.java.exception.DaoException;
+public interface AlarmSettingsDAO {
+public AlarmSettings getAlarmSettingsByCulsterId( int clusterId )throws DaoException;
+public boolean updateAlarmSettingsByClusterId( AlarmSettings alarmSettings ) throws DaoException;
+public boolean addAlarmSettings( AlarmSettings alarmSettings ) throws DaoException;
+}

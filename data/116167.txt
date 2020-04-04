@@ -1,0 +1,55 @@
+package net.i2p.router.networkdb.kademlia;
+import net.i2p.data.i2np.DatabaseSearchReplyMessage;
+import net.i2p.data.i2np.DatabaseStoreMessage;
+import net.i2p.data.i2np.I2NPMessage;
+import net.i2p.router.MessageSelector;
+import net.i2p.router.RouterContext;
+import net.i2p.util.Log;
+class FloodOnlyLookupSelector implements MessageSelector {
+private final RouterContext _context;
+private final FloodOnlySearchJob _search;
+private boolean _matchFound;
+private final Log _log;
+public FloodOnlyLookupSelector(RouterContext ctx, FloodOnlySearchJob search) {
+_context = ctx;
+_search = search;
+_log = ctx.logManager().getLog(getClass());
+}
+public boolean continueMatching() {
+return _search.getLookupsRemaining() > 0 && !_matchFound && _context.clock().now() < getExpiration();
+}
+public long getExpiration() { return (_matchFound ? -1 : _search.getExpiration()); }
+public boolean isMatch(I2NPMessage message) {
+if (message == null) return false;
+int type = message.getType();
+if (type == DatabaseStoreMessage.MESSAGE_TYPE) {
+DatabaseStoreMessage dsm = (DatabaseStoreMessage)message;
+if (_search.getKey().equals(dsm.getKey())) {
+_search.decrementRemaining();
+_matchFound = true;
+return true;
+}
+} else if (type == DatabaseSearchReplyMessage.MESSAGE_TYPE) {
+DatabaseSearchReplyMessage dsrm = (DatabaseSearchReplyMessage)message;
+if (_search.getKey().equals(dsrm.getSearchKey())) {
+_context.profileManager().dbLookupReply(dsrm.getFromHash(),  0, dsrm.getNumReplies(), 0, 0,
+System.currentTimeMillis()-_search.getCreated());
+if (_search.shouldProcessDSRM()) {
+if (_log.shouldLog(Log.INFO))
+_log.info(_search.getJobId() + ": Processing DSRM via SingleLookupJob, apparently from " + dsrm.getFromHash());
+_context.jobQueue().addJob(new SingleLookupJob(_context, dsrm));
+} else if (_log.shouldLog(Log.INFO)) {
+int remaining = _search.getLookupsRemaining();
+_log.info(_search.getJobId() + ": got a DSRM apparently from " + dsrm.getFromHash() + " when we were looking for "
++ _search.getKey() + ", with " + remaining + " outstanding searches");
+}
+int remaining = _search.decrementRemaining(dsrm.getFromHash());
+return remaining <= 0;
+}
+}
+return false;
+}
+public String toString() {
+return "FOL Selector for " + _search.getKey();
+}
+}

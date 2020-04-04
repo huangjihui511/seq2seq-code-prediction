@@ -1,0 +1,58 @@
+package org.spongepowered.mod.plugin;
+import com.google.common.collect.ImmutableSet;
+import net.minecraftforge.fml.common.ModContainer;
+import net.minecraftforge.fml.common.versioning.ArtifactVersion;
+import org.spongepowered.plugin.meta.PluginDependency;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+import javax.annotation.Nullable;
+public final class DependencyHandler {
+private DependencyHandler() {
+}
+public static Set<PluginDependency> collectDependencies(ModContainer container) {
+Map<String, PluginDependency> result = new HashMap<>();
+addDependencies(result, PluginDependency.LoadOrder.NONE, container.getRequirements(), false);
+addDependencies(result, PluginDependency.LoadOrder.AFTER, container.getDependants(), true);
+addDependencies(result, PluginDependency.LoadOrder.BEFORE, container.getDependencies(), true);
+return ImmutableSet.copyOf(result.values());
+}
+private static void addDependencies(Map<String, PluginDependency> result, PluginDependency.LoadOrder loadOrder,
+Iterable<ArtifactVersion> dependencies, boolean optional) {
+for (ArtifactVersion version : dependencies) {
+String id = version.getLabel();
+if (id == null) {
+continue;
+}
+result.put(id, buildDependency(result.get(id), loadOrder, version, optional));
+}
+}
+@Nullable
+public static PluginDependency findDependency(ModContainer container, String id) {
+PluginDependency current = findDependency(id, null, PluginDependency.LoadOrder.NONE, container.getRequirements(), false);
+current = findDependency(id, current, PluginDependency.LoadOrder.AFTER, container.getDependants(), true);
+return findDependency(id, current, PluginDependency.LoadOrder.BEFORE, container.getDependencies(), true);
+}
+private static PluginDependency findDependency(String id, @Nullable PluginDependency current, PluginDependency.LoadOrder loadOrder,
+Iterable<ArtifactVersion> dependencies, boolean optional) {
+for (ArtifactVersion version : dependencies) {
+String dependencyId = version.getLabel();
+if (dependencyId == null || !dependencyId.equals(id)) {
+continue;
+}
+current = buildDependency(current, loadOrder, version, optional);
+}
+return current;
+}
+private static PluginDependency buildDependency(PluginDependency current, PluginDependency.LoadOrder loadOrder, ArtifactVersion version,
+boolean optional) {
+String versionRange = version.getRangeString();
+if (versionRange.equals("any")) {
+versionRange = null;
+}
+if (optional && current != null && !current.isOptional()) {
+optional = false;
+}
+return new PluginDependency(loadOrder, version.getLabel(), versionRange, optional);
+}
+}

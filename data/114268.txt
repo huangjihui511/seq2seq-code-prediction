@@ -1,0 +1,29 @@
+package com.datumbox.framework.core.machinelearning;
+import com.datumbox.framework.common.Configuration;
+import com.datumbox.framework.core.common.interfaces.Parameterizable;
+import com.datumbox.framework.core.machinelearning.common.interfaces.Trainable;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+public class MLBuilder {
+public static <T extends Trainable, TP extends Parameterizable> T create(TP trainingParameters, Configuration configuration) {
+try {
+Class<T> aClass = (Class<T>) trainingParameters.getClass().getEnclosingClass();
+Constructor<T> constructor = aClass.getDeclaredConstructor(trainingParameters.getClass(), Configuration.class);
+constructor.setAccessible(true);
+return constructor.newInstance(trainingParameters, configuration);
+}
+catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException ex) {
+throw new RuntimeException(ex);
+}
+}
+public static <T extends Trainable> T load(Class<T> aClass, String storageName, Configuration configuration) {
+try {
+Constructor<T> constructor = aClass.getDeclaredConstructor(String.class, Configuration.class);
+constructor.setAccessible(true);
+return constructor.newInstance(storageName, configuration);
+}
+catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException ex) {
+throw new RuntimeException(ex);
+}
+}
+}

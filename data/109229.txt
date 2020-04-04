@@ -1,0 +1,46 @@
+package org.jeecg.common.util.jsonschema;
+import java.io.Serializable;
+import java.util.List;
+public class JsonSchemaDescrip implements Serializable{
+private static final long serialVersionUID = 7682073117441544718L;
+private String $schema = "http:
+private String title;
+private String description;
+private String type;
+private List<String> required;
+public List<String> getRequired() {
+return required;
+}
+public void setRequired(List<String> required) {
+this.required = required;
+}
+public String get$schema() {
+return $schema;
+}
+public void set$schema(String $schema) {
+this.$schema = $schema;
+}
+public String getTitle() {
+return title;
+}
+public void setTitle(String title) {
+this.title = title;
+}
+public String getDescription() {
+return description;
+}
+public void setDescription(String description) {
+this.description = description;
+}
+public String getType() {
+return type;
+}
+public void setType(String type) {
+this.type = type;
+}
+public JsonSchemaDescrip() {}
+public JsonSchemaDescrip(List<String> required) {
+this.type="object";
+this.required = required;
+}
+}

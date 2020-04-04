@@ -1,0 +1,55 @@
+package org.spongepowered.api.item.recipe.smelting;
+import org.spongepowered.api.CatalogType;
+import org.spongepowered.api.Sponge;
+import org.spongepowered.api.item.ItemType;
+import org.spongepowered.api.item.inventory.ItemStack;
+import org.spongepowered.api.item.inventory.ItemStackSnapshot;
+import org.spongepowered.api.item.recipe.Recipe;
+import org.spongepowered.api.text.translation.Translation;
+import org.spongepowered.api.util.CatalogBuilder;
+import org.spongepowered.api.util.ResettableBuilder;
+import java.util.Optional;
+import java.util.function.Predicate;
+public interface SmeltingRecipe extends Recipe, CatalogType {
+static Builder builder() {
+return Sponge.getRegistry().createBuilder(Builder.class);
+}
+@Override
+default String getId() {
+return "sponge:" + getClass().getName().toLowerCase().replaceAll("[.$]", "_");
+}
+@Override
+default String getName() {
+return getId();
+}
+ItemStackSnapshot getExemplaryIngredient();
+boolean isValid(ItemStackSnapshot ingredient);
+Optional<SmeltingResult> getResult(ItemStackSnapshot ingredient);
+interface Builder extends ResettableBuilder<SmeltingRecipe, Builder> {
+ResultStep ingredient(Predicate<ItemStackSnapshot> ingredientPredicate, ItemStackSnapshot exemplaryIngredient);
+ResultStep ingredient(ItemStackSnapshot ingredient);
+default ResultStep ingredient(ItemStack ingredient) {
+return ingredient(ingredient.createSnapshot());
+}
+default ResultStep ingredient(ItemType ingredient) {
+return ingredient(itemStackSnapshot -> itemStackSnapshot.getType() == ingredient, ingredient.getTemplate());
+}
+interface ResultStep extends Builder {
+EndStep result(ItemStackSnapshot result);
+default EndStep result(ItemStack result) {
+return result(result.createSnapshot());
+}
+}
+interface EndStep extends Builder, CatalogBuilder<SmeltingRecipe, Builder> {
+EndStep experience(double experience);
+@Override
+EndStep id(String id);
+@Override
+EndStep name(String name);
+@Override
+EndStep name(Translation name);
+@Override
+SmeltingRecipe build();
+}
+}
+}

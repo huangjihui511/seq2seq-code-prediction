@@ -1,0 +1,4 @@
+package org.pf4j;
+public interface PluginFactory {
+Plugin create(PluginWrapper pluginWrapper);
+}

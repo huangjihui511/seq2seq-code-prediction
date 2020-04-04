@@ -1,0 +1,152 @@
+package com.spazedog.lib.rootfw4.containers;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import android.text.TextUtils;
+@SuppressWarnings("unchecked")
+public class Data<DATATYPE extends Data<DATATYPE>> extends BasicContainer {
+protected String[] mLines;
+public static interface DataSorting {
+public Boolean test(String input);
+}
+public static interface DataReplace {
+public String replace(String input);
+}
+public Data(String[] lines) {
+mLines = lines;
+}
+public DATATYPE replace(DataReplace dataReplace) {
+if (size() > 0) {
+List<String> list = new ArrayList<String>();
+for (int i=0; i < mLines.length; i++) {
+list.add( dataReplace.replace(mLines[i]) );
+}
+}
+return (DATATYPE) this;
+}
+public DATATYPE replace(final String contains, final String newLine) {
+return (DATATYPE) replace(new DataReplace() {
+@Override
+public String replace(String input) {
+return input != null && input.contains(contains) ? newLine : input;
+}
+});
+}
+public DATATYPE assort(DataSorting test) {
+if (size() > 0) {
+List<String> list = new ArrayList<String>();
+for (int i=0; i < mLines.length; i++) {
+if (!test.test(mLines[i])) {
+list.add(mLines[i]);
+}
+}
+mLines = list.toArray( new String[list.size()] );
+}
+return (DATATYPE) this;
+}
+public DATATYPE assort(final String contains) {
+return (DATATYPE) assort(new DataSorting() {
+@Override
+public Boolean test(String input) {
+return input.contains( contains );
+}
+});
+}
+public DATATYPE sort(DataSorting test) {
+if (size() > 0) {
+List<String> list = new ArrayList<String>();
+for (int i=0; i < mLines.length; i++) {
+if (test.test(mLines[i])) {
+list.add(mLines[i]);
+}
+}
+mLines = list.toArray( new String[list.size()] );
+}
+return (DATATYPE) this;
+}
+public DATATYPE sort(final String contains) {
+return (DATATYPE) sort(new DataSorting() {
+public Boolean test(String input) {
+return input.contains( contains );
+}
+});
+}
+public DATATYPE sort(Integer start) {
+return (DATATYPE) sort(start, mLines.length);
+}
+public DATATYPE sort(Integer start, Integer stop) {
+if (size() > 0) {
+List<String> list = new ArrayList<String>();
+Integer begin = start < 0 ? (mLines.length + start) : start;
+Integer end = stop < 0 ? (mLines.length + stop) : stop;
+Integer[] min = null, max = null;
+if (begin > end) {
+if (end == 0) {
+min = new Integer[]{ begin };
+max = new Integer[]{ mLines.length };
+} else {
+min = new Integer[]{ 0, begin };
+max = new Integer[]{ end, mLines.length };
+}
+} else {
+min = new Integer[]{ begin };
+max = new Integer[]{ end };
+}
+for (int i=0; i < min.length; i++) {
+for (int x=min[i]; x < max[i]; x++) {
+list.add(mLines[x]);
+}
+}
+mLines = list.toArray( new String[list.size()] );
+}
+return (DATATYPE) this;
+}
+public DATATYPE assort(Integer start, Integer stop) {
+return (DATATYPE) sort(stop, start);
+}
+public DATATYPE assort(Integer start) {
+return (DATATYPE) assort(mLines.length, start);
+}
+public DATATYPE trim() {
+if (size() > 0) {
+List<String> list = new ArrayList<String>();
+for (int i=0; i < mLines.length; i++) {
+if (mLines[i].trim().length() > 0) {
+list.add(mLines[i]);
+}
+}
+mLines = list.toArray( new String[list.size()] );
+}
+return (DATATYPE) this;
+}
+public String[] getArray() {
+return mLines;
+}
+public String getString() {
+return getString("\n");
+}
+public String getString(String separater) {
+return mLines == null ? null : TextUtils.join(separater, Arrays.asList(mLines));
+}
+public String getLine() {
+return getLine(-1, true);
+}
+public String getLine(Integer aLineNumber) {
+return getLine(aLineNumber, false);
+}
+public String getLine(Integer aLineNumber, Boolean aSkipEmpty) {
+if (size() > 0) {
+Integer count = aLineNumber < 0 ? (mLines.length + aLineNumber) : aLineNumber;
+while(count >= 0 && count < mLines.length) {
+if (!aSkipEmpty || mLines[count].trim().length() > 0) {
+return mLines[count].trim();
+}
+count = aLineNumber < 0 ? (count - 1) : (count + 1);
+}
+}
+return null;
+}
+public Integer size() {
+return mLines == null ? 0 : mLines.length;
+}
+}

@@ -1,0 +1,28 @@
+package org.spongepowered.mod.registry;
+import net.minecraftforge.registries.ForgeRegistry;
+import net.minecraftforge.registries.IForgeRegistry;
+import net.minecraftforge.registries.IForgeRegistryEntry;
+import java.lang.reflect.Field;
+public final class SpongeGameData {
+private SpongeGameData() {
+}
+private static Field callbackField;
+@SuppressWarnings("unchecked")
+public static <I extends IForgeRegistryEntry<I>> void addRegistryCallback(IForgeRegistry<I> registry,
+final ForgeRegistry.AddCallback<I> callback) throws ReflectiveOperationException {
+if (callbackField == null) {
+callbackField = ForgeRegistry.class.getDeclaredField("add");
+callbackField.setAccessible(true);
+}
+ForgeRegistry.AddCallback<I> newCallback = callback;
+final ForgeRegistry.AddCallback<I> currentCallback =
+(ForgeRegistry.AddCallback<I>) callbackField.get(registry);
+if (currentCallback != null) {
+newCallback = (owner, stage, id, obj, oldObj) -> {
+currentCallback.onAdd(owner, stage, id, obj, oldObj);
+callback.onAdd(owner, stage, id, obj, oldObj);
+};
+}
+callbackField.set(registry, newCallback);
+}
+}

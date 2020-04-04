@@ -1,0 +1,44 @@
+package org.spongepowered.api.event.entity;
+import org.spongepowered.api.data.key.Keys;
+import org.spongepowered.api.data.manipulator.immutable.entity.ImmutableExperienceHolderData;
+import org.spongepowered.api.data.manipulator.mutable.entity.ExperienceHolderData;
+import org.spongepowered.api.entity.Entity;
+import org.spongepowered.api.entity.Transform;
+import org.spongepowered.api.event.Cancellable;
+import org.spongepowered.api.event.SpongeEventFactory;
+import org.spongepowered.api.event.cause.Cause;
+import org.spongepowered.api.util.annotation.eventgen.FactoryMethod;
+import org.spongepowered.api.util.annotation.eventgen.GenerateFactoryMethod;
+import org.spongepowered.api.util.annotation.eventgen.PropertySettings;
+import org.spongepowered.api.world.PortalAgent;
+import org.spongepowered.api.world.World;
+@GenerateFactoryMethod
+public interface MoveEntityEvent extends TargetEntityEvent, Cancellable {
+Transform<World> getFromTransform();
+Transform<World> getToTransform();
+void setToTransform(Transform<World> transform);
+@GenerateFactoryMethod
+interface Position extends MoveEntityEvent {};
+@GenerateFactoryMethod
+interface Teleport extends MoveEntityEvent {
+boolean getKeepsVelocity();
+void setKeepsVelocity(boolean keepsVelocity);
+@FactoryMethod
+@Deprecated
+static MoveEntityEvent.Teleport createMoveEntityEventTeleport(Cause cause, Transform<World> fromTransform, Transform<World> toTransform, Entity targetEntity) {
+return SpongeEventFactory.createMoveEntityEventTeleport(cause, fromTransform, toTransform, targetEntity, false);
+}
+@GenerateFactoryMethod
+interface Portal extends Teleport {
+void setUsePortalAgent(boolean usePortalAgent);
+boolean getUsePortalAgent();
+PortalAgent getPortalAgent();
+void setPortalAgent(PortalAgent portalAgent);
+@FactoryMethod
+@Deprecated
+static MoveEntityEvent.Teleport.Portal createMoveEntityEventTeleportPortal(Cause cause, Transform<World> fromTransform, Transform<World> toTransform, PortalAgent portalAgent, Entity targetEntity, boolean usePortalAgent) {
+return SpongeEventFactory.createMoveEntityEventTeleportPortal(cause, fromTransform, toTransform, portalAgent, targetEntity, false, usePortalAgent);
+}
+}
+}
+}

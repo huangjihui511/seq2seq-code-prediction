@@ -1,0 +1,21 @@
+package de.codecentric.boot.admin.server.cloud.discovery;
+import java.net.URI;
+import java.util.Collections;
+import org.junit.Test;
+import org.springframework.cloud.client.ServiceInstance;
+import de.codecentric.boot.admin.server.domain.values.Registration;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+public class KubernetesServiceInstanceConverterTest {
+@Test
+public void convert_using_port_mgmt() {
+ServiceInstance service = mock(ServiceInstance.class);
+when(service.getUri()).thenReturn(URI.create("http:
+when(service.getServiceId()).thenReturn("test");
+when(service.getMetadata()).thenReturn(Collections.singletonMap("port.management", "9080"));
+Registration registration = new KubernetesServiceInstanceConverter().convert(service);
+assertThat(registration.getManagementUrl()).isEqualTo("http:
+assertThat(registration.getHealthUrl()).isEqualTo("http:
+}
+}

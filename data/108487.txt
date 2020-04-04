@@ -1,0 +1,69 @@
+package com.oracle.truffle.tools.chromeinspector.server;
+import java.io.IOException;
+import java.net.URI;
+import java.nio.ByteBuffer;
+import org.graalvm.polyglot.io.MessageEndpoint;
+import org.graalvm.polyglot.io.MessageTransport;
+import com.oracle.truffle.tools.chromeinspector.instrument.InspectorWSConnection;
+public final class WSInterceptorServer implements InspectorWSConnection, MessageEndpoint {
+private final URI uri;
+private final ConnectionWatcher connectionWatcher;
+private InspectServerSession iss;
+private MessageEndpoint inspectEndpoint;
+public WSInterceptorServer(URI uri, InspectServerSession iss, ConnectionWatcher connectionWatcher) {
+this.uri = uri;
+this.connectionWatcher = connectionWatcher;
+this.iss = iss;
+iss.setMessageListener(this);
+}
+public void newSession(InspectServerSession newIss) {
+this.iss.setMessageListener(null);
+this.iss = newIss;
+this.iss.setMessageListener(this);
+}
+public void opened(MessageEndpoint endpoint) {
+this.inspectEndpoint = endpoint;
+iss.setMessageListener(this);
+this.connectionWatcher.notifyOpen();
+}
+@Override
+public int getPort() {
+return uri.getPort();
+}
+@Override
+public void close(String path) throws IOException {
+iss.setMessageListener(null);
+if (inspectEndpoint != null) {
+if (path.equals(uri.getPath())) {
+inspectEndpoint.sendClose();
+}
+}
+}
+@Override
+public void consoleAPICall(String wsspath, String type, Object text) {
+iss.consoleAPICall(type, text);
+}
+@Override
+public void sendText(String message) throws IOException {
+connectionWatcher.waitForOpen();
+inspectEndpoint.sendText(message);
+}
+@Override
+public void sendBinary(ByteBuffer data) throws IOException {
+inspectEndpoint.sendBinary(data);
+}
+@Override
+public void sendPing(ByteBuffer data) throws IOException {
+inspectEndpoint.sendPing(data);
+}
+@Override
+public void sendPong(ByteBuffer data) throws IOException {
+inspectEndpoint.sendPong(data);
+}
+@Override
+public void sendClose() throws IOException {
+if (inspectEndpoint != null) {
+inspectEndpoint.sendClose();
+}
+}
+}

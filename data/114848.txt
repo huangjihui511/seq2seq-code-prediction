@@ -1,0 +1,42 @@
+package com.google.api.client.http.xml.atom;
+import com.google.api.client.http.HttpMediaType;
+import com.google.api.client.http.xml.AbstractXmlHttpContent;
+import com.google.api.client.util.Beta;
+import com.google.api.client.util.Preconditions;
+import com.google.api.client.xml.XmlNamespaceDictionary;
+import com.google.api.client.xml.atom.Atom;
+import java.io.IOException;
+import org.xmlpull.v1.XmlSerializer;
+@Beta
+public class AtomContent extends AbstractXmlHttpContent {
+private final boolean isEntry;
+private final Object entry;
+protected AtomContent(XmlNamespaceDictionary namespaceDictionary, Object entry, boolean isEntry) {
+super(namespaceDictionary);
+setMediaType(new HttpMediaType(Atom.MEDIA_TYPE));
+this.entry = Preconditions.checkNotNull(entry);
+this.isEntry = isEntry;
+}
+public static AtomContent forEntry(XmlNamespaceDictionary namespaceDictionary, Object entry) {
+return new AtomContent(namespaceDictionary, entry, true);
+}
+public static AtomContent forFeed(XmlNamespaceDictionary namespaceDictionary, Object feed) {
+return new AtomContent(namespaceDictionary, feed, false);
+}
+@Override
+public AtomContent setMediaType(HttpMediaType mediaType) {
+super.setMediaType(mediaType);
+return this;
+}
+@Override
+public final void writeTo(XmlSerializer serializer) throws IOException {
+getNamespaceDictionary()
+.serialize(serializer, Atom.ATOM_NAMESPACE, isEntry ? "entry" : "feed", entry);
+}
+public final boolean isEntry() {
+return isEntry;
+}
+public final Object getData() {
+return entry;
+}
+}

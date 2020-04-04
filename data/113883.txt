@@ -1,0 +1,41 @@
+package psiprobe.controllers.certificates;
+import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+import org.apache.commons.beanutils.BeanUtils;
+import org.apache.coyote.http11.AbstractHttp11JsseProtocol;
+import org.apache.tomcat.util.net.SSLHostConfig;
+import org.apache.tomcat.util.net.SSLHostConfigCertificate;
+import psiprobe.model.certificates.CertificateInfo;
+import psiprobe.model.certificates.ConnectorInfo;
+import psiprobe.model.certificates.SslHostConfigInfo;
+public class SslHostConfigHelper {
+public SslHostConfigHelper(AbstractHttp11JsseProtocol<?> protocol, ConnectorInfo info)
+throws IllegalAccessException, InvocationTargetException {
+SSLHostConfig[] sslHostConfigs = protocol.findSslHostConfigs();
+List<SslHostConfigInfo> sslHostConfigInfos = new ArrayList<>(sslHostConfigs.length);
+info.setSslHostConfigInfos(sslHostConfigInfos);
+for (SSLHostConfig sslHostConfig : sslHostConfigs) {
+sslHostConfigInfos.add(toSslHostConfigInfo(sslHostConfig));
+}
+}
+private SslHostConfigInfo toSslHostConfigInfo(SSLHostConfig sslHostConfig)
+throws IllegalAccessException, InvocationTargetException {
+SslHostConfigInfo sslHostConfigInfo = new SslHostConfigInfo();
+BeanUtils.copyProperties(sslHostConfigInfo, sslHostConfig);
+Set<SSLHostConfigCertificate> certificates = sslHostConfig.getCertificates();
+List<CertificateInfo> certificateInfos = new ArrayList<>(certificates.size());
+sslHostConfigInfo.setCertificateInfos(certificateInfos);
+for (SSLHostConfigCertificate sslHostConfigCertificate : certificates) {
+certificateInfos.add(toCertificateInfo(sslHostConfigCertificate));
+}
+return sslHostConfigInfo;
+}
+private CertificateInfo toCertificateInfo(SSLHostConfigCertificate sslHostConfigCertificate)
+throws IllegalAccessException, InvocationTargetException {
+CertificateInfo certificateInfo = new CertificateInfo();
+BeanUtils.copyProperties(certificateInfo, sslHostConfigCertificate);
+return certificateInfo;
+}
+}

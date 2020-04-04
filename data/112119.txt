@@ -1,0 +1,6 @@
+package org.menacheri.convert;
+import org.menacheri.jetclient.communication.MessageBuffer;
+public interface Transform<T, V>
+{
+V convert(T object) throws Exception;
+}

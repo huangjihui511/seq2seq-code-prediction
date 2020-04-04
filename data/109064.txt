@@ -1,0 +1,97 @@
+package examples;
+import io.vertx.core.Vertx;
+import io.vertx.core.buffer.Buffer;
+import io.vertx.core.shareddata.*;
+public class SharedDataExamples {
+public void localMap(Vertx vertx) {
+SharedData sharedData = vertx.sharedData();
+LocalMap<String, String> map1 = sharedData.getLocalMap("mymap1");
+map1.put("foo", "bar"); 
+LocalMap<String, Buffer> map2 = sharedData.getLocalMap("mymap2");
+map2.put("eek", Buffer.buffer().appendInt(123)); 
+map1 = sharedData.getLocalMap("mymap1");
+String val = map1.get("foo");
+map2 = sharedData.getLocalMap("mymap2");
+Buffer buff = map2.get("eek");
+}
+public void asyncMap(Vertx vertx) {
+SharedData sharedData = vertx.sharedData();
+sharedData.<String, String>getAsyncMap("mymap", res -> {
+if (res.succeeded()) {
+AsyncMap<String, String> map = res.result();
+} else {
+}
+});
+}
+public void localAsyncMap(Vertx vertx) {
+SharedData sharedData = vertx.sharedData();
+sharedData.<String, String>getLocalAsyncMap("mymap", res -> {
+if (res.succeeded()) {
+AsyncMap<String, String> map = res.result();
+} else {
+}
+});
+}
+public void example3(AsyncMap<String, String> map) {
+map.put("foo", "bar", resPut -> {
+if (resPut.succeeded()) {
+} else {
+}
+});
+}
+public void example4(AsyncMap<String, String> map) {
+map.get("foo", resGet -> {
+if (resGet.succeeded()) {
+Object val = resGet.result();
+} else {
+}
+});
+}
+public void lock(Vertx vertx) {
+SharedData sharedData = vertx.sharedData();
+sharedData.getLock("mylock", res -> {
+if (res.succeeded()) {
+Lock lock = res.result();
+vertx.setTimer(5000, tid -> lock.release());
+} else {
+}
+});
+}
+public void lockWithTimeout(Vertx vertx) {
+SharedData sharedData = vertx.sharedData();
+sharedData.getLockWithTimeout("mylock", 10000, res -> {
+if (res.succeeded()) {
+Lock lock = res.result();
+} else {
+}
+});
+}
+public void localLock(Vertx vertx) {
+SharedData sharedData = vertx.sharedData();
+sharedData.getLocalLock("mylock", res -> {
+if (res.succeeded()) {
+Lock lock = res.result();
+vertx.setTimer(5000, tid -> lock.release());
+} else {
+}
+});
+}
+public void counter(Vertx vertx) {
+SharedData sharedData = vertx.sharedData();
+sharedData.getCounter("mycounter", res -> {
+if (res.succeeded()) {
+Counter counter = res.result();
+} else {
+}
+});
+}
+public void localCounter(Vertx vertx) {
+SharedData sharedData = vertx.sharedData();
+sharedData.getLocalCounter("mycounter", res -> {
+if (res.succeeded()) {
+Counter counter = res.result();
+} else {
+}
+});
+}
+}

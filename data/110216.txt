@@ -1,0 +1,17 @@
+package tests;
+import javax.annotation.processing.Generated;
+import javax.inject.Inject;
+@Generated(
+value = "com.google.auto.factory.processor.AutoFactoryProcessor",
+comments = "https:
+)
+final class FactoryExtendingAbstractClassFactory
+extends FactoryExtendingAbstractClass.AbstractFactory {
+@Inject FactoryExtendingAbstractClassFactory() {}
+FactoryExtendingAbstractClass create() {
+return new FactoryExtendingAbstractClass();
+}
+@Override public FactoryExtendingAbstractClass newInstance() {
+return create();
+}
+}

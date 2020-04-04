@@ -1,0 +1,26 @@
+package io.ebean.common;
+import io.ebean.bean.BeanCollection;
+import java.util.Iterator;
+class ModifyIterator<E> implements Iterator<E> {
+private final BeanCollection<E> owner;
+private final Iterator<E> it;
+private E last;
+ModifyIterator(BeanCollection<E> owner, Iterator<E> it) {
+this.owner = owner;
+this.it = it;
+}
+@Override
+public boolean hasNext() {
+return it.hasNext();
+}
+@Override
+public E next() {
+last = it.next();
+return last;
+}
+@Override
+public void remove() {
+owner.modifyRemoval(last);
+it.remove();
+}
+}

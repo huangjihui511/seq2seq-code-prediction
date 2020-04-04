@@ -1,0 +1,42 @@
+package com.datumbox.framework.common.dataobjects;
+import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Set;
+public class TransposeDataList extends AbstractDataStructureMap<Map<Object, FlatDataList>> {
+private static final long serialVersionUID = 1L;
+public TransposeDataList() {
+super(new LinkedHashMap<>());
+}
+public TransposeDataList(Map<Object, FlatDataList> internalData) {
+super(internalData);
+}
+public final FlatDataList remove(Object key) {
+return internalData.remove(key);
+}
+public final FlatDataList get(Object key) {
+return internalData.get(key);
+}
+public final FlatDataList put(Object key, FlatDataList value) {
+return internalData.put(key, value);
+}
+public final Set<Map.Entry<Object, FlatDataList>> entrySet() {
+return internalData.entrySet();
+}
+public final Set<Object> keySet() {
+return internalData.keySet();
+}
+public final Collection<FlatDataList> values() {
+return internalData.values();
+}
+@Override
+public boolean equals(Object o) {
+if ( this == o ) return true;
+if ( !(o instanceof TransposeDataList) ) return false;
+return internalData.equals(((TransposeDataList)o).internalData);
+}
+@Override
+public int hashCode() {
+return internalData.hashCode();
+}
+}

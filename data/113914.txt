@@ -1,0 +1,58 @@
+package org.spongepowered.mod.test.integration.regression;
+import static org.junit.Assert.assertEquals;
+import static org.spongepowered.common.regression.registry.TileEntityRegistrationTest.CORRECTLY_QUALIFIED_ID;
+import static org.spongepowered.common.regression.registry.TileEntityRegistrationTest.MINECRAFT_PREFIXED_ID;
+import static org.spongepowered.common.regression.registry.TileEntityRegistrationTest.UNQUALIFIED_TILE_ID;
+import net.minecraft.tileentity.TileEntity;
+import net.minecraftforge.fml.common.registry.GameRegistry;
+import org.junit.BeforeClass;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.spongepowered.api.block.tileentity.TileEntityType;
+import org.spongepowered.common.registry.type.block.TileEntityTypeRegistryModule;
+import org.spongepowered.common.regression.registry.Test1Tile;
+import org.spongepowered.common.regression.registry.Test2Tile;
+import org.spongepowered.common.regression.registry.Test3Tile;
+import org.spongepowered.common.test.RegressionTest;
+import org.spongepowered.mctester.api.junit.MinecraftRunner;
+import org.spongepowered.mctester.internal.BaseTest;
+import org.spongepowered.mctester.junit.TestUtils;
+@RunWith(MinecraftRunner.class)
+public class CustomTileRegistration extends BaseTest {
+public CustomTileRegistration(TestUtils testUtils) {
+super(testUtils);
+}
+@SuppressWarnings("deprecation")
+@BeforeClass
+public static void registerStuff() {
+GameRegistry.registerTileEntity(Test1Tile.class, UNQUALIFIED_TILE_ID);
+GameRegistry.registerTileEntity(Test2Tile.class, CORRECTLY_QUALIFIED_ID);
+GameRegistry.registerTileEntity(Test3Tile.class, MINECRAFT_PREFIXED_ID);
+}
+@RegressionTest(ghIssue = "https:
+@SuppressWarnings("ConstantConditions")
+@Test
+public void testGettingTileEntityTypes() {
+final TileEntityType test1type = TileEntityTypeRegistryModule.getInstance().getForClass(Test1Tile.class);
+final TileEntityType test2type = TileEntityTypeRegistryModule.getInstance().getForClass(Test2Tile.class);
+final TileEntityType test3type = TileEntityTypeRegistryModule.getInstance().getForClass(Test3Tile.class);
+@RegressionTest(ghIssue = "https:
+comment = "Specifically put, Forge has a weird case where they auto-prefix mod provided"
++ "id's "
+)
+final String autoPrefixed = "sponge:" + UNQUALIFIED_TILE_ID;
+final TileEntityType test1StringType = TileEntityTypeRegistryModule.getInstance().getById(UNQUALIFIED_TILE_ID).get();
+final TileEntityType test2StringType = TileEntityTypeRegistryModule.getInstance().getById(CORRECTLY_QUALIFIED_ID).get();
+final TileEntityType test3StringType = TileEntityTypeRegistryModule.getInstance().getById(MINECRAFT_PREFIXED_ID).get();
+assertEquals(test1type, test1StringType);
+assertEquals(test2type, test2StringType);
+assertEquals(test3type, test3StringType);
+assertEquals(autoPrefixed, test1type.getId()); 
+assertEquals("minecraft:" + UNQUALIFIED_TILE_ID, TileEntity.getKey(Test1Tile.class).toString());
+assertEquals(CORRECTLY_QUALIFIED_ID, test2type.getId());
+assertEquals(MINECRAFT_PREFIXED_ID, test3type.getId());
+assertEquals(((org.spongepowered.api.block.tileentity.TileEntity) (Object) new Test1Tile()).getType(), test1type);
+assertEquals(((org.spongepowered.api.block.tileentity.TileEntity) (Object) new Test2Tile()).getType(), test2type);
+assertEquals(((org.spongepowered.api.block.tileentity.TileEntity) (Object) new Test3Tile()).getType(), test3type);
+}
+}

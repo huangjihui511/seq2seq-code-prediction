@@ -1,0 +1,23 @@
+package io.flutter.inspector;
+import com.intellij.xdebugger.XSourcePosition;
+import com.intellij.xdebugger.frame.XNavigatable;
+import com.intellij.xdebugger.frame.XValue;
+public class JumpToSourceAction extends JumpToSourceActionBase {
+public JumpToSourceAction() {
+super("jumpToSource");
+}
+@Override
+protected XSourcePosition getSourcePosition(DiagnosticsNode node) {
+if (!node.hasCreationLocation()) {
+return null;
+}
+return node.getCreationLocation().getXSourcePosition();
+}
+@Override
+protected void startComputingSourcePosition(XValue value, XNavigatable navigatable) {
+value.computeSourcePosition(navigatable);
+}
+protected boolean isSupported(DiagnosticsNode diagnosticsNode) {
+return diagnosticsNode.hasCreationLocation();
+}
+}

@@ -1,0 +1,5 @@
+package org.spongepowered.mod.bridge.entity.passive;
+import net.minecraft.village.MerchantRecipeList;
+public interface EntityVillagerBridge_Forge {
+MerchantRecipeList forgeBridge$getForgeTrades();
+}

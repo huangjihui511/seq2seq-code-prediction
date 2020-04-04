@@ -1,0 +1,32 @@
+package org.apache.pdfbox.debugger.ui;
+import org.apache.pdfbox.cos.COSBase;
+public class ArrayEntry
+{
+private int index;
+private COSBase value;
+private COSBase item;
+public COSBase getValue()
+{
+return value;
+}
+public COSBase getItem()
+{
+return item;
+}
+public void setValue(COSBase val)
+{
+this.value = val;
+}
+public void setItem(COSBase val)
+{
+this.item = val;
+}
+public int getIndex()
+{
+return index;
+}
+public void setIndex(int i)
+{
+index = i;
+}
+}

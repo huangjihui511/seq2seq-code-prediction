@@ -1,0 +1,197 @@
+package com.oath.cyclops.types.futurestream;
+import static java.util.Spliterator.ORDERED;
+import static java.util.Spliterators.spliteratorUnknownSize;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.function.Supplier;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
+import com.oath.cyclops.internal.react.stream.ReactBuilder;
+import com.oath.cyclops.internal.react.stream.StreamWrapper;
+import com.oath.cyclops.react.async.subscription.Continueable;
+import cyclops.futurestream.FutureStream;
+import cyclops.futurestream.SimpleReact;
+import com.oath.cyclops.async.adapters.Queue;
+import com.oath.cyclops.async.adapters.QueueFactory;
+import com.oath.cyclops.internal.react.SimpleReactStreamImpl;
+import com.oath.cyclops.internal.react.stream.CloseableIterator;
+import com.oath.cyclops.react.SimpleReactFailedStageException;
+import com.oath.cyclops.react.ThreadPools;
+public interface BaseSimpleReactStream<U> extends BlockingStream<U> {
+ReactBuilder getSimpleReact();
+default <U> BaseSimpleReactStream<U> ofType(final Class<? extends U> type) {
+return filterSync(type::isInstance).thenSync(t -> (U) t);
+}
+default <U> BaseSimpleReactStream<U> cast(final Class<? extends U> type) {
+return this.thenSync(type::cast);
+}
+default BaseSimpleReactStream<U> intersperse(final U value) {
+return flatMap(t -> Stream.of(value, t)).skip(1);
+}
+public BaseSimpleReactStream<U> skip(long n);
+default Iterator<U> iterator() {
+final Queue<U> q = toQueue();
+if (getSubscription().closed())
+return new CloseableIterator<>(
+Arrays.<U> asList()
+.iterator(),
+getSubscription(), null);
+return new CloseableIterator<>(
+q.stream(getSubscription())
+.iterator(),
+getSubscription(), q);
+}
+@Override
+StreamWrapper<U> getLastActive();
+<R> BaseSimpleReactStream<R> then(final Function<? super U, ? extends R> fn, Executor service);
+<R> BaseSimpleReactStream<R> thenSync(final Function<? super U, ? extends R> fn);
+<R> BaseSimpleReactStream<R> fromStream(Stream<R> stream);
+new SimpleReact().<Integer, Integer> react(() -> 1, () -> 2, () -> 3)
+.map((it) -> it * 100)
+.map((it) -> "*" + it)
+}
+</pre>
+@SuppressWarnings("unchecked")
+<R> BaseSimpleReactStream<R> then(final Function<? super U, ? extends R> fn);
+BaseSimpleReactStream<U> peek(final Consumer<? super U> consumer);
+BaseSimpleReactStream<U> peekSync(final Consumer<? super U> consumer);
+.of(1,2,3)
+.flatMapCompletableFuture(i->CompletableFuture.completedFuture(i))
+.block(),equalTo(Arrays.asList(1,2,3)));
+<R> BaseSimpleReactStream<R> flatMapToCompletableFuture(Function<? super U, CompletableFuture<? extends R>> flatFn);
+.of(1,2,3)
+.flatMapCompletableFutureSync(i->CompletableFuture.completedFuture(i))
+.block(),equalTo(Arrays.asList(1,2,3)));
+<R> BaseSimpleReactStream<R> flatMapToCompletableFutureSync(Function<? super U, CompletableFuture<? extends R>> flatFn);
+<R> BaseSimpleReactStream<R> flatMap(Function<? super U, ? extends Stream<? extends R>> flatFn);
+@SuppressWarnings("unchecked")
+BaseSimpleReactStream<U> filter(final Predicate<? super U> p);
+BaseSimpleReactStream<U> filterSync(final Predicate<? super U> p);
+@SuppressWarnings({ "unchecked" })
+<T> Stream<CompletableFuture<T>> streamCompletableFutures();
+{@code
+List<String> strings = new SimpleReact().<Integer, Integer> react(() -> 100, () -> 2, () -> 3)
+.map(it -> {
+if (it == 100)
+throw new RuntimeException("boo!");
+return it;
+})
+.onFail(e -> 1)
+.map(it -> "*" + it)
+.block();
+}
+</pre>
+@SuppressWarnings({ "unchecked", "rawtypes" })
+BaseSimpleReactStream<U> onFail(final Function<? super SimpleReactFailedStageException, ? extends U> fn);
+onFail(IOException.class, recoveryFunction1)
+.onFail(Throwable.class,recovertyFunction2)
+{@code
+onFail(Throwable.class,recovertyFunction2)
+.onFail(IOException.class, recoveryFunction1)
+}
+</pre>
+BaseSimpleReactStream<U> onFail(Class<? extends Throwable> exceptionClass,
+final Function<? super SimpleReactFailedStageException, ? extends U> fn);
+{@code
+List<String> strings = new SimpleReact().<Integer, Integer> react(() -> 1, () -> 2, () -> 3)
+.map(it -> it * 100)
+.map(it -> {
+if (it == 100)
+throw new RuntimeException("boo!");
+return it;
+})
+.onFail(e -> 1)
+.map(it -> "*" + it)
+.map(it -> {
+if ("*200".equals(it))
+throw new RuntimeException("boo!");
+return it;
+})
+.capture(e -> logger.error(e.getMessage(),e))
+.block();
+}
+</pre>
+@SuppressWarnings("unchecked")
+BaseSimpleReactStream<U> capture(final Consumer<Throwable> errorHandler);
+BaseSimpleReactStream<U> sync();
+BaseSimpleReactStream<U> async();
+Queue<U> toQueue();
+static <T> SimpleReactStream<T> react(final Supplier<T> value) {
+return new SimpleReact(
+ThreadPools.getStandard(),
+false).ofAsync(value);
+}
+@SafeVarargs
+static <T> SimpleReactStream<T> react(final Supplier<T>... values) {
+return new SimpleReact(
+ThreadPools.getStandard(),
+false).ofAsync(values);
+}
+static <T> SimpleReactStream<T> of(final T value) {
+return simpleReactStream((Stream) Stream.of(value));
+}
+@SafeVarargs
+static <T> SimpleReactStream<T> of(final T... values) {
+return simpleReactStream((Stream) Stream.of(values));
+}
+static <T> SimpleReactStream<T> freeThread(final T value) {
+return new SimpleReact(
+ThreadPools.getSequential(),
+false).of(value);
+}
+@SafeVarargs
+static <T> SimpleReactStream<T> freeThread(final T... values) {
+return new SimpleReact(
+ThreadPools.getSequential(),
+false).of(values);
+}
+static <T> SimpleReactStream<T> empty() {
+return simpleReactStream((Stream) Stream.empty());
+}
+public static <U> SimpleReactStream<U> parallel(final U... array) {
+return SimpleReact.parallelCommonBuilder()
+.from(Arrays.asList(array));
+}
+static <T> BaseSimpleReactStream<T> simpleReactStreamFrom(final Stream<CompletableFuture<T>> stream) {
+return new SimpleReact(
+ThreadPools.getSequential(),
+false).fromStream(stream);
+}
+static <T> BaseSimpleReactStream<T> simpleReactStream(final CompletableFuture<T> value) {
+return new SimpleReact(
+ThreadPools.getSequential(),
+false).fromStream(Stream.of(value));
+}
+static <T> SimpleReactStream<T> simpleReactStream(final CompletableFuture<T>... values) {
+return new SimpleReact(
+ThreadPools.getSequential(),
+false).fromStream(Stream.of(values));
+}
+static <T> SimpleReactStream<T> simpleReactStream(Stream<T> stream) {
+if (stream instanceof FutureStream)
+stream = ((FutureStream) stream).toQueue()
+.stream(((FutureStream) stream).getSubscription());
+final SimpleReact sr = new SimpleReact(
+ThreadPools.getCurrentThreadExecutor(),
+false);
+return new SimpleReactStreamImpl<T>(
+sr, stream.map(CompletableFuture::completedFuture));
+}
+static <T> SimpleReactStream<T> simpleReactStreamFromIterable(final Iterable<T> iterable) {
+return simpleReactStream(iterable.iterator());
+}
+static <T> SimpleReactStream<T> simpleReactStream(final Iterator<T> iterator) {
+return simpleReactStream(StreamSupport.stream(spliteratorUnknownSize(iterator, ORDERED), false));
+}
+Continueable getSubscription();
+QueueFactory<U> getQueueFactory();
+BaseSimpleReactStream<U> withSubscription(Continueable subscription);
+BaseSimpleReactStream<U> withQueueFactory(QueueFactory<U> queueFactory);
+Executor getTaskExecutor();
+boolean isAsync();
+}

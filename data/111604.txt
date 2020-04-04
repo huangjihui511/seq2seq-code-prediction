@@ -1,0 +1,47 @@
+package io.github.bonigarcia.wdm;
+import static java.util.Collections.emptyList;
+import static java.util.Optional.empty;
+import java.io.IOException;
+import java.net.URL;
+import java.util.List;
+import java.util.Optional;
+public class VoidDriverManager extends WebDriverManager {
+@Override
+protected List<URL> getDrivers() throws IOException {
+return emptyList();
+}
+@Override
+protected Optional<String> getBrowserVersion() {
+return empty();
+}
+@Override
+protected String getDriverVersion() {
+return "";
+}
+@Override
+protected URL getDriverUrl() {
+return null;
+}
+@Override
+protected Optional<URL> getMirrorUrl() {
+return empty();
+}
+@Override
+protected Optional<String> getExportParameter() {
+return empty();
+}
+@Override
+protected DriverManagerType getDriverManagerType() {
+return null;
+}
+@Override
+protected String getDriverName() {
+return "";
+}
+@Override
+protected void setDriverVersion(String version) {
+}
+@Override
+protected void setDriverUrl(URL url) {
+}
+}

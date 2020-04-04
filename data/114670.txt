@@ -1,0 +1,111 @@
+package com.twelvemonkeys.sql;
+import java.lang.reflect.*;
+import java.util.*;
+import java.sql.SQLException;
+import java.sql.Connection;
+Det vi trenger er en mapping mellom
+- abstrakt navn/klasse/type/identifikator (tilsv. repository)
+- java klasse
+- selve mappingen av db kolonne/java property
+I tillegg en mapping mellom alle objektene som brukes i VM'en, og deres id'er
+public abstract class ObjectManager {
+private ObjectReader mObjectReader = null;
+private WeakHashMap mLiveObjects = new WeakHashMap(); 
+private Hashtable mTypes = new Hashtable();    
+private Hashtable mMappings = new Hashtable(); 
+public ObjectManager() {
+this(DatabaseConnection.getConnection());
+}
+public ObjectManager(Connection pConnection) {
+mObjectReader = new ObjectReader(pConnection);
+}
+protected Hashtable getMapping(String pType) {
+return (Hashtable) mMappings.get(pType);
+}
+protected Class getType(String pType) {
+Class cl = (Class) mTypes.get(pType);
+if (cl == null) {
+}
+return cl;
+}
+protected Object getObject(String pType)
+Class cl = getType(pType);
+try {
+return cl.newInstance();
+}
+catch (Exception e) {
+throw new RuntimeException(e.getMessage());
+}
+}
+protected DatabaseReadable getDatabaseReadable(String pType) {
+return new DatabaseObject(getObject(pType), getMapping(pType));
+}
+public Object getObject(String pType, Object pId)
+throws SQLException {
+DatabaseObject dbObject = (DatabaseObject) getDatabaseReadable(pType);
+dbObject.setId(pId);
+dbObject = (DatabaseObject) mObjectReader.readObject(dbObject);
+return dbObject.getObject();
+}
+public Object[] getObjects(String pType, Object[] pIds)
+throws SQLException {
+Vector result = new Vector(pIds.length);
+for (int i = 0; i < pIds.length; i++) {
+DatabaseObject dbObject =
+(DatabaseObject) getDatabaseReadable(pType);
+dbObject.setId(pIds[i]);
+dbObject = (DatabaseObject) mObjectReader.readObject(dbObject);
+if (dbObject != null) {
+result.add(dbObject.getObject());
+}
+}
+Class cl = getType(pType);
+Object[] arr = (Object[]) Array.newInstance(cl, result.size());
+return result.toArray(arr);
+}
+public Object[] getObjects(String pType, Hashtable pWhere)
+throws SQLException {
+return mObjectReader.readObjects(getDatabaseReadable(pType), pWhere);
+}
+public Object[] getObjects(String pType)
+throws SQLException {
+return mObjectReader.readObjects(getDatabaseReadable(pType));
+}
+public Object addObject(Object pObject) {
+return pObject;
+}
+public Object updateObject(Object pObject) {
+return pObject;
+}
+public abstract Object deleteObject(String pType, Object pId);
+public abstract Object deleteObject(Object pObject);
+public abstract Object createObject(String pType, Object pId);
+public abstract Object createObject(String pType);
+}
+class DatabaseObject implements DatabaseReadable {
+Hashtable mMapping = null;
+Object mId = null;
+Object mObject = null;
+public DatabaseObject(Object pObject, Hashtable pMapping) {
+setObject(pObject);
+setMapping(pMapping);
+}
+public Object getId() {
+return mId;
+}
+public void setId(Object pId) {
+mId = pId;
+}
+public void setObject(Object pObject) {
+mObject = pObject;
+}
+public Object getObject() {
+return mObject;
+}
+public void setMapping(Hashtable pMapping) {
+mMapping = pMapping;
+}
+public Hashtable getMapping() {
+return mMapping;
+}
+}

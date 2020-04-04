@@ -1,0 +1,5 @@
+package com.twelvemonkeys.net;
+import java.net.*;
+public interface PasswordAuthenticator {
+public PasswordAuthentication requestPasswordAuthentication(InetAddress addr, int port, String protocol, String prompt, String scheme);
+}

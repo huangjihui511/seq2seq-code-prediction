@@ -1,0 +1,29 @@
+package net.i2p.router.tunnel.pool;
+import java.util.Properties;
+import net.i2p.data.Hash;
+import net.i2p.router.RouterContext;
+import net.i2p.router.tunnel.TunnelCreatorConfig;
+class PooledTunnelCreatorConfig extends TunnelCreatorConfig {
+private final TunnelPool _pool;
+public PooledTunnelCreatorConfig(RouterContext ctx, int length, boolean isInbound,
+Hash destination, TunnelPool pool) {
+super(ctx, length, isInbound, destination);
+_pool = pool;
+}
+public void testJobSuccessful(int ms) {
+testSuccessful(ms);
+}
+@Override
+public boolean tunnelFailed() {
+boolean rv = super.tunnelFailed();
+if (!rv) {
+_pool.tunnelFailed(this);
+}
+return rv;
+}
+@Override
+public Properties getOptions() {
+return _pool.getSettings().getUnknownOptions();
+}
+public TunnelPool getTunnelPool() { return _pool; }
+}

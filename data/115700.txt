@@ -1,0 +1,11 @@
+package com.graphhopper.jsprit.core.algorithm.recreate;
+import com.graphhopper.jsprit.core.algorithm.recreate.listener.InsertionListener;
+import com.graphhopper.jsprit.core.problem.job.Job;
+import com.graphhopper.jsprit.core.problem.solution.route.VehicleRoute;
+import java.util.Collection;
+public interface InsertionStrategy {
+public Collection<Job> insertJobs(Collection<VehicleRoute> vehicleRoutes, Collection<Job> unassignedJobs);
+public void addListener(InsertionListener insertionListener);
+public void removeListener(InsertionListener insertionListener);
+public Collection<InsertionListener> getListeners();
+}

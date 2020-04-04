@@ -1,0 +1,5 @@
+package com.example.time;
+import org.joda.time.Instant;
+public interface Clock {
+Instant now();
+}

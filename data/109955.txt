@@ -1,0 +1,16 @@
+package us.codecraft.webmagic.selector;
+import org.jsoup.Jsoup;
+import org.junit.Test;
+import java.util.List;
+public class LinksSelectorTest {
+private String html = "<div><a href='http:
+@Test
+public void testLinks() throws Exception {
+LinksSelector linksSelector = new LinksSelector();
+List<String> links = linksSelector.selectList(html);
+System.out.println(links);
+html = "<div><a href='aaa'></a></div><div><a href='http:
+links = linksSelector.selectList(Jsoup.parse(html, "http:
+System.out.println(links);
+}
+}

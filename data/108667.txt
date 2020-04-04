@@ -1,0 +1,58 @@
+package com.alibaba.csp.sentinel.dashboard.config;
+import static org.junit.Assert.assertEquals;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.contrib.java.lang.system.EnvironmentVariables;
+public class DashboardConfigTest {
+@Rule
+public final EnvironmentVariables environmentVariables = new EnvironmentVariables();
+@Test
+public void testGetConfigStr() {
+DashboardConfig.clearCache();
+assertEquals(null, DashboardConfig.getConfigStr("a"));
+System.setProperty("a", "111");
+assertEquals("111", DashboardConfig.getConfigStr("a"));
+environmentVariables.set("a", "222");
+assertEquals("111", DashboardConfig.getConfigStr("a"));
+DashboardConfig.clearCache();
+assertEquals("222", DashboardConfig.getConfigStr("a"));
+}
+@Test
+public void testGetConfigInt() {
+DashboardConfig.clearCache();
+assertEquals(0, DashboardConfig.getConfigInt("t", 0, 10));
+DashboardConfig.clearCache();
+assertEquals(1, DashboardConfig.getConfigInt("t", 1, 10));
+System.setProperty("t", "asdf");
+DashboardConfig.clearCache();
+assertEquals(0, DashboardConfig.getConfigInt("t", 0, 10));
+System.setProperty("t", "");
+DashboardConfig.clearCache();
+assertEquals(0, DashboardConfig.getConfigInt("t", 0, 10));
+System.setProperty("t", "2");
+DashboardConfig.clearCache();
+assertEquals(2, DashboardConfig.getConfigInt("t", 0, 1));
+DashboardConfig.clearCache();
+assertEquals(10, DashboardConfig.getConfigInt("t", 0, 10));
+DashboardConfig.clearCache();
+assertEquals(2, DashboardConfig.getConfigInt("t", 0, -1));
+environmentVariables.set("t", "20");
+DashboardConfig.clearCache();
+assertEquals(20, DashboardConfig.getConfigInt("t", 0, 10));
+environmentVariables.set("t", "20dddd");
+DashboardConfig.clearCache();
+assertEquals(0, DashboardConfig.getConfigInt("t", 0, 10));
+environmentVariables.set("t", "");
+DashboardConfig.clearCache();
+assertEquals(10, DashboardConfig.getConfigInt("t", 0, 10));
+DashboardConfig.clearCache();
+assertEquals(2, DashboardConfig.getConfigInt("t", 0, 1));
+System.setProperty("t", "666");
+DashboardConfig.clearCache();
+assertEquals(666, DashboardConfig.getConfigInt("t", 0, 1));
+System.setProperty("t", "777");
+assertEquals(666, DashboardConfig.getConfigInt("t", 0, 1));
+System.setProperty("t", "555");
+assertEquals(666, DashboardConfig.getConfigInt("t", 0, 1));
+}
+}

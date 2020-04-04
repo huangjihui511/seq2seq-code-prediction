@@ -1,0 +1,11 @@
+package com.jeff.tianti.org.dto;
+import com.jeff.tianti.common.dto.CommonQueryDTO;
+public class UserQueryDTO extends CommonQueryDTO{
+private String userName;
+public String getUserName() {
+return userName;
+}
+public void setUserName(String userName) {
+this.userName = userName;
+}
+}

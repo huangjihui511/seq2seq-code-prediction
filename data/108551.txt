@@ -1,0 +1,9 @@
+package org.deeplearning4j.arbiter.optimize.api.data;
+import java.io.Serializable;
+import java.util.Properties;
+public interface DataSource extends Serializable {
+void configure(Properties properties);
+Object trainData();
+Object testData();
+Class<?> getDataType();
+}

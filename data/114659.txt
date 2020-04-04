@@ -1,0 +1,5 @@
+package com.twelvemonkeys.net;
+import java.net.*;
+public interface AuthenticatorFilter {
+public boolean accept(InetAddress pAddress, int pPort, String pProtocol, String pPrompt, String pScheme);
+}

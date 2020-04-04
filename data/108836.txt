@@ -1,0 +1,62 @@
+package cn.hutool.core.bean.copier;
+import java.io.Serializable;
+import java.util.Map;
+import cn.hutool.core.map.MapUtil;
+public class CopyOptions implements Serializable{
+private static final long serialVersionUID = 1L;
+protected Class<?> editable;
+protected boolean ignoreNullValue;
+protected String[] ignoreProperties;
+protected boolean ignoreError;
+protected boolean ignoreCase;
+protected Map<String, String> fieldMapping;
+public static CopyOptions create() {
+return new CopyOptions();
+}
+public static CopyOptions create(Class<?> editable, boolean ignoreNullValue, String... ignoreProperties) {
+return new CopyOptions(editable, ignoreNullValue, ignoreProperties);
+}
+public CopyOptions() {
+}
+public CopyOptions(Class<?> editable, boolean ignoreNullValue, String... ignoreProperties) {
+this.editable = editable;
+this.ignoreNullValue = ignoreNullValue;
+this.ignoreProperties = ignoreProperties;
+}
+public CopyOptions setEditable(Class<?> editable) {
+this.editable = editable;
+return this;
+}
+public CopyOptions setIgnoreNullValue(boolean ignoreNullVall) {
+this.ignoreNullValue = ignoreNullVall;
+return this;
+}
+public CopyOptions ignoreNullValue() {
+return setIgnoreNullValue(true);
+}
+public CopyOptions setIgnoreProperties(String... ignoreProperties) {
+this.ignoreProperties = ignoreProperties;
+return this;
+}
+public CopyOptions setIgnoreError(boolean ignoreError) {
+this.ignoreError = ignoreError;
+return this;
+}
+public CopyOptions ignoreError() {
+return setIgnoreError(true);
+}
+public CopyOptions setIgnoreCase(boolean ignoreCase) {
+this.ignoreCase = ignoreCase;
+return this;
+}
+public CopyOptions ignoreCase() {
+return setIgnoreCase(true);
+}
+public CopyOptions setFieldMapping(Map<String, String> fieldMapping) {
+this.fieldMapping = fieldMapping;
+return this;
+}
+protected Map<String, String> getReversedMapping() {
+return (null != this.fieldMapping) ? MapUtil.reverse(this.fieldMapping) : null;
+}
+}

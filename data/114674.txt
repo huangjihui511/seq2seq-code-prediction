@@ -1,0 +1,28 @@
+package com.twelvemonkeys.util;
+abstract class AbstractResource implements Resource {
+protected final Object resourceId;
+protected final Object wrappedResource;
+protected AbstractResource(Object pResourceId, Object pWrappedResource) {
+if (pResourceId == null) {
+throw new IllegalArgumentException("id == null");
+}
+if (pWrappedResource == null) {
+throw new IllegalArgumentException("resource == null");
+}
+resourceId = pResourceId;
+wrappedResource = pWrappedResource;
+}
+public final Object getId() {
+return resourceId;
+}
+public String toString() {
+return asURL().toExternalForm();
+}
+public int hashCode() {
+return wrappedResource.hashCode();
+}
+public boolean equals(Object pObject) {
+return pObject instanceof AbstractResource
+&& wrappedResource.equals(((AbstractResource) pObject).wrappedResource);
+}
+}

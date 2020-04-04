@@ -1,0 +1,132 @@
+package com.google.api.client.http.javanet;
+import com.google.api.client.http.LowLevelHttpResponse;
+import java.io.FilterInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+final class NetHttpResponse extends LowLevelHttpResponse {
+private final HttpURLConnection connection;
+private final int responseCode;
+private final String responseMessage;
+private final ArrayList<String> headerNames = new ArrayList<String>();
+private final ArrayList<String> headerValues = new ArrayList<String>();
+NetHttpResponse(HttpURLConnection connection) throws IOException {
+this.connection = connection;
+int responseCode = connection.getResponseCode();
+this.responseCode = responseCode == -1 ? 0 : responseCode;
+responseMessage = connection.getResponseMessage();
+List<String> headerNames = this.headerNames;
+List<String> headerValues = this.headerValues;
+for (Map.Entry<String, List<String>> entry : connection.getHeaderFields().entrySet()) {
+String key = entry.getKey();
+if (key != null) {
+for (String value : entry.getValue()) {
+if (value != null) {
+headerNames.add(key);
+headerValues.add(value);
+}
+}
+}
+}
+}
+@Override
+public int getStatusCode() {
+return responseCode;
+}
+@Override
+public InputStream getContent() throws IOException {
+InputStream in = null;
+try {
+in = connection.getInputStream();
+} catch (IOException ioe) {
+in = connection.getErrorStream();
+}
+return in == null ? null : new SizeValidatingInputStream(in);
+}
+@Override
+public String getContentEncoding() {
+return connection.getContentEncoding();
+}
+@Override
+public long getContentLength() {
+String string = connection.getHeaderField("Content-Length");
+return string == null ? -1 : Long.parseLong(string);
+}
+@Override
+public String getContentType() {
+return connection.getHeaderField("Content-Type");
+}
+@Override
+public String getReasonPhrase() {
+return responseMessage;
+}
+@Override
+public String getStatusLine() {
+String result = connection.getHeaderField(0);
+return result != null && result.startsWith("HTTP/1.") ? result : null;
+}
+@Override
+public int getHeaderCount() {
+return headerNames.size();
+}
+@Override
+public String getHeaderName(int index) {
+return headerNames.get(index);
+}
+@Override
+public String getHeaderValue(int index) {
+return headerValues.get(index);
+}
+@Override
+public void disconnect() {
+connection.disconnect();
+}
+private final class SizeValidatingInputStream extends FilterInputStream {
+private long bytesRead = 0;
+public SizeValidatingInputStream(InputStream in) {
+super(in);
+}
+@Override
+public int read(byte[] b, int off, int len) throws IOException {
+int n = in.read(b, off, len);
+if (n == -1) {
+throwIfFalseEOF();
+} else {
+bytesRead += n;
+}
+return n;
+}
+@Override
+public int read() throws IOException {
+int n = in.read();
+if (n == -1) {
+throwIfFalseEOF();
+} else {
+bytesRead++;
+}
+return n;
+}
+@Override
+public long skip(long len) throws IOException {
+long n = in.skip(len);
+bytesRead += n;
+return n;
+}
+private void throwIfFalseEOF() throws IOException {
+long contentLength = getContentLength();
+if (contentLength == -1) {
+return;
+}
+if (bytesRead != 0 && bytesRead < contentLength) {
+throw new IOException(
+"Connection closed prematurely: bytesRead = "
++ bytesRead
++ ", Content-Length = "
++ contentLength);
+}
+}
+}
+}

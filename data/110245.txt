@@ -1,0 +1,10 @@
+package tests;
+import com.google.auto.factory.AutoFactory;
+import tests.FactoryExtendingAbstractClassWithConstructorParams.AbstractFactory;
+@AutoFactory(extending = AbstractFactory.class)
+final class FactoryExtendingAbstractClassWithConstructorParams {
+static abstract class AbstractFactory {
+protected AbstractFactory(Object obj) {}
+abstract FactoryExtendingAbstractClassWithConstructorParams newInstance();
+}
+}

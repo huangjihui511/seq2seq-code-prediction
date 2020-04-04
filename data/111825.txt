@@ -1,0 +1,11 @@
+package org.jupiter.example;
+import java.util.concurrent.CompletableFuture;
+import org.jupiter.rpc.ServiceProvider;
+@ServiceProvider(group = "test")
+public interface AsyncUserService {
+User syncCreateUser();
+CompletableFuture<User> createUser();
+MyCompletableFuture<User> createUser2();
+class MyCompletableFuture<T> extends CompletableFuture<T> {
+}
+}

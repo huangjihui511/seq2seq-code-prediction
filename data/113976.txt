@@ -1,0 +1,6 @@
+package org.spongepowered.mod.bridge.network;
+import io.netty.channel.ChannelHandlerContext;
+import net.minecraftforge.fml.common.network.internal.FMLProxyPacket;
+public interface FMLEventChannelBridge_Forge {
+void forgeBridge$spongeFireRead(FMLProxyPacket msg, ChannelHandlerContext ctx);
+}

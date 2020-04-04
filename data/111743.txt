@@ -1,0 +1,15 @@
+package org.jupiter.common.util.collection;
+import java.util.Iterator;
+import java.util.Map;
+public interface IntObjectMap<V> extends Map<Integer, V> {
+interface PrimitiveEntry<V> {
+int key();
+V value();
+void setValue(V value);
+}
+V get(int key);
+V put(int key, V value);
+V remove(int key);
+Iterable<PrimitiveEntry<V>> entries();
+boolean containsKey(int key);
+}

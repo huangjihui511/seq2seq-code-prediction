@@ -1,0 +1,34 @@
+package org.spongepowered.api.data.manipulator.mutable.common;
+import org.spongepowered.api.CatalogType;
+import org.spongepowered.api.Sponge;
+import org.spongepowered.api.data.DataContainer;
+import org.spongepowered.api.data.key.Key;
+import org.spongepowered.api.data.manipulator.immutable.ImmutableVariantData;
+import org.spongepowered.api.data.manipulator.mutable.VariantData;
+import org.spongepowered.api.data.value.mutable.Value;
+public abstract class AbstractSingleCatalogData<T extends CatalogType, M extends VariantData<T, M, I>, I extends ImmutableVariantData<T, I, M>>
+extends AbstractSingleData<T, M, I> implements VariantData<T, M, I> {
+@Deprecated
+protected AbstractSingleCatalogData(T value, Key<Value<T>> usedKey) {
+super(value, usedKey);
+}
+protected AbstractSingleCatalogData(Key<Value<T>> usedKey, T value) {
+this(usedKey, value, value);
+}
+protected AbstractSingleCatalogData(Key<Value<T>> usedKey, T value, T defaultValue) {
+super(usedKey, value, defaultValue);
+}
+@Override
+protected Value<?> getValueGetter() {
+return type();
+}
+@SuppressWarnings("unchecked")
+@Override
+public Value<T> type() {
+return Sponge.getRegistry().getValueFactory().createValue((Key<Value<T>>) this.usedKey, this.value, this.defaultValue);
+}
+@Override
+public DataContainer toContainer() {
+return super.toContainer();
+}
+}

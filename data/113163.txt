@@ -1,0 +1,54 @@
+package org.msgpack.core.buffer;
+import java.io.IOException;
+import java.util.Enumeration;
+import static org.msgpack.core.Preconditions.checkNotNull;
+public class SequenceMessageBufferInput
+implements MessageBufferInput
+{
+private Enumeration<? extends MessageBufferInput> sequence;
+private MessageBufferInput input;
+public SequenceMessageBufferInput(Enumeration<? extends MessageBufferInput> sequence)
+{
+this.sequence = checkNotNull(sequence, "input sequence is null");
+try {
+nextInput();
+}
+catch (IOException ignore) {
+}
+}
+@Override
+public MessageBuffer next() throws IOException
+{
+if (input == null) {
+return null;
+}
+MessageBuffer buffer = input.next();
+if (buffer == null) {
+nextInput();
+return next();
+}
+return buffer;
+}
+private void nextInput() throws IOException
+{
+if (input != null) {
+input.close();
+}
+if (sequence.hasMoreElements()) {
+input = sequence.nextElement();
+if (input == null) {
+throw new NullPointerException("An element in the MessageBufferInput sequence is null");
+}
+}
+else {
+input = null;
+}
+}
+@Override
+public void close() throws IOException
+{
+do {
+nextInput();
+} while (input != null);
+}
+}

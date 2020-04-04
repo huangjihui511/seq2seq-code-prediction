@@ -1,0 +1,15 @@
+package io.hawt.log.support;
+import java.io.IOException;
+import io.hawt.log.LogFilter;
+import io.hawt.log.LogResults;
+public interface LogQuerySupportMBean {
+public LogResults allLogResults() throws IOException;
+public LogResults logResultsSince(long time) throws IOException;
+public LogResults getLogResults(int count) throws IOException;
+public LogResults queryLogResults(LogFilter filter);
+public String getSource(String mavenCoordinates, String className, String filePath) throws IOException;
+public String getJavaDoc(String mavenCoordinates, String filePath) throws IOException;
+public String getLogEvents(int count) throws IOException;
+public String filterLogEvents(String jsonFiler) throws IOException;
+public LogResults jsonQueryLogResults(String jsonFilter) throws IOException;
+}

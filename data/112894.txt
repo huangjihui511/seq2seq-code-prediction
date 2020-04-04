@@ -1,0 +1,111 @@
+package example.jbot.facebook;
+import me.ramswaroop.jbot.core.common.Controller;
+import me.ramswaroop.jbot.core.common.EventType;
+import me.ramswaroop.jbot.core.common.JBot;
+import me.ramswaroop.jbot.core.facebook.Bot;
+import me.ramswaroop.jbot.core.facebook.models.*;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
+import javax.annotation.PostConstruct;
+@JBot
+@Profile("facebook")
+public class FbBot extends Bot {
+@Value("${fbBotToken}")
+private String fbToken;
+@Value("${fbPageAccessToken}")
+private String pageAccessToken;
+@Override
+public String getFbToken() {
+return fbToken;
+}
+@Override
+public String getPageAccessToken() {
+return pageAccessToken;
+}
+public void init() {
+setGetStartedButton("hi");
+setGreetingText(new Payload[]{new Payload().setLocale("default").setText("JBot is a Java Framework to help" +
+" developers make Facebook, and Slack bots easily. You can see a quick demo by clicking " +
+"the \"Get Started\" button or just typing \"Hi\".")});
+}
+@Controller(events = {EventType.MESSAGE, EventType.POSTBACK}, pattern = "^(?i)(hi|hello|hey)$")
+public void onGetStarted(Event event) {
+Button[] quickReplies = new Button[]{
+new Button().setContentType("text").setTitle("Sure").setPayload("yes"),
+new Button().setContentType("text").setTitle("Nope").setPayload("no")
+};
+reply(event, new Message().setText("Hello, I am JBot. Would you like to see more?").setQuickReplies(quickReplies));
+}
+@Controller(events = EventType.QUICK_REPLY, pattern = "(yes|no)")
+public void onReceiveQuickReply(Event event) {
+if ("yes".equals(event.getMessage().getQuickReply().getPayload())) {
+reply(event, "Cool! You can type: \n - Show Buttons \n - Show List \n - Setup meeting");
+} else {
+reply(event, "No worries, see you soon!");
+}
+}
+@Controller(events = EventType.MESSAGE, pattern = "(?i:button)")
+public void showButtons(Event event) {
+Button[] buttons = new Button[]{
+new Button().setType("web_url").setUrl("https:
+new Button().setType("web_url").setUrl("https:
+};
+reply(event, new Message().setAttachment(new Attachment().setType("template").setPayload(new Payload()
+.setTemplateType("button").setText("These are 2 link buttons.").setButtons(buttons))));
+}
+@Controller(events = EventType.MESSAGE, pattern = "(?i:list)")
+public void showList(Event event) {
+Element[] elements = new Element[]{
+new Element().setTitle("AnimateScroll").setSubtitle("A jQuery Plugin for Animating Scroll.")
+.setImageUrl("https:
+.setDefaultAction(new Button().setType("web_url").setMessengerExtensions(true)
+.setUrl("https:
+new Element().setTitle("Windows on Top").setSubtitle("Keeps a specific Window on Top of all others.")
+.setImageUrl("https:
+.setDefaultAction(new Button().setType("web_url").setMessengerExtensions(true)
+.setUrl("https:
+new Element().setTitle("SimpleFill").setSubtitle("Simplest form filler ever.")
+.setImageUrl("https:
+.setDefaultAction(new Button().setType("web_url").setMessengerExtensions(true)
+.setUrl("https:
+};
+reply(event, new Message().setAttachment(new Attachment().setType("template").setPayload(new Payload()
+.setTemplateType("list").setElements(elements))));
+}
+@Controller(events = EventType.MESSAGE, pattern = "(?i)(bye|tata|ttyl|cya|see you)")
+public void showGithubLink(Event event) {
+reply(event, new Message().setAttachment(new Attachment().setType("template").setPayload(new Payload()
+.setTemplateType("button").setText("Bye. Happy coding!").setButtons(new Button[]{new Button()
+.setType("web_url").setTitle("View Docs").setUrl("https:
+}
+@Controller(pattern = "(?i)(setup meeting)", next = "confirmTiming")
+public void setupMeeting(Event event) {
+startConversation(event, "confirmTiming");   
+reply(event, "Cool! At what time (ex. 15:30) do you want me to set up the meeting?");
+}
+@Controller(next = "askTimeForMeeting")
+public void confirmTiming(Event event) {
+reply(event, "Your meeting is set at " + event.getMessage().getText() +
+". Would you like to repeat it tomorrow?");
+nextConversation(event);    
+}
+@Controller(next = "askWhetherToRepeat")
+public void askTimeForMeeting(Event event) {
+if (event.getMessage().getText().contains("yes")) {
+reply(event, "Okay. Would you like me to set a reminder for you?");
+nextConversation(event);    
+} else {
+reply(event, "No problem. You can always schedule one with 'setup meeting' command.");
+stopConversation(event);    
+}
+}
+@Controller
+public void askWhetherToRepeat(Event event) {
+if (event.getMessage().getText().contains("yes")) {
+reply(event, "Great! I will remind you tomorrow before the meeting.");
+} else {
+reply(event, "Okay, don't forget to attend the meeting tomorrow :)");
+}
+stopConversation(event);    
+}
+}

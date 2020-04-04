@@ -1,0 +1,11 @@
+package org.deeplearning4j.arbiter.optimize.generator.genetic.crossover;
+import lombok.Data;
+@Data
+public class CrossoverResult {
+private final boolean isModified;
+private final double[] genes;
+public CrossoverResult(boolean isModified, double[] genes) {
+this.isModified = isModified;
+this.genes = genes;
+}
+}

@@ -1,0 +1,28 @@
+package com.example.appengine.twilio;
+import com.twilio.sdk.verbs.Message;
+import com.twilio.sdk.verbs.TwiMLException;
+import com.twilio.sdk.verbs.TwiMLResponse;
+import java.io.IOException;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+@SuppressWarnings("serial")
+public class ReceiveSmsServlet extends HttpServlet {
+@Override
+public void service(HttpServletRequest request, HttpServletResponse response)
+throws IOException, ServletException {
+String fromNumber = request.getParameter("From");
+String body = request.getParameter("Body");
+String message = String.format("Hello, %s, you said %s", fromNumber, body);
+TwiMLResponse twiml = new TwiMLResponse();
+Message sms = new Message(message);
+try {
+twiml.append(sms);
+} catch (TwiMLException e) {
+throw new ServletException("Twilio error", e);
+}
+response.setContentType("application/xml");
+response.getWriter().print(twiml.toXML());
+}
+}

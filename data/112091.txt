@@ -1,0 +1,24 @@
+package org.springframework.data.mongodb.core;
+import static org.assertj.core.api.Assertions.*;
+import org.bson.BsonDocument;
+import org.junit.jupiter.api.Test;
+public class ChangeStreamOptionsUnitTests {
+@Test 
+public void shouldReportResumeAfter() {
+ChangeStreamOptions options = ChangeStreamOptions.builder().resumeAfter(new BsonDocument()).build();
+assertThat(options.isResumeAfter()).isTrue();
+assertThat(options.isStartAfter()).isFalse();
+}
+@Test 
+public void shouldReportStartAfter() {
+ChangeStreamOptions options = ChangeStreamOptions.builder().startAfter(new BsonDocument()).build();
+assertThat(options.isResumeAfter()).isFalse();
+assertThat(options.isStartAfter()).isTrue();
+}
+@Test 
+public void shouldNotReportResumeStartAfter() {
+ChangeStreamOptions options = ChangeStreamOptions.empty();
+assertThat(options.isResumeAfter()).isFalse();
+assertThat(options.isStartAfter()).isFalse();
+}
+}

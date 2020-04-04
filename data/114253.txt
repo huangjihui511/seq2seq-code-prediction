@@ -1,0 +1,66 @@
+package com.datumbox.framework.core.common.text;
+import com.datumbox.framework.core.common.utilities.PHPMethods;
+import java.text.Normalizer;
+import java.util.HashMap;
+import java.util.Locale;
+import java.util.Map;
+import java.util.regex.Pattern;
+public class StringCleaner {
+private static final Pattern URL_PATTERN = Pattern.compile("(https?|ftp|file):
+private static final String TOKENIZED_URL = " PREPROCESSDOC_URL ";
+private static final Map<String, String> SMILEYS_MAPPING = new HashMap<>();
+static {
+SMILEYS_MAPPING.put(":\\)", " PREPROCESSDOC_EM1 ");
+SMILEYS_MAPPING.put(":-\\)", " PREPROCESSDOC_EM2 ");
+SMILEYS_MAPPING.put(":\\(", " PREPROCESSDOC_EM3 ");
+SMILEYS_MAPPING.put(":-\\(", " PREPROCESSDOC_EM4 ");
+SMILEYS_MAPPING.put(":d", " PREPROCESSDOC_EM5 ");
+SMILEYS_MAPPING.put(";\\)", " PREPROCESSDOC_EM6 ");
+SMILEYS_MAPPING.put(":o\\)", " PREPROCESSDOC_EM7 ");
+SMILEYS_MAPPING.put(":\\]", " PREPROCESSDOC_EM8 ");
+SMILEYS_MAPPING.put(":\\[", " PREPROCESSDOC_EM9 ");
+SMILEYS_MAPPING.put(":p", " PREPROCESSDO,C_EM10 ");
+SMILEYS_MAPPING.put(":-p", " PREPROCESSDOC_EM11 ");
+SMILEYS_MAPPING.put("8-\\)", " PREPROCESSDOC_EM12 ");
+SMILEYS_MAPPING.put("=\\)", " PREPROCESSDOC_EM13 ");
+SMILEYS_MAPPING.put("=\\(", " PREPROCESSDOC_EM14 ");
+}
+public static String tokenizeURLs(String text) {
+return PHPMethods.preg_replace(URL_PATTERN, TOKENIZED_URL, text);
+}
+public static String tokenizeSmileys(String text) {
+for(Map.Entry<String, String> smiley : SMILEYS_MAPPING.entrySet()) {
+text = text.replaceAll(smiley.getKey(), smiley.getValue());
+}
+return text;
+}
+public static String removeExtraSpaces(String text) {
+text = text.trim().replaceAll("\\s+", " ");
+return text;
+}
+public static String removeSymbols(String text) {
+text = text.replaceAll("[^\\p{L}\\p{Z}_]","");
+return text;
+}
+public static String unifyTerminators(String text) {
+text = text.replaceAll("[\",:;()\\-]+", " "); 
+text = text.replaceAll("[\\.!?]", "."); 
+text = text.replaceAll("\\.[\\. ]+", "."); 
+text = text.replaceAll("\\s*\\.\\s*", ". "); 
+return text.trim();
+}
+public static String removeAccents(String text) {
+text = Normalizer.normalize(text, Normalizer.Form.NFD);
+text = text.replaceAll("[\\p{InCombiningDiacriticalMarks}]", "");
+return text;
+}
+and symbols and eliminates the extra spaces from the provided text.
+public static String clear(String text) {
+text = StringCleaner.tokenizeURLs(text);
+text = StringCleaner.tokenizeSmileys(text);
+text = StringCleaner.removeAccents(text);
+text = StringCleaner.removeSymbols(text);
+text = StringCleaner.removeExtraSpaces(text);
+return text.toLowerCase(Locale.ENGLISH);
+}
+}

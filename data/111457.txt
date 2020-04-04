@@ -1,0 +1,8 @@
+package io.grpc.internal;
+import javax.annotation.Nullable;
+import javax.annotation.concurrent.ThreadSafe;
+@ThreadSafe
+interface TransportProvider {
+@Nullable
+ClientTransport obtainActiveTransport();
+}

@@ -1,0 +1,21 @@
+package com.netflix.astyanax;
+import java.util.concurrent.ExecutorService;
+import com.netflix.astyanax.connectionpool.NodeDiscoveryType;
+import com.netflix.astyanax.connectionpool.impl.ConnectionPoolType;
+import com.netflix.astyanax.model.ConsistencyLevel;
+import com.netflix.astyanax.partitioner.Partitioner;
+import com.netflix.astyanax.retry.RetryPolicy;
+public interface AstyanaxConfiguration {
+RetryPolicy getRetryPolicy();
+ConsistencyLevel getDefaultReadConsistencyLevel();
+ConsistencyLevel getDefaultWriteConsistencyLevel();
+Clock getClock();
+ExecutorService getAsyncExecutor();
+int getDiscoveryDelayInSeconds();
+NodeDiscoveryType getDiscoveryType();
+ConnectionPoolType getConnectionPoolType();
+String getCqlVersion();
+String getTargetCassandraVersion();
+Partitioner getPartitioner(String partitionerName) throws Exception;
+int getMaxThriftSize();
+}

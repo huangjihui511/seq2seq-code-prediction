@@ -1,0 +1,157 @@
+package shared.turboeditor.views;
+import android.app.Activity;
+import android.app.AlertDialog;
+import android.app.DialogFragment;
+import android.app.Fragment;
+import android.app.FragmentManager;
+import android.app.FragmentTransaction;
+import android.content.Context;
+import android.graphics.drawable.Drawable;
+import android.text.TextUtils;
+import android.text.method.LinkMovementMethod;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.TextView;
+import java.util.Objects;
+import shared.turboeditor.R;
+import shared.turboeditor.dialogfragment.AboutDialog;
+public class DialogHelper {
+public static final String TAG_FRAGMENT_ABOUT = "dialog_about";
+public static final String TAG_FRAGMENT_HELP = "dialog_help";
+public static final String TAG_FRAGMENT_FEEDBACK = "dialog_feedback";
+public static void showAboutDialog(Activity activity) {
+showDialog(activity, AboutDialog.class, TAG_FRAGMENT_ABOUT);
+}
+private static void showDialog(Activity activity, Class clazz, String tag) {
+FragmentManager fm = activity.getFragmentManager();
+FragmentTransaction ft = fm.beginTransaction();
+Fragment prev = fm.findFragmentByTag(tag);
+if (prev != null) {
+ft.remove(prev);
+}
+ft.addToBackStack(null);
+try {
+((DialogFragment) clazz.newInstance()).show(ft, tag);
+} catch (InstantiationException | IllegalAccessException e) {
+e.printStackTrace();
+}
+}
+public static class Builder {
+public static final int LAYOUT_COMMON = 0;
+public static final int LAYOUT_SKELETON = 1;
+protected final Context mContext;
+private Drawable mIcon;
+private CharSequence mTitleText;
+private CharSequence mMessageText;
+private View mView;
+private int mViewRes;
+public Builder(Context context) {
+mContext = context;
+}
+@Override
+public boolean equals(Object o) {
+if (this == o) return true;
+if (o == null || getClass() != o.getClass()) return false;
+Builder builder = (Builder) o;
+return mViewRes == builder.mViewRes &&
+Objects.equals(mContext, builder.mContext) &&
+Objects.equals(mIcon, builder.mIcon) &&
+Objects.equals(mTitleText, builder.mTitleText) &&
+Objects.equals(mMessageText, builder.mMessageText) &&
+Objects.equals(mView, builder.mView);
+}
+@Override
+public int hashCode() {
+return Objects.hash(mContext, mIcon, mTitleText, mMessageText, mView, mViewRes);
+}
+public Builder setIcon(Drawable icon) {
+mIcon = icon;
+return this;
+}
+public Builder setTitle(CharSequence title) {
+mTitleText = title;
+return this;
+}
+public Builder setMessage(CharSequence message) {
+mMessageText = message;
+return this;
+}
+public Builder setIcon(int iconRes) {
+return setIcon(iconRes == 0 ? null : mContext.getResources().getDrawable(iconRes));
+}
+public Builder setTitle(int titleRes) {
+return setTitle(titleRes == 0 ? null : getString(titleRes));
+}
+public Builder setMessage(int messageRes) {
+return setMessage(messageRes == 0 ? null : getString(messageRes));
+}
+private String getString(int stringRes) {
+return mContext.getResources().getString(stringRes);
+}
+public Builder setView(View view) {
+mView = view;
+mViewRes = 0;
+return this;
+}
+public Builder setView(int layoutRes) {
+mView = null;
+mViewRes = layoutRes;
+return this;
+}
+public View createView(int type) {
+switch (type) {
+case LAYOUT_COMMON:
+return createCommonView();
+case LAYOUT_SKELETON:
+return createSkeletonView();
+default:
+throw new IllegalArgumentException();
+}
+}
+public View createCommonView() {
+int customViewRes = mViewRes;
+View customView = mView;
+mViewRes = 0;
+mView = null;
+LayoutInflater inflater = (LayoutInflater) mContext
+.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+ViewGroup rootLayout = (ViewGroup) createSkeletonView();
+View bodyRootView = inflater.inflate(R.layout.dialog, rootLayout, false);
+ViewGroup bodyLayout = (ViewGroup) bodyRootView.findViewById(R.id.content);
+TextView messageView = (TextView) bodyLayout.findViewById(R.id.message);
+rootLayout.addView(bodyRootView);
+bodyLayout.removeView(messageView);
+if (!TextUtils.isEmpty(mMessageText)) {
+messageView.setMovementMethod(new LinkMovementMethod());
+messageView.setText(mMessageText);
+bodyLayout.addView(messageView);
+}
+if (customViewRes != 0) customView = inflater.inflate(customViewRes, bodyLayout, false);
+if (customView != null) bodyLayout.addView(customView);
+mView = customView;
+return rootLayout;
+}
+public View createSkeletonView() {
+LayoutInflater inflater = (LayoutInflater) mContext
+.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+ViewGroup rootLayout = (ViewGroup) inflater.inflate(R.layout.dialog_skeleton, null);
+TextView titleView = (TextView) rootLayout.findViewById(R.id.title);
+if (mTitleText != null) {
+titleView.setText(mTitleText);
+titleView.setCompoundDrawablesWithIntrinsicBounds(mIcon, null, null, null);
+} else {
+rootLayout.removeView(titleView);
+}
+if (mViewRes != 0) mView = inflater.inflate(mViewRes, rootLayout, false);
+if (mView != null) rootLayout.addView(mView);
+return rootLayout;
+}
+public AlertDialog.Builder wrap() {
+return wrap(LAYOUT_COMMON);
+}
+public AlertDialog.Builder wrap(int type) {
+return new AlertDialog.Builder(mContext).setView(createView(type));
+}
+}
+}

@@ -1,0 +1,8 @@
+package tests;
+import com.google.auto.factory.AutoFactory;
+final class NestedClasses {
+@AutoFactory
+static final class SimpleNestedClass {}
+@AutoFactory(className = "NestedClassCustomNamedFactory")
+static final class SimpleNestedClassWithCustomFactory {}
+}

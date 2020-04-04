@@ -1,0 +1,5 @@
+package org.wltea.analyzer.core;
+interface ISegmenter {
+void analyze(AnalyzeContext context);
+void reset();
+}

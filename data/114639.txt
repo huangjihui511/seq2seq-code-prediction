@@ -1,0 +1,11 @@
+package com.twelvemonkeys.image;
+import java.awt.image.ImageConsumer;
+import java.awt.image.ColorModel;
+public interface ExtendedImageConsumer extends ImageConsumer {
+public void setPixels(int pX, int pY, int pWidth, int pHeight,
+ColorModel pModel,
+short[] pPixels, int pOffset, int pScanSize);
+public void setPixels(int pX, int pY, int pWidth, int pHeight,
+ColorModel pModel,
+byte[] pPixels, int pOffset, int pScanSize);
+}

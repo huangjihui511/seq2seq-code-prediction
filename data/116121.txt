@@ -1,0 +1,40 @@
+package net.i2p.router.tunnel.pool;
+import java.util.concurrent.atomic.AtomicBoolean;
+import net.i2p.router.JobImpl;
+import net.i2p.router.Router;
+import net.i2p.router.RouterContext;
+class ExpireJob extends JobImpl {
+private final PooledTunnelCreatorConfig _cfg;
+private final AtomicBoolean _leaseUpdated = new AtomicBoolean(false);
+private final long _dropAfter;
+private static final long OB_EARLY_EXPIRE = 30*1000;
+private static final long IB_EARLY_EXPIRE = OB_EARLY_EXPIRE + 7500;
+public ExpireJob(RouterContext ctx, PooledTunnelCreatorConfig cfg) {
+super(ctx);
+_cfg = cfg;
+long expire = cfg.getExpiration();
+if (cfg.getTunnelPool().getSettings().isInbound()) {
+_dropAfter = expire + (2 * Router.CLOCK_FUDGE_FACTOR);
+expire -= IB_EARLY_EXPIRE + ctx.random().nextLong(IB_EARLY_EXPIRE);
+} else {
+_dropAfter = expire + Router.CLOCK_FUDGE_FACTOR;
+expire -= OB_EARLY_EXPIRE + ctx.random().nextLong(OB_EARLY_EXPIRE);
+}
+cfg.setExpiration(expire);
+getTiming().setStartAfter(expire);
+}
+public String getName() {
+return "Expire our tunnel";
+}
+public void runJob() {
+if (_leaseUpdated.compareAndSet(false,true)) {
+TunnelPool pool = _cfg.getTunnelPool();
+pool.removeTunnel(_cfg);
+pool.refreshLeaseSet();
+long timeToDrop = _dropAfter - getContext().clock().now();
+requeue(timeToDrop);
+} else {
+getContext().tunnelDispatcher().remove(_cfg);
+}
+}
+}

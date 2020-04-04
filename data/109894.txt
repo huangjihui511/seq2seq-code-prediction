@@ -1,0 +1,24 @@
+package us.codecraft.webmagic.processor;
+import us.codecraft.webmagic.Page;
+import us.codecraft.webmagic.Site;
+import java.util.List;
+public class SimplePageProcessor implements PageProcessor {
+private String urlPattern;
+private Site site;
+public SimplePageProcessor(String urlPattern) {
+this.site = Site.me();
+this.urlPattern = "(" + urlPattern.replace(".", "\\.").replace("*", "[^\"'#]*") + ")";
+}
+@Override
+public void process(Page page) {
+List<String> requests = page.getHtml().links().regex(urlPattern).all();
+page.addTargetRequests(requests);
+page.putField("title", page.getHtml().xpath("
+page.putField("html", page.getHtml().toString());
+page.putField("content", page.getHtml().smartContent());
+}
+@Override
+public Site getSite() {
+return site;
+}
+}

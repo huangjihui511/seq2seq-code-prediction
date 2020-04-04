@@ -1,0 +1,8 @@
+package com.baomidou.mybatisplus.annotation;
+public enum FieldStrategy {
+IGNORED,
+NOT_NULL,
+NOT_EMPTY,
+DEFAULT,
+NEVER
+}

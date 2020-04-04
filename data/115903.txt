@@ -1,0 +1,10 @@
+package net.openhft.affinity;
+public interface CpuLayout {
+int cpus();
+int sockets();
+int coresPerSocket();
+int threadsPerCore();
+int socketId(int cpuId);
+int coreId(int cpuId);
+int threadId(int cpuId);
+}

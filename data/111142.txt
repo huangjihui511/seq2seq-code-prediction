@@ -1,0 +1,8 @@
+package org.apereo.cas.support.oauth.services;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import java.io.Serializable;
+@JsonTypeInfo(use = JsonTypeInfo.Id.CLASS)
+public interface RegisteredServiceOAuthCodeExpirationPolicy extends Serializable {
+long getNumberOfUses();
+String getTimeToLive();
+}

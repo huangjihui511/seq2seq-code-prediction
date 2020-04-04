@@ -1,0 +1,4 @@
+package org.whispersystems.libsignal.util.guava;
+public interface Supplier<T> {
+T get();
+}

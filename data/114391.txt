@@ -1,0 +1,46 @@
+package com.oreilly.springdata.gemfire.order;
+import java.math.BigDecimal;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+import org.springframework.data.gemfire.mapping.Region;
+import org.springframework.util.Assert;
+import com.oreilly.springdata.gemfire.core.AbstractPersistentEntity;
+import com.oreilly.springdata.gemfire.core.Address;
+import com.oreilly.springdata.gemfire.core.Customer;
+@Region
+public class Order extends AbstractPersistentEntity {
+private Long customerId;
+private Address billingAddress;
+private Address shippingAddress;
+private Set<LineItem> lineItems = new HashSet<LineItem>();
+public Order(Long id, Long customerId, Address shippingAddress) {
+super(id);
+Assert.notNull(customerId);
+Assert.notNull(shippingAddress);
+this.customerId = customerId;
+this.shippingAddress = shippingAddress;
+}
+public void add(LineItem lineItem) {
+this.lineItems.add(lineItem);
+}
+public Long getCustomerId() {
+return customerId;
+}
+public Address getBillingAddress() {
+return billingAddress != null ? billingAddress : shippingAddress;
+}
+public Address getShippingAddress() {
+return shippingAddress;
+}
+public Set<LineItem> getLineItems() {
+return Collections.unmodifiableSet(lineItems);
+}
+public BigDecimal getTotal() {
+BigDecimal total = BigDecimal.ZERO;
+for (LineItem item : lineItems) {
+total = total.add(item.getTotal());
+}
+return total;
+}
+}

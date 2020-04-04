@@ -1,0 +1,35 @@
+package org.apache.flink.table.sinks;
+import org.apache.flink.annotation.Internal;
+import org.apache.flink.api.common.typeinfo.TypeInformation;
+import java.util.Optional;
+@Internal
+public abstract class TableSinkBase<T> implements TableSink<T> {
+private Optional<String[]> fieldNames;
+private Optional<TypeInformation<?>[]> fieldTypes;
+protected abstract TableSinkBase<T> copy();
+@Override
+public String[] getFieldNames() {
+if (fieldNames.isPresent()) {
+return fieldNames.get();
+} else {
+throw new IllegalStateException(
+"Table sink must be configured to retrieve field names.");
+}
+}
+@Override
+public TypeInformation<?>[] getFieldTypes() {
+if (fieldTypes.isPresent()) {
+return fieldTypes.get();
+} else {
+throw new IllegalStateException(
+"Table sink must be configured to retrieve field types.");
+}
+}
+@Override
+public final TableSink<T> configure(String[] fieldNames, TypeInformation<?>[] fieldTypes) {
+final TableSinkBase<T> configuredSink = this.copy();
+configuredSink.fieldNames = Optional.of(fieldNames);
+configuredSink.fieldTypes = Optional.of(fieldTypes);
+return configuredSink;
+}
+}

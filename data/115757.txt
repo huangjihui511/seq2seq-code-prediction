@@ -1,0 +1,59 @@
+package org.springframework.integration.test.mock;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import org.mockito.ArgumentCaptor;
+import org.mockito.internal.matchers.CapturingMatcher;
+import org.springframework.integration.handler.AbstractMessageProducingHandler;
+import org.springframework.integration.test.util.TestUtils;
+import org.springframework.messaging.Message;
+public class MockMessageHandler extends AbstractMessageProducingHandler {
+protected final List<Function<Message<?>, ?>> messageFunctions = new LinkedList<>(); 
+private final CapturingMatcher<Message<?>> capturingMatcher;
+protected Function<Message<?>, ?> lastFunction; 
+protected boolean hasReplies; 
+@SuppressWarnings("unchecked")
+protected MockMessageHandler(ArgumentCaptor<Message<?>> messageArgumentCaptor) {
+if (messageArgumentCaptor != null) {
+this.capturingMatcher = TestUtils.getPropertyValue(messageArgumentCaptor,
+"capturingMatcher", CapturingMatcher.class);
+}
+else {
+this.capturingMatcher = null;
+}
+}
+public MockMessageHandler handleNext(Consumer<Message<?>> nextMessageConsumer) {
+this.lastFunction = m -> {
+nextMessageConsumer.accept(m);
+return null;
+};
+this.messageFunctions.add(this.lastFunction);
+return this;
+}
+public MockMessageHandler handleNextAndReply(Function<Message<?>, ?> nextMessageFunction) {
+this.lastFunction = nextMessageFunction;
+this.messageFunctions.add(this.lastFunction);
+this.hasReplies = true;
+return this;
+}
+@Override
+protected void handleMessageInternal(Message<?> message) {
+if (this.capturingMatcher != null) {
+this.capturingMatcher.captureFrom(message);
+}
+Function<Message<?>, ?> function = this.lastFunction;
+synchronized (this) {
+Iterator<Function<Message<?>, ?>> iterator = this.messageFunctions.iterator();
+if (iterator.hasNext()) {
+function = iterator.next();
+iterator.remove();
+}
+}
+Object result = function.apply(message);
+if (result != null) {
+sendOutputs(result, message);
+}
+}
+}

@@ -1,0 +1,63 @@
+package io.vertx.core.cli;
+import io.vertx.codegen.annotations.Fluent;
+import io.vertx.codegen.annotations.GenIgnore;
+import io.vertx.codegen.annotations.Nullable;
+import io.vertx.codegen.annotations.VertxGen;
+import io.vertx.core.cli.annotations.CLIConfigurator;
+import io.vertx.core.cli.impl.DefaultCLI;
+import java.util.List;
+@VertxGen
+public interface CLI {
+static CLI create(String name) {
+return new DefaultCLI().setName(name);
+}
+@GenIgnore
+static CLI create(Class<?> clazz) {
+return CLIConfigurator.define(clazz);
+}
+CommandLine parse(List<String> arguments);
+CommandLine parse(List<String> arguments, boolean validate);
+String getName();
+@Fluent
+CLI setName(String name);
+@Nullable String getDescription();
+@Fluent
+CLI setDescription(String desc);
+@Nullable String getSummary();
+@Fluent
+CLI setSummary(String summary);
+boolean isHidden();
+@Fluent
+CLI setHidden(boolean hidden);
+List<Option> getOptions();
+@Fluent
+CLI addOption(Option option);
+@Fluent
+CLI addOptions(List<Option> options);
+@Fluent
+CLI setOptions(List<Option> options);
+List<Argument> getArguments();
+@Fluent
+CLI addArgument(Argument arg);
+@Fluent
+CLI addArguments(List<Argument> args);
+@Fluent
+CLI setArguments(List<Argument> args);
+@Nullable
+Option getOption(String name);
+@Nullable
+Argument getArgument(String name);
+@Nullable
+Argument getArgument(int index);
+@Fluent
+CLI removeOption(String name);
+@Fluent
+CLI removeArgument(int index);
+@GenIgnore
+CLI usage(StringBuilder builder);
+@GenIgnore
+CLI usage(StringBuilder builder, String prefix);
+int getPriority();
+@Fluent
+CLI setPriority(int priority);
+}

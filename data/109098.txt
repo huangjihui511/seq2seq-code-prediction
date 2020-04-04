@@ -1,0 +1,19 @@
+package io.vertx.core.cli.annotations;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+@Target(ElementType.METHOD)
+@Retention(RetentionPolicy.RUNTIME)
+public @interface Option {
+String NO_NAME = "\0";
+String longName() default NO_NAME;
+String shortName() default NO_NAME;
+String argName() default "value";
+boolean required() default false;
+boolean acceptValue() default true;
+boolean acceptMultipleValues() default false;
+boolean flag() default false;
+boolean help() default false;
+String[] choices() default {};
+}

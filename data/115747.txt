@@ -1,0 +1,99 @@
+package org.springframework.integration.support.management;
+import java.util.concurrent.atomic.AtomicLong;
+@SuppressWarnings("deprecation")
+public class DefaultMessageHandlerMetrics extends AbstractMessageHandlerMetrics {
+private static final int DEFAULT_MOVING_AVERAGE_WINDOW = 10;
+protected final AtomicLong activeCount = new AtomicLong(); 
+protected final AtomicLong handleCount = new AtomicLong(); 
+protected final AtomicLong errorCount = new AtomicLong(); 
+protected final ExponentialMovingAverage duration; 
+public DefaultMessageHandlerMetrics() {
+this(null);
+}
+public DefaultMessageHandlerMetrics(String name) {
+this(name, new ExponentialMovingAverage(DEFAULT_MOVING_AVERAGE_WINDOW, 1000000.));
+}
+public DefaultMessageHandlerMetrics(String name, ExponentialMovingAverage duration) {
+super(name);
+this.duration = duration;
+}
+@Override
+public MetricsContext beforeHandle() {
+long start = 0;
+if (isFullStatsEnabled()) {
+start = System.nanoTime();
+}
+this.handleCount.incrementAndGet();
+this.activeCount.incrementAndGet();
+return new DefaultHandlerMetricsContext(start);
+}
+@Override
+public void afterHandle(MetricsContext context, boolean success) {
+this.activeCount.decrementAndGet();
+if (isFullStatsEnabled() && success) {
+this.duration.append(System.nanoTime() - ((DefaultHandlerMetricsContext) context).start);
+}
+else if (!success) {
+this.errorCount.incrementAndGet();
+}
+}
+@Override
+public synchronized void reset() {
+this.duration.reset();
+this.errorCount.set(0);
+this.handleCount.set(0);
+}
+@Override
+public long getHandleCountLong() {
+if (logger.isTraceEnabled()) {
+logger.trace("Getting Handle Count:" + this);
+}
+return this.handleCount.get();
+}
+@Override
+public int getHandleCount() {
+return (int) getHandleCountLong();
+}
+@Override
+public int getErrorCount() {
+return (int) this.errorCount.get();
+}
+@Override
+public long getErrorCountLong() {
+return this.errorCount.get();
+}
+@Override
+public double getMeanDuration() {
+return this.duration.getMean();
+}
+@Override
+public double getMinDuration() {
+return this.duration.getMin();
+}
+@Override
+public double getMaxDuration() {
+return this.duration.getMax();
+}
+@Override
+public double getStandardDeviationDuration() {
+return this.duration.getStandardDeviation();
+}
+@Override
+public int getActiveCount() {
+return (int) this.activeCount.get();
+}
+@Override
+public long getActiveCountLong() {
+return this.activeCount.get();
+}
+@Override
+public Statistics getDuration() {
+return this.duration.getStatistics();
+}
+protected static class DefaultHandlerMetricsContext implements MetricsContext {
+protected final long start; 
+protected DefaultHandlerMetricsContext(long start) {
+this.start = start;
+}
+}
+}

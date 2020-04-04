@@ -1,0 +1,8 @@
+package com.alibaba.csp.sentinel.adapter.gateway.common.param;
+public interface RequestItemParser<T> {
+String getPath(T request);
+String getRemoteAddress(T request);
+String getHeader(T request, String key);
+String getUrlParam(T request, String paramName);
+String getCookieValue(T request, String cookieName);
+}

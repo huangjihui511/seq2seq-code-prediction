@@ -1,0 +1,53 @@
+package org.jupiter.common.util;
+import java.util.concurrent.atomic.AtomicLongFieldUpdater;
+import org.jupiter.common.util.internal.InternalThreadLocal;
+class LongLhsPadding {
+@SuppressWarnings("unused")
+protected long p01, p02, p03, p04, p05, p06, p07;
+}
+class LongValue extends LongLhsPadding {
+protected volatile long value;
+}
+class LongRhsPadding extends LongValue {
+@SuppressWarnings("unused")
+protected long p09, p10, p11, p12, p13, p14, p15;
+}
+public class LongSequence extends LongRhsPadding {
+private static final int DEFAULT_STEP = 128;
+private static final AtomicLongFieldUpdater<LongValue> updater = AtomicLongFieldUpdater.newUpdater(LongValue.class, "value");
+private final InternalThreadLocal<LocalSequence> localSequence = new InternalThreadLocal<LocalSequence>() {
+@Override
+protected LocalSequence initialValue() throws Exception {
+return new LocalSequence();
+}
+};
+private final int step;
+public LongSequence() {
+this(DEFAULT_STEP);
+}
+public LongSequence(int step) {
+this.step = step;
+}
+public LongSequence(long initialValue, int step) {
+updater.set(this, initialValue);
+this.step = step;
+}
+public long next() {
+return localSequence.get().next();
+}
+private long getNextBaseValue() {
+return updater.getAndAdd(this, step);
+}
+private final class LocalSequence {
+private long localBase = getNextBaseValue();
+private long localValue = 0;
+public long next() {
+long realVal = ++localValue + localBase;
+if (localValue == step) {
+localBase = getNextBaseValue();
+localValue = 0;
+}
+return realVal;
+}
+}
+}

@@ -1,0 +1,105 @@
+package io.hawt.util;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import java.net.InetAddress;
+import java.net.NetworkInterface;
+import java.net.SocketException;
+import java.net.UnknownHostException;
+import java.util.Enumeration;
+import java.util.LinkedHashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
+public class Hosts {
+private static final transient Logger LOG = LoggerFactory.getLogger(Hosts.class);
+public static final String PREFERED_ADDRESS_PROPERTY_NAME = "preferred.network.address";
+private Hosts() {
+}
+public static Map<String, Set<InetAddress>> getNetworkInterfaceAddresses(boolean includeLoopback) {
+Map<String, Set<InetAddress>> interfaceAddressMap = new TreeMap<>();
+try {
+Enumeration ifaces = NetworkInterface.getNetworkInterfaces();
+while (ifaces.hasMoreElements()) {
+NetworkInterface iface = (NetworkInterface) ifaces.nextElement();
+if (!iface.isUp()) {
+continue;
+}
+if (!includeLoopback && iface.isLoopback()) {
+continue;
+}
+String name = iface.getName();
+Enumeration<InetAddress> ifaceAdresses = iface.getInetAddresses();
+while (ifaceAdresses.hasMoreElements()) {
+InetAddress ia = ifaceAdresses.nextElement();
+if (!includeLoopback && ia.isLoopbackAddress()) {
+continue;
+}
+if (!ia.getHostAddress().contains(":") && !(name != null && name.toLowerCase().contains("docker"))) {
+Set<InetAddress> addresses = interfaceAddressMap.get(name);
+if (addresses == null) {
+addresses = new LinkedHashSet<>();
+}
+addresses.add(ia);
+interfaceAddressMap.put(name, addresses);
+}
+}
+}
+} catch (SocketException ex) {
+}
+return interfaceAddressMap;
+}
+public static Set<InetAddress> getAddresses() {
+Set<InetAddress> allAddresses = new LinkedHashSet<>();
+Map<String, Set<InetAddress>> interfaceAddressMap = getNetworkInterfaceAddresses(false);
+for (Map.Entry<String, Set<InetAddress>> entry : interfaceAddressMap.entrySet()) {
+Set<InetAddress> addresses = entry.getValue();
+if (!addresses.isEmpty()) {
+for (InetAddress address : addresses) {
+allAddresses.add(address);
+}
+}
+}
+return allAddresses;
+}
+private static InetAddress chooseAddress(String preferred) throws UnknownHostException {
+Set<InetAddress> addresses = getAddresses();
+if (preferred != null && !preferred.isEmpty()) {
+try {
+InetAddress preferredAddress = InetAddress.getByName(preferred);
+if (addresses != null && addresses.contains(preferredAddress)) {
+LOG.info("preferred address is " + preferredAddress.getHostAddress() + " for host " + preferredAddress.getHostName());
+return preferredAddress;
+}
+} catch (UnknownHostException e) {
+}
+for (InetAddress address : addresses) {
+if (preferred.equals(address.getHostName())) {
+return address;
+}
+}
+StringBuffer hostNameBuffer = new StringBuffer();
+for (InetAddress address : addresses) {
+if (hostNameBuffer.length() > 0) {
+hostNameBuffer.append(", ");
+}
+hostNameBuffer.append(address.getHostName() + "/" + address.getHostAddress());
+}
+LOG.warn("Could not find network address for preferred '" + preferred + "' when the addresses were: " + hostNameBuffer);
+}
+if (addresses.contains(InetAddress.getLocalHost())) {
+return InetAddress.getLocalHost();
+} else if (addresses != null && !addresses.isEmpty()) {
+return addresses.toArray(new InetAddress[addresses.size()])[0];
+} else {
+return InetAddress.getLocalHost();
+}
+}
+public static String getLocalHostName() throws UnknownHostException {
+String preffered = System.getProperty(PREFERED_ADDRESS_PROPERTY_NAME);
+return chooseAddress(preffered).getHostName();
+}
+public static String getLocalIp() throws UnknownHostException {
+String preffered = System.getProperty(PREFERED_ADDRESS_PROPERTY_NAME);
+return chooseAddress(preffered).getHostAddress();
+}
+}

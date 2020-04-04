@@ -1,0 +1,79 @@
+package org.springframework.integration.dsl;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.function.Function;
+import org.springframework.beans.factory.BeanNameAware;
+import org.springframework.core.ResolvableType;
+import org.springframework.integration.channel.DirectChannel;
+import org.springframework.integration.scheduling.PollerMetadata;
+import org.springframework.messaging.MessageChannel;
+import org.springframework.util.Assert;
+import reactor.util.function.Tuple2;
+import reactor.util.function.Tuples;
+public abstract class EndpointSpec<S extends EndpointSpec<S, F, H>, F extends BeanNameAware, H>
+extends IntegrationComponentSpec<S, Tuple2<F, H>>
+implements ComponentsRegistration {
+protected final Map<Object, String> componentsToRegister = new LinkedHashMap<>(); 
+protected H handler; 
+protected F endpointFactoryBean; 
+@SuppressWarnings("unchecked")
+protected EndpointSpec(H handler) {
+try {
+Class<?> fClass = ResolvableType.forClass(this.getClass()).as(EndpointSpec.class).resolveGenerics()[1];
+this.endpointFactoryBean = (F) fClass.newInstance();
+this.handler = handler;
+}
+catch (Exception e) {
+throw new IllegalStateException(e);
+}
+}
+@Override
+public S id(String id) {
+this.endpointFactoryBean.setBeanName(id);
+return super.id(id);
+}
+public S poller(Function<PollerFactory, PollerSpec> pollers) {
+return poller(pollers.apply(new PollerFactory()));
+}
+public S poller(PollerSpec pollerMetadataSpec) {
+Map<Object, String> components = pollerMetadataSpec.getComponentsToRegister();
+if (components != null) {
+this.componentsToRegister.putAll(components);
+}
+return poller(pollerMetadataSpec.get());
+}
+public abstract S poller(PollerMetadata pollerMetadata);
+public abstract S phase(int phase);
+public abstract S autoStartup(boolean autoStartup);
+public abstract S role(String role);
+@Override
+public Map<Object, String> getComponentsToRegister() {
+return this.componentsToRegister.isEmpty()
+? null
+: this.componentsToRegister;
+}
+@Override
+protected Tuple2<F, H> doGet() {
+return Tuples.of(this.endpointFactoryBean, this.handler);
+}
+protected void assertHandler() {
+Assert.state(this.handler != null, "'this.handler' must not be null.");
+}
+protected MessageChannel obtainInputChannelFromFlow(IntegrationFlow subFlow) {
+return obtainInputChannelFromFlow(subFlow, true);
+}
+protected MessageChannel obtainInputChannelFromFlow(IntegrationFlow subFlow, boolean evaluateInternalBuilder) {
+Assert.notNull(subFlow, "'subFlow' must not be null");
+MessageChannel messageChannel = subFlow.getInputChannel();
+if (messageChannel == null) {
+messageChannel = new DirectChannel();
+IntegrationFlowDefinition<?> flowBuilder = IntegrationFlows.from(messageChannel);
+subFlow.configure(flowBuilder);
+this.componentsToRegister.put(evaluateInternalBuilder ? flowBuilder.get() : flowBuilder, null);
+}
+else {
+this.componentsToRegister.put(subFlow, null);
+}
+return messageChannel;
+}
+}

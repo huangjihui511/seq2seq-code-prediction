@@ -1,0 +1,6 @@
+package org.spongepowered.mod.bridge.server.management;
+import net.minecraft.world.chunk.Chunk;
+public interface PlayerChunkMapEntryBridge_Forge {
+void forgeBridge$setChunk(Chunk chunk);
+void forgeBridge$setLoading(boolean loading);
+}

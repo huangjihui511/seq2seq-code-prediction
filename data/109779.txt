@@ -1,0 +1,17 @@
+package lombok.installer.eclipse;
+import java.util.Collections;
+import lombok.installer.IdeLocationProvider;
+import org.mangosdk.spi.ProviderFor;
+@ProviderFor(IdeLocationProvider.class)
+public class EclipseLocationProvider extends EclipseProductLocationProvider {
+private static final EclipseProductDescriptor ECLIPSE = new StandardProductDescriptor(
+"Eclipse",
+"eclipse",
+"eclipse",
+EclipseLocationProvider.class.getResource("eclipse.png"),
+Collections.<String>emptySet()
+);
+public EclipseLocationProvider() {
+super(ECLIPSE);
+}
+}

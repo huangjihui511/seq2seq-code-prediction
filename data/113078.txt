@@ -1,0 +1,7 @@
+package br.com.leonardoz.patterns.thread_safe.publishing;
+public class SafePublishing {
+public static Object object;
+{
+object = new Object();
+}
+}

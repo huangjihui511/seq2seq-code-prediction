@@ -1,0 +1,21 @@
+package org.apache.pdfbox.preflight.action;
+import static org.apache.pdfbox.preflight.PreflightConstants.ERROR_ACTION_FORBIDDEN_ACTIONS_UNDEF;
+import org.apache.pdfbox.cos.COSDictionary;
+import org.apache.pdfbox.preflight.PreflightContext;
+import org.apache.pdfbox.preflight.ValidationResult.ValidationError;
+public class UndefAction extends AbstractActionManager
+{
+private String actionName = null;
+public UndefAction(ActionManagerFactory amFact, COSDictionary adict, PreflightContext ctx, String aaKey, String name)
+{
+super(amFact, adict, ctx, aaKey);
+this.actionName = name;
+}
+@Override
+protected boolean innerValid()
+{
+context.addValidationError(new ValidationError(ERROR_ACTION_FORBIDDEN_ACTIONS_UNDEF, "The action " + actionName
++ " is undefined"));
+return false;
+}
+}

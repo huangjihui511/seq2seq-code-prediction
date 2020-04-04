@@ -1,0 +1,10 @@
+package org.hongxi.whatsmars.activemq.broker;
+import org.apache.activemq.broker.BrokerService;
+public class BrokerStartup {
+public static void main(String[] args) throws Exception {
+BrokerService broker =new BrokerService();
+broker.setBrokerName("TestBroker"); 
+broker.addConnector("tcp:
+broker.start();
+}
+}

@@ -1,0 +1,45 @@
+package com.github.jknack.handlebars.io;
+import static org.apache.commons.lang3.StringUtils.defaultString;
+import static org.apache.commons.lang3.Validate.notNull;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+public abstract class AbstractTemplateLoader implements TemplateLoader {
+private String prefix = DEFAULT_PREFIX;
+private String suffix = DEFAULT_SUFFIX;
+private Charset charset;
+@Override
+public String resolve(final String uri) {
+return prefix + normalize(uri) + suffix;
+}
+protected String normalize(final String location) {
+if (location.toString().startsWith("/")) {
+return location.substring(1);
+}
+return location;
+}
+public void setPrefix(final String prefix) {
+this.prefix = notNull(prefix, "A view prefix is required.");
+if (!this.prefix.endsWith("/")) {
+this.prefix += "/";
+}
+}
+public void setSuffix(final String suffix) {
+this.suffix = defaultString(suffix, "");
+}
+@Override
+public void setCharset(final Charset charset) {
+this.charset = notNull(charset, "Charset required.");
+}
+@Override
+public Charset getCharset() {
+return charset == null ? StandardCharsets.UTF_8 : charset;
+}
+@Override
+public String getPrefix() {
+return prefix;
+}
+@Override
+public String getSuffix() {
+return suffix;
+}
+}

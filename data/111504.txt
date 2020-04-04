@@ -1,0 +1,39 @@
+package io.grpc;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
+@ExperimentalApi("https:
+public interface Codec extends Compressor, Decompressor {
+final class Gzip implements Codec {
+@Override
+public String getMessageEncoding() {
+return "gzip";
+}
+@Override
+public OutputStream compress(OutputStream os) throws IOException {
+return new GZIPOutputStream(os);
+}
+@Override
+public InputStream decompress(InputStream is) throws IOException {
+return new GZIPInputStream(is);
+}
+}
+final class Identity implements Codec {
+public static final Codec NONE = new Identity();
+@Override
+public InputStream decompress(InputStream is) {
+return is;
+}
+@Override
+public String getMessageEncoding() {
+return "identity";
+}
+@Override
+public OutputStream compress(OutputStream os) {
+return os;
+}
+private Identity() {}
+}
+}

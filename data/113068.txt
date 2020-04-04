@@ -1,0 +1,65 @@
+package br.com.leonardoz.patterns.thread_safe.lock_split;
+import java.util.List;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+import br.com.leonardoz.patterns.GuardedBy;
+import br.com.leonardoz.patterns.ThreadSafe;
+@ThreadSafe
+public class LockSplit {
+@GuardedBy("lockState")
+private List<Object> hotState;
+@GuardedBy("lockAnotherState")
+private Object anotherState;
+@GuardedBy("lockOtherState")
+private Object otherState;
+private Lock lockState = new ReentrantLock();
+private Lock lockOtherStates = new ReentrantLock();
+public List<Object> stateReader() {
+lockState.lock();
+try {
+return hotState;
+} finally {
+lockState.unlock();
+}
+}
+public void stateWriterMethod(Object param) {
+lockState.lock();
+try {
+this.hotState.add(param);
+} finally {
+lockState.unlock();
+}
+}
+public Object anotherStateReader() {
+lockOtherStates.lock();
+try {
+return anotherState;
+} finally {
+lockOtherStates.unlock();
+}
+}
+public void anotherStateWriterMethod(Object param) {
+lockOtherStates.lock();
+try {
+this.anotherState = param;
+} finally {
+lockOtherStates.unlock();
+}
+}
+public Object otherStateReader() {
+lockOtherStates.lock();
+try {
+return otherState;
+} finally {
+lockOtherStates.unlock();
+}
+}
+public void otherStateWriterMethod(Object param) {
+lockOtherStates.lock();
+try {
+this.otherState = param;
+} finally {
+lockOtherStates.unlock();
+}
+}
+}

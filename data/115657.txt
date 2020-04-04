@@ -1,0 +1,33 @@
+package com.graphhopper.jsprit.core.algorithm;
+import com.graphhopper.jsprit.core.algorithm.state.InternalStates;
+import com.graphhopper.jsprit.core.problem.solution.SolutionCostCalculator;
+import com.graphhopper.jsprit.core.problem.solution.VehicleRoutingProblemSolution;
+import com.graphhopper.jsprit.core.problem.solution.route.VehicleRoute;
+import com.graphhopper.jsprit.core.problem.solution.route.state.RouteAndActivityStateGetter;
+import com.graphhopper.jsprit.core.problem.vehicle.Vehicle;
+public class VariablePlusFixedSolutionCostCalculatorFactory {
+private RouteAndActivityStateGetter stateManager;
+public VariablePlusFixedSolutionCostCalculatorFactory(RouteAndActivityStateGetter stateManager) {
+super();
+this.stateManager = stateManager;
+}
+public SolutionCostCalculator createCalculator() {
+return new SolutionCostCalculator() {
+@Override
+public double getCosts(VehicleRoutingProblemSolution solution) {
+double c = 0.0;
+for (VehicleRoute r : solution.getRoutes()) {
+c += stateManager.getRouteState(r, InternalStates.COSTS, Double.class);
+c += getFixedCosts(r.getVehicle());
+}
+c += solution.getUnassignedJobs().size() * c * .1;
+return c;
+}
+private double getFixedCosts(Vehicle vehicle) {
+if (vehicle == null) return 0.0;
+if (vehicle.getType() == null) return 0.0;
+return vehicle.getType().getVehicleCostParams().fix;
+}
+};
+}
+}

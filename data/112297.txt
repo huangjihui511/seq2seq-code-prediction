@@ -1,0 +1,17 @@
+package com.github.jknack.handlebars.internal;
+import java.io.IOException;
+import com.github.jknack.handlebars.Context;
+public class VarParam implements Param {
+public final Variable fn;
+public VarParam(final Variable value) {
+this.fn = value;
+}
+@Override
+public Object apply(final Context context) throws IOException {
+return this.fn.value(context, new FastStringWriter());
+}
+@Override
+public String toString() {
+return fn.text();
+}
+}

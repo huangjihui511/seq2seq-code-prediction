@@ -1,0 +1,9 @@
+package mobi.hsz.idea.gitignore.file.type.kind;
+import mobi.hsz.idea.gitignore.file.type.IgnoreFileType;
+import mobi.hsz.idea.gitignore.lang.kind.GitLanguage;
+public class GitFileType extends IgnoreFileType {
+public static final GitFileType INSTANCE = new GitFileType();
+private GitFileType() {
+super(GitLanguage.INSTANCE);
+}
+}

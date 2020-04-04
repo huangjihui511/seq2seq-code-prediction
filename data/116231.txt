@@ -1,0 +1,6 @@
+package org.apache.struts2.portlet.interceptor;
+import javax.portlet.PortletContext;
+@Deprecated
+public interface PortletContextAware {
+void setPortletContext(PortletContext portletContext);
+}

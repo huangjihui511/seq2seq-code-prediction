@@ -1,0 +1,6 @@
+package com.google.inject.internal;
+import com.google.inject.spi.Message;
+interface ErrorHandler {
+void handle(Object source, Errors errors);
+void handle(Message message);
+}

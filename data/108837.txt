@@ -1,0 +1,7 @@
+package cn.hutool.core.bean.copier;
+import java.lang.reflect.Type;
+import cn.hutool.core.convert.Convert;
+public interface ValueProvider<T>{
+Object value(T key, Type valueType);
+boolean containsKey(T key);
+}

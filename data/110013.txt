@@ -1,0 +1,160 @@
+package com.google.cloud.tools.jib.tar;
+import com.google.cloud.tools.jib.blob.Blobs;
+import com.google.common.io.ByteStreams;
+import com.google.common.io.Resources;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
+import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
+import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+public class TarStreamBuilderTest {
+private Path fileA;
+private Path fileB;
+private Path directoryA;
+private byte[] fileAContents;
+private byte[] fileBContents;
+private TarStreamBuilder testTarStreamBuilder = new TarStreamBuilder();
+@Before
+public void setup() throws URISyntaxException, IOException {
+fileA = Paths.get(Resources.getResource("core/fileA").toURI());
+fileB = Paths.get(Resources.getResource("core/fileB").toURI());
+directoryA = Paths.get(Resources.getResource("core/directoryA").toURI());
+fileAContents = Files.readAllBytes(fileA);
+fileBContents = Files.readAllBytes(fileB);
+}
+@Test
+public void testToBlob_tarArchiveEntries() throws IOException {
+setUpWithTarEntries();
+verifyBlobWithoutCompression();
+}
+@Test
+public void testToBlob_strings() throws IOException {
+setUpWithStrings();
+verifyBlobWithoutCompression();
+}
+@Test
+public void testToBlob_stringsAndTarArchiveEntries() throws IOException {
+setUpWithStringsAndTarEntries();
+verifyBlobWithoutCompression();
+}
+@Test
+public void testToBlob_tarArchiveEntriesWithCompression() throws IOException {
+setUpWithTarEntries();
+verifyBlobWithCompression();
+}
+@Test
+public void testToBlob_stringsWithCompression() throws IOException {
+setUpWithStrings();
+verifyBlobWithCompression();
+}
+@Test
+public void testToBlob_stringsAndTarArchiveEntriesWithCompression() throws IOException {
+setUpWithStringsAndTarEntries();
+verifyBlobWithCompression();
+}
+@Test
+public void testToBlob_multiByte() throws IOException {
+testTarStreamBuilder.addByteEntry("æ—¥æœ¬èªž".getBytes(StandardCharsets.UTF_8), "test");
+testTarStreamBuilder.addByteEntry("asdf".getBytes(StandardCharsets.UTF_8), "crepecake");
+testTarStreamBuilder.addBlobEntry(
+Blobs.from("jib"), "jib".getBytes(StandardCharsets.UTF_8).length, "jib");
+ByteArrayOutputStream tarByteOutputStream = new ByteArrayOutputStream();
+OutputStream compressorStream = new GZIPOutputStream(tarByteOutputStream);
+testTarStreamBuilder.writeAsTarArchiveTo(compressorStream);
+ByteArrayInputStream byteArrayInputStream =
+new ByteArrayInputStream(tarByteOutputStream.toByteArray());
+InputStream tarByteInputStream = new GZIPInputStream(byteArrayInputStream);
+TarArchiveInputStream tarArchiveInputStream = new TarArchiveInputStream(tarByteInputStream);
+TarArchiveEntry headerFile = tarArchiveInputStream.getNextTarEntry();
+Assert.assertEquals("test", headerFile.getName());
+Assert.assertEquals(
+"æ—¥æœ¬èªž", new String(ByteStreams.toByteArray(tarArchiveInputStream), StandardCharsets.UTF_8));
+headerFile = tarArchiveInputStream.getNextTarEntry();
+Assert.assertEquals("crepecake", headerFile.getName());
+Assert.assertEquals(
+"asdf", new String(ByteStreams.toByteArray(tarArchiveInputStream), StandardCharsets.UTF_8));
+headerFile = tarArchiveInputStream.getNextTarEntry();
+Assert.assertEquals("jib", headerFile.getName());
+Assert.assertEquals(
+"jib", new String(ByteStreams.toByteArray(tarArchiveInputStream), StandardCharsets.UTF_8));
+Assert.assertNull(tarArchiveInputStream.getNextTarEntry());
+}
+private void setUpWithTarEntries() {
+testTarStreamBuilder.addTarArchiveEntry(
+new TarArchiveEntry(fileA.toFile(), "some/path/to/resourceFileA"));
+testTarStreamBuilder.addTarArchiveEntry(new TarArchiveEntry(fileB.toFile(), "crepecake"));
+testTarStreamBuilder.addTarArchiveEntry(
+new TarArchiveEntry(directoryA.toFile(), "some/path/to"));
+testTarStreamBuilder.addTarArchiveEntry(
+new TarArchiveEntry(
+fileA.toFile(),
+"some/really/long/path/that/exceeds/100/characters/abcdefghijklmnopqrstuvwxyz0123456789012345678901234567890"));
+}
+private void setUpWithStrings() {
+testTarStreamBuilder.addByteEntry(fileAContents, "some/path/to/resourceFileA");
+testTarStreamBuilder.addByteEntry(fileBContents, "crepecake");
+testTarStreamBuilder.addTarArchiveEntry(
+new TarArchiveEntry(directoryA.toFile(), "some/path/to"));
+testTarStreamBuilder.addByteEntry(
+fileAContents,
+"some/really/long/path/that/exceeds/100/characters/abcdefghijklmnopqrstuvwxyz0123456789012345678901234567890");
+}
+private void setUpWithStringsAndTarEntries() {
+testTarStreamBuilder.addByteEntry(fileAContents, "some/path/to/resourceFileA");
+testTarStreamBuilder.addTarArchiveEntry(new TarArchiveEntry(fileB.toFile(), "crepecake"));
+testTarStreamBuilder.addTarArchiveEntry(
+new TarArchiveEntry(directoryA.toFile(), "some/path/to"));
+testTarStreamBuilder.addByteEntry(
+fileAContents,
+"some/really/long/path/that/exceeds/100/characters/abcdefghijklmnopqrstuvwxyz0123456789012345678901234567890");
+}
+private void verifyBlobWithCompression() throws IOException {
+ByteArrayOutputStream tarByteOutputStream = new ByteArrayOutputStream();
+OutputStream compressorStream = new GZIPOutputStream(tarByteOutputStream);
+testTarStreamBuilder.writeAsTarArchiveTo(compressorStream);
+ByteArrayInputStream byteArrayInputStream =
+new ByteArrayInputStream(tarByteOutputStream.toByteArray());
+InputStream tarByteInputStream = new GZIPInputStream(byteArrayInputStream);
+TarArchiveInputStream tarArchiveInputStream = new TarArchiveInputStream(tarByteInputStream);
+verifyTarArchive(tarArchiveInputStream);
+}
+private void verifyBlobWithoutCompression() throws IOException {
+ByteArrayOutputStream tarByteOutputStream = new ByteArrayOutputStream();
+testTarStreamBuilder.writeAsTarArchiveTo(tarByteOutputStream);
+ByteArrayInputStream byteArrayInputStream =
+new ByteArrayInputStream(tarByteOutputStream.toByteArray());
+TarArchiveInputStream tarArchiveInputStream = new TarArchiveInputStream(byteArrayInputStream);
+verifyTarArchive(tarArchiveInputStream);
+}
+private void verifyTarArchive(TarArchiveInputStream tarArchiveInputStream) throws IOException {
+TarArchiveEntry headerFileA = tarArchiveInputStream.getNextTarEntry();
+Assert.assertEquals("some/path/to/resourceFileA", headerFileA.getName());
+byte[] fileAString = ByteStreams.toByteArray(tarArchiveInputStream);
+Assert.assertArrayEquals(fileAContents, fileAString);
+TarArchiveEntry headerFileB = tarArchiveInputStream.getNextTarEntry();
+Assert.assertEquals("crepecake", headerFileB.getName());
+byte[] fileBString = ByteStreams.toByteArray(tarArchiveInputStream);
+Assert.assertArrayEquals(fileBContents, fileBString);
+TarArchiveEntry headerDirectoryA = tarArchiveInputStream.getNextTarEntry();
+Assert.assertEquals("some/path/to/", headerDirectoryA.getName());
+TarArchiveEntry headerFileALong = tarArchiveInputStream.getNextTarEntry();
+Assert.assertEquals(
+"some/really/long/path/that/exceeds/100/characters/abcdefghijklmnopqrstuvwxyz0123456789012345678901234567890",
+headerFileALong.getName());
+byte[] fileALongString = ByteStreams.toByteArray(tarArchiveInputStream);
+Assert.assertArrayEquals(fileAContents, fileALongString);
+Assert.assertNull(tarArchiveInputStream.getNextTarEntry());
+}
+}

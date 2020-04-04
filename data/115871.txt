@@ -1,0 +1,18 @@
+package com.jeff.tianti.org.dto;
+import com.jeff.tianti.common.dto.CommonQueryDTO;
+public class RoleQueryDTO extends CommonQueryDTO{
+private String name;
+private Integer status;
+public String getName() {
+return name;
+}
+public void setName(String name) {
+this.name = name;
+}
+public Integer getStatus() {
+return status;
+}
+public void setStatus(Integer status) {
+this.status = status;
+}
+}

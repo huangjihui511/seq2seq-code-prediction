@@ -1,0 +1,24 @@
+package org.androidannotations.api.sharedpreferences;
+import android.content.SharedPreferences;
+public final class IntPrefField extends AbstractPrefField<Integer> {
+IntPrefField(SharedPreferences sharedPreferences, String key, Integer defaultValue) {
+super(sharedPreferences, key, defaultValue);
+}
+@Override
+public Integer getOr(Integer defaultValue) {
+try {
+return sharedPreferences.getInt(key, defaultValue);
+} catch (ClassCastException e) {
+try {
+String value = sharedPreferences.getString(key, "" + defaultValue);
+return Integer.parseInt(value);
+} catch (Exception e2) {
+throw e;
+}
+}
+}
+@Override
+protected void putInternal(Integer value) {
+apply(edit().putInt(key, value));
+}
+}

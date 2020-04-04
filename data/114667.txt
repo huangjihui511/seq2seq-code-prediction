@@ -1,0 +1,7 @@
+package com.twelvemonkeys.sql;
+import java.util.Hashtable;
+public interface DatabaseReadable {
+public Object getId();
+public void setId(Object id);
+public Hashtable getMapping();
+}

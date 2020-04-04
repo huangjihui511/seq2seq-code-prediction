@@ -1,0 +1,6 @@
+package org.apereo.cas.services.domain;
+@FunctionalInterface
+public interface RegisteredServiceDomainExtractor {
+String DOMAIN_DEFAULT = "default";
+String extract(String service);
+}

@@ -1,0 +1,18 @@
+package com.xkcoding.rbac.security.controller;
+import com.xkcoding.rbac.security.common.ApiResponse;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.web.bind.annotation.*;
+@Slf4j
+@RestController
+@RequestMapping("/test")
+public class TestController {
+@GetMapping
+public ApiResponse list() {
+}
+@PostMapping
+public ApiResponse add() {
+}
+@PutMapping("/{id}")
+public ApiResponse update(@PathVariable Long id) {
+}
+}

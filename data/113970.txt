@@ -1,0 +1,5 @@
+package org.spongepowered.mod.bridge.block;
+public interface BlockBridge_Forge {
+boolean forgeBridge$requiresLocationCheckForLightValue();
+boolean forgeBridge$requiresLocationCheckForOpacity();
+}

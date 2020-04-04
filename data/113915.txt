@@ -1,0 +1,16 @@
+package org.spongepowered.mod.util;
+public class CompatibilityException extends RuntimeException {
+private static final long serialVersionUID = 2438839069499131356L;
+public CompatibilityException(String message) {
+super(message);
+}
+public CompatibilityException(String message, Throwable cause) {
+super(message, cause);
+}
+public CompatibilityException(Throwable cause) {
+super(cause);
+}
+public CompatibilityException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+super(message, cause, enableSuppression, writableStackTrace);
+}
+}

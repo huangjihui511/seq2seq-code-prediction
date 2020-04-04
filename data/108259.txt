@@ -1,0 +1,10 @@
+package org.apache.flink.streaming.api.datastream;
+import org.apache.flink.annotation.PublicEvolving;
+import org.apache.flink.util.FlinkRuntimeException;
+@PublicEvolving
+public class UnsupportedTimeCharacteristicException extends FlinkRuntimeException {
+private static final long serialVersionUID = -8109094930338075819L;
+public UnsupportedTimeCharacteristicException(String message) {
+super(message);
+}
+}

@@ -1,0 +1,100 @@
+package net.pms.io;
+import java.io.IOException;
+import java.io.InputStream;
+public class SizeLimitInputStream extends InputStream {
+protected InputStream in;
+protected long maxBytesToRead = 0;
+protected long bytesRead = 0;
+protected long bytesReadSinceMark = 0;
+protected long markReadLimitBytes = -1;
+public long getBytesRead() {
+return bytesRead;
+}
+public long getBytesLeft() {
+return maxBytesToRead - bytesRead;
+}
+public boolean allBytesRead() {
+return getBytesLeft() == 0;
+}
+public long getMaxBytesToRead() {
+return maxBytesToRead;
+}
+public SizeLimitInputStream(InputStream in, long maxBytesToRead) {
+this.in = in;
+this.maxBytesToRead = maxBytesToRead;
+}
+@Override
+public int read() throws IOException {
+if (bytesRead >= maxBytesToRead) {
+return -1;
+}
+int b = in.read();
+if (b != -1) {
+bytesRead++;
+bytesReadSinceMark++;
+}
+return b;
+}
+@Override
+public int read(byte[] b) throws IOException {
+return this.read(b, 0, b.length);
+}
+@Override
+public int read(byte[] b, int off, int len) throws IOException {
+if (bytesRead >= maxBytesToRead) {
+return -1;
+}
+long bytesLeft = getBytesLeft();
+if (len > bytesLeft) {
+len = (int) bytesLeft;
+}
+int bytesJustRead = in.read(b, off, len);
+bytesRead += bytesJustRead;
+bytesReadSinceMark += bytesJustRead;
+return bytesJustRead;
+}
+@Override
+public long skip(long n) throws IOException {
+if (bytesRead >= maxBytesToRead) {
+return -1;
+}
+long bytesLeft = getBytesLeft();
+if (n > bytesLeft) {
+n = bytesLeft;
+}
+return in.skip(n);
+}
+@Override
+public int available() throws IOException {
+int available = in.available();
+long bytesLeft = getBytesLeft();
+if (available > bytesLeft) {
+available = (int) bytesLeft;
+}
+return available;
+}
+@Override
+public void close() throws IOException {
+in.close();
+}
+@Override
+public synchronized void mark(int readlimit) {
+if (in.markSupported()) {
+markReadLimitBytes = readlimit;
+bytesReadSinceMark = 0;
+in.mark(readlimit);
+}
+}
+@Override
+public synchronized void reset() throws IOException {
+if (in.markSupported() && bytesReadSinceMark <= markReadLimitBytes) {
+bytesRead -= bytesReadSinceMark;
+in.reset();
+bytesReadSinceMark = 0;
+}
+}
+@Override
+public boolean markSupported() {
+return in.markSupported();
+}
+}

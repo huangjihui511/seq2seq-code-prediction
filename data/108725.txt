@@ -1,0 +1,22 @@
+package com.xkcoding.rbac.security.util;
+import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.ReflectUtil;
+import com.xkcoding.rbac.security.common.Consts;
+import com.xkcoding.rbac.security.payload.PageCondition;
+import org.springframework.data.domain.PageRequest;
+public class PageUtil {
+public static <T extends PageCondition> void checkPageCondition(T condition, Class<T> clazz) {
+if (ObjectUtil.isNull(condition)) {
+condition = ReflectUtil.newInstance(clazz);
+}
+if (ObjectUtil.isNull(condition.getCurrentPage())) {
+condition.setCurrentPage(Consts.DEFAULT_CURRENT_PAGE);
+}
+if (ObjectUtil.isNull(condition.getPageSize())) {
+condition.setPageSize(Consts.DEFAULT_PAGE_SIZE);
+}
+}
+public static <T extends PageCondition> PageRequest ofPageRequest(T condition) {
+return PageRequest.of(condition.getCurrentPage(), condition.getPageSize());
+}
+}

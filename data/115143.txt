@@ -1,0 +1,21 @@
+package io.ebean.cache;
+import java.util.Set;
+public class QueryCacheEntry {
+private final Object value;
+private final Set<String> dependentTables;
+private final long timestamp;
+public QueryCacheEntry(Object value, Set<String> dependentTables, long timestamp) {
+this.value = value;
+this.dependentTables = dependentTables;
+this.timestamp = timestamp;
+}
+public Object getValue() {
+return value;
+}
+public Set<String> getDependentTables() {
+return dependentTables;
+}
+public long getTimestamp() {
+return timestamp;
+}
+}

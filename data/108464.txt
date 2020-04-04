@@ -1,0 +1,44 @@
+package com.oracle.svm.core.jdk;
+import com.oracle.svm.core.annotate.Alias;
+import com.oracle.svm.core.annotate.RecomputeFieldValue;
+import com.oracle.svm.core.annotate.RecomputeFieldValue.Kind;
+import com.oracle.svm.core.annotate.TargetClass;
+@TargetClass(value = sun.misc.Unsafe.class, onlyWith = JDK11OrLater.class)
+final class Target_sun_misc_Unsafe_JDK11OrLater {
+@Alias @RecomputeFieldValue(kind = Kind.ArrayBaseOffset, declClass = boolean[].class, isFinal = true) 
+private static int ARRAY_BOOLEAN_BASE_OFFSET;
+@Alias @RecomputeFieldValue(kind = Kind.ArrayBaseOffset, declClass = byte[].class, isFinal = true) 
+private static int ARRAY_BYTE_BASE_OFFSET;
+@Alias @RecomputeFieldValue(kind = Kind.ArrayBaseOffset, declClass = short[].class, isFinal = true) 
+private static int ARRAY_SHORT_BASE_OFFSET;
+@Alias @RecomputeFieldValue(kind = Kind.ArrayBaseOffset, declClass = char[].class, isFinal = true) 
+private static int ARRAY_CHAR_BASE_OFFSET;
+@Alias @RecomputeFieldValue(kind = Kind.ArrayBaseOffset, declClass = int[].class, isFinal = true) 
+private static int ARRAY_INT_BASE_OFFSET;
+@Alias @RecomputeFieldValue(kind = Kind.ArrayBaseOffset, declClass = long[].class, isFinal = true) 
+private static int ARRAY_LONG_BASE_OFFSET;
+@Alias @RecomputeFieldValue(kind = Kind.ArrayBaseOffset, declClass = float[].class, isFinal = true) 
+private static int ARRAY_FLOAT_BASE_OFFSET;
+@Alias @RecomputeFieldValue(kind = Kind.ArrayBaseOffset, declClass = double[].class, isFinal = true) 
+private static int ARRAY_DOUBLE_BASE_OFFSET;
+@Alias @RecomputeFieldValue(kind = Kind.ArrayBaseOffset, declClass = Object[].class, isFinal = true) 
+private static int ARRAY_OBJECT_BASE_OFFSET;
+@Alias @RecomputeFieldValue(kind = Kind.ArrayIndexScale, declClass = boolean[].class, isFinal = true) 
+private static int ARRAY_BOOLEAN_INDEX_SCALE;
+@Alias @RecomputeFieldValue(kind = Kind.ArrayIndexScale, declClass = byte[].class, isFinal = true) 
+private static int ARRAY_BYTE_INDEX_SCALE;
+@Alias @RecomputeFieldValue(kind = Kind.ArrayIndexScale, declClass = short[].class, isFinal = true) 
+private static int ARRAY_SHORT_INDEX_SCALE;
+@Alias @RecomputeFieldValue(kind = Kind.ArrayIndexScale, declClass = char[].class, isFinal = true) 
+private static int ARRAY_CHAR_INDEX_SCALE;
+@Alias @RecomputeFieldValue(kind = Kind.ArrayIndexScale, declClass = int[].class, isFinal = true) 
+private static int ARRAY_INT_INDEX_SCALE;
+@Alias @RecomputeFieldValue(kind = Kind.ArrayIndexScale, declClass = long[].class, isFinal = true) 
+private static int ARRAY_LONG_INDEX_SCALE;
+@Alias @RecomputeFieldValue(kind = Kind.ArrayIndexScale, declClass = float[].class, isFinal = true) 
+private static int ARRAY_FLOAT_INDEX_SCALE;
+@Alias @RecomputeFieldValue(kind = Kind.ArrayIndexScale, declClass = double[].class, isFinal = true) 
+private static int ARRAY_DOUBLE_INDEX_SCALE;
+@Alias @RecomputeFieldValue(kind = Kind.ArrayIndexScale, declClass = Object[].class, isFinal = true) 
+private static int ARRAY_OBJECT_INDEX_SCALE;
+}

@@ -1,0 +1,11 @@
+package net.pms.formats.audio;
+public class EAC3 extends AudioBase {
+@Override
+public Identifier getIdentifier() {
+return Identifier.EAC3;
+}
+@Override
+public String[] getSupportedExtensions() {
+return new String[] { "eac3" };
+}
+}

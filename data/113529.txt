@@ -1,0 +1,27 @@
+package com.pokegoapi.api.inventory;
+import POGOProtos.Data.PokedexEntryOuterClass.PokedexEntry;
+import POGOProtos.Enums.PokemonIdOuterClass.PokemonId;
+import java.util.Collections;
+import java.util.EnumMap;
+import java.util.Map;
+public class Pokedex {
+private final Map<PokemonId, PokedexEntry> pokedexMap =
+Collections.synchronizedMap(new EnumMap<PokemonId, PokedexEntry>(PokemonId.class));
+private final Object lock = new Object();
+public void reset() {
+synchronized (this.lock) {
+pokedexMap.clear();
+}
+}
+public void add(PokedexEntry entry) {
+PokemonId id = PokemonId.forNumber(entry.getPokemonId().getNumber());
+synchronized (this.lock) {
+pokedexMap.put(id, entry);
+}
+}
+public PokedexEntry getPokedexEntry(PokemonId pokemonId) {
+synchronized (this.lock) {
+return pokedexMap.get(pokemonId);
+}
+}
+}

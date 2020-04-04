@@ -1,0 +1,107 @@
+package com.datumbox.framework.common.dataobjects;
+import java.util.*;
+public class AssociativeArray extends AbstractDataStructureMap<Map<Object, Object>> {
+private static final long serialVersionUID = 1L;
+public static AssociativeArray copy2Unmodifiable(AssociativeArray original) {
+Map<Object, Object> internalData = new LinkedHashMap<>();
+internalData.putAll(original.internalData);
+internalData = Collections.unmodifiableMap(internalData);
+return new AssociativeArray(internalData);
+}
+public static AssociativeArray convert2Unmodifiable(AssociativeArray original) {
+return new AssociativeArray(Collections.unmodifiableMap(original.internalData));
+}
+public AssociativeArray() {
+super(new LinkedHashMap<>());
+}
+public AssociativeArray(Map<Object, Object> internalData) {
+super(internalData);
+}
+public AssociativeArray copy() {
+AssociativeArray copy = new AssociativeArray();
+copy.internalData.putAll(this.internalData);
+return copy;
+}
+public final void overwrite(Map<Object, Object> data) {
+internalData.clear();
+internalData.putAll(data);
+}
+public final void addValues(AssociativeArray array) {
+addRemoveValues(array, +1);
+}
+public final void subtractValues(AssociativeArray array) {
+addRemoveValues(array, -1);
+}
+private void addRemoveValues(AssociativeArray array, int sign) {
+for(Map.Entry<Object, Object> entry : array.entrySet()) {
+Object column = entry.getKey();
+Double previousValue = TypeInference.toDouble(internalData.get(column));
+if(previousValue==null) {
+previousValue=0.0;
+}
+internalData.put(column, previousValue+ sign*TypeInference.toDouble(entry.getValue()));
+}
+}
+public final void multiplyValues(double multiplier) {
+for(Map.Entry<Object, Object> entry : internalData.entrySet()) {
+Double previousValue = TypeInference.toDouble(entry.getValue());
+if(previousValue==null) {
+continue;
+}
+internalData.put(entry.getKey(), previousValue*multiplier);
+}
+}
+public final Object remove(Object key) {
+return internalData.remove(key);
+}
+public final Object get(Object key) {
+return internalData.get(key);
+}
+public final Double getDouble(Object key) {
+return TypeInference.toDouble(internalData.get(key));
+}
+public final Object put(Object key, Object value) {
+return internalData.put(key, value);
+}
+public void putAll(Map<? extends Object,? extends Object> m) {
+internalData.putAll(m);
+}
+public final Set<Map.Entry<Object, Object>> entrySet() {
+return internalData.entrySet();
+}
+public final Set<Object> keySet() {
+return internalData.keySet();
+}
+public final Collection<Object> values() {
+return internalData.values();
+}
+public FlatDataCollection toFlatDataCollection() {
+return new FlatDataCollection(internalData.values());
+}
+@SuppressWarnings("unchecked")
+public FlatDataList toFlatDataList() {
+Collection<Object> values = internalData.values();
+List<Object> list;
+if (values instanceof List<?>) {
+list = (List<Object>)values;
+}
+else {
+list = new ArrayList(values);
+}
+return new FlatDataList(list);
+}
+@Override
+public boolean equals(Object o) {
+if ( this == o ) return true;
+if ( !(o instanceof AssociativeArray) ) return false;
+return internalData.equals(((AssociativeArray)o).internalData);
+}
+@Override
+public int hashCode() {
+return internalData.hashCode();
+}
+@Override
+public String toString() {
+return internalData.toString();
+}
+}

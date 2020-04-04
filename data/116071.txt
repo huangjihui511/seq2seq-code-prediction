@@ -1,0 +1,36 @@
+package org.apache.dubbo.spring.starter.autoconfigure;
+import org.apache.dubbo.config.AbstractConfig;
+import org.apache.dubbo.config.spring.context.properties.AbstractDubboConfigBinder;
+import org.apache.dubbo.config.spring.context.properties.DubboConfigBinder;
+import org.springframework.boot.context.properties.bind.BindHandler;
+import org.springframework.boot.context.properties.bind.Bindable;
+import org.springframework.boot.context.properties.bind.Binder;
+import org.springframework.boot.context.properties.bind.PropertySourcesPlaceholdersResolver;
+import org.springframework.boot.context.properties.bind.handler.IgnoreErrorsBindHandler;
+import org.springframework.boot.context.properties.bind.handler.NoUnboundElementsBindHandler;
+import org.springframework.boot.context.properties.source.ConfigurationPropertySource;
+import org.springframework.boot.context.properties.source.UnboundElementsSourceFilter;
+import org.springframework.core.env.PropertySource;
+import static org.springframework.boot.context.properties.source.ConfigurationPropertySources.from;
+class RelaxedDubboConfigBinder extends AbstractDubboConfigBinder {
+@Override
+public <C extends AbstractConfig> void bind(String prefix, C dubboConfig) {
+Iterable<PropertySource<?>> propertySources = getPropertySources();
+Iterable<ConfigurationPropertySource> configurationPropertySources = from(propertySources);
+Bindable<C> bindable = Bindable.ofInstance(dubboConfig);
+Binder binder = new Binder(configurationPropertySources, new PropertySourcesPlaceholdersResolver(propertySources));
+BindHandler bindHandler = getBindHandler();
+binder.bind(prefix, bindable, bindHandler);
+}
+private BindHandler getBindHandler() {
+BindHandler handler = BindHandler.DEFAULT;
+if (isIgnoreInvalidFields()) {
+handler = new IgnoreErrorsBindHandler(handler);
+}
+if (!isIgnoreUnknownFields()) {
+UnboundElementsSourceFilter filter = new UnboundElementsSourceFilter();
+handler = new NoUnboundElementsBindHandler(handler, filter);
+}
+return handler;
+}
+}

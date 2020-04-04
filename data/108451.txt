@@ -1,0 +1,7 @@
+package org.graalvm.compiler.serviceprovider;
+import java.nio.Buffer;
+public final class BufferUtil {
+public static Buffer asBaseBuffer(Buffer obj) {
+return obj;
+}
+}

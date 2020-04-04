@@ -1,0 +1,6 @@
+package org.pf4j;
+public interface PluginStatusProvider {
+boolean isPluginDisabled(String pluginId);
+void disablePlugin(String pluginId);
+void enablePlugin(String pluginId);
+}

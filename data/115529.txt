@@ -1,0 +1,30 @@
+package com.JUtils.date;
+import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+public class TimestampUtils {
+public static Timestamp string2Timestamp(String value){
+if(value == null && !"".equals(value.trim())){
+return null;
+}
+Timestamp ts = new Timestamp(System.currentTimeMillis());
+ts = Timestamp.valueOf(value);
+return ts;
+}
+public static String timestamp2String(Timestamp value,String format){
+if(null == value){
+return "";
+}
+SimpleDateFormat sdf = DateFormatUtils.getFormat(format);
+return sdf.format(value);
+}
+public static Timestamp date2Timestamp(Date date){
+if(date == null){
+return null;
+}
+return new Timestamp(date.getTime());
+}
+public static Date timestamp2Date(Timestamp time){
+return time == null ? null : time;
+}
+}

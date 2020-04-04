@@ -1,0 +1,9 @@
+package com.twelvemonkeys.io.enc;
+public class InflateDecoderTestCase extends DecoderAbstractTestCase {
+public Decoder createDecoder() {
+return new InflateDecoder();
+}
+public Encoder createCompatibleEncoder() {
+return new DeflateEncoder();
+}
+}

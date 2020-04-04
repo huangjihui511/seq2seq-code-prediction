@@ -1,0 +1,8 @@
+package org.apache.fontbox.ttf;
+public class OTLTable extends TTFTable
+{
+OTLTable(TrueTypeFont font)
+{
+super(font);
+}
+}

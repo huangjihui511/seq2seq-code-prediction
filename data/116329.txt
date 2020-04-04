@@ -1,0 +1,14 @@
+package org.spongepowered.api.entity.projectile;
+import org.spongepowered.api.data.key.Keys;
+import org.spongepowered.api.data.manipulator.mutable.entity.TargetedEntityData;
+import org.spongepowered.api.data.value.mutable.Value;
+import org.spongepowered.api.entity.Entity;
+import org.spongepowered.api.entity.EntitySnapshot;
+public interface EntityTargetingProjectile extends Projectile {
+default TargetedEntityData getTargetData() {
+return getOrCreate(TargetedEntityData.class).get();
+}
+default Value<EntitySnapshot> target() {
+return getValue(Keys.TARGETED_ENTITY).get();
+}
+}

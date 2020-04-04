@@ -1,0 +1,9 @@
+package org.mockito.exceptions.misusing;
+import org.mockito.MockitoSession;
+import org.mockito.exceptions.base.MockitoException;
+import org.mockito.session.MockitoSessionBuilder;
+public class UnfinishedMockingSessionException extends MockitoException {
+public UnfinishedMockingSessionException(String message) {
+super(message);
+}
+}

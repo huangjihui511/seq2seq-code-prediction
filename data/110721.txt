@@ -1,0 +1,13 @@
+package org.apache.zookeeper.server.jersey.jaxb;
+import javax.xml.bind.annotation.XmlRootElement;
+@XmlRootElement(name="error")
+public class ZError {
+public String request;
+public String message;
+public ZError(){
+}
+public ZError(String request, String message) {
+this.request = request;
+this.message = message;
+}
+}

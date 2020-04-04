@@ -1,0 +1,40 @@
+package com.oreilly.springdata.gemfire.core;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.gemfire.GemfireTemplate;
+import org.springframework.stereotype.Repository;
+import org.springframework.util.Assert;
+import com.gemstone.gemfire.cache.query.SelectResults;
+@Repository
+class GemfireCustomerRepository implements CustomerRepository {
+private final GemfireTemplate template;
+@Autowired
+public GemfireCustomerRepository(GemfireTemplate template) {
+Assert.notNull(template);
+this.template = template;
+}
+@SuppressWarnings("unchecked")
+public List<Customer> findAll() {
+return new ArrayList<Customer>((Collection<? extends Customer>) template.getRegion().values());
+}
+@Override
+public Customer save(Customer customer) {
+template.put(customer.getId(), customer);
+return customer;
+}
+public List<Customer> findByLastname(String lastname) {
+String queryString = "lastname = '" + lastname + "'";
+SelectResults<Customer> results = template.query(queryString);
+return results.asList();
+}
+@Override
+public Customer findByEmailAddress(EmailAddress emailAddress) {
+String queryString = "emailAddress = ?1";
+return template.findUnique(queryString, emailAddress);
+}
+public void delete(Customer customer) {
+template.remove(customer.getId());
+}
+}

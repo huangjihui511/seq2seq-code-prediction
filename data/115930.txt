@@ -1,0 +1,288 @@
+package org.junit;
+import org.hamcrest.Matcher;
+import org.hamcrest.MatcherAssert;
+import org.junit.internal.ArrayComparisonFailure;
+import org.junit.internal.ExactComparisonCriteria;
+import org.junit.internal.InexactComparisonCriteria;
+public class Assert {
+protected Assert() {
+}
+static public void assertTrue(String message, boolean condition) {
+if (!condition) {
+fail(message);
+}
+}
+static public void assertTrue(boolean condition) {
+assertTrue(null, condition);
+}
+static public void assertFalse(String message, boolean condition) {
+assertTrue(message, !condition);
+}
+static public void assertFalse(boolean condition) {
+assertFalse(null, condition);
+}
+static public void fail(String message) {
+if (message == null) {
+throw new AssertionError();
+}
+throw new AssertionError(message);
+}
+static public void fail() {
+fail(null);
+}
+static public void assertEquals(String message, Object expected,
+Object actual) {
+if (equalsRegardingNull(expected, actual)) {
+return;
+} else if (expected instanceof String && actual instanceof String) {
+String cleanMessage = message == null ? "" : message;
+throw new ComparisonFailure(cleanMessage, (String) expected,
+(String) actual);
+} else {
+failNotEquals(message, expected, actual);
+}
+}
+private static boolean equalsRegardingNull(Object expected, Object actual) {
+if (expected == null) {
+return actual == null;
+}
+return isEquals(expected, actual);
+}
+private static boolean isEquals(Object expected, Object actual) {
+return expected.equals(actual);
+}
+static public void assertEquals(Object expected, Object actual) {
+assertEquals(null, expected, actual);
+}
+static public void assertNotEquals(String message, Object first,
+Object second) {
+if (equalsRegardingNull(first, second)) {
+failEquals(message, first);
+}
+}
+static public void assertNotEquals(Object first, Object second) {
+assertNotEquals(null, first, second);
+}
+private static void failEquals(String message, Object actual) {
+String formatted = "Values should be different. ";
+if (message != null) {
+formatted = message + ". ";
+}
+formatted += "Actual: " + actual;
+fail(formatted);
+}
+static public void assertNotEquals(String message, long first, long second) {
+assertNotEquals(message, (Long) first, (Long) second);
+}
+static public void assertNotEquals(long first, long second) {
+assertNotEquals(null, first, second);
+}
+static public void assertNotEquals(String message, double first,
+double second, double delta) {
+if (!doubleIsDifferent(first, second, delta)) {
+failEquals(message, new Double(first));
+}
+}
+static public void assertNotEquals(double first, double second, double delta) {
+assertNotEquals(null, first, second, delta);
+}
+public static void assertArrayEquals(String message, Object[] expecteds,
+Object[] actuals) throws ArrayComparisonFailure {
+internalArrayEquals(message, expecteds, actuals);
+}
+public static void assertArrayEquals(Object[] expecteds, Object[] actuals) {
+assertArrayEquals(null, expecteds, actuals);
+}
+public static void assertArrayEquals(String message, byte[] expecteds,
+byte[] actuals) throws ArrayComparisonFailure {
+internalArrayEquals(message, expecteds, actuals);
+}
+public static void assertArrayEquals(byte[] expecteds, byte[] actuals) {
+assertArrayEquals(null, expecteds, actuals);
+}
+public static void assertArrayEquals(String message, char[] expecteds,
+char[] actuals) throws ArrayComparisonFailure {
+internalArrayEquals(message, expecteds, actuals);
+}
+public static void assertArrayEquals(char[] expecteds, char[] actuals) {
+assertArrayEquals(null, expecteds, actuals);
+}
+public static void assertArrayEquals(String message, short[] expecteds,
+short[] actuals) throws ArrayComparisonFailure {
+internalArrayEquals(message, expecteds, actuals);
+}
+public static void assertArrayEquals(short[] expecteds, short[] actuals) {
+assertArrayEquals(null, expecteds, actuals);
+}
+public static void assertArrayEquals(String message, int[] expecteds,
+int[] actuals) throws ArrayComparisonFailure {
+internalArrayEquals(message, expecteds, actuals);
+}
+public static void assertArrayEquals(int[] expecteds, int[] actuals) {
+assertArrayEquals(null, expecteds, actuals);
+}
+public static void assertArrayEquals(String message, long[] expecteds,
+long[] actuals) throws ArrayComparisonFailure {
+internalArrayEquals(message, expecteds, actuals);
+}
+public static void assertArrayEquals(long[] expecteds, long[] actuals) {
+assertArrayEquals(null, expecteds, actuals);
+}
+public static void assertArrayEquals(String message, double[] expecteds,
+double[] actuals, double delta) throws ArrayComparisonFailure {
+new InexactComparisonCriteria(delta).arrayEquals(message, expecteds, actuals);
+}
+public static void assertArrayEquals(double[] expecteds, double[] actuals, double delta) {
+assertArrayEquals(null, expecteds, actuals, delta);
+}
+public static void assertArrayEquals(String message, float[] expecteds,
+float[] actuals, float delta) throws ArrayComparisonFailure {
+new InexactComparisonCriteria(delta).arrayEquals(message, expecteds, actuals);
+}
+public static void assertArrayEquals(float[] expecteds, float[] actuals, float delta) {
+assertArrayEquals(null, expecteds, actuals, delta);
+}
+private static void internalArrayEquals(String message, Object expecteds,
+Object actuals) throws ArrayComparisonFailure {
+new ExactComparisonCriteria().arrayEquals(message, expecteds, actuals);
+}
+static public void assertEquals(String message, double expected,
+double actual, double delta) {
+if (doubleIsDifferent(expected, actual, delta)) {
+failNotEquals(message, new Double(expected), new Double(actual));
+}
+}
+static public void assertEquals(String message, float expected,
+float actual, float delta) {
+if (Float.compare(expected, actual) == 0) {
+return;
+}
+if (!(Math.abs(expected - actual) <= delta)) {
+failNotEquals(message, new Float(expected), new Float(actual));
+}
+}
+static private boolean doubleIsDifferent(double d1, double d2, double delta) {
+if (Double.compare(d1, d2) == 0) {
+return false;
+}
+return (Math.abs(d1 - d2) > delta);
+}
+static public void assertEquals(long expected, long actual) {
+if (expected != actual)
+assertEquals(null, expected, actual);
+}
+static public void assertEquals(String message, long expected, long actual) {
+assertEquals(message, (Long) expected, (Long) actual);
+}
+@Deprecated
+static public void assertEquals(double expected, double actual) {
+assertEquals(null, expected, actual);
+}
+@Deprecated
+static public void assertEquals(String message, double expected,
+double actual) {
+fail("Use assertEquals(expected, actual, delta) to compare floating-point numbers");
+}
+static public void assertEquals(double expected, double actual, double delta) {
+assertEquals(null, expected, actual, delta);
+}
+static public void assertEquals(float expected, float actual, float delta) {
+assertEquals(null, expected, actual, delta);
+}
+static public void assertNotNull(String message, Object object) {
+assertTrue(message, object != null);
+}
+static public void assertNotNull(Object object) {
+assertNotNull(null, object);
+}
+static public void assertNull(String message, Object object) {
+if (object == null) {
+return;
+}
+failNotNull(message, object);
+}
+static public void assertNull(Object object) {
+assertNull(null, object);
+}
+static private void failNotNull(String message, Object actual) {
+String formatted = "";
+if (message != null) {
+formatted = message + " ";
+}
+fail(formatted + "expected null, but was:<" + actual + ">");
+}
+static public void assertSame(String message, Object expected, Object actual) {
+if (expected == actual) {
+return;
+}
+failNotSame(message, expected, actual);
+}
+static public void assertSame(Object expected, Object actual) {
+assertSame(null, expected, actual);
+}
+static public void assertNotSame(String message, Object unexpected,
+Object actual) {
+if (unexpected == actual) {
+failSame(message);
+}
+}
+static public void assertNotSame(Object unexpected, Object actual) {
+assertNotSame(null, unexpected, actual);
+}
+static private void failSame(String message) {
+String formatted = "";
+if (message != null) {
+formatted = message + " ";
+}
+fail(formatted + "expected not same");
+}
+static private void failNotSame(String message, Object expected,
+Object actual) {
+String formatted = "";
+if (message != null) {
+formatted = message + " ";
+}
+fail(formatted + "expected same:<" + expected + "> was not:<" + actual
++ ">");
+}
+static private void failNotEquals(String message, Object expected,
+Object actual) {
+fail(format(message, expected, actual));
+}
+static String format(String message, Object expected, Object actual) {
+String formatted = "";
+if (message != null && !message.equals("")) {
+formatted = message + " ";
+}
+String expectedString = String.valueOf(expected);
+String actualString = String.valueOf(actual);
+if (expectedString.equals(actualString)) {
+return formatted + "expected: "
++ formatClassAndValue(expected, expectedString)
++ " but was: " + formatClassAndValue(actual, actualString);
+} else {
+return formatted + "expected:<" + expectedString + "> but was:<"
++ actualString + ">";
+}
+}
+private static String formatClassAndValue(Object value, String valueString) {
+String className = value == null ? "null" : value.getClass().getName();
+return className + "<" + valueString + ">";
+}
+@Deprecated
+public static void assertEquals(String message, Object[] expecteds,
+Object[] actuals) {
+assertArrayEquals(message, expecteds, actuals);
+}
+@Deprecated
+public static void assertEquals(Object[] expecteds, Object[] actuals) {
+assertArrayEquals(expecteds, actuals);
+}
+public static <T> void assertThat(T actual, Matcher<? super T> matcher) {
+assertThat("", actual, matcher);
+}
+public static <T> void assertThat(String reason, T actual,
+Matcher<? super T> matcher) {
+MatcherAssert.assertThat(reason, actual, matcher);
+}
+}

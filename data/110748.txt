@@ -1,0 +1,51 @@
+package org.apache.zookeeper.inspector.gui;
+import java.awt.BorderLayout;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.Frame;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.io.IOException;
+import javax.swing.JButton;
+import javax.swing.JDialog;
+import javax.swing.JEditorPane;
+import javax.swing.JPanel;
+import org.apache.zookeeper.inspector.logger.LoggerFactory;
+public class ZooInspectorAboutDialog extends JDialog {
+public ZooInspectorAboutDialog(Frame frame, IconResource iconResource) {
+super(frame);
+this.setLayout(new BorderLayout());
+this.setIconImage(iconResource.get(IconResource.ICON_INFORMATION, "About ZooInspector").getImage());
+this.setTitle("About ZooInspector");
+this.setModal(true);
+this.setAlwaysOnTop(true);
+this.setResizable(false);
+JPanel panel = new JPanel();
+panel.setLayout(new BorderLayout());
+JEditorPane aboutPane = new JEditorPane();
+aboutPane.setEditable(false);
+aboutPane.setOpaque(false);
+java.net.URL aboutURL = ZooInspectorAboutDialog.class
+.getResource("about.html");
+try {
+aboutPane.setPage(aboutURL);
+} catch (IOException e) {
+LoggerFactory.getLogger().error(
+"Error loading about.html, file may be corrupt", e);
+}
+panel.add(aboutPane, BorderLayout.CENTER);
+panel.setPreferredSize(new Dimension(600, 200));
+JPanel buttonsPanel = new JPanel();
+buttonsPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 10, 10));
+JButton okButton = new JButton("OK");
+okButton.addActionListener(new ActionListener() {
+public void actionPerformed(ActionEvent e) {
+ZooInspectorAboutDialog.this.dispose();
+}
+});
+buttonsPanel.add(okButton);
+this.add(panel, BorderLayout.CENTER);
+this.add(buttonsPanel, BorderLayout.SOUTH);
+this.pack();
+}
+}

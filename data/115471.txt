@@ -1,0 +1,201 @@
+package org.gnucash.android.model;
+import android.graphics.Color;
+import android.support.annotation.NonNull;
+import org.gnucash.android.BuildConfig;
+import org.gnucash.android.export.ofx.OfxHelper;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.List;
+public class Account extends BaseModel {
+public static final String MIME_TYPE = "vnd.android.cursor.item/vnd." + BuildConfig.APPLICATION_ID + ".account";
+public static final int DEFAULT_COLOR = Color.LTGRAY;
+public enum OfxAccountType {
+CHECKING, SAVINGS, MONEYMRKT, CREDITLINE
+}
+private String mName;
+private String mFullName;
+private String mDescription = "";
+private Commodity mCommodity;
+private AccountType mAccountType = AccountType.CASH;
+private List<Transaction> mTransactionsList = new ArrayList<>();
+private String mParentAccountUID;
+private String mDefaultTransferAccountUID;
+private boolean mIsPlaceholderAccount;
+private int mColor = DEFAULT_COLOR;
+private boolean mIsFavorite;
+private boolean mIsHidden;
+public static final String EXTRA_CURRENCY_CODE = "org.gnucash.android.extra.currency_code";
+public static final String EXTRA_PARENT_UID = "org.gnucash.android.extra.parent_uid";
+public Account(String name) {
+setName(name);
+this.mFullName = mName;
+setCommodity(Commodity.DEFAULT_COMMODITY);
+}
+public Account(String name, @NonNull Commodity commodity) {
+setName(name);
+this.mFullName = mName;
+setCommodity(commodity);
+}
+public void setName(String name) {
+this.mName = name.trim();
+}
+public String getName() {
+return mName;
+}
+public String getFullName() {
+return mFullName;
+}
+public void setFullName(String fullName) {
+this.mFullName = fullName;
+}
+public String getDescription() {
+return mDescription;
+}
+public void setDescription(@NonNull String description) {
+this.mDescription = description;
+}
+public AccountType getAccountType() {
+return mAccountType;
+}
+public void setAccountType(AccountType mAccountType) {
+this.mAccountType = mAccountType;
+}
+public void addTransaction(Transaction transaction) {
+transaction.setCommodity(mCommodity);
+mTransactionsList.add(transaction);
+}
+public void setTransactions(List<Transaction> transactionsList) {
+this.mTransactionsList = transactionsList;
+}
+public List<Transaction> getTransactions() {
+return mTransactionsList;
+}
+public int getTransactionCount() {
+return mTransactionsList.size();
+}
+public Money getBalance() {
+Money balance = Money.createZeroInstance(mCommodity.getCurrencyCode());
+for (Transaction transaction : mTransactionsList) {
+balance = balance.add(transaction.getBalance(getUID()));
+}
+return balance;
+}
+public int getColor() {
+return mColor;
+}
+public String getColorHexString(){
+return String.format("#%06X", (0xFFFFFF & mColor));
+}
+public void setColor(int color) {
+if (Color.alpha(color) < 255)
+throw new IllegalArgumentException("Transparent colors are not supported: " + color);
+mColor = color;
+}
+public void setColor(@NonNull String colorCode) {
+setColor(Color.parseColor(colorCode));
+}
+public boolean isFavorite() {
+return mIsFavorite;
+}
+public void setFavorite(boolean isFavorite) {
+this.mIsFavorite = isFavorite;
+}
+@NonNull
+public Commodity getCommodity() {
+return mCommodity;
+}
+public void setCommodity(@NonNull Commodity commodity) {
+this.mCommodity = commodity;
+}
+public void setParentUID(String parentUID) {
+mParentAccountUID = parentUID;
+}
+public String getParentUID() {
+return mParentAccountUID;
+}
+public boolean isPlaceholderAccount() {
+return mIsPlaceholderAccount;
+}
+public boolean isHidden() {
+return mIsHidden;
+}
+public void setHidden(boolean hidden) {
+this.mIsHidden = hidden;
+}
+public void setPlaceHolderFlag(boolean isPlaceholder) {
+mIsPlaceholderAccount = isPlaceholder;
+}
+public String getDefaultTransferAccountUID() {
+return mDefaultTransferAccountUID;
+}
+public void setDefaultTransferAccountUID(String defaultTransferAccountUID) {
+this.mDefaultTransferAccountUID = defaultTransferAccountUID;
+}
+public static OfxAccountType convertToOfxAccountType(AccountType accountType) {
+switch (accountType) {
+case CREDIT:
+case LIABILITY:
+return OfxAccountType.CREDITLINE;
+case CASH:
+case INCOME:
+case EXPENSE:
+case PAYABLE:
+case RECEIVABLE:
+return OfxAccountType.CHECKING;
+case BANK:
+case ASSET:
+return OfxAccountType.SAVINGS;
+case MUTUAL:
+case STOCK:
+case EQUITY:
+case CURRENCY:
+return OfxAccountType.MONEYMRKT;
+default:
+return OfxAccountType.CHECKING;
+}
+}
+public void toOfx(Document doc, Element parent, Timestamp exportStartTime) {
+Element currency = doc.createElement(OfxHelper.TAG_CURRENCY_DEF);
+currency.appendChild(doc.createTextNode(mCommodity.getCurrencyCode()));
+Element bankId = doc.createElement(OfxHelper.TAG_BANK_ID);
+bankId.appendChild(doc.createTextNode(OfxHelper.APP_ID));
+Element acctId = doc.createElement(OfxHelper.TAG_ACCOUNT_ID);
+acctId.appendChild(doc.createTextNode(getUID()));
+Element accttype = doc.createElement(OfxHelper.TAG_ACCOUNT_TYPE);
+String ofxAccountType = convertToOfxAccountType(mAccountType).toString();
+accttype.appendChild(doc.createTextNode(ofxAccountType));
+Element bankFrom = doc.createElement(OfxHelper.TAG_BANK_ACCOUNT_FROM);
+bankFrom.appendChild(bankId);
+bankFrom.appendChild(acctId);
+bankFrom.appendChild(accttype);
+String balance = getBalance().toPlainString();
+String formattedCurrentTimeString = OfxHelper.getFormattedCurrentTime();
+Element balanceAmount = doc.createElement(OfxHelper.TAG_BALANCE_AMOUNT);
+balanceAmount.appendChild(doc.createTextNode(balance));
+Element dtasof = doc.createElement(OfxHelper.TAG_DATE_AS_OF);
+dtasof.appendChild(doc.createTextNode(formattedCurrentTimeString));
+Element ledgerBalance = doc.createElement(OfxHelper.TAG_LEDGER_BALANCE);
+ledgerBalance.appendChild(balanceAmount);
+ledgerBalance.appendChild(dtasof);
+Element dtstart = doc.createElement(OfxHelper.TAG_DATE_START);
+dtstart.appendChild(doc.createTextNode(formattedCurrentTimeString));
+Element dtend = doc.createElement(OfxHelper.TAG_DATE_END);
+dtend.appendChild(doc.createTextNode(formattedCurrentTimeString));
+Element bankTransactionsList = doc.createElement(OfxHelper.TAG_BANK_TRANSACTION_LIST);
+bankTransactionsList.appendChild(dtstart);
+bankTransactionsList.appendChild(dtend);
+for (Transaction transaction : mTransactionsList) {
+if (transaction.getModifiedTimestamp().before(exportStartTime))
+continue;
+bankTransactionsList.appendChild(transaction.toOFX(doc, getUID()));
+}
+Element statementTransactions = doc.createElement(OfxHelper.TAG_STATEMENT_TRANSACTIONS);
+statementTransactions.appendChild(currency);
+statementTransactions.appendChild(bankFrom);
+statementTransactions.appendChild(bankTransactionsList);
+statementTransactions.appendChild(ledgerBalance);
+parent.appendChild(statementTransactions);
+}
+}

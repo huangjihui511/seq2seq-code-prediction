@@ -1,0 +1,36 @@
+package org.apache.pdfbox.examples.pdmodel;
+import java.awt.Color;
+import java.io.IOException;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.PDPage;
+import org.apache.pdfbox.pdmodel.PDPageContentStream;
+public final class ShowColorBoxes
+{
+private ShowColorBoxes()
+{
+}
+public static void main(String[] args) throws IOException
+{
+if (args.length != 1)
+{
+System.err.println("usage: " +ShowColorBoxes.class.getName() + " <output-file>");
+System.exit(1);
+}
+String filename = args[0];
+try (PDDocument doc = new PDDocument())
+{
+PDPage page = new PDPage();
+doc.addPage(page);
+try (PDPageContentStream contents = new PDPageContentStream(doc, page))
+{
+contents.setNonStrokingColor(Color.CYAN);
+contents.addRect(0, 0, page.getMediaBox().getWidth(), page.getMediaBox().getHeight());
+contents.fill();
+contents.setNonStrokingColor(Color.RED);
+contents.addRect(10, 10, 100, 100);
+contents.fill();
+}
+doc.save(filename);
+}
+}
+}

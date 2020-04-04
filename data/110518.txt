@@ -1,0 +1,62 @@
+package com.baomidou.mybatisplus.core.parser;
+import com.baomidou.mybatisplus.core.toolkit.ExceptionUtils;
+import net.sf.jsqlparser.JSQLParserException;
+import net.sf.jsqlparser.parser.CCJSqlParserUtil;
+import net.sf.jsqlparser.statement.Statement;
+import net.sf.jsqlparser.statement.Statements;
+import net.sf.jsqlparser.statement.delete.Delete;
+import net.sf.jsqlparser.statement.insert.Insert;
+import net.sf.jsqlparser.statement.select.Select;
+import net.sf.jsqlparser.statement.select.SelectBody;
+import net.sf.jsqlparser.statement.update.Update;
+import org.apache.ibatis.logging.Log;
+import org.apache.ibatis.logging.LogFactory;
+import org.apache.ibatis.reflection.MetaObject;
+public abstract class AbstractJsqlParser implements ISqlParser {
+protected final Log logger = LogFactory.getLog(this.getClass());
+@Override
+public SqlInfo parser(MetaObject metaObject, String sql) {
+if (this.allowProcess(metaObject)) {
+try {
+logger.debug("Original SQL: " + sql);
+StringBuilder sqlStringBuilder = new StringBuilder();
+Statements statements = CCJSqlParserUtil.parseStatements(sql);
+int i = 0;
+for (Statement statement : statements.getStatements()) {
+if (null != statement) {
+if (i++ > 0) {
+sqlStringBuilder.append(';');
+}
+sqlStringBuilder.append(this.processParser(statement).getSql());
+}
+}
+if (sqlStringBuilder.length() > 0) {
+return SqlInfo.newInstance().setSql(sqlStringBuilder.toString());
+}
+} catch (JSQLParserException e) {
+throw ExceptionUtils.mpe("Failed to process, please exclude the tableName or statementId.\n Error SQL: %s", e, sql);
+}
+}
+return null;
+}
+public SqlInfo processParser(Statement statement) {
+if (statement instanceof Insert) {
+this.processInsert((Insert) statement);
+} else if (statement instanceof Select) {
+this.processSelectBody(((Select) statement).getSelectBody());
+} else if (statement instanceof Update) {
+this.processUpdate((Update) statement);
+} else if (statement instanceof Delete) {
+this.processDelete((Delete) statement);
+}
+logger.debug("parser sql: " + statement.toString());
+return SqlInfo.newInstance().setSql(statement.toString());
+}
+public abstract void processInsert(Insert insert);
+public abstract void processDelete(Delete delete);
+public abstract void processUpdate(Update update);
+public abstract void processSelectBody(SelectBody selectBody);
+public boolean allowProcess(MetaObject metaObject) {
+return true;
+}
+}

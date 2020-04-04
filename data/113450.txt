@@ -1,0 +1,657 @@
+package com.pokegoapi.api.gym;
+import POGOProtos.Data.Battle.BattleActionOuterClass.BattleAction;
+import POGOProtos.Data.Battle.BattleActionTypeOuterClass.BattleActionType;
+import POGOProtos.Data.Battle.BattleLogOuterClass.BattleLog;
+import POGOProtos.Data.Battle.BattleParticipantOuterClass.BattleParticipant;
+import POGOProtos.Data.Battle.BattlePokemonInfoOuterClass.BattlePokemonInfo;
+import POGOProtos.Data.Battle.BattleResultsOuterClass.BattleResults;
+import POGOProtos.Data.Battle.BattleStateOuterClass.BattleState;
+import POGOProtos.Data.Battle.BattleTypeOuterClass.BattleType;
+import POGOProtos.Data.PokemonDataOuterClass.PokemonData;
+import POGOProtos.Enums.PokemonMoveOuterClass.PokemonMove;
+import POGOProtos.Networking.Requests.Messages.AttackGymMessageOuterClass.AttackGymMessage;
+import POGOProtos.Networking.Requests.Messages.StartGymBattleMessageOuterClass.StartGymBattleMessage;
+import POGOProtos.Networking.Requests.RequestTypeOuterClass.RequestType;
+import POGOProtos.Networking.Responses.AttackGymResponseOuterClass.AttackGymResponse;
+import POGOProtos.Networking.Responses.StartGymBattleResponseOuterClass.StartGymBattleResponse;
+import POGOProtos.Settings.Master.MoveSettingsOuterClass;
+import com.google.protobuf.InvalidProtocolBufferException;
+import com.pokegoapi.api.PokemonGo;
+import com.pokegoapi.api.pokemon.Pokemon;
+import com.pokegoapi.exceptions.request.RequestFailedException;
+import com.pokegoapi.main.ServerRequest;
+import lombok.Getter;
+import lombok.Setter;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Queue;
+import java.util.Set;
+import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.PriorityBlockingQueue;
+public class Battle {
+private final PokemonGo api;
+@Getter
+public final Gym gym;
+@Getter
+private Pokemon[] team;
+@Getter
+private String battleId;
+@Getter
+private BattleParticipant attacker;
+@Getter
+private BattleParticipant defender;
+@Getter
+private BattleState battleState;
+@Getter
+public boolean active;
+@Getter
+private long serverTimeOffset;
+private Queue<ServerAction> serverActionQueue
+= new PriorityBlockingQueue<>(11, new Comparator<ServerAction>() {
+@Override
+public int compare(ServerAction o1, ServerAction o2) {
+return Long.compare(o1.start, o2.start);
+}
+});
+private Set<ServerAction> activeActions = new HashSet<>();
+private Set<ServerAction> damagingActions = new HashSet<>();
+@Getter
+private Map<String, BattleParticipant> participants = new HashMap<>();
+private Map<Integer, BattleParticipant> participantIndices = new HashMap<>();
+private Map<BattleParticipant, BattlePokemon> activePokemon = new HashMap<>();
+private Queue<ClientAction> queuedActions = new LinkedBlockingDeque<>();
+@Getter
+private BattlePokemon activeDefender;
+@Getter
+public BattlePokemon activeAttacker;
+@Getter
+private long startTime;
+@Getter
+private long endTime;
+@Getter
+private BattleType battleType;
+private long lastSendTime;
+private long lastServerTime;
+private BattleAction lastRetrievedAction;
+private Set<Long> faintedPokemon = new HashSet<>();
+private boolean sentActions;
+@Getter
+private BattleResults results;
+private int defenderIndex = 0;
+private int defenderCount;
+private int gymPointsDelta;
+private Set<ServerAction> handledActions = new HashSet<>();
+public Battle(PokemonGo api, Gym gym) {
+this.api = api;
+this.gym = gym;
+}
+public void start(final BattleHandler handler) throws RequestFailedException {
+battleId = null;
+participantIndices.clear();
+participants.clear();
+activePokemon.clear();
+serverActionQueue.clear();
+activeActions.clear();
+serverTimeOffset = 0;
+active = false;
+team = handler.createTeam(api, this);
+faintedPokemon.clear();
+defenderIndex = 0;
+defenderCount = gym.getDefendingPokemon().size();
+gymPointsDelta = 0;
+handledActions.clear();
+Thread updateThread = new Thread(new Runnable() {
+@Override
+public void run() {
+while (active || battleId == null) {
+if (battleId != null) {
+updateBattle(handler);
+}
+try {
+Thread.sleep(10);
+} catch (InterruptedException e) {
+active = false;
+}
+}
+}
+});
+updateThread.setDaemon(true);
+updateThread.setName("Gym Battle Update Thread");
+updateThread.start();
+beginDefenderBattle(handler);
+}
+private void beginDefenderBattle(final BattleHandler handler)
+throws RequestFailedException {
+lastRetrievedAction = null;
+queuedActions.clear();
+battleState = BattleState.STATE_UNSET;
+lastServerTime = api.currentTimeMillis();
+lastSendTime = lastServerTime;
+sentActions = false;
+List<Pokemon> attackers = new ArrayList<>();
+for (Pokemon pokemon : team) {
+if (!faintedPokemon.contains(pokemon.getId())) {
+attackers.add(pokemon);
+}
+}
+if (attackers.size() > 0 && defenderIndex < defenderCount) {
+StartGymBattleMessage.Builder builder = StartGymBattleMessage.newBuilder()
+.setPlayerLatitude(api.latitude)
+.setPlayerLongitude(api.longitude)
+.setGymId(gym.getId())
+.setDefendingPokemonId(gym.getDefendingPokemon().get(defenderIndex).getPokemon().getId());
+for (Pokemon pokemon : attackers) {
+builder.addAttackingPokemonIds(pokemon.getId());
+if (pokemon.getStamina() < pokemon.getMaxStamina()) {
+throw new IllegalArgumentException("Pokemon must have full stamina to battle in a gym!");
+} else {
+String deployedFortId = pokemon.getDeployedFortId();
+if (pokemon.getFromFort() && deployedFortId != null && deployedFortId.length() > 0) {
+throw new IllegalArgumentException("Cannot deploy Pokemon that is already in a gym!");
+}
+}
+}
+try {
+StartGymBattleMessage message = builder.build();
+ServerRequest request = new ServerRequest(RequestType.GYM_START_SESSION, message);
+api.requestHandler.sendServerRequests(request, true);
+StartGymBattleResponse response = StartGymBattleResponse.parseFrom(request.getData());
+if (response.getResult() == StartGymBattleResponse.Result.SUCCESS) {
+battleId = response.getBattleId();
+attacker = response.getAttacker();
+defender = response.getDefender();
+activeDefender = new BattlePokemon(defender.getActivePokemon());
+activeAttacker = new BattlePokemon(attacker.getActivePokemon());
+updateLog(handler, response.getBattleLog());
+}
+sendActions(handler);
+handler.onStart(api, this, response.getResult());
+} catch (InvalidProtocolBufferException e) {
+battleId = "";
+throw new RequestFailedException(e);
+}
+} else {
+active = false;
+}
+}
+private void updateBattle(BattleHandler handler) {
+long time = api.currentTimeMillis();
+while (serverActionQueue.size() > 0) {
+ServerAction action = serverActionQueue.element();
+if (time >= action.start) {
+handler.onActionStart(api, this, action);
+activeActions.add(serverActionQueue.remove());
+handleAction(handler, action);
+} else {
+break;
+}
+}
+Set<ServerAction> completedActions = new HashSet<>();
+for (ServerAction action : activeActions) {
+if (time >= action.end) {
+handler.onActionEnd(api, this, action);
+completedActions.add(action);
+} else {
+if (damagingActions.contains(action)) {
+if (time > action.damageWindowEnd) {
+handler.onDamageEnd(api, this, action);
+damagingActions.remove(action);
+}
+} else {
+if (time > action.damageWindowStart) {
+damagingActions.add(action);
+handler.onDamageStart(api, this, action);
+}
+}
+}
+}
+activeActions.removeAll(completedActions);
+boolean nextDefender = false;
+if (active && !queuedActions.isEmpty()) {
+try {
+nextDefender = sendActions(handler);
+} catch (Exception e) {
+handler.onException(api, this, e);
+}
+lastSendTime = time;
+}
+if (nextDefender) {
+defenderIndex++;
+try {
+beginDefenderBattle(handler);
+Thread.sleep(1500);
+} catch (Exception e) {
+handler.onException(api, this, e);
+}
+}
+}
+private boolean updateLog(BattleHandler handler, BattleLog log) {
+serverTimeOffset = log.getServerMs() - api.currentTimeMillis();
+battleType = log.getBattleType();
+startTime = log.getBattleStartTimestampMs();
+endTime = log.getBattleEndTimestampMs();
+if (log.getBattleActionsCount() > 0) {
+long latestTime = Long.MIN_VALUE;
+for (BattleAction action : log.getBattleActionsList()) {
+if (action.getActionStartMs() > latestTime) {
+lastRetrievedAction = action;
+latestTime = action.getActionStartMs();
+}
+}
+}
+results = null;
+for (BattleAction action : log.getBattleActionsList()) {
+BattleResults results = action.getBattleResults();
+if (results.hasGymState()) {
+this.results = action.getBattleResults();
+}
+}
+if (results != null) {
+gym.updatePoints(results.getGymPointsDelta());
+gymPointsDelta += results.getGymPointsDelta();
+}
+BattleState state = log.getState();
+active = defenderIndex < defenderCount && !(state == BattleState.TIMED_OUT || state == BattleState
+.STATE_UNSET);
+if (state != battleState) {
+switch (state) {
+case TIMED_OUT:
+gym.clearDetails();
+handler.onTimedOut(api, this);
+break;
+case DEFEATED:
+gym.clearDetails();
+handler.onDefeated(api, this);
+break;
+case VICTORY:
+if (!active) {
+gym.updateState(results.getGymState());
+handler.onVictory(api, this, gymPointsDelta, gym.getPoints());
+}
+break;
+default:
+break;
+}
+if (!active) {
+try {
+api.inventories.updateInventories();
+} catch (Exception e) {
+handler.onException(api, this, e);
+}
+}
+battleState = state;
+}
+for (BattleAction action : log.getBattleActionsList()) {
+ServerAction serverAction = new ServerAction(action);
+if (!handledActions.contains(serverAction)) {
+serverActionQueue.add(serverAction);
+handledActions.add(serverAction);
+}
+}
+lastServerTime = log.getServerMs();
+return battleState != BattleState.ACTIVE && battleState != BattleState.STATE_UNSET
+&& battleState != BattleState.TIMED_OUT;
+}
+private void handleAction(BattleHandler handler, ServerAction action) {
+switch (action.type) {
+case ACTION_PLAYER_JOIN:
+onPlayerJoin(handler, action);
+break;
+case ACTION_PLAYER_QUIT:
+onPlayerQuit(handler, action);
+break;
+case ACTION_ATTACK:
+handleAttack(handler, action);
+break;
+case ACTION_DODGE:
+handleDodge(handler, action);
+break;
+case ACTION_FAINT:
+handleFaint(handler, action);
+break;
+case ACTION_SPECIAL_ATTACK:
+handleSpecialAttack(handler, action);
+break;
+default:
+break;
+}
+}
+private void onPlayerJoin(BattleHandler handler, ServerAction action) {
+BattleParticipant joined = action.joined;
+String name = joined.getTrainerPublicProfile().getName();
+participants.put(name, joined);
+participantIndices.put(action.targetIndex, joined);
+activePokemon.put(joined, new BattlePokemon(joined.getActivePokemon()));
+handler.onPlayerJoin(api, this, joined, action);
+}
+private void onPlayerQuit(BattleHandler handler, ServerAction action) {
+BattleParticipant left = action.left;
+String name = left.getTrainerPublicProfile().getName();
+BattleParticipant remove = participants.remove(name);
+participantIndices.remove(action.targetIndex);
+activePokemon.remove(remove);
+handler.onPlayerLeave(api, this, left, action);
+}
+private void handleAttack(BattleHandler handler, ServerAction action) {
+BattlePokemon attacked = getActivePokemon(action.targetIndex, true);
+BattlePokemon attacker = getActivePokemon(action.attackerIndex, false);
+if (action.attackerIndex == 0) {
+attacker = activeAttacker;
+}
+long damageWindowStart = action.damageWindowStart;
+long damageWindowEnd = action.damageWindowEnd;
+int duration = action.duration;
+handler.onAttacked(api, this, attacked, attacker, duration, damageWindowStart, damageWindowEnd, action);
+}
+private void handleSpecialAttack(BattleHandler handler, ServerAction action) {
+BattlePokemon attacked = getActivePokemon(action.targetIndex, false);
+BattlePokemon attacker = getActivePokemon(action.attackerIndex, true);
+if (action.attackerIndex == 0) {
+attacker = activeAttacker;
+}
+long damageWindowStart = action.damageWindowStart;
+long damageWindowEnd = action.damageWindowEnd;
+int duration = action.duration;
+handler.onAttackedSpecial(api, this, attacked, attacker, duration, damageWindowStart, damageWindowEnd, action);
+}
+private void handleFaint(BattleHandler handler, ServerAction action) {
+BattlePokemon pokemon = getActivePokemon(action.attackerIndex, true);
+if (action.attackerIndex == 0) {
+pokemon = activeAttacker;
+}
+int duration = action.duration;
+handler.onFaint(api, this, pokemon, duration, action);
+faintedPokemon.add(pokemon.pokemon.getId());
+}
+private void handleDodge(BattleHandler handler, ServerAction action) {
+BattlePokemon pokemon = getActivePokemon(action.attackerIndex, true);
+if (action.attackerIndex == 0) {
+pokemon = activeAttacker;
+}
+int duration = action.duration;
+handler.onDodge(api, this, pokemon, duration, action);
+}
+public long toServerTime(long clientTime) {
+return clientTime + serverTimeOffset;
+}
+public long toClientTime(long serverTime) {
+return serverTime - serverTimeOffset;
+}
+private boolean sendActions(BattleHandler handler)
+throws RequestFailedException {
+AttackGymMessage.Builder builder = AttackGymMessage.newBuilder()
+.setGymId(gym.getId())
+.setBattleId(battleId)
+.setPlayerLatitude(api.latitude)
+.setPlayerLongitude(api.longitude);
+while (queuedActions.size() > 0) {
+ClientAction action = queuedActions.element();
+if (action.endTime < lastSendTime) {
+queuedActions.remove();
+long activePokemon = activeAttacker.pokemon.getId();
+if (action.pokemon != null) {
+activePokemon = action.pokemon.getId();
+}
+long start = action.startTime;
+BattleAction.Builder actionBuilder = BattleAction.newBuilder()
+.setActionStartMs(start)
+.setDurationMs(action.duration)
+.setTargetIndex(-1)
+.setActivePokemonId(activePokemon)
+.setType(action.type);
+if (action.hasDamageWindow) {
+long damageWindowsStart = start + action.damageWindowStart;
+long damageWindowEnd = start + action.damageWindowEnd;
+actionBuilder.setDamageWindowsStartTimestampMs(damageWindowsStart);
+actionBuilder.setDamageWindowsEndTimestampMs(damageWindowEnd);
+}
+builder.addAttackActions(actionBuilder.build());
+} else {
+break;
+}
+}
+if (lastRetrievedAction != null && sentActions) {
+builder.setLastRetrievedAction(lastRetrievedAction);
+}
+if (builder.getAttackActionsCount() > 0) {
+AttackGymMessage message = builder.build();
+ServerRequest request = new ServerRequest(RequestType.GYM_BATTLE_ATTACK, message);
+api.requestHandler.sendServerRequests(request, true);
+boolean nextDefender;
+try {
+AttackGymResponse response = AttackGymResponse.parseFrom(request.getData());
+nextDefender = handleAttackResponse(handler, response);
+} catch (InvalidProtocolBufferException e) {
+throw new RequestFailedException(e);
+}
+sentActions = true;
+return nextDefender;
+}
+return false;
+}
+private boolean handleAttackResponse(BattleHandler handler, AttackGymResponse response) {
+if (response.getResult() == AttackGymResponse.Result.SUCCESS) {
+final BattlePokemon lastDefender = activeDefender;
+final BattlePokemon lastAttacker = activeAttacker;
+activeAttacker = new BattlePokemon(response.getActiveAttacker());
+activeDefender = new BattlePokemon(response.getActiveDefender());
+if (lastAttacker == null || lastAttacker.pokemon.getId() != activeAttacker.pokemon.getId()) {
+handler.onAttackerSwap(api, this, activeAttacker);
+}
+if (lastDefender == null || lastDefender.pokemon.getId() != activeDefender.pokemon.getId()) {
+handler.onDefenderSwap(api, this, activeDefender);
+}
+int lastAttackerHealth = lastAttacker.health;
+int lastDefenderHealth = lastDefender.health;
+int attackerHealth = activeAttacker.health;
+int defenderHealth = activeDefender.health;
+int attackerMaxHealth = activeAttacker.maxHealth;
+int defenderMaxHealth = activeDefender.maxHealth;
+handler.onAttackerHealthUpdate(api, this, lastAttackerHealth, attackerHealth, attackerMaxHealth);
+handler.onDefenderHealthUpdate(api, this, lastDefenderHealth, defenderHealth, defenderMaxHealth);
+BattleLog log = response.getBattleLog();
+return updateLog(handler, log);
+} else if (response.getResult() == AttackGymResponse.Result.ERROR_INVALID_ATTACK_ACTIONS) {
+handler.onInvalidActions(api, this);
+}
+return false;
+}
+public BattlePokemon getActivePokemon(BattleParticipant participant) {
+return activePokemon.get(participant);
+}
+public BattlePokemon getActivePokemon(String participantName) {
+BattleParticipant participant = participants.get(participantName);
+if (participant != null) {
+return activePokemon.get(participant);
+}
+return null;
+}
+public BattlePokemon getActivePokemon(int index, boolean attacker) {
+if (attacker || index != -1) {
+BattleParticipant participant = getParticipant(index);
+if (participant != null) {
+return activePokemon.get(participant);
+}
+} else {
+return activeDefender;
+}
+return null;
+}
+public BattleParticipant getParticipant(int index) {
+return participantIndices.get(index);
+}
+public ClientAction performAction(BattleActionType type, int duration) {
+ClientAction action = new ClientAction(type, api.currentTimeMillis(), duration);
+queuedActions.add(action);
+return action;
+}
+public int attack() {
+PokemonData pokemon = activeAttacker.pokemon;
+PokemonMove move = pokemon.getMove1();
+MoveSettingsOuterClass.MoveSettings moveSettings = api.itemTemplates.getMoveSettings(move);
+int duration = moveSettings.getDurationMs();
+long time = api.currentTimeMillis();
+ClientAction action = new ClientAction(BattleActionType.ACTION_ATTACK, time, duration);
+action.setDamageWindow(moveSettings.getDamageWindowStartMs(), moveSettings.getDamageWindowEndMs());
+queuedActions.add(action);
+return duration;
+}
+public int attackSpecial() {
+PokemonData pokemon = activeAttacker.pokemon;
+PokemonMove move = pokemon.getMove2();
+MoveSettingsOuterClass.MoveSettings moveSettings = api.itemTemplates.getMoveSettings(move);
+int duration = moveSettings.getDurationMs();
+if (activeAttacker.energy >= -moveSettings.getEnergyDelta()) {
+long time = api.currentTimeMillis();
+ClientAction action = new ClientAction(BattleActionType.ACTION_SPECIAL_ATTACK, time, duration);
+action.setDamageWindow(moveSettings.getDamageWindowStartMs(), moveSettings.getDamageWindowEndMs());
+queuedActions.add(action);
+return duration;
+} else {
+throw new RuntimeException("Not enough energy to use special attack!");
+}
+}
+public int dodge() {
+int duration = api.itemTemplates.battleSettings.getDodgeDurationMs();
+performAction(BattleActionType.ACTION_DODGE, duration);
+return duration;
+}
+public int swap(Pokemon pokemon) {
+int duration = api.itemTemplates.battleSettings.getSwapDurationMs();
+ClientAction action = new ClientAction(BattleActionType.ACTION_SWAP_POKEMON, api.currentTimeMillis(),
+duration);
+action.pokemon = pokemon;
+queuedActions.add(action);
+return duration;
+}
+public long getTimeLeft() {
+return endTime - api.currentTimeMillis();
+}
+public class ServerAction {
+@Getter
+public final BattleActionType type;
+@Getter
+private final long start;
+@Getter
+private final long end;
+@Getter
+private final int duration;
+@Getter
+private final int energyDelta;
+@Getter
+public final int attackerIndex;
+@Getter
+private final int targetIndex;
+@Getter
+private final long damageWindowStart;
+@Getter
+private final long damageWindowEnd;
+@Getter
+private final BattleParticipant joined;
+@Getter
+private final BattleParticipant left;
+ServerAction(BattleAction action) {
+type = action.getType();
+start = toClientTime(action.getActionStartMs());
+duration = action.getDurationMs();
+end = start + duration;
+energyDelta = action.getEnergyDelta();
+attackerIndex = action.getAttackerIndex();
+targetIndex = action.getTargetIndex();
+damageWindowStart = toClientTime(action.getDamageWindowsStartTimestampMs());
+damageWindowEnd = toClientTime(action.getDamageWindowsEndTimestampMs());
+joined = action.getPlayerJoined();
+left = action.getPlayerLeft();
+}
+@Override
+public int hashCode() {
+return (int) start;
+}
+@Override
+public boolean equals(Object obj) {
+if (obj instanceof ServerAction) {
+ServerAction action = (ServerAction) obj;
+return action.type == type && action.start == start && action.duration == duration
+&& action.attackerIndex == attackerIndex && action.targetIndex == targetIndex;
+}
+return false;
+}
+}
+public class ClientAction {
+@Getter
+private final BattleActionType type;
+@Getter
+private final long startTime;
+@Getter
+private final long endTime;
+@Getter
+private final int duration;
+@Getter
+@Setter
+private Pokemon pokemon;
+@Getter
+private int damageWindowStart;
+@Getter
+private int damageWindowEnd;
+@Getter
+private boolean hasDamageWindow;
+ClientAction(BattleActionType type, long startTime, int duration) {
+this.type = type;
+this.startTime = toServerTime(startTime);
+this.endTime = this.startTime + duration;
+this.duration = duration;
+}
+public void setDamageWindow(int start, int end) {
+this.damageWindowStart = start;
+this.damageWindowEnd = end;
+this.hasDamageWindow = true;
+}
+}
+public class BattlePokemon {
+@Getter
+public final PokemonData pokemon;
+@Setter
+@Getter
+private int health;
+@Getter
+private int maxHealth;
+@Setter
+@Getter
+public int energy;
+BattlePokemon(BattlePokemonInfo activePokemon) {
+this.health = activePokemon.getCurrentHealth();
+this.energy = activePokemon.getCurrentEnergy();
+this.pokemon = activePokemon.getPokemonData();
+this.maxHealth = pokemon.getStaminaMax();
+}
+}
+public interface BattleHandler {
+Pokemon[] createTeam(PokemonGo api, Battle battle);
+void onStart(PokemonGo api, Battle battle, StartGymBattleResponse.Result result);
+void onVictory(PokemonGo api, Battle battle, int deltaPoints, long newPoints);
+void onDefeated(PokemonGo api, Battle battle);
+void onTimedOut(PokemonGo api, Battle battle);
+void onActionStart(PokemonGo api, Battle battle, ServerAction action);
+void onActionEnd(PokemonGo api, Battle battle, ServerAction action);
+void onDamageStart(PokemonGo api, Battle battle, ServerAction action);
+void onDamageEnd(PokemonGo api, Battle battle, ServerAction action);
+void onPlayerJoin(PokemonGo api, Battle battle, BattleParticipant joined, ServerAction action);
+void onPlayerLeave(PokemonGo api, Battle battle, BattleParticipant left, ServerAction action);
+void onAttacked(PokemonGo api, Battle battle, BattlePokemon attacked, BattlePokemon attacker, int duration,
+long damageWindowStart, long damageWindowEnd, ServerAction action);
+void onAttackedSpecial(PokemonGo api, Battle battle, BattlePokemon attacked, BattlePokemon attacker,
+int duration, long damageWindowStart, long damageWindowEnd, ServerAction action);
+void onException(PokemonGo api, Battle battle, Exception exception);
+void onInvalidActions(PokemonGo api, Battle battle);
+void onAttackerHealthUpdate(PokemonGo api, Battle battle, int lastHealth, int health, int maxHealth);
+void onDefenderHealthUpdate(PokemonGo api, Battle battle, int lastHealth, int health, int maxHealth);
+void onAttackerSwap(PokemonGo api, Battle battle, BattlePokemon newAttacker);
+void onDefenderSwap(PokemonGo api, Battle battle, BattlePokemon newDefender);
+void onFaint(PokemonGo api, Battle battle, BattlePokemon pokemon, int duration, ServerAction action);
+void onDodge(PokemonGo api, Battle battle, BattlePokemon pokemon, int duration, ServerAction action);
+}
+}

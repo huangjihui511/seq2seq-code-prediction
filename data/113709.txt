@@ -1,0 +1,20 @@
+package net.pms.formats.image;
+public class TGA extends ImageBase {
+@Override
+public Identifier getIdentifier() {
+return Identifier.TGA;
+}
+@Override
+public String[] getSupportedExtensions() {
+return new String[] {
+"tga",
+"icb",
+"vda",
+"vstrle"
+};
+}
+@Override
+public String mimeType() {
+return "image/x-tga";
+}
+}

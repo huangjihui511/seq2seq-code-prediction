@@ -1,0 +1,111 @@
+package io.ebean.config.dbplatform;
+import java.sql.Types;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import javax.xml.bind.DatatypeConverter;
+import io.ebean.annotation.DbDefault;
+public class DbDefaultValue {
+public static final String FALSE = "false";
+public static final String TRUE = "true";
+public static final String NOW = "now";
+public static final String NULL = "null";
+protected final Map<String, String> map = new LinkedHashMap<>();
+public void setNow(String dbFunction) {
+put(NOW, dbFunction);
+}
+public void setFalse(String dbFalseLiteral) {
+put(FALSE, dbFalseLiteral);
+}
+public void setTrue(String dbTrueLiteral) {
+put(TRUE, dbTrueLiteral);
+}
+public void put(String dbLiteral, String dbTranslated) {
+map.put(dbLiteral, dbTranslated);
+}
+public String convert(String dbDefaultLiteral) {
+if (dbDefaultLiteral == null) {
+return null;
+}
+if (dbDefaultLiteral.startsWith("$RAW:")) {
+return dbDefaultLiteral.substring(5);
+}
+String val = map.get(dbDefaultLiteral);
+return val != null ? val : dbDefaultLiteral;
+}
+public static String toSqlLiteral(String defaultValue, Class<?> propertyType, int sqlType) {
+if (propertyType == null
+|| defaultValue == null
+|| NULL.equals(defaultValue)
+|| (defaultValue.startsWith("'") && defaultValue.endsWith("'"))
+|| (defaultValue.startsWith("$RAW:"))) {
+return defaultValue;
+}
+if (Boolean.class.isAssignableFrom(propertyType) || Boolean.TYPE.isAssignableFrom(propertyType)) {
+return toBooleanLiteral(defaultValue);
+}
+if (Number.class.isAssignableFrom(propertyType)
+|| Byte.TYPE.equals(propertyType)
+|| Short.TYPE.equals(propertyType)
+|| Integer.TYPE.equals(propertyType)
+|| Long.TYPE.equals(propertyType)
+|| Float.TYPE.equals(propertyType)
+|| Double.TYPE.equals(propertyType)
+|| (propertyType.isEnum() && sqlType == Types.INTEGER)) {
+Double.valueOf(defaultValue); 
+return defaultValue;
+}
+switch (sqlType) {
+case Types.DATE:
+return toDateLiteral(defaultValue);
+case Types.TIME:
+case Types.TIME_WITH_TIMEZONE:
+return toTimeLiteral(defaultValue);
+case Types.TIMESTAMP:
+case Types.TIMESTAMP_WITH_TIMEZONE:
+return toDateTimeLiteral(defaultValue);
+default:
+return toTextLiteral(defaultValue); 
+}
+}
+private static String toBooleanLiteral(String value) {
+if (DbDefaultValue.FALSE.equals(value) || DbDefaultValue.TRUE.equals(value)) {
+return value;
+}
+throw new IllegalArgumentException("'" + value + "' is not a valid value for boolean");
+}
+private static String toTextLiteral(String value) {
+StringBuilder sb = new StringBuilder(value.length()+10);
+sb.append('\'');
+for (int i = 0; i < value.length(); i++) {
+char ch = value.charAt(i);
+if (ch == '\'') {
+sb.append("''");
+} else {
+sb.append(ch);
+}
+}
+sb.append('\'');
+return sb.toString();
+}
+private static String toDateLiteral(String value) {
+if (NOW.equals(value)) {
+return value; 
+}
+DatatypeConverter.parseDate(value); 
+return toTextLiteral(value);
+}
+private static String toTimeLiteral(String value) {
+if (NOW.equals(value)) {
+return value; 
+}
+DatatypeConverter.parseTime(value); 
+return toTextLiteral(value);
+}
+private static String toDateTimeLiteral(String value) {
+if (NOW.equals(value)) {
+return value; 
+}
+DatatypeConverter.parseDateTime(value); 
+return toTextLiteral(value);
+}
+}

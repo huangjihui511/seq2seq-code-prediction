@@ -1,0 +1,251 @@
+package org.lionsoul.ip2region;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.RandomAccessFile;
+import java.io.UnsupportedEncodingException;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedList;
+public class DbMaker
+{
+private DbConfig dbConfig;
+private File ipSrcFile;
+private LinkedList<IndexBlock>  indexPool;
+private LinkedList<HeaderBlock> headerPool;
+private File globalRegionFile = null;
+private HashMap<String, Integer> globalRegionMap = null;
+private HashMap<String, DataBlock> regionPtrPool = null;
+public DbMaker(
+DbConfig config,
+String ipSrcFile,
+String globalRegionFile ) throws DbMakerConfigException, IOException
+{
+this.dbConfig = config;
+this.ipSrcFile = new File(ipSrcFile);
+this.globalRegionMap = new HashMap<String, Integer>();
+this.regionPtrPool = new HashMap<String, DataBlock>();
+if ( globalRegionFile != null ) {
+this.globalRegionFile = new File(globalRegionFile);
+}
+if ( this.ipSrcFile.exists() == false ) {
+throw new IOException("Error: Invalid file path " + ipSrcFile);
+}
+}
+private void initDbFile( RandomAccessFile raf ) throws IOException
+{
+raf.seek(0L);
+raf.write(new byte[8]);		
+raf.write(new byte[dbConfig.getTotalHeaderSize()]);		
+headerPool = new LinkedList<HeaderBlock>();
+indexPool  = new LinkedList<IndexBlock>();
+}
+public void make(String dbFile) throws IOException
+{
+if ( globalRegionFile != null ) {
+System.out.println("+-Try to load the global region data ...");
+BufferedReader greader = new BufferedReader(new FileReader(globalRegionFile));
+String gline = null;
+while ( (gline = greader.readLine()) != null ) {
+String[] p = gline.split(",");
+if ( p.length != 5 ) continue;
+globalRegionMap.put(p[2], Integer.valueOf(p[0]));
+}
+greader.close();
+System.out.println("|--[Ok]");
+}
+BufferedReader reader = new BufferedReader(new FileReader(this.ipSrcFile));
+RandomAccessFile raf  = new RandomAccessFile(dbFile, "rw");
+initDbFile(raf);
+System.out.println("+-Db file initialized.");
+System.out.println("+-Try to write the data blocks ... ");
+String line = null;
+while ( ( line = reader.readLine() ) != null ) {
+line = line.trim();
+if ( line.length() == 0 ) 	 continue;
+if ( line.charAt(0) == '#' ) continue;
+int sIdx = 0, eIdx = 0;
+if ( (eIdx = line.indexOf('|', sIdx + 1)) == -1 ) continue;
+String startIp = line.substring(sIdx, eIdx);
+sIdx = eIdx + 1;
+if ( (eIdx = line.indexOf('|', sIdx + 1)) == -1 ) continue;
+String endIp = line.substring(sIdx, eIdx);
+sIdx = eIdx + 1;
+String region = line.substring(sIdx);
+System.out.println("+-Try to process item " + line);
+addDataBlock(raf, startIp, endIp, region);
+System.out.println("|--[Ok]");
+}
+System.out.println("|--Data block flushed!");
+System.out.println("|--Data file pointer: "+raf.getFilePointer()+"\n");
+System.out.println("+-Try to write index blocks ... ");
+IndexBlock indexBlock = null;
+HeaderBlock hb = null;
+indexBlock = indexPool.getFirst();
+long indexStartIp = indexBlock.getStartIp(),
+indexStratPtr = raf.getFilePointer(), indexEndPtr;
+headerPool.add(new HeaderBlock(indexStartIp, (int)(indexStratPtr)));
+int blockLength = IndexBlock.getIndexBlockLength();
+int counter = 0, shotCounter = (dbConfig.getIndexBlockSize()/blockLength) - 1;
+Iterator<IndexBlock> indexIt = indexPool.iterator();
+while ( indexIt.hasNext() ) {
+indexBlock = indexIt.next();
+if ( ++counter >= shotCounter ) {
+hb = new HeaderBlock(
+indexBlock.getStartIp(),
+(int)raf.getFilePointer()
+);
+headerPool.add(hb);
+counter = 0;
+}
+raf.write(indexBlock.getBytes());
+}
+if ( counter > 0 ) {
+indexBlock = indexPool.getLast();
+hb = new HeaderBlock(
+indexBlock.getStartIp(),
+((int)raf.getFilePointer()) - IndexBlock.getIndexBlockLength()
+);
+headerPool.add(hb);
+}
+indexEndPtr = raf.getFilePointer();
+System.out.println("|--[Ok]");
+System.out.println("+-Try to write the super blocks ... ");
+raf.seek(0L);	
+byte[] superBuffer = new byte[8];
+Util.writeIntLong(superBuffer, 0, indexStratPtr);
+Util.writeIntLong(superBuffer, 4, indexEndPtr - blockLength);
+raf.write(superBuffer);
+System.out.println("|--[Ok]");
+System.out.println("+-Try to write the header blocks ... ");
+Iterator<HeaderBlock> headerIt = headerPool.iterator();
+while ( headerIt.hasNext() ) {
+HeaderBlock headerBlock = headerIt.next();
+raf.write(headerBlock.getBytes());
+}
+System.out.println("+-Try to write the copyright and release date info ... ");
+raf.seek(raf.length());
+Calendar cal = Calendar.getInstance();
+SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd");
+String copyright = "Created by lionsoul at " + dateFormat.format(cal.getTime());
+raf.write((int)(cal.getTime().getTime()/1000));	
+raf.write(copyright.getBytes());
+System.out.println("|--[Ok]");
+reader.close();
+raf.close();
+}
+private void addDataBlock(
+RandomAccessFile raf,
+String startIp, String endIp, String region)
+{
+try {
+byte[] data = region.getBytes("UTF-8");
+int dataPtr = 0;
+int city_id = getCityId(region);
+Util.writeIntLong(city, 0, city_id);
+dataPtr = (int)raf.getFilePointer();
+raf.write(city);
+raf.write(data);*/
+if ( regionPtrPool.containsKey(region) ) {
+DataBlock dataBlock = regionPtrPool.get(region);
+dataPtr = dataBlock.getDataPtr();
+System.out.println("dataPtr: " + dataPtr + ", region: " + region);
+} else {
+byte[] city = new byte[4];
+int city_id = getCityId(region);
+Util.writeIntLong(city, 0, city_id);
+dataPtr = (int)raf.getFilePointer();
+raf.write(city);
+raf.write(data);
+regionPtrPool.put(region, new DataBlock(city_id, region, dataPtr));
+}
+IndexBlock ib = new IndexBlock(
+Util.ip2long(startIp),
+Util.ip2long(endIp),
+dataPtr,
+data.length + 4 
+);
+indexPool.add(ib);
+} catch (UnsupportedEncodingException e) {
+e.printStackTrace();
+} catch (IOException e) {
+e.printStackTrace();
+}
+}
+public int getCityId( String region )
+{
+String[] p = region.split("\\|");
+if ( p.length != 5 ) return 0;
+String key = null;
+Integer intv = null;
+for ( int i = 3; i >= 0; i-- ) {
+if ( p[i].equals("0") ) continue;
+if ( i == 3
+key = p[2]+p[3];
+} else {
+key = p[i];
+}
+intv = globalRegionMap.get(key);
+if ( intv == null ) return 0;
+return intv.intValue();
+}
+return 0;
+}
+public DbConfig getDbConfig()
+{
+return dbConfig;
+}
+public DbMaker setDbConfig(DbConfig dbConfig)
+{
+this.dbConfig = dbConfig;
+return this;
+}
+public File getIpSrcFile()
+{
+return ipSrcFile;
+}
+public DbMaker setIpSrcFile(File ipSrcFile)
+{
+this.ipSrcFile = ipSrcFile;
+return this;
+}
+public static void main(String args[])
+{
+String dstDir = "./data/";
+String[] path = new String[]{null, null};
+for ( int i = 0; i < args.length; i++ ) {
+if ( args[i].equals("-src") ) {
+path[0] = args[++i];
+} else if ( args[i].equals("-region") ) {
+path[1] = args[++i];
+} else if ( args[i].equals("-dst") ) {
+dstDir  = args[++i];
+}
+}
+for ( int i = 0; i < path.length; i++ ) {
+if ( path[i] == null ) {
+System.out.println("Usage: java -jar dbMaker.jar "
++ "-src [source text file path] "
++ "-region [global region file path]");
+System.out.println("eg: java -jar dbMaker.jar "
++ "-src ./data/ip.merge.txt -region ./data/origin/global_region.csv");
+System.exit(0);
+}
+}
+if ( ! dstDir.endsWith("/") ) {
+dstDir = dstDir + "/";
+}
+try {
+DbConfig config = new DbConfig();
+DbMaker dbMaker = new DbMaker(config, path[0], path[1]);
+dbMaker.make(dstDir + "ip2region.db");
+} catch (DbMakerConfigException e) {
+e.printStackTrace();
+} catch (IOException e) {
+e.printStackTrace();
+}
+}
+}

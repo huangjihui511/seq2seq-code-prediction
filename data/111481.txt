@@ -1,0 +1,165 @@
+package io.grpc.protobuf.lite;
+import static com.google.common.base.Preconditions.checkNotNull;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.protobuf.CodedInputStream;
+import com.google.protobuf.ExtensionRegistryLite;
+import com.google.protobuf.InvalidProtocolBufferException;
+import com.google.protobuf.MessageLite;
+import com.google.protobuf.Parser;
+import io.grpc.ExperimentalApi;
+import io.grpc.KnownLength;
+import io.grpc.Metadata;
+import io.grpc.MethodDescriptor.Marshaller;
+import io.grpc.MethodDescriptor.PrototypeMarshaller;
+import io.grpc.Status;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.lang.ref.Reference;
+import java.lang.ref.WeakReference;
+@ExperimentalApi("Experimental until Lite is stable in protobuf")
+public final class ProtoLiteUtils {
+static volatile ExtensionRegistryLite globalRegistry =
+ExtensionRegistryLite.getEmptyRegistry();
+private static final int BUF_SIZE = 8192;
+@VisibleForTesting
+static final int DEFAULT_MAX_MESSAGE_SIZE = 4 * 1024 * 1024;
+@ExperimentalApi("https:
+public static void setExtensionRegistry(ExtensionRegistryLite newRegistry) {
+globalRegistry = checkNotNull(newRegistry, "newRegistry");
+}
+public static <T extends MessageLite> Marshaller<T> marshaller(T defaultInstance) {
+return new MessageMarshaller<>(defaultInstance);
+}
+public static <T extends MessageLite> Metadata.BinaryMarshaller<T> metadataMarshaller(
+T defaultInstance) {
+return new MetadataMarshaller<>(defaultInstance);
+}
+static long copy(InputStream from, OutputStream to) throws IOException {
+checkNotNull(from, "inputStream cannot be null!");
+checkNotNull(to, "outputStream cannot be null!");
+byte[] buf = new byte[BUF_SIZE];
+long total = 0;
+while (true) {
+int r = from.read(buf);
+if (r == -1) {
+break;
+}
+to.write(buf, 0, r);
+total += r;
+}
+return total;
+}
+private ProtoLiteUtils() {
+}
+private static final class MessageMarshaller<T extends MessageLite>
+implements PrototypeMarshaller<T> {
+private static final ThreadLocal<Reference<byte[]>> bufs = new ThreadLocal<>();
+private final Parser<T> parser;
+private final T defaultInstance;
+@SuppressWarnings("unchecked")
+MessageMarshaller(T defaultInstance) {
+this.defaultInstance = defaultInstance;
+parser = (Parser<T>) defaultInstance.getParserForType();
+}
+@SuppressWarnings("unchecked")
+@Override
+public Class<T> getMessageClass() {
+return (Class<T>) defaultInstance.getClass();
+}
+@Override
+public T getMessagePrototype() {
+return defaultInstance;
+}
+@Override
+public InputStream stream(T value) {
+return new ProtoInputStream(value, parser);
+}
+@Override
+public T parse(InputStream stream) {
+if (stream instanceof ProtoInputStream) {
+ProtoInputStream protoStream = (ProtoInputStream) stream;
+if (protoStream.parser() == parser) {
+try {
+@SuppressWarnings("unchecked")
+T message = (T) ((ProtoInputStream) stream).message();
+return message;
+} catch (IllegalStateException ignored) {
+}
+}
+}
+CodedInputStream cis = null;
+try {
+if (stream instanceof KnownLength) {
+int size = stream.available();
+if (size > 0 && size <= DEFAULT_MAX_MESSAGE_SIZE) {
+Reference<byte[]> ref;
+byte[] buf;
+if ((ref = bufs.get()) == null || (buf = ref.get()) == null || buf.length < size) {
+buf = new byte[size];
+bufs.set(new WeakReference<>(buf));
+}
+int remaining = size;
+while (remaining > 0) {
+int position = size - remaining;
+int count = stream.read(buf, position, remaining);
+if (count == -1) {
+break;
+}
+remaining -= count;
+}
+if (remaining != 0) {
+int position = size - remaining;
+throw new RuntimeException("size inaccurate: " + size + " != " + position);
+}
+cis = CodedInputStream.newInstance(buf, 0, size);
+} else if (size == 0) {
+return defaultInstance;
+}
+}
+} catch (IOException e) {
+throw new RuntimeException(e);
+}
+if (cis == null) {
+cis = CodedInputStream.newInstance(stream);
+}
+cis.setSizeLimit(Integer.MAX_VALUE);
+try {
+return parseFrom(cis);
+} catch (InvalidProtocolBufferException ipbe) {
+throw Status.INTERNAL.withDescription("Invalid protobuf byte sequence")
+.withCause(ipbe).asRuntimeException();
+}
+}
+private T parseFrom(CodedInputStream stream) throws InvalidProtocolBufferException {
+T message = parser.parseFrom(stream, globalRegistry);
+try {
+stream.checkLastTagWas(0);
+return message;
+} catch (InvalidProtocolBufferException e) {
+e.setUnfinishedMessage(message);
+throw e;
+}
+}
+}
+private static final class MetadataMarshaller<T extends MessageLite>
+implements Metadata.BinaryMarshaller<T> {
+private final T defaultInstance;
+MetadataMarshaller(T defaultInstance) {
+this.defaultInstance = defaultInstance;
+}
+@Override
+public byte[] toBytes(T value) {
+return value.toByteArray();
+}
+@Override
+@SuppressWarnings("unchecked")
+public T parseBytes(byte[] serialized) {
+try {
+return (T) defaultInstance.getParserForType().parseFrom(serialized, globalRegistry);
+} catch (InvalidProtocolBufferException ipbe) {
+throw new IllegalArgumentException(ipbe);
+}
+}
+}
+}

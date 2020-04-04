@@ -1,0 +1,7 @@
+package com.netflix.astyanax;
+import com.netflix.astyanax.connectionpool.exceptions.ConnectionException;
+import com.netflix.astyanax.model.Rows;
+public interface RowCallback<K, C> {
+void success(Rows<K, C> rows);
+boolean failure(ConnectionException e);
+}

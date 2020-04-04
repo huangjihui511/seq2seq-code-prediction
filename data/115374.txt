@@ -1,0 +1,7 @@
+package io.flutter.run.test;
+import io.flutter.run.common.TestLineMarkerContributor;
+public class FlutterTestLineMarkerContributor extends TestLineMarkerContributor {
+public FlutterTestLineMarkerContributor() {
+super(TestConfigUtils.getInstance());
+}
+}

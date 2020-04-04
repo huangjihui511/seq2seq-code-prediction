@@ -1,0 +1,38 @@
+package org.jeecg.modules.monitor.domain;
+import java.util.HashMap;
+import java.util.Map;
+public class RedisInfo {
+private static Map<String, String> map = new HashMap<>();
+static {
+map.put("redis_git_sha1", "Git SHA1");
+map.put("redis_git_dirty", "Git dirty flag");
+map.put("redis_build_id", "redis_build_id");
+map.put("atomicvar_api", "atomicvar_api");
+}
+private String key;
+private String value;
+private String description;
+public String getKey() {
+return key;
+}
+public void setKey(String key) {
+this.key = key;
+this.description = map.get(this.key);
+}
+public String getValue() {
+return value;
+}
+public void setValue(String value) {
+this.value = value;
+}
+public String getDescription() {
+return description;
+}
+public void setDescription(String description) {
+this.description = description;
+}
+@Override
+public String toString() {
+return "RedisInfo{" + "key='" + key + '\'' + ", value='" + value + '\'' + ", desctiption='" + description + '\'' + '}';
+}
+}

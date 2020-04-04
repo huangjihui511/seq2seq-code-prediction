@@ -1,0 +1,22 @@
+package org.apache.zookeeper.graph.filterops;
+import org.apache.zookeeper.graph.LogEntry;
+import org.apache.zookeeper.graph.FilterOp;
+import org.apache.zookeeper.graph.FilterException;
+public class EqualsOp extends FilterOp {
+public boolean matches(LogEntry entry) throws FilterException {
+Object last = null;
+for (Arg a : args) {
+Object v = a.getValue();
+if (a.getType() == FilterOp.ArgType.SYMBOL) {
+String key = (String)a.getValue();
+v = entry.getAttribute(key);
+}
+if (last != null
+&& !last.equals(v)) {
+return false;
+}
+last = v;
+}
+return true;
+}
+}

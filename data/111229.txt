@@ -1,0 +1,10 @@
+package com.github.benmanes.caffeine.cache;
+import org.checkerframework.checker.index.qual.NonNegative;
+import org.checkerframework.checker.nullness.qual.NonNull;
+public interface Expiry<K, V> {
+long expireAfterCreate(@NonNull K key, @NonNull V value, long currentTime);
+long expireAfterUpdate(@NonNull K key, @NonNull V value,
+long currentTime, @NonNegative long currentDuration);
+long expireAfterRead(@NonNull K key, @NonNull V value,
+long currentTime, @NonNegative long currentDuration);
+}

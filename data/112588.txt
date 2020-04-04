@@ -1,0 +1,31 @@
+package org.jb2011.lnf.beautyeye.ch10_internalframe;
+import javax.swing.UIManager;
+import javax.swing.plaf.BorderUIResource;
+import javax.swing.plaf.ColorUIResource;
+import org.jb2011.lnf.beautyeye.BeautyEyeLNFHelper;
+import org.jb2011.lnf.beautyeye.widget.border.BEShadowBorder;
+public class __UI__
+{
+public static void uiImpl()
+{
+UIManager.put("InternalFrame.borderColor",new ColorUIResource(BeautyEyeLNFHelper.commonBackgroundColor));
+UIManager.put("InternalFrame.minimizeIconBackground", new ColorUIResource(BeautyEyeLNFHelper.commonBackgroundColor));
+UIManager.put("InternalFrame.icon"
+,__IconFactory__.getInstance().getInternalFrameIcon());
+UIManager.put("InternalFrame.iconifyIcon"
+,__IconFactory__.getInstance().getInternalIconfiedIcon());
+UIManager.put("InternalFrame.minimizeIcon"
+,__IconFactory__.getInstance().getInternalFrameMinIcon());
+UIManager.put("InternalFrame.maximizeIcon"
+,__IconFactory__.getInstance().getInternalFrameMaxIcon());
+UIManager.put("InternalFrame.closeIcon"
+,__IconFactory__.getInstance().getInternalFrameCloseIcon());
+UIManager.put("InternalFrameUI",org.jb2011.lnf.beautyeye.ch10_internalframe.BEInternalFrameUI.class.getName());
+Object internalFrameBorder = new BorderUIResource(new BEShadowBorder());
+UIManager.put("InternalFrame.border", internalFrameBorder);
+UIManager.put("InternalFrame.paletteBorder", internalFrameBorder);
+UIManager.put("InternalFrame.optionDialogBorder", internalFrameBorder);
+UIManager.put("Desktop.background",new ColorUIResource(BeautyEyeLNFHelper.commonBackgroundColor));
+UIManager.put("DesktopIconUI",org.jb2011.lnf.beautyeye.ch10_internalframe.BEDesktopIconUI.class.getName());
+}
+}

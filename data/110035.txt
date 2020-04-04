@@ -1,0 +1,8 @@
+package com.google.cloud.tools.jib.registry;
+import com.google.cloud.tools.jib.api.RegistryException;
+import javax.annotation.Nullable;
+class RegistryErrorException extends RegistryException {
+RegistryErrorException(String message, @Nullable Throwable cause) {
+super(message, cause);
+}
+}

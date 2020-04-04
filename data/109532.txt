@@ -1,0 +1,5 @@
+package permissions.dispatcher;
+public interface PermissionRequest {
+void proceed();
+void cancel();
+}

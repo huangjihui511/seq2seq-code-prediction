@@ -1,0 +1,17 @@
+package freenet.support.CPUInformation;
+public interface IntelCPUInfo extends CPUInfo {
+public boolean IsPentiumCompatible();
+public boolean IsPentiumMMXCompatible();
+public boolean IsPentium2Compatible();
+public boolean IsPentium3Compatible();
+public boolean IsPentium4Compatible();
+public boolean IsPentiumMCompatible();
+public boolean IsAtomCompatible();
+public boolean IsCore2Compatible();
+public boolean IsCoreiCompatible();
+public boolean IsSandyCompatible();
+public boolean IsIvyCompatible();
+public boolean IsHaswellCompatible();
+public boolean IsBroadwellCompatible();
+public boolean IsSkylakeCompatible();
+}

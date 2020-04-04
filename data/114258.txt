@@ -1,0 +1,158 @@
+package com.datumbox.framework.core.common.text.extractors;
+import java.util.*;
+public class NgramsExtractor extends AbstractTextExtractor<NgramsExtractor.Parameters, String, Double> {
+public static class Parameters extends AbstractTextExtractor.AbstractParameters {
+private static final long serialVersionUID = 1L;
+private int maxCombinations=3;
+private int minWordLength=1;
+private int minWordOccurrence=1;
+private int examinationWindowLength=3;
+private int maxDistanceBetweenKwds=0;
+public int getMaxCombinations() {
+return maxCombinations;
+}
+public void setMaxCombinations(int maxCombinations) {
+this.maxCombinations = maxCombinations;
+}
+public int getMinWordLength() {
+return minWordLength;
+}
+public void setMinWordLength(int minWordLength) {
+this.minWordLength = minWordLength;
+}
+public int getMinWordOccurrence() {
+return minWordOccurrence;
+}
+public void setMinWordOccurrence(int minWordOccurrence) {
+this.minWordOccurrence = minWordOccurrence;
+}
+public int getExaminationWindowLength() {
+return examinationWindowLength;
+}
+public void setExaminationWindowLength(int examinationWindowLength) {
+this.examinationWindowLength = examinationWindowLength;
+}
+public int getMaxDistanceBetweenKwds() {
+return maxDistanceBetweenKwds;
+}
+public void setMaxDistanceBetweenKwds(int maxDistanceBetweenKwds) {
+this.maxDistanceBetweenKwds = maxDistanceBetweenKwds;
+}
+}
+public NgramsExtractor(Parameters parameters) {
+super(parameters);
+}
+@Override
+public Map<String, Double> extract(final String text) {
+Map<Integer, String> ID2word = new HashMap<>(); 
+Map<Integer, Double> ID2occurrences = new HashMap<>(); 
+Map<Integer, Integer> position2ID = new LinkedHashMap<>(); 
+int numberOfWordsInDoc = buildInternalArrays(text, ID2word, ID2occurrences, position2ID);
+int maxCombinations = parameters.getMaxCombinations();
+Map<String, Double> keywordsMap = new HashMap<>();
+for(Map.Entry<Integer, Integer> entry : position2ID.entrySet()) {
+Integer wordID = entry.getValue();
+if(!useThisWord(wordID, ID2word, ID2occurrences)) {
+continue;
+}
+Integer position = entry.getKey();
+Map<LinkedList<Integer>, Double> positionCombinationsWithScores = getPositionCombinationsWithinWindow(position, maxCombinations, ID2word, ID2occurrences, position2ID, numberOfWordsInDoc);
+for(Map.Entry<LinkedList<Integer>, Double> entry2 : positionCombinationsWithScores.entrySet()) {
+LinkedList<Integer> positionCombination = entry2.getKey();
+StringBuilder sb = new StringBuilder(positionCombination.size()*6);
+for(Integer pos : positionCombination) {
+sb.append(ID2word.get(position2ID.get(pos))).append(" ");
+}
+if(sb.length()>0) {
+String key = sb.toString().trim();
+double score = entry2.getValue();
+keywordsMap.put(key, keywordsMap.getOrDefault(key, 0.0)+score);
+}
+}
+}
+double minScore = parameters.getMinWordOccurrence();
+Iterator<Map.Entry<String, Double>> it = keywordsMap.entrySet().iterator();
+while(it.hasNext()) {
+Map.Entry<String, Double> entry = it.next();
+if(entry.getValue()<minScore) {
+it.remove();
+}
+}
+return keywordsMap;
+}
+private Map<LinkedList<Integer>, Double> getPositionCombinationsWithinWindow(Integer windowStart, int maxCombinations,
+Map<Integer, String> ID2word, Map<Integer, Double> ID2occurrences, Map<Integer, Integer> position2ID,
+int numberOfWordsInDoc) {
+int maxDistanceBetweenKwds=parameters.getMaxDistanceBetweenKwds();
+int windowLength;
+if(maxDistanceBetweenKwds == 0) {
+windowLength = maxCombinations;
+}
+else {
+windowLength = Math.max(parameters.getExaminationWindowLength(), maxCombinations);
+}
+int windowEnd=Math.min(windowStart+windowLength, numberOfWordsInDoc);
+Map<LinkedList<Integer>, Double> positionCombinationsWithScores = new HashMap<>();
+LinkedList<Integer> seedList = new LinkedList<>();
+seedList.add(windowStart);
+positionCombinationsWithScores.put(seedList, 1.0); 
+for(int i=windowStart+1;i<windowEnd;++i) {
+Integer ID = position2ID.get(i);
+if(ID==null || useThisWord(ID, ID2word, ID2occurrences)==false) {
+continue;
+}
+Map<LinkedList<Integer>, Double> newPositionCombinations = new HashMap<>();
+int wordsBetweenStart=i-(windowStart+1);
+for(LinkedList<Integer> previousPositionCombination : positionCombinationsWithScores.keySet()) {
+int previousNumWords = previousPositionCombination.size();
+if(previousNumWords>=maxCombinations) {
+continue; 
+}
+int wordsBetweenLastCombo = i-(previousPositionCombination.getLast()+1); 
+if(wordsBetweenLastCombo>maxDistanceBetweenKwds) {
+continue; 
+}
+int currentNumWords = previousNumWords+1; 
+int extraWords = wordsBetweenStart - (currentNumWords-2); 
+double score = 1.0/(1.0+extraWords);
+LinkedList<Integer> currentPositionCombination = new LinkedList<>(previousPositionCombination);
+currentPositionCombination.add(i); 
+newPositionCombinations.put(currentPositionCombination, score);
+}
+positionCombinationsWithScores.putAll(newPositionCombinations);
+}
+return positionCombinationsWithScores;
+}
+private boolean useThisWord(Integer wordID, Map<Integer, String> ID2word, Map<Integer, Double> ID2occurrences) {
+String word = ID2word.get(wordID);
+if(word==null) {
+return false;
+}
+else if(word.length() < parameters.getMinWordLength()) {
+return false;
+}
+else if(ID2occurrences.get(wordID)<parameters.getMinWordOccurrence()) {
+return false;
+}
+return true;
+}
+private int buildInternalArrays(final String text, Map<Integer, String> ID2word, Map<Integer, Double> ID2occurrences, Map<Integer, Integer> position2ID) {
+Map<String, Integer> word2ID = new HashMap<>();
+List<String> keywordList = generateTokenizer().tokenize(text);
+int lastId=-1;
+int numberOfWordsInDoc = keywordList.size();
+for(int position=0;position<numberOfWordsInDoc;++position) {
+String word = keywordList.get(position);
+Integer id = word2ID.get(word);
+if(id==null) {
+id=++lastId;
+word2ID.put(word, id);
+ID2word.put(id, word);
+ID2occurrences.put(id, 0.0);
+}
+ID2occurrences.put(id, ID2occurrences.get(id)+1);
+position2ID.put(position, id);
+}
+return numberOfWordsInDoc;
+}
+}

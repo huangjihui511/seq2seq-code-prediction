@@ -1,0 +1,32 @@
+package io.flutter.pub;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
+import java.util.ArrayList;
+import java.util.List;
+public class PubRoots {
+private PubRoots() {
+}
+@NotNull
+public static List<PubRoot> forModule(@NotNull Module module) {
+final List<PubRoot> result = new ArrayList<>();
+for (VirtualFile dir : ModuleRootManager.getInstance(module).getContentRoots()) {
+final PubRoot root = PubRoot.forDirectory(dir);
+if (root != null) {
+result.add(root);
+}
+}
+return result;
+}
+@NotNull
+public static List<PubRoot> forProject(@NotNull Project project) {
+final List<PubRoot> result = new ArrayList<>();
+for (Module module : ModuleManager.getInstance(project).getModules()) {
+result.addAll(forModule(module));
+}
+return result;
+}
+}

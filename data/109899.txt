@@ -1,0 +1,7 @@
+package us.codecraft.webmagic.proxy;
+import us.codecraft.webmagic.Page;
+import us.codecraft.webmagic.Task;
+public interface ProxyProvider {
+void returnProxy(Proxy proxy, Page page, Task task);
+Proxy getProxy(Task task);
+}

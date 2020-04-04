@@ -1,0 +1,68 @@
+package com.datumbox.framework.core.common.dataobjects;
+import org.apache.commons.math3.linear.OpenMapRealMatrix;
+import org.apache.commons.math3.linear.OpenMapRealVector;
+import org.apache.commons.math3.linear.RealMatrix;
+import org.apache.commons.math3.linear.RealVector;
+public class MapRealVector extends OpenMapRealVector {
+private static final long serialVersionUID = 1L;
+public MapRealVector() {
+super();
+}
+public MapRealVector(int dimension) {
+super(dimension);
+}
+public MapRealVector(int dimension, double epsilon) {
+super(dimension, epsilon);
+}
+protected MapRealVector(MapRealVector v, int resize) {
+super((OpenMapRealVector)v, resize);
+}
+protected MapRealVector(OpenMapRealVector v, int resize) {
+super(v, resize);
+}
+public MapRealVector(int dimension, int expectedSize) {
+super(dimension, expectedSize);
+}
+public MapRealVector(int dimension, int expectedSize, double epsilon) {
+super(dimension, expectedSize, epsilon);
+}
+public MapRealVector(double[] values) {
+super(values);
+}
+public MapRealVector(double[] values, double epsilon) {
+super(values, epsilon);
+}
+public MapRealVector(Double[] values) {
+super(values, DEFAULT_ZERO_TOLERANCE);
+}
+public MapRealVector(Double[] values, double epsilon) {
+super(values, epsilon);
+}
+public MapRealVector(MapRealVector v) {
+super((OpenMapRealVector)v);
+}
+public MapRealVector(OpenMapRealVector v) {
+super(v);
+}
+public MapRealVector(RealVector v) {
+super(v);
+}
+@Override
+public RealMatrix outerProduct(RealVector v) {
+final int m = this.getDimension();
+final int n = v.getDimension();
+final RealMatrix product;
+if(m > 1000000) { 
+product = new MapRealMatrix(m, n);
+}
+else {
+product = new OpenMapRealMatrix(m, n);
+}
+for (int i = 0; i < m; i++) {
+for (int j = 0; j < n; j++) {
+product.setEntry(i, j, this.getEntry(i) * v.getEntry(j));
+}
+}
+return product;
+}
+}

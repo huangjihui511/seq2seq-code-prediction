@@ -1,0 +1,13 @@
+package com.twelvemonkeys.util;
+import java.io.Serializable;
+public class StringKey extends TypedMap.AbstractKey implements Serializable {
+public StringKey() {
+super();
+}
+public StringKey(String pName) {
+super(pName);
+}
+public boolean isCompatibleValue(Object pValue) {
+return pValue instanceof String;
+}
+}

@@ -1,0 +1,262 @@
+package org.springframework.data.mongodb.core.aggregation;
+import java.util.Collections;
+import java.util.List;
+import org.bson.Document;
+import org.springframework.util.Assert;
+public class AccumulatorOperators {
+public static AccumulatorOperatorFactory valueOf(String fieldReference) {
+return new AccumulatorOperatorFactory(fieldReference);
+}
+public static AccumulatorOperatorFactory valueOf(AggregationExpression expression) {
+return new AccumulatorOperatorFactory(expression);
+}
+public static class AccumulatorOperatorFactory {
+private final String fieldReference;
+private final AggregationExpression expression;
+public AccumulatorOperatorFactory(String fieldReference) {
+Assert.notNull(fieldReference, "FieldReference must not be null!");
+this.fieldReference = fieldReference;
+this.expression = null;
+}
+public AccumulatorOperatorFactory(AggregationExpression expression) {
+Assert.notNull(expression, "Expression must not be null!");
+this.fieldReference = null;
+this.expression = expression;
+}
+public Sum sum() {
+return usesFieldRef() ? Sum.sumOf(fieldReference) : Sum.sumOf(expression);
+}
+public Avg avg() {
+return usesFieldRef() ? Avg.avgOf(fieldReference) : Avg.avgOf(expression);
+}
+public Max max() {
+return usesFieldRef() ? Max.maxOf(fieldReference) : Max.maxOf(expression);
+}
+public Min min() {
+return usesFieldRef() ? Min.minOf(fieldReference) : Min.minOf(expression);
+}
+public StdDevPop stdDevPop() {
+return usesFieldRef() ? StdDevPop.stdDevPopOf(fieldReference) : StdDevPop.stdDevPopOf(expression);
+}
+public StdDevSamp stdDevSamp() {
+return usesFieldRef() ? StdDevSamp.stdDevSampOf(fieldReference) : StdDevSamp.stdDevSampOf(expression);
+}
+private boolean usesFieldRef() {
+return fieldReference != null;
+}
+}
+public static class Sum extends AbstractAggregationExpression {
+private Sum(Object value) {
+super(value);
+}
+@Override
+protected String getMongoMethod() {
+return "$sum";
+}
+public static Sum sumOf(String fieldReference) {
+Assert.notNull(fieldReference, "FieldReference must not be null!");
+return new Sum(asFields(fieldReference));
+}
+public static Sum sumOf(AggregationExpression expression) {
+Assert.notNull(expression, "Expression must not be null!");
+return new Sum(Collections.singletonList(expression));
+}
+public Sum and(String fieldReference) {
+Assert.notNull(fieldReference, "FieldReference must not be null!");
+return new Sum(append(Fields.field(fieldReference)));
+}
+public Sum and(AggregationExpression expression) {
+Assert.notNull(expression, "Expression must not be null!");
+return new Sum(append(expression));
+}
+public Sum and(Number value) {
+Assert.notNull(value, "Value must not be null!");
+return new Sum(append(value));
+}
+@Override
+@SuppressWarnings("unchecked")
+public Document toDocument(Object value, AggregationOperationContext context) {
+if (value instanceof List) {
+if (((List) value).size() == 1) {
+return super.toDocument(((List<Object>) value).iterator().next(), context);
+}
+}
+return super.toDocument(value, context);
+}
+}
+public static class Avg extends AbstractAggregationExpression {
+private Avg(Object value) {
+super(value);
+}
+@Override
+protected String getMongoMethod() {
+return "$avg";
+}
+public static Avg avgOf(String fieldReference) {
+Assert.notNull(fieldReference, "FieldReference must not be null!");
+return new Avg(asFields(fieldReference));
+}
+public static Avg avgOf(AggregationExpression expression) {
+Assert.notNull(expression, "Expression must not be null!");
+return new Avg(Collections.singletonList(expression));
+}
+public Avg and(String fieldReference) {
+Assert.notNull(fieldReference, "FieldReference must not be null!");
+return new Avg(append(Fields.field(fieldReference)));
+}
+public Avg and(AggregationExpression expression) {
+Assert.notNull(expression, "Expression must not be null!");
+return new Avg(append(expression));
+}
+@Override
+@SuppressWarnings("unchecked")
+public Document toDocument(Object value, AggregationOperationContext context) {
+if (value instanceof List) {
+if (((List) value).size() == 1) {
+return super.toDocument(((List<Object>) value).iterator().next(), context);
+}
+}
+return super.toDocument(value, context);
+}
+}
+public static class Max extends AbstractAggregationExpression {
+private Max(Object value) {
+super(value);
+}
+@Override
+protected String getMongoMethod() {
+return "$max";
+}
+public static Max maxOf(String fieldReference) {
+Assert.notNull(fieldReference, "FieldReference must not be null!");
+return new Max(asFields(fieldReference));
+}
+public static Max maxOf(AggregationExpression expression) {
+Assert.notNull(expression, "Expression must not be null!");
+return new Max(Collections.singletonList(expression));
+}
+public Max and(String fieldReference) {
+Assert.notNull(fieldReference, "FieldReference must not be null!");
+return new Max(append(Fields.field(fieldReference)));
+}
+public Max and(AggregationExpression expression) {
+Assert.notNull(expression, "Expression must not be null!");
+return new Max(append(expression));
+}
+@Override
+@SuppressWarnings("unchecked")
+public Document toDocument(Object value, AggregationOperationContext context) {
+if (value instanceof List) {
+if (((List) value).size() == 1) {
+return super.toDocument(((List<Object>) value).iterator().next(), context);
+}
+}
+return super.toDocument(value, context);
+}
+}
+public static class Min extends AbstractAggregationExpression {
+private Min(Object value) {
+super(value);
+}
+@Override
+protected String getMongoMethod() {
+return "$min";
+}
+public static Min minOf(String fieldReference) {
+Assert.notNull(fieldReference, "FieldReference must not be null!");
+return new Min(asFields(fieldReference));
+}
+public static Min minOf(AggregationExpression expression) {
+Assert.notNull(expression, "Expression must not be null!");
+return new Min(Collections.singletonList(expression));
+}
+public Min and(String fieldReference) {
+Assert.notNull(fieldReference, "FieldReference must not be null!");
+return new Min(append(Fields.field(fieldReference)));
+}
+public Min and(AggregationExpression expression) {
+Assert.notNull(expression, "Expression must not be null!");
+return new Min(append(expression));
+}
+@Override
+@SuppressWarnings("unchecked")
+public Document toDocument(Object value, AggregationOperationContext context) {
+if (value instanceof List) {
+if (((List) value).size() == 1) {
+return super.toDocument(((List<Object>) value).iterator().next(), context);
+}
+}
+return super.toDocument(value, context);
+}
+}
+public static class StdDevPop extends AbstractAggregationExpression {
+private StdDevPop(Object value) {
+super(value);
+}
+@Override
+protected String getMongoMethod() {
+return "$stdDevPop";
+}
+public static StdDevPop stdDevPopOf(String fieldReference) {
+Assert.notNull(fieldReference, "FieldReference must not be null!");
+return new StdDevPop(asFields(fieldReference));
+}
+public static StdDevPop stdDevPopOf(AggregationExpression expression) {
+Assert.notNull(expression, "Expression must not be null!");
+return new StdDevPop(Collections.singletonList(expression));
+}
+public StdDevPop and(String fieldReference) {
+Assert.notNull(fieldReference, "FieldReference must not be null!");
+return new StdDevPop(append(Fields.field(fieldReference)));
+}
+public StdDevPop and(AggregationExpression expression) {
+Assert.notNull(expression, "Expression must not be null!");
+return new StdDevPop(append(expression));
+}
+@Override
+@SuppressWarnings("unchecked")
+public Document toDocument(Object value, AggregationOperationContext context) {
+if (value instanceof List) {
+if (((List) value).size() == 1) {
+return super.toDocument(((List<Object>) value).iterator().next(), context);
+}
+}
+return super.toDocument(value, context);
+}
+}
+public static class StdDevSamp extends AbstractAggregationExpression {
+private StdDevSamp(Object value) {
+super(value);
+}
+@Override
+protected String getMongoMethod() {
+return "$stdDevSamp";
+}
+public static StdDevSamp stdDevSampOf(String fieldReference) {
+Assert.notNull(fieldReference, "FieldReference must not be null!");
+return new StdDevSamp(asFields(fieldReference));
+}
+public static StdDevSamp stdDevSampOf(AggregationExpression expression) {
+Assert.notNull(expression, "Expression must not be null!");
+return new StdDevSamp(Collections.singletonList(expression));
+}
+public StdDevSamp and(String fieldReference) {
+Assert.notNull(fieldReference, "FieldReference must not be null!");
+return new StdDevSamp(append(Fields.field(fieldReference)));
+}
+public StdDevSamp and(AggregationExpression expression) {
+Assert.notNull(expression, "Expression must not be null!");
+return new StdDevSamp(append(expression));
+}
+@Override
+@SuppressWarnings("unchecked")
+public Document toDocument(Object value, AggregationOperationContext context) {
+if (value instanceof List) {
+if (((List) value).size() == 1) {
+return super.toDocument(((List<Object>) value).iterator().next(), context);
+}
+}
+return super.toDocument(value, context);
+}
+}
+}

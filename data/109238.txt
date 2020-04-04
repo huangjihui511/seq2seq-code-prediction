@@ -1,0 +1,12 @@
+package org.jeecg.modules.demo.test.mapper;
+import java.util.List;
+import org.apache.ibatis.annotations.Delete;
+import org.apache.ibatis.annotations.Select;
+import org.jeecg.modules.demo.test.entity.JeecgOrderCustomer;
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+public interface JeecgOrderCustomerMapper extends BaseMapper<JeecgOrderCustomer> {
+@Delete("DELETE FROM JEECG_ORDER_CUSTOMER WHERE ORDER_ID = #{mainId}")
+public boolean deleteCustomersByMainId(String mainId);
+@Select("SELECT * FROM JEECG_ORDER_CUSTOMER WHERE ORDER_ID = #{mainId}")
+public List<JeecgOrderCustomer> selectCustomersByMainId(String mainId);
+}

@@ -1,0 +1,17 @@
+package io.vertx.core.impl.logging;
+public interface Logger {
+boolean isTraceEnabled();
+void trace(Object message);
+void trace(Object message, Throwable t);
+boolean isDebugEnabled();
+void debug(Object message);
+void debug(Object message, Throwable t);
+boolean isInfoEnabled();
+void info(Object message);
+void info(Object message, Throwable t);
+boolean isWarnEnabled();
+void warn(Object message);
+void warn(Object message, Throwable t);
+void error(Object message);
+void error(Object message, Throwable t);
+}

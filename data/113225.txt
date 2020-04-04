@@ -1,0 +1,26 @@
+package org.pf4j;
+import org.pf4j.util.AndFileFilter;
+import org.pf4j.util.DirectoryFileFilter;
+import org.pf4j.util.HiddenFilter;
+import org.pf4j.util.NameFileFilter;
+import org.pf4j.util.NotFileFilter;
+import org.pf4j.util.OrFileFilter;
+import java.io.FileFilter;
+import java.nio.file.Path;
+public class DevelopmentPluginRepository extends BasePluginRepository {
+public static final String MAVEN_BUILD_DIR = "target";
+public static final String GRADLE_BUILD_DIR = "build";
+public DevelopmentPluginRepository(Path pluginsRoot) {
+super(pluginsRoot);
+AndFileFilter pluginsFilter = new AndFileFilter(new DirectoryFileFilter());
+pluginsFilter.addFileFilter(new NotFileFilter(createHiddenPluginFilter()));
+setFilter(pluginsFilter);
+}
+protected FileFilter createHiddenPluginFilter() {
+OrFileFilter hiddenPluginFilter = new OrFileFilter(new HiddenFilter());
+hiddenPluginFilter
+.addFileFilter(new NameFileFilter(MAVEN_BUILD_DIR))
+.addFileFilter(new NameFileFilter(GRADLE_BUILD_DIR));
+return hiddenPluginFilter;
+}
+}

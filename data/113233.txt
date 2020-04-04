@@ -1,0 +1,7 @@
+package org.pf4j;
+import java.nio.file.Path;
+import java.util.List;
+public interface PluginRepository {
+List<Path> getPluginPaths();
+boolean deletePluginPath(Path pluginPath);
+}

@@ -1,0 +1,35 @@
+package lombok.installer;
+import java.util.ArrayList;
+import java.util.List;
+-I "/c/Program Files/Java/jdk1.6.0_14/include" \
+-I "/c/Program Files/Java/jdk1.6.0_14/include/win32" \
+-D__int64="long long" lombok_installer_WindowsDriveInfo.c
+-o WindowsDriveInfo-i386.dll \
+lombok_installer_WindowsDriveInfo.o
+public class WindowsDriveInfo {
+public List<String> getLogicalDrives() {
+int flags = getLogicalDrives0();
+List<String> letters = new ArrayList<String>();
+for (int i = 0; i < 26; i++) {
+if ((flags & (1 << i)) != 0) letters.add(Character.toString((char)('A' + i)));
+}
+return letters;
+}
+private native int getLogicalDrives0();
+public boolean isFixedDisk(String letter) {
+if (letter.length() != 1) throw new IllegalArgumentException("Supply 1 letter, not: " + letter);
+char drive = Character.toUpperCase(letter.charAt(0));
+if (drive < 'A' || drive > 'Z') throw new IllegalArgumentException(
+"A drive is indicated by a letter, so A-Z inclusive. Not " + drive);
+return getDriveType(drive + ":\\") == 3L;
+}
+private native int getDriveType(String name);
+public static void main(String[] args) {
+System.loadLibrary("WindowsDriveInfo");
+WindowsDriveInfo info = new WindowsDriveInfo();
+for (String letter : info.getLogicalDrives()) {
+System.out.printf("Drive %s: - %s\n", letter,
+info.isFixedDisk(letter) ? "Fixed Disk" : "Not Fixed Disk");
+}
+}
+}

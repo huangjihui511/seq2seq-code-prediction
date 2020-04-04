@@ -1,0 +1,34 @@
+package tests;
+import javax.annotation.processing.Generated;
+import javax.inject.Inject;
+import javax.inject.Provider;
+@Generated(
+value = "com.google.auto.factory.processor.AutoFactoryProcessor",
+comments = "https:
+)
+class ConstructorAnnotatedNonFinalFactory {
+private final Provider<Object> objProvider;
+@Inject ConstructorAnnotatedNonFinalFactory(Provider<Object> objProvider) {
+this.objProvider = checkNotNull(objProvider, 1);
+}
+ConstructorAnnotatedNonFinal create() {
+return new ConstructorAnnotatedNonFinal();
+}
+ConstructorAnnotatedNonFinal create(String s) {
+return new ConstructorAnnotatedNonFinal(checkNotNull(s, 1));
+}
+ConstructorAnnotatedNonFinal create(int i) {
+return new ConstructorAnnotatedNonFinal(checkNotNull(objProvider.get(), 1), i);
+}
+ConstructorAnnotatedNonFinal create(char c) {
+return new ConstructorAnnotatedNonFinal(checkNotNull(objProvider.get(), 1), c);
+}
+private static <T> T checkNotNull(T reference, int argumentIndex) {
+if (reference == null) {
+throw new NullPointerException(
+"@AutoFactory method argument is null but is not marked @Nullable. Argument index: "
++ argumentIndex);
+}
+return reference;
+}
+}

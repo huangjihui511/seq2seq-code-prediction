@@ -1,0 +1,50 @@
+package com.netflix.astyanax.model;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import com.netflix.astyanax.Serializer;
+import com.netflix.astyanax.serializers.DoubleSerializer;
+import com.netflix.astyanax.serializers.IntegerSerializer;
+import com.netflix.astyanax.serializers.StringSerializer;
+public class ColumnPath<C> implements Iterable<ByteBuffer> {
+private List<ByteBuffer> path = new ArrayList<ByteBuffer>();
+private Serializer<C> columnSerializer;
+public ColumnPath(Serializer<C> columnSerializer) {
+this.columnSerializer = columnSerializer;
+}
+public ColumnPath() {
+}
+public <C2> ColumnPath<C> append(C2 name, Serializer<C2> ser) {
+path.add(ByteBuffer.wrap(ser.toBytes(name)));
+return this;
+}
+public <C2> ColumnPath<C> append(String name) {
+append(name, StringSerializer.get());
+return this;
+}
+public <C2> ColumnPath<C> append(int name) {
+append(name, IntegerSerializer.get());
+return this;
+}
+public <C2> ColumnPath<C> append(double name) {
+append(name, DoubleSerializer.get());
+return this;
+}
+@Override
+public Iterator<ByteBuffer> iterator() {
+return path.iterator();
+}
+public int length() {
+return path.size();
+}
+public ByteBuffer get(int index) {
+return path.get(index);
+}
+public ByteBuffer getLast() {
+return path.get(path.size() - 1);
+}
+public Serializer<C> getSerializer() {
+return this.columnSerializer;
+}
+}

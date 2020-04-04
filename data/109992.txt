@@ -1,0 +1,7 @@
+package com.google.cloud.tools.jib.api;
+import com.google.cloud.tools.jib.registry.credentials.CredentialRetrievalException;
+import java.util.Optional;
+@FunctionalInterface
+public interface CredentialRetriever {
+Optional<Credential> retrieve() throws CredentialRetrievalException;
+}

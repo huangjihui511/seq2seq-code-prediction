@@ -1,0 +1,27 @@
+package org.cybergarage.upnp;
+import java.util.Iterator;
+import java.util.Vector;
+public class AllowedValueList extends Vector<AllowedValue>
+{
+public final static String ELEM_NAME = "allowedValueList";
+public AllowedValueList()
+{
+}
+public AllowedValueList(String[] values) {
+for (int i = 0; i < values.length; i++) {
+add(new AllowedValue(values[i]));
+};
+}
+public AllowedValue getAllowedValue(int n)
+{
+return get(n);
+}
+public boolean isAllowed(String v){
+for (Iterator<AllowedValue> i = this.iterator(); i.hasNext();) {
+AllowedValue av = i.next();
+if(av.getValue().equals(v))
+return true;
+}
+return false;
+}
+}

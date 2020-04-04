@@ -1,0 +1,11 @@
+package net.pms.formats.audio;
+import net.pms.formats.Format;
+public abstract class AudioBase extends Format {
+public AudioBase() {
+type = AUDIO;
+}
+@Override
+public boolean transcodable() {
+return true;
+}
+}

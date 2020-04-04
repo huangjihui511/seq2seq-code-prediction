@@ -1,0 +1,44 @@
+package io.realm.examples.newsreader.ui.details;
+import java.util.concurrent.TimeUnit;
+import io.reactivex.Observable;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.disposables.CompositeDisposable;
+import io.reactivex.disposables.Disposable;
+import io.realm.examples.newsreader.model.Model;
+import io.realm.examples.newsreader.ui.Presenter;
+public class DetailsPresenter implements Presenter {
+private final DetailsActivity view;
+private final Model model;
+private final String storyId;
+private CompositeDisposable compositeDisposable = new CompositeDisposable();
+public DetailsPresenter(DetailsActivity detailsActivity, Model model, String storyId) {
+this.storyId = storyId;
+this.view = detailsActivity;
+this.model = model;
+}
+@Override
+public void onCreate() {
+view.showLoader();
+}
+@Override
+public void onResume() {
+Disposable detailsDisposable = model.getStory(storyId)
+.subscribe(story -> {
+view.hideLoader();
+view.showStory(story);
+view.setRead(story.isRead());
+});
+compositeDisposable.add(detailsDisposable);
+Disposable timberDisposable = Observable.timer(2, TimeUnit.SECONDS)
+.observeOn(AndroidSchedulers.mainThread())
+.subscribe(aLong -> model.markAsRead(storyId, true));
+compositeDisposable.add(timberDisposable);
+}
+@Override
+public void onPause() {
+compositeDisposable.clear();
+}
+@Override
+public void onDestroy() {
+}
+}

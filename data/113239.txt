@@ -1,0 +1,19 @@
+package org.pf4j;
+public class ZipPluginManager extends DefaultPluginManager {
+@Override
+protected PluginDescriptorFinder createPluginDescriptorFinder() {
+return new PropertiesPluginDescriptorFinder();
+}
+@Override
+protected PluginLoader createPluginLoader() {
+return new CompoundPluginLoader()
+.add(new DevelopmentPluginLoader(this), this::isDevelopment)
+.add(new DefaultPluginLoader(this), this::isNotDevelopment);
+}
+@Override
+protected PluginRepository createPluginRepository() {
+return new CompoundPluginRepository()
+.add(new DevelopmentPluginRepository(getPluginsRoot()), this::isDevelopment)
+.add(new DefaultPluginRepository(getPluginsRoot()), this::isNotDevelopment);
+}
+}

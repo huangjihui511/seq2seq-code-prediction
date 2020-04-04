@@ -1,0 +1,23 @@
+package java.lang;
+public class ThreadTrackingGroup extends ThreadGroup {
+private final ThreadLifecycleListener listener;
+public ThreadTrackingGroup(ThreadGroup parent, ThreadLifecycleListener listener) {
+super(parent, ThreadTrackingGroup.class.getSimpleName().toLowerCase() + System.identityHashCode(listener));
+this.listener = listener;
+}
+@Override
+void add(Thread t) {
+super.add(t);
+listener.started(t);
+}
+@Override
+void threadStartFailed(Thread t) {
+super.threadStartFailed(t);
+listener.startFailed(t);
+}
+@Override
+void threadTerminated(Thread t) {
+super.threadTerminated(t);
+listener.terminated(t);
+}
+}

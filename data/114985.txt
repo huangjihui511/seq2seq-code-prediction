@@ -1,0 +1,32 @@
+package com.example.endpoints;
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import java.io.IOException;
+import java.util.Base64;
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+@WebServlet("/auth/info/*")
+public class AuthInfoServlet extends HttpServlet {
+@Override
+public void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+String encodedInfo = req.getHeader("X-Endpoint-API-UserInfo");
+if (encodedInfo == null || encodedInfo == "") {
+JsonObject anon = new JsonObject();
+anon.addProperty("id", "anonymous");
+new Gson().toJson(anon, resp.getWriter());
+return;
+}
+try {
+byte[] authInfo = Base64.getDecoder().decode(encodedInfo);
+resp.getOutputStream().write(authInfo);
+} catch (IllegalArgumentException iae) {
+resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+JsonObject error = new JsonObject();
+error.addProperty("code", HttpServletResponse.SC_BAD_REQUEST);
+error.addProperty("message", "Could not decode auth info.");
+new Gson().toJson(error, resp.getWriter());
+}
+}
+}

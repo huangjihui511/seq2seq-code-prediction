@@ -1,0 +1,7 @@
+package org.apache.fontbox.ttf;
+import java.util.List;
+public interface CmapLookup
+{
+int getGlyphId(int codePointAt);
+List<Integer> getCharCodes(int gid);
+}

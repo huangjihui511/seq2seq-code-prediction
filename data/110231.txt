@@ -1,0 +1,17 @@
+package tests;
+import javax.annotation.processing.Generated;
+import javax.inject.Inject;
+@Generated(
+value = "com.google.auto.factory.processor.AutoFactoryProcessor",
+comments = "https:
+)
+final class SimpleClassImplementingSimpleInterfaceFactory
+implements SimpleClassImplementingSimpleInterface.SimpleInterface {
+@Inject SimpleClassImplementingSimpleInterfaceFactory() {}
+SimpleClassImplementingSimpleInterface create() {
+return new SimpleClassImplementingSimpleInterface();
+}
+@Override public SimpleClassImplementingSimpleInterface newInstance() {
+return create();
+}
+}

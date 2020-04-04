@@ -1,0 +1,33 @@
+package com.graphhopper.jsprit.core.algorithm.acceptor;
+import com.graphhopper.jsprit.core.problem.solution.VehicleRoutingProblemSolution;
+import java.util.Collection;
+public class GreedyAcceptance implements SolutionAcceptor {
+private final int solutionMemory;
+public GreedyAcceptance(int solutionMemory) {
+this.solutionMemory = solutionMemory;
+}
+@Override
+public boolean acceptSolution(Collection<VehicleRoutingProblemSolution> solutions, VehicleRoutingProblemSolution newSolution) {
+boolean solutionAccepted = false;
+if (solutions.size() < solutionMemory) {
+solutions.add(newSolution);
+solutionAccepted = true;
+} else {
+VehicleRoutingProblemSolution worstSolution = null;
+for (VehicleRoutingProblemSolution s : solutions) {
+if (worstSolution == null) worstSolution = s;
+else if (s.getCost() > worstSolution.getCost()) worstSolution = s;
+}
+if (newSolution.getCost() < worstSolution.getCost()) {
+solutions.remove(worstSolution);
+solutions.add(newSolution);
+solutionAccepted = true;
+}
+}
+return solutionAccepted;
+}
+@Override
+public String toString() {
+return "[name=GreedyAcceptance]";
+}
+}

@@ -1,0 +1,39 @@
+package io.vertx.core.cli;
+import io.vertx.codegen.annotations.GenIgnore;
+import io.vertx.codegen.annotations.Nullable;
+import io.vertx.codegen.annotations.VertxGen;
+import io.vertx.core.cli.impl.DefaultCommandLine;
+import java.util.List;
+@VertxGen
+public interface CommandLine {
+static CommandLine create(CLI cli) {
+return new DefaultCommandLine(cli);
+}
+CLI cli();
+List<String> allArguments();
+@Nullable
+<T> T getOptionValue(String name);
+@Nullable
+<T> T getArgumentValue(String name);
+@Nullable
+<T> T getArgumentValue(int index);
+@GenIgnore
+<T> List<T> getOptionValues(String name);
+@GenIgnore
+<T> List<T> getArgumentValues(int index);
+boolean isFlagEnabled(String name);
+boolean isOptionAssigned(Option option);
+@Deprecated
+default List<String> getRawValues(Option option) {
+return getRawValuesForOption(option);
+}
+List<String> getRawValuesForOption(Option option);
+List<String> getRawValuesForArgument(Argument argument);
+@Nullable String getRawValueForOption(Option option);
+boolean acceptMoreValues(Option option);
+@Nullable String getRawValueForArgument(Argument arg);
+boolean isArgumentAssigned(Argument arg);
+boolean isSeenInCommandLine(Option option);
+boolean isValid();
+boolean isAskingForHelp();
+}

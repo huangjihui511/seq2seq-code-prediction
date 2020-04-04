@@ -1,0 +1,54 @@
+package org.apache.fontbox.ttf;
+import java.io.IOException;
+public class TTFTable
+{
+private String tag;
+private long checkSum;
+private long offset;
+private long length;
+protected boolean initialized;
+protected final TrueTypeFont font;
+TTFTable(TrueTypeFont font)
+{
+this.font = font;
+}
+public long getCheckSum()
+{
+return checkSum;
+}
+void setCheckSum(long checkSumValue)
+{
+this.checkSum = checkSumValue;
+}
+public long getLength()
+{
+return length;
+}
+void setLength(long lengthValue)
+{
+this.length = lengthValue;
+}
+public long getOffset()
+{
+return offset;
+}
+void setOffset(long offsetValue)
+{
+this.offset = offsetValue;
+}
+public String getTag()
+{
+return tag;
+}
+void setTag(String tagValue)
+{
+this.tag = tagValue;
+}
+public boolean getInitialized()
+{
+return initialized;
+}
+void read(TrueTypeFont ttf, TTFDataStream data) throws IOException
+{
+}
+}

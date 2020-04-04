@@ -1,0 +1,8 @@
+package com.facebook.buck.cli.testdata.daemon;
+import org.junit.Test;
+public class SleepTest {
+@Test
+public void sleep() throws InterruptedException {
+Thread.sleep(1000);
+}
+}

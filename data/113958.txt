@@ -1,0 +1,17 @@
+package org.spongepowered.mod;
+import org.spongepowered.common.SpongeImpl;
+import org.spongepowered.mod.plugin.MetaModContainer;
+import java.io.File;
+public class SpongeCommonModContainer extends MetaModContainer {
+public SpongeCommonModContainer() {
+super(SpongeModMetadata.get(SpongeImpl.ECOSYSTEM_ID, SpongeImpl.ECOSYSTEM_NAME));
+}
+@Override
+public File getSource() {
+return SpongeCoremod.modFile;
+}
+@Override
+public Object getMod() {
+return this;
+}
+}

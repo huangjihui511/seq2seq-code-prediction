@@ -1,0 +1,6 @@
+package com.google.cloud.tools.jib.blob;
+import java.io.IOException;
+import java.io.OutputStream;
+public interface Blob {
+BlobDescriptor writeTo(OutputStream outputStream) throws IOException;
+}

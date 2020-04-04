@@ -1,0 +1,26 @@
+package org.pf4j;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+public class SingletonExtensionFactory extends DefaultExtensionFactory {
+private final List<String> extensionClassNames;
+private Map<String, Object> cache;
+public SingletonExtensionFactory(String... extensionClassNames) {
+this.extensionClassNames = Arrays.asList(extensionClassNames);
+cache = new HashMap<>(); 
+}
+@Override
+@SuppressWarnings("unchecked")
+public <T> T create(Class<T> extensionClass) {
+String extensionClassName = extensionClass.getName();
+if (cache.containsKey(extensionClassName)) {
+return (T) cache.get(extensionClassName);
+}
+T extension = super.create(extensionClass);
+if (extensionClassNames.isEmpty() || extensionClassNames.contains(extensionClassName)) {
+cache.put(extensionClassName, extension);
+}
+return extension;
+}
+}

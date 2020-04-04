@@ -1,0 +1,57 @@
+package mobi.hsz.idea.gitignore.util;
+import com.intellij.concurrency.JobScheduler;
+import com.intellij.openapi.project.DumbAwareRunnable;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
+public class InterruptibleScheduledFuture implements DumbAwareRunnable {
+private final int delay;
+private final int maxAttempts;
+private int attempt = 0;
+@NotNull
+private final Runnable task;
+@Nullable
+private ScheduledFuture<?> future;
+private boolean leading = false;
+private boolean trailing = false;
+private boolean trailingTask = false;
+public InterruptibleScheduledFuture(@NotNull Runnable task, int delay, int maxAttempts) {
+this.task = task;
+this.delay = delay;
+this.maxAttempts = maxAttempts;
+}
+@Override
+public void run() {
+if (future != null && !future.isCancelled() && !future.isDone()) {
+return;
+}
+if (leading) {
+task.run();
+}
+future = JobScheduler.getScheduler().scheduleWithFixedDelay(() -> {
+task.run();
+if (++attempt >= maxAttempts || trailingTask) {
+trailing = false;
+if (future != null) {
+future.cancel(false);
+}
+}
+}, delay, delay, TimeUnit.MILLISECONDS);
+}
+public void cancel() {
+if (future != null && !future.isCancelled()) {
+if (trailing) {
+trailingTask = true;
+} else {
+future.cancel(true);
+}
+}
+}
+public void setLeading(boolean leading) {
+this.leading = leading;
+}
+public void setTrailing(boolean trailing) {
+this.trailing = trailing;
+}
+}

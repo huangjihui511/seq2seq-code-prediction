@@ -1,0 +1,57 @@
+package org.deeplearning4j.arbiter.optimize.generator.genetic.crossover;
+import org.apache.commons.math3.random.JDKRandomGenerator;
+import org.apache.commons.math3.random.RandomGenerator;
+import org.apache.commons.math3.random.SynchronizedRandomGenerator;
+import org.deeplearning4j.arbiter.optimize.generator.genetic.crossover.parentselection.RandomTwoParentSelection;
+import org.deeplearning4j.arbiter.optimize.generator.genetic.crossover.parentselection.TwoParentSelection;
+import org.nd4j.base.Preconditions;
+public class ArithmeticCrossover extends TwoParentsCrossoverOperator {
+private static final double DEFAULT_CROSSOVER_RATE = 0.85;
+private final double crossoverRate;
+private final RandomGenerator rng;
+public static class Builder {
+private double crossoverRate = DEFAULT_CROSSOVER_RATE;
+private RandomGenerator rng;
+private TwoParentSelection parentSelection;
+public Builder crossoverRate(double rate) {
+Preconditions.checkState(rate >= 0.0 && rate <= 1.0, "Rate must be between 0.0 and 1.0, got %s", rate);
+this.crossoverRate = rate;
+return this;
+}
+public Builder randomGenerator(RandomGenerator rng) {
+this.rng = rng;
+return this;
+}
+public Builder parentSelection(TwoParentSelection parentSelection) {
+this.parentSelection = parentSelection;
+return this;
+}
+public ArithmeticCrossover build() {
+if (rng == null) {
+rng = new SynchronizedRandomGenerator(new JDKRandomGenerator());
+}
+if (parentSelection == null) {
+parentSelection = new RandomTwoParentSelection();
+}
+return new ArithmeticCrossover(this);
+}
+}
+private ArithmeticCrossover(ArithmeticCrossover.Builder builder) {
+super(builder.parentSelection);
+this.crossoverRate = builder.crossoverRate;
+this.rng = builder.rng;
+}
+@Override
+public CrossoverResult crossover() {
+double[][] parents = parentSelection.selectParents();
+double[] offspringValues = new double[parents[0].length];
+if (rng.nextDouble() < crossoverRate) {
+for (int i = 0; i < offspringValues.length; ++i) {
+double t = rng.nextDouble();
+offspringValues[i] = t * parents[0][i] + (1.0 - t) * parents[1][i];
+}
+return new CrossoverResult(true, offspringValues);
+}
+return new CrossoverResult(false, parents[0]);
+}
+}

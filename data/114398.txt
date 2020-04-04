@@ -1,0 +1,30 @@
+package com.oreilly.springdata.gemfire.core;
+import static com.oreilly.springdata.gemfire.core.CoreMatchers.named;
+import static org.hamcrest.Matchers.hasSize;
+import static org.junit.Assert.assertThat;
+import java.math.BigDecimal;
+import java.util.List;
+import org.hamcrest.Matchers;
+import org.junit.Test;
+import com.oreilly.springdata.gemfire.AbstractIntegrationTest;
+public class ProductRepositoryIntegrationTest extends AbstractIntegrationTest {
+@Test
+public void createProduct() {
+Product product = new Product(4L, "Camera bag", new BigDecimal(49.99));
+product = productRepository.save(product);
+}
+@Test
+@SuppressWarnings("unchecked")
+public void lookupProductsByDescription() {
+List<Product> products = productRepository.findByDescriptionContaining("Apple");
+assertThat(products, hasSize(2));
+assertThat(products, Matchers.<Product> hasItems(named("iPad")));
+}
+@Test
+@SuppressWarnings("unchecked")
+public void findsProductsByAttributes() {
+List<Product> products = productRepository.findByAttributes("connector", "plug");
+assertThat(products, hasSize(1));
+assertThat(products, Matchers.<Product> hasItems(named("Dock")));
+}
+}

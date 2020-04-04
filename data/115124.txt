@@ -1,0 +1,8 @@
+package io.ebean;
+import javax.persistence.PessimisticLockException;
+public class AcquireLockException extends PessimisticLockException {
+private static final long serialVersionUID = -8585962352965876691L;
+public AcquireLockException(String message, Throwable cause) {
+super(message, cause);
+}
+}

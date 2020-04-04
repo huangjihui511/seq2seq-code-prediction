@@ -1,0 +1,79 @@
+package org.apache.pdfbox.io;
+import java.io.InputStream;
+import java.io.IOException;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+public class RandomAccessInputStream extends InputStream
+{
+private static final Log LOG = LogFactory.getLog(RandomAccessInputStream.class);
+private final RandomAccessRead input;
+private long position;
+public RandomAccessInputStream(RandomAccessRead randomAccessRead)
+{
+input = randomAccessRead;
+position = 0;
+}
+void restorePosition() throws IOException
+{
+input.seek(position);
+}
+@Override
+public int available() throws IOException
+{
+restorePosition();
+long available = input.length() - input.getPosition();
+if (available > Integer.MAX_VALUE)
+{
+return Integer.MAX_VALUE;
+}
+return (int)available;
+}
+@Override
+public int read() throws IOException
+{
+restorePosition();
+if (input.isEOF())
+{
+return -1;
+}
+int b = input.read();
+if (b != -1)
+{
+position += 1;
+}
+else
+{
+LOG.error("read() returns -1, assumed position: " +
+position + ", actual position: " + input.getPosition());
+}
+return b;
+}
+@Override
+public int read(byte[] b, int off, int len) throws IOException
+{
+restorePosition();
+if (input.isEOF())
+{
+return -1;
+}
+int n = input.read(b, off, len);
+if (n != -1)
+{
+position += n;
+}
+else
+{
+LOG.error("read() returns -1, assumed position: " +
+position + ", actual position: " + input.getPosition());
+}
+return n;
+}
+@Override
+public long skip(long n) throws IOException
+{
+restorePosition();
+input.seek(position + n);
+position += n;
+return n;
+}
+}

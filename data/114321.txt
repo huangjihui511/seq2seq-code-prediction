@@ -1,0 +1,11 @@
+package mobi.hsz.idea.gitignore.codeInsight;
+import com.intellij.codeInsight.daemon.impl.HighlightRangeExtension;
+import com.intellij.psi.PsiFile;
+import mobi.hsz.idea.gitignore.lang.IgnoreLanguage;
+import org.jetbrains.annotations.NotNull;
+public class IgnoreHighlightRangeExtension implements HighlightRangeExtension {
+@Override
+public boolean isForceHighlightParents(@NotNull PsiFile file) {
+return file.getLanguage() instanceof IgnoreLanguage;
+}
+}

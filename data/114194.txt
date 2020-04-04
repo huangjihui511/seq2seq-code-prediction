@@ -1,0 +1,119 @@
+package com.jiang.android.rxjavaapp.utils;
+import com.jiang.android.rxjavaapp.common.CommonString;
+import com.jiang.android.rxjavaapp.common.OperatorsUrl;
+import com.jiang.android.rxjavaapp.database.alloperators;
+import com.jiang.android.rxjavaapp.database.helper.DbUtil;
+import com.jiang.android.rxjavaapp.database.operators;
+import java.util.ArrayList;
+import java.util.List;
+import rx.Single;
+import rx.SingleSubscriber;
+import rx.android.schedulers.AndroidSchedulers;
+import rx.schedulers.Schedulers;
+public class DataUtils {
+private static final String IMMEDIATE = "immediate";
+static long i = 1l;
+static long parentId = 0l;
+static final String COMPUTATION = "computation";
+static final String TRAMPOLINE = "trampoline";
+public static void fillData(final callBack call) {
+Single.create(new Single.OnSubscribe<Boolean>() {
+@Override
+public void call(SingleSubscriber<? super Boolean> singleSubscriber) {
+try {
+List<operators> lists = getOperatorsData();
+List<alloperators> alloperatorses = getAllOperators();
+DbUtil.getOperatorsService().save(lists);
+DbUtil.getAllOperatorsService().save(alloperatorses);
+singleSubscriber.onSuccess(true);
+} catch (Exception e) {
+singleSubscriber.onError(e);
+}
+}
+}).subscribeOn(Schedulers.io())
+.observeOn(AndroidSchedulers.mainThread())
+.subscribe(new SingleSubscriber<Boolean>() {
+@Override
+public void onSuccess(Boolean value) {
+call.onSuccess();
+}
+@Override
+public void onError(Throwable error) {
+call.onFail(error);
+}
+});
+}
+public static List<operators> getOperatorsData() {
+List<operators> lists = new ArrayList<>();
+lists.add(new operators(0l, "RxJava 2.x", 0l));
+return lists;
+}
+public static List<alloperators> getAllOperators() {
+List<alloperators> alloperatorses = new ArrayList<>();
+getRxJava2List(alloperatorses);
+getIntroduceList(alloperatorses);
+getCreatingList(alloperatorses);
+getTransformList(alloperatorses);
+getFilterList(alloperatorses);
+getCombinList(alloperatorses);
+getErrorList(alloperatorses);
+getUtilityList(alloperatorses);
+getConditionalList(alloperatorses);
+getMathList(alloperatorses);
+getSayncList(alloperatorses);
+getConnectList(alloperatorses);
+getBlockList(alloperatorses);
+getStringList(alloperatorses);
+getOthersList(alloperatorses);
+return alloperatorses;
+}
+private static void getRxJava2List(List<alloperators> alloperatorses) {
+parentId++;
+}
+private static void getOthersList(List<alloperators> alloperatorses) {
+parentId++;
+}
+private static void getStringList(List<alloperators> alloperatorses) {
+parentId++;
+}
+private static void getBlockList(List<alloperators> alloperatorses) {
+parentId++;
+}
+private static void getConnectList(List<alloperators> alloperatorses) {
+parentId++;
+}
+private static void getSayncList(List<alloperators> alloperatorses) {
+parentId++;
+}
+private static void getMathList(List<alloperators> alloperatorses) {
+parentId++;
+}
+private static void getConditionalList(List<alloperators> alloperatorses) {
+parentId++;
+}
+private static void getUtilityList(List<alloperators> alloperatorses) {
+parentId++;
+}
+private static void getErrorList(List<alloperators> alloperatorses) {
+parentId++;
+}
+private static void getCombinList(List<alloperators> alloperatorses) {
+parentId++;
+}
+private static void getIntroduceList(List<alloperators> alloperatorses) {
+parentId++;
+}
+private static void getCreatingList(List<alloperators> alloperatorses) {
+parentId++;
+}
+private static void getTransformList(List<alloperators> alloperatorses) {
+parentId++;
+}
+private static void getFilterList(List<alloperators> alloperatorses) {
+parentId++;
+}
+public interface callBack {
+void onSuccess();
+void onFail(Throwable e);
+}
+}

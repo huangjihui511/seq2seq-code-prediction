@@ -1,0 +1,21 @@
+package org.graalvm.compiler.core;
+public class GraalServiceThread extends Thread {
+private final Runnable runnable;
+public GraalServiceThread(Runnable runnable) {
+super();
+this.runnable = runnable;
+}
+@Override
+public final void run() {
+beforeRun();
+try {
+runnable.run();
+} finally {
+afterRun();
+}
+}
+private void afterRun() {
+}
+private void beforeRun() {
+}
+}

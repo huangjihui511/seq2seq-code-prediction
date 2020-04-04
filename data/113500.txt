@@ -1,0 +1,73 @@
+package com.pokegoapi.api.pokemon;
+import POGOProtos.Data.PokemonDataOuterClass.PokemonData;
+import POGOProtos.Networking.Responses.UseItemEggIncubatorResponseOuterClass.UseItemEggIncubatorResponse;
+import com.annimon.stream.Stream;
+import com.annimon.stream.function.Predicate;
+import com.pokegoapi.api.PokemonGo;
+import com.pokegoapi.api.inventory.EggIncubator;
+import com.pokegoapi.exceptions.request.RequestFailedException;
+import lombok.Setter;
+public class EggPokemon {
+private static final String TAG = EggPokemon.class.getSimpleName();
+@Setter
+public PokemonGo api;
+private PokemonData proto;
+public UseItemEggIncubatorResponse.Result incubate(EggIncubator incubator) throws RequestFailedException {
+if (incubator.isInUse()) {
+throw new IllegalArgumentException("Incubator already used");
+}
+return incubator.hatchEgg(this);
+}
+public double getEggKmWalked() {
+if (!isIncubate())
+return 0;
+EggIncubator incubator = Stream.of(api.inventories.incubators)
+.filter(new Predicate<EggIncubator>() {
+@Override
+public boolean test(EggIncubator incub) {
+return incub.getId().equals(proto.getEggIncubatorId());
+}
+}).findFirst().orElse(null);
+if (incubator == null)
+return 0;
+else
+return proto.getEggKmWalkedTarget()
+- (incubator.getKmTarget() - api.playerProfile.getStats().getKmWalked());
+}
+public EggPokemon(PokemonData proto) {
+if (!proto.getIsEgg()) {
+throw new IllegalArgumentException("You cant build a EggPokemon without a valid PokemonData.");
+}
+this.proto = proto;
+}
+public long getId() {
+return proto.getId();
+}
+public double getEggKmWalkedTarget() {
+return proto.getEggKmWalkedTarget();
+}
+public long getCapturedCellId() {
+return proto.getCapturedCellId();
+}
+public long getCreationTimeMs() {
+return proto.getCreationTimeMs();
+}
+public String getEggIncubatorId() {
+return proto.getEggIncubatorId();
+}
+public boolean isIncubate() {
+return proto.getEggIncubatorId().length() > 0;
+}
+@Override
+public int hashCode() {
+return proto.getPokemonId().hashCode();
+}
+@Override
+public boolean equals(Object obj) {
+if (obj instanceof EggPokemon) {
+EggPokemon other = (EggPokemon) obj;
+return (this.getId() == other.getId());
+}
+return false;
+}
+}

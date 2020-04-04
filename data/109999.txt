@@ -1,0 +1,42 @@
+package com.google.cloud.tools.jib.event.events;
+import com.google.cloud.tools.jib.api.JibEvent;
+import java.time.Duration;
+import java.util.Optional;
+public class TimerEvent implements JibEvent {
+public enum State {
+START,
+LAP,
+FINISHED
+}
+public interface Timer {
+Optional<? extends Timer> getParent();
+}
+private final State state;
+private final Timer timer;
+private final Duration duration;
+private final Duration elapsed;
+private final String description;
+public TimerEvent(
+State state, Timer timer, Duration duration, Duration elapsed, String description) {
+this.state = state;
+this.timer = timer;
+this.duration = duration;
+this.elapsed = elapsed;
+this.description = description;
+}
+public State getState() {
+return state;
+}
+public Timer getTimer() {
+return timer;
+}
+public Duration getDuration() {
+return duration;
+}
+public Duration getElapsed() {
+return elapsed;
+}
+public String getDescription() {
+return description;
+}
+}

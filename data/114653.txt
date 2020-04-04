@@ -1,0 +1,281 @@
+package com.twelvemonkeys.lang;
+import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.InvocationTargetException;
+import java.util.*;
+public final class DuckType {
+EXAMPLE:
+public ImageMgr(Object receiver, Image image) {
+if (!DuckType.instanceOf(IImageHolder.class, receiver)) {
+throw new ClassCastException("Cannot implement IImageHolder");
+}
+this.image = image;
+IImageHolder imageHolder = (IImageHolder) DuckType.implement(IImageHolder.class, receiver);
+imageHolder.setImage(image);
+imageHolder.addDisposeListener(this);
+}
+private DuckType() {}
+public static boolean instanceOf(Class pInterface, Object pObject) {
+return instanceOf(new Class[] {pInterface}, new Object[] {pObject});
+}
+public static boolean instanceOf(Class[] pInterfaces, Object pObject) {
+return instanceOf(pInterfaces, new Object[] {pObject});
+}
+public static boolean instanceOf(final Class[] pInterfaces, final Object[] pObjects) {
+for (int i = 0; i < pInterfaces.length; i++) {
+Class interfce = pInterfaces[i];
+Method[] methods = interfce.getMethods();
+for (int j = 0; j < methods.length; j++) {
+Method method = methods[j];
+if (findMethodImplementation(method, pObjects) == null) {
+return false;
+}
+}
+}
+return true;
+}
+private static Class[] getClasses(final Object[] pObjects) {
+Class[] classes = new Class[pObjects.length];
+for (int i = 0; i < pObjects.length; i++) {
+classes[i] = pObjects[i].getClass();
+}
+return classes;
+}
+static MethodProxy findMethodImplementation(final Method pMethod, final Object[] pObjects) {
+Set tested = new HashSet(pObjects.length);
+for (int i = 0; i < pObjects.length; i++) {
+Class cls = pObjects[i].getClass();
+if (tested.contains(cls)) {
+continue;
+}
+else {
+tested.add(cls);
+}
+try {
+Method method = cls.getMethod(pMethod.getName(),
+pMethod.getParameterTypes());
+if (matches(pMethod, method)) {
+return new MethodProxy(method, pObjects[i]);
+}
+}
+catch (NoSuchMethodException e) {
+}
+}
+if (hasSuperTypes(pMethod.getParameterTypes())) {
+SortedSet uniqueMethods = new TreeSet();
+for (int i = 0; i < pObjects.length; i++) {
+Class cls = pObjects[i].getClass();
+Method[] methods = cls.getMethods();
+for (int j = 0; j < methods.length; j++) {
+Method method = methods[j];
+if (pMethod.getName().equals(method.getName())
+&& isAssignableFrom(method.getParameterTypes(), pMethod.getParameterTypes())
+&& pMethod.getReturnType().isAssignableFrom(method.getReturnType())) {
+uniqueMethods.add(new MethodProxy(method, pObjects[i]));
+}
+}
+}
+if (uniqueMethods.size() == 1) {
+return (MethodProxy) uniqueMethods.first();
+}
+else {
+}
+}
+return null;
+}
+private static boolean isAssignableFrom(Class[] pTypes, Class[] pSubTypes) {
+if (pTypes.length != pSubTypes.length) {
+return false;
+}
+for (int i = 0; i < pTypes.length; i++) {
+if (!pTypes[i].isAssignableFrom(pSubTypes[i])) {
+return false;
+}
+}
+return true;
+}
+private static boolean hasSuperTypes(Class[] pParameterTypes) {
+for (int i = 0; i < pParameterTypes.length; i++) {
+Class type = pParameterTypes[i];
+if (type != Object.class
+&& (type.isInterface() || type.getSuperclass() != null)) {
+return true;
+}
+}
+return false;
+}
+private static boolean matches(Method pLeft, Method pRight) {
+if (pLeft == pRight) {
+return true;
+}
+else if (pLeft.getName().equals(pRight.getName())
+&& pLeft.getReturnType().isAssignableFrom(pRight.getReturnType())) {
+Class[] params1 = pLeft.getParameterTypes();
+Class[] params2 = pRight.getParameterTypes();
+if (params1.length == params2.length) {
+for (int i = 0; i < params1.length; i++) {
+if (params1[i] != params2[i]) {
+return false;
+}
+}
+return true;
+}
+}
+return false;
+}
+public static Object implement(Class pInterface, Object pObject) throws NoMatchingMethodException {
+return implement(new Class[] {pInterface}, new Object[] {pObject}, false);
+}
+public static Object implement(Class[] pInterfaces, Object pObject) throws NoMatchingMethodException {
+return implement(pInterfaces, new Object[] {pObject}, false);
+}
+public static Object implement(final Class[] pInterfaces, final Object[] pObjects) throws NoMatchingMethodException {
+return implement(pInterfaces, pObjects, false);
+}
+public static Object implement(final Class[] pInterfaces, final Object[] pObjects, boolean pStubAbstract) throws NoMatchingMethodException {
+Map delegates = new HashMap(pObjects.length * 10);
+for (int i = 0; i < pInterfaces.length; i++) {
+Class interfce = pInterfaces[i];
+Method[] methods = interfce.getMethods();
+for (int j = 0; j < methods.length; j++) {
+Method method = methods[j];
+MethodProxy impl = findMethodImplementation(method, pObjects);
+if (impl == null) {
+if (pStubAbstract) {
+impl = MethodProxy.createAbstract(method);
+}
+else {
+throw new NoMatchingMethodException(interfce.getName() + "."
++ method.getName()
++ parameterTypesToString(method.getParameterTypes()));
+}
+}
+if (!delegates.containsKey(method)) {
+delegates.put(method, impl);
+}
+}
+}
+return Proxy.newProxyInstance(Thread.currentThread().getContextClassLoader(),
+pInterfaces, new DelegationHandler(delegates));
+}
+private static String parameterTypesToString(Class[] pTypes) {
+StringBuilder buf = new StringBuilder();
+buf.append("(");
+if (pTypes != null) {
+for (int i = 0; i < pTypes.length; i++) {
+if (i > 0) {
+buf.append(", ");
+}
+Class c = pTypes[i];
+buf.append((c == null) ? "null" : c.getName());
+}
+}
+buf.append(")");
+return buf.toString();
+}
+static class MethodProxy {
+private final Method mMethod;
+private final Object mDelegate;
+private final static Object ABSTRACT_METHOD_DELEGATE = new Object() {
+};
+public static MethodProxy createAbstract(Method pMethod) {
+return new MethodProxy(pMethod, ABSTRACT_METHOD_DELEGATE) {
+public Object invoke(Object[] pArguments) throws Throwable {
+throw abstractMehthodError();
+}
+};
+}
+public MethodProxy(Method pMethod, Object pDelegate) {
+if (pMethod == null) {
+throw new IllegalArgumentException("method == null");
+}
+if (pDelegate == null) {
+throw new IllegalArgumentException("delegate == null");
+}
+mMethod = pMethod;
+mDelegate = pDelegate;
+}
+public Object invoke(Object[] pArguments) throws Throwable {
+try {
+return mMethod.invoke(mDelegate, pArguments);
+}
+catch (IllegalAccessException e) {
+throw new Error(e); 
+}
+catch (InvocationTargetException e) {
+throw e.getCause();
+}
+}
+Error abstractMehthodError() {
+return new AbstractMethodError(mMethod.toString());
+}
+public int hashCode() {
+return mMethod.hashCode() ^ mDelegate.hashCode();
+}
+public boolean equals(Object pOther) {
+if (pOther == this) {
+return true;
+}
+if (pOther instanceof MethodProxy) {
+MethodProxy other = (MethodProxy) pOther;
+return mMethod.equals(other.mMethod) && mDelegate.equals(other.mDelegate);
+}
+return false;
+}
+public String toString() {
+return mMethod.toString() + mDelegate.toString();
+}
+}
+public static class NoMatchingMethodException extends IllegalArgumentException {
+public NoMatchingMethodException() {
+super();
+}
+public NoMatchingMethodException(String s) {
+super(s);
+}
+public NoMatchingMethodException(Exception e) {
+super(e.getMessage());
+initCause(e);
+}
+}
+private static class DelegationHandler implements InvocationHandler {
+private final Map mDelegates;
+public DelegationHandler(Map pDelegates) {
+mDelegates = pDelegates;
+}
+public final Object invoke(Object pProxy, Method pMethod, Object[] pArguments)
+throws Throwable
+{
+if (pMethod.getDeclaringClass() == Object.class) {
+String name = pMethod.getName();
+if (name.equals("equals")) {
+return proxyEquals(pProxy, pArguments[0]);
+}
+else if (name.equals("hashCode")) {
+return proxyHashCode(pProxy);
+}
+else if (name.equals("toString")) {
+return proxyToString(pProxy);
+}
+return pMethod.invoke(this, pArguments);
+}
+MethodProxy mp = (MethodProxy) mDelegates.get(pMethod);
+return mp.invoke(pArguments);
+}
+protected Integer proxyHashCode(Object pProxy) {
+return new Integer(mDelegates.hashCode());
+}
+protected Boolean proxyEquals(Object pProxy, Object pOther) {
+return pProxy == pOther ||
+(Proxy.isProxyClass(pOther.getClass())
+&& Proxy.getInvocationHandler(pOther) instanceof DelegationHandler
+&& ((DelegationHandler) Proxy.getInvocationHandler(pOther)).mDelegates.equals(mDelegates))
+? Boolean.TRUE : Boolean.FALSE;
+}
+protected String proxyToString(Object pProxy) {
+return pProxy.getClass().getName() + '@' +
+Integer.toHexString(pProxy.hashCode());
+}
+}
+}

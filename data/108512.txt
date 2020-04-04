@@ -1,0 +1,14 @@
+package org.deeplearning4j.text.tokenization.tokenizer.preprocessor;
+import org.deeplearning4j.BaseDL4JTest;
+import org.junit.Test;
+import static org.junit.Assert.assertEquals;
+public class StemmingPreprocessorTest extends BaseDL4JTest {
+@Test
+public void testPreProcess() throws Exception {
+StemmingPreprocessor preprocessor = new StemmingPreprocessor();
+String test = "TESTING.";
+String output = preprocessor.preProcess(test);
+System.out.println("Output: " + output);
+assertEquals("test", output);
+}
+}

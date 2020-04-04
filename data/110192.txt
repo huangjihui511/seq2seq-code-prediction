@@ -1,0 +1,6 @@
+package com.google.auto.factory;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+@javax.inject.Qualifier
+@Retention(RetentionPolicy.RUNTIME)
+@interface Qualifier {}

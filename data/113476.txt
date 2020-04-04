@@ -1,0 +1,25 @@
+package com.pokegoapi.api.pokemon;
+import POGOProtos.Enums.PokemonIdOuterClass.PokemonId;
+import POGOProtos.Settings.Master.Pokemon.EvolutionBranchOuterClass.EvolutionBranch;
+import com.pokegoapi.api.settings.templates.ItemTemplates;
+import lombok.Getter;
+import java.util.ArrayList;
+import java.util.List;
+public class Evolution {
+@Getter
+public PokemonId parent;
+@Getter
+private PokemonId pokemon;
+@Getter
+public List<PokemonId> evolutions = new ArrayList<>();
+@Getter
+public List<EvolutionBranch> evolutionBranch;
+public Evolution(ItemTemplates templates, PokemonId parent, PokemonId pokemon) {
+this.parent = parent;
+this.pokemon = pokemon;
+this.evolutionBranch = templates.getPokemonSettings(pokemon).getEvolutionBranchList();
+for (EvolutionBranch evolutionBranch : evolutionBranch) {
+evolutions.add(evolutionBranch.getEvolution());
+}
+}
+}

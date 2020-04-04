@@ -1,0 +1,105 @@
+package com.taobao.taokeeper.research.sample;
+import java.io.IOException;
+import java.util.concurrent.CountDownLatch;
+import org.apache.log4j.PropertyConfigurator;
+import org.apache.log4j.xml.DOMConfigurator;
+import org.apache.zookeeper.CreateMode;
+import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.WatchedEvent;
+import org.apache.zookeeper.Watcher;
+import org.apache.zookeeper.Watcher.Event.KeeperState;
+import org.apache.zookeeper.ZooDefs.Ids;
+import org.apache.zookeeper.ZooKeeper;
+import common.toolkit.java.util.ObjectUtil;
+import common.toolkit.java.util.ThreadUtil;
+public class SessionTimeoutSample implements Watcher {
+private static final int SESSION_TIMEOUT = 10000;
+private static final String CONNECTION_STRING = "test.zookeeper.connection_string:2181," +
+"test.zookeeper.connection_string2:2181," +
+"test.zookeeper.connection_string3:2181";
+private static final String ZK_PATH = "/nileader";
+private ZooKeeper zk = null;
+private CountDownLatch connectedSemaphore = new CountDownLatch( 1 );
+public void createConnection( String connectString, int sessionTimeout ) {
+this.releaseConnection();
+try {
+zk = new ZooKeeper( connectString, sessionTimeout, this );
+connectedSemaphore.await();
+} catch ( InterruptedException e ) {
+e.printStackTrace();
+} catch ( IOException e ) {
+e.printStackTrace();
+}
+}
+public void releaseConnection() {
+if ( !ObjectUtil.isBlank( this.zk ) ) {
+try {
+this.zk.close();
+} catch ( InterruptedException e ) {
+e.printStackTrace();
+}
+}
+}
+public boolean createPath( String path, String data ) {
+try {
++ this.zk.create( path, 
+data.getBytes(), 
+Ids.OPEN_ACL_UNSAFE, 
+CreateMode.EPHEMERAL )
++ ", content: " + data );
+} catch ( KeeperException e ) {
+e.printStackTrace();
+} catch ( InterruptedException e ) {
+e.printStackTrace();
+}
+return true;
+}
+public String readData( String path ) {
+try {
+return new String( this.zk.getData( path, false, null ) );
+} catch ( KeeperException e ) {
+e.printStackTrace();
+return "";
+} catch ( InterruptedException e ) {
+e.printStackTrace();
+return "";
+}
+}
+public boolean writeData( String path, String data ) {
+try {
+this.zk.setData( path, data.getBytes(), -1 ) );
+} catch ( KeeperException e ) {
+e.printStackTrace();
+} catch ( InterruptedException e ) {
+e.printStackTrace();
+}
+return false;
+}
+public void deleteNode( String path ) {
+try {
+this.zk.delete( path, -1 );
+} catch ( KeeperException e ) {
+e.printStackTrace();
+} catch ( InterruptedException e ) {
+e.printStackTrace();
+}
+}
+public static void main( String[] args ) {
+PropertyConfigurator.configure("src/main/resources/log4j.properties");
+SessionTimeoutSample sample = new SessionTimeoutSample();
+sample.createConnection( CONNECTION_STRING, SESSION_TIMEOUT );
+if ( sample.createPath( ZK_PATH, System.currentTimeMillis()+"" ) ) {
+while( true ){
+sample.writeData( ZK_PATH, System.currentTimeMillis()+"" );
+ThreadUtil.sleep( 1500 );
+}
+}
+sample.releaseConnection();
+}
+@Override
+public void process( WatchedEvent event ) {
+if ( KeeperState.SyncConnected == event.getState() ) {
+connectedSemaphore.countDown();
+}
+}
+}

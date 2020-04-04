@@ -1,0 +1,13 @@
+package org.deeplearning4j.arbiter.optimize.api.saving;
+import org.deeplearning4j.arbiter.optimize.api.OptimizationResult;
+import org.nd4j.shade.jackson.annotation.JsonInclude;
+import org.nd4j.shade.jackson.annotation.JsonTypeInfo;
+import java.io.IOException;
+import java.util.List;
+@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY, property = "@class")
+public interface ResultSaver {
+ResultReference saveModel(OptimizationResult result, Object modelResult) throws IOException;
+List<Class<?>> getSupportedCandidateTypes();
+List<Class<?>> getSupportedModelTypes();
+}

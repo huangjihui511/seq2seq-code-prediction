@@ -1,0 +1,58 @@
+package org.gnucash.android.model;
+import android.net.Uri;
+import java.sql.Timestamp;
+public class Book extends BaseModel {
+private Uri mSourceUri;
+private String mDisplayName;
+private String mRootAccountUID;
+private String mRootTemplateUID;
+private boolean mActive;
+private Timestamp mLastSync;
+public Book(){
+init();
+}
+public Book(String rootAccountUID){
+this.mRootAccountUID = rootAccountUID;
+init();
+}
+private void init(){
+this.mRootTemplateUID = generateUID();
+mLastSync = new Timestamp(System.currentTimeMillis());
+}
+public String getRootAccountUID() {
+return mRootAccountUID;
+}
+public void setRootAccountUID(String rootAccountUID) {
+mRootAccountUID = rootAccountUID;
+}
+public String getRootTemplateUID() {
+return mRootTemplateUID;
+}
+public void setRootTemplateUID(String rootTemplateUID) {
+mRootTemplateUID = rootTemplateUID;
+}
+public boolean isActive() {
+return mActive;
+}
+public void setActive(boolean active) {
+mActive = active;
+}
+public Uri getSourceUri() {
+return mSourceUri;
+}
+public void setSourceUri(Uri uri) {
+this.mSourceUri = uri;
+}
+public String getDisplayName() {
+return mDisplayName;
+}
+public void setDisplayName(String name) {
+this.mDisplayName = name;
+}
+public Timestamp getLastSync() {
+return mLastSync;
+}
+public void setLastSync(Timestamp lastSync) {
+this.mLastSync = lastSync;
+}
+}

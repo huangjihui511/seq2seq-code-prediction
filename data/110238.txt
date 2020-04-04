@@ -1,0 +1,25 @@
+package tests;
+import javax.annotation.processing.Generated;
+import javax.inject.Inject;
+@Generated(
+value = "com.google.auto.factory.processor.AutoFactoryProcessor",
+comments = "https:
+)
+final class SimpleClassVarargsFactory implements SimpleClassVarargs.InterfaceWithVarargs {
+@Inject SimpleClassVarargsFactory() {}
+SimpleClassVarargs create(String... args) {
+return new SimpleClassVarargs(checkNotNull(args, 1));
+}
+@Override
+public SimpleClassVarargs build(String... args) {
+return create(args);
+}
+private static <T> T checkNotNull(T reference, int argumentIndex) {
+if (reference == null) {
+throw new NullPointerException(
+"@AutoFactory method argument is null but is not marked @Nullable. Argument index: "
++ argumentIndex);
+}
+return reference;
+}
+}

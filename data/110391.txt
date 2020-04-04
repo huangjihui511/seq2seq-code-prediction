@@ -1,0 +1,6 @@
+package org.jd.gui.api.model;
+import java.util.Collection;
+import java.util.Map;
+public interface Indexes {
+Map<String, Collection> getIndex(String name);
+}

@@ -1,0 +1,22 @@
+package org.apache.zookeeper.graph;
+import java.io.Serializable;
+import java.util.HashMap;
+import java.util.Map;
+public abstract class LogEntry implements Serializable {
+private Map attributes;
+public enum Type { UNKNOWN, LOG4J, TXN };
+public LogEntry(long timestamp) {
+attributes = new HashMap();
+setAttribute("timestamp", new Long(timestamp));
+}
+public long getTimestamp() {
+return (Long)getAttribute("timestamp");
+}
+public abstract Type getType();
+public void setAttribute(String key, Object v) {
+attributes.put(key, v);
+}
+public Object getAttribute(String key) {
+return attributes.get(key);
+}
+}

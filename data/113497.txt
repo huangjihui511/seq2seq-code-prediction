@@ -1,0 +1,40 @@
+package com.pokegoapi.api.player;
+import POGOProtos.Data.PlayerBadgeOuterClass.PlayerBadge;
+import POGOProtos.Enums.BadgeTypeOuterClass.BadgeType;
+import POGOProtos.Settings.Master.BadgeSettingsOuterClass.BadgeSettings;
+import com.pokegoapi.api.PokemonGo;
+import lombok.Getter;
+import lombok.Setter;
+public class Medal {
+private PokemonGo api;
+@Getter
+@Setter
+public int rank;
+@Getter
+private BadgeType type;
+@Getter
+private final int startValue;
+@Getter
+private final double currentValue;
+@Getter
+private final int endValue;
+public Medal(PokemonGo api, PlayerBadge badge) {
+this.api = api;
+this.type = badge.getBadgeType();
+this.rank = badge.getRank();
+this.startValue = badge.getStartValue();
+this.currentValue = badge.getCurrentValue();
+this.endValue = badge.getEndValue();
+}
+public BadgeSettings getSettings() {
+return api.itemTemplates.getBadgeSettings(type);
+}
+@Override
+public int hashCode() {
+return type.getNumber();
+}
+@Override
+public boolean equals(Object obj) {
+return obj instanceof Medal && ((Medal) obj).type.equals(type);
+}
+}

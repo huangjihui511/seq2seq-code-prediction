@@ -1,0 +1,14 @@
+package com.google.inject.internal;
+import com.google.inject.spi.InterceptorBinding;
+final class InterceptorBindingProcessor extends AbstractProcessor {
+InterceptorBindingProcessor(Errors errors) {
+super(errors);
+}
+@Override
+public Boolean visit(InterceptorBinding command) {
+injector.state.addMethodAspect(
+new MethodAspect(
+command.getClassMatcher(), command.getMethodMatcher(), command.getInterceptors()));
+return true;
+}
+}

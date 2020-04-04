@@ -1,0 +1,31 @@
+package com.facebook.presto.cost;
+import com.facebook.presto.Session;
+import com.facebook.presto.matching.Pattern;
+import com.facebook.presto.sql.planner.TypeProvider;
+import com.facebook.presto.sql.planner.iterative.Lookup;
+import com.facebook.presto.sql.planner.plan.AssignUniqueId;
+import com.facebook.presto.sql.planner.plan.Patterns;
+import java.util.Optional;
+import static com.facebook.presto.spi.type.BigintType.BIGINT;
+public class AssignUniqueIdStatsRule
+implements ComposableStatsCalculator.Rule<AssignUniqueId>
+{
+private static final Pattern<AssignUniqueId> PATTERN = Patterns.assignUniqueId();
+@Override
+public Pattern<AssignUniqueId> getPattern()
+{
+return PATTERN;
+}
+@Override
+public Optional<PlanNodeStatsEstimate> calculate(AssignUniqueId assignUniqueId, StatsProvider statsProvider, Lookup lookup, Session session, TypeProvider types)
+{
+PlanNodeStatsEstimate sourceStats = statsProvider.getStats(assignUniqueId.getSource());
+return Optional.of(PlanNodeStatsEstimate.buildFrom(sourceStats)
+.addVariableStatistics(assignUniqueId.getIdVariable(), VariableStatsEstimate.builder()
+.setDistinctValuesCount(sourceStats.getOutputRowCount())
+.setNullsFraction(0.0)
+.setAverageRowSize(BIGINT.getFixedSize())
+.build())
+.build());
+}
+}

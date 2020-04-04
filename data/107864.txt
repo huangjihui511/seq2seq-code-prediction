@@ -1,0 +1,49 @@
+package org.apache.zookeeper.graph;
+import java.util.ArrayList;
+import java.util.List;
+import org.apache.zookeeper.graph.filterops.*;
+public abstract class FilterOp {
+protected List<FilterOp> subOps;
+protected List<Arg> args;
+public enum ArgType {
+STRING, NUMBER, SYMBOL
+}
+public FilterOp() {
+subOps = new ArrayList<FilterOp>();
+args = new ArrayList<Arg>();
+}
+public static FilterOp newOp(String op) throws FilterException {
+if (op.equals("or"))
+return new OrOp();
+if (op.equals("and"))
+return new AndOp();
+if (op.equals("not"))
+return new NotOp();
+if (op.equals("xor"))
+return new XorOp();
+if (op.equals("="))
+return new EqualsOp();
+if (op.equals("<"))
+return new LessThanOp();
+if (op.equals(">"))
+return new GreaterThanOp();
+throw new FilterException("Invalid operation '"+op+"'");
+}
+public void addSubOp(FilterOp op) {
+subOps.add(op);
+}
+public void addArg(Arg arg) {
+args.add(arg);
+}
+public abstract boolean matches(LogEntry entry) throws FilterException;
+public String toString() {
+String op = "(" + getClass().getName();
+for (FilterOp f :  subOps) {
+op += " " + f;
+}
+for (Arg a : args) {
+op += " " + a;
+}
+return op + ")";
+}
+}

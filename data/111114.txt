@@ -1,0 +1,9 @@
+package org.apereo.cas.support.saml;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
+@Tag("SAML")
+public class SamlIdPConfigurationTests extends BaseSamlIdPConfigurationTests {
+@Test
+public void verifyConfig() {
+}
+}

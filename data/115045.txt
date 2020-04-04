@@ -1,0 +1,27 @@
+package com.google.cloud.storage.storagetransfer.samples;
+import com.google.api.services.storagetransfer.v1.Storagetransfer;
+import com.google.api.services.storagetransfer.v1.model.ListOperationsResponse;
+import java.io.IOException;
+import java.util.logging.Logger;
+public final class RequestChecker {
+private static final String PROJECT_ID = "YOUR_PROJECT_ID";
+private static final String JOB_NAME = "YOUR_JOB_NAME";
+private static final Logger LOG = Logger.getLogger(RequestChecker.class.getName());
+public static ListOperationsResponse checkTransfer(
+Storagetransfer client, String projectId, String jobName) throws IOException {
+return client
+.transferOperations()
+.list("transferOperations")
+.setFilter("{\"project_id\": \"" + projectId + "\", \"job_names\": [\"" + jobName + "\"] }")
+.execute();
+}
+public static void main(String[] args) {
+try {
+ListOperationsResponse resp =
+checkTransfer(TransferClientCreator.createStorageTransferClient(), PROJECT_ID, JOB_NAME);
+LOG.info("Result of transferOperations/list: " + resp.toPrettyString());
+} catch (Exception e) {
+e.printStackTrace();
+}
+}
+}

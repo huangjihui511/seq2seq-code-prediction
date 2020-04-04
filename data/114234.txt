@@ -1,0 +1,14 @@
+package com.datumbox.framework.common.storage.interfaces;
+import com.datumbox.framework.common.storage.interfaces.StorageEngine.MapType;
+import com.datumbox.framework.common.storage.interfaces.StorageEngine.StorageHint;
+import java.lang.annotation.*;
+@Target(ElementType.FIELD)
+@Inherited
+@Retention(RetentionPolicy.RUNTIME)
+public @interface BigMap {
+public Class<?> keyClass();
+public Class<?> valueClass();
+public MapType mapType();
+public StorageHint storageHint();
+public boolean concurrent();
+}

@@ -1,0 +1,40 @@
+package org.springframework.integration.jpa.support.parametersource;
+import java.beans.PropertyDescriptor;
+import java.util.ArrayList;
+import java.util.List;
+import org.springframework.beans.BeanWrapper;
+import org.springframework.beans.NotReadablePropertyException;
+import org.springframework.beans.PropertyAccessorFactory;
+public class BeanPropertyParameterSource implements ParameterSource {
+private final BeanWrapper beanWrapper;
+private String[] propertyNames;
+public BeanPropertyParameterSource(Object object) {
+this.beanWrapper = PropertyAccessorFactory.forBeanPropertyAccess(object);
+}
+@Override
+public boolean hasValue(String paramName) {
+return this.beanWrapper.isReadableProperty(paramName);
+}
+@Override
+public Object getValue(String paramName) {
+try {
+return this.beanWrapper.getPropertyValue(paramName);
+}
+catch (NotReadablePropertyException ex) {
+throw new IllegalArgumentException(ex.getMessage()); 
+}
+}
+public String[] getReadablePropertyNames() {
+if (this.propertyNames == null) {
+final List<String> names = new ArrayList<String>();
+PropertyDescriptor[] props = this.beanWrapper.getPropertyDescriptors();
+for (PropertyDescriptor pd : props) {
+if (this.beanWrapper.isReadableProperty(pd.getName())) {
+names.add(pd.getName());
+}
+}
+this.propertyNames = names.toArray(new String[names.size()]);
+}
+return this.propertyNames; 
+}
+}

@@ -1,0 +1,130 @@
+package org.springframework.integration.ftp.session;
+import java.io.IOException;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.apache.commons.net.ftp.FTP;
+import org.apache.commons.net.ftp.FTPClient;
+import org.apache.commons.net.ftp.FTPClientConfig;
+import org.apache.commons.net.ftp.FTPFile;
+import org.apache.commons.net.ftp.FTPReply;
+import org.springframework.integration.file.remote.session.SessionFactory;
+import org.springframework.messaging.MessagingException;
+import org.springframework.util.Assert;
+public abstract class AbstractFtpSessionFactory<T extends FTPClient> implements SessionFactory<FTPFile> {
+protected final Log logger = LogFactory.getLog(this.getClass()); 
+private FTPClientConfig config;
+private String username;
+private String host;
+private String password;
+private int port = FTP.DEFAULT_PORT;
+private int bufferSize = 2048; 
+private int clientMode = FTPClient.ACTIVE_LOCAL_DATA_CONNECTION_MODE;
+private int fileType = FTP.BINARY_FILE_TYPE;
+private String controlEncoding = FTP.DEFAULT_CONTROL_ENCODING;
+private Integer connectTimeout;
+private Integer defaultTimeout;
+private Integer dataTimeout;
+public void setFileType(int fileType) {
+this.fileType = fileType;
+}
+public void setControlEncoding(String controlEncoding) {
+Assert.hasText(controlEncoding, "'controlEncoding' must not be empty");
+this.controlEncoding = controlEncoding;
+}
+public void setConfig(FTPClientConfig config) {
+Assert.notNull(config, "'config' must not be null");
+this.config = config;
+}
+public void setBufferSize(int bufferSize) {
+this.bufferSize = bufferSize;
+}
+public void setHost(String host) {
+Assert.hasText(host, "'host' must not be empty");
+this.host = host;
+}
+public void setPort(int port) {
+Assert.isTrue(port > 0, "Port number should be > 0");
+this.port = port;
+}
+public void setUsername(String user) {
+Assert.hasText(user, "'user' should be a nonempty string");
+this.username = user;
+}
+public void setPassword(String pass) {
+Assert.notNull(pass, "password should not be null");
+this.password = pass;
+}
+public void setClientMode(int clientMode) {
+Assert.isTrue(clientMode == FTPClient.ACTIVE_LOCAL_DATA_CONNECTION_MODE ||
+clientMode == FTPClient.PASSIVE_LOCAL_DATA_CONNECTION_MODE,
+"Only local modes are supported. Was: " + clientMode);
+this.clientMode = clientMode;
+}
+public void setConnectTimeout(int connectTimeout) {
+this.connectTimeout = connectTimeout;
+}
+public void setDefaultTimeout(int defaultTimeout) {
+this.defaultTimeout = defaultTimeout;
+}
+public void setDataTimeout(int dataTimeout) {
+this.dataTimeout = dataTimeout;
+}
+@Override
+public FtpSession getSession() {
+try {
+return new FtpSession(this.createClient());
+}
+catch (Exception e) {
+throw new IllegalStateException("failed to create FTPClient", e);
+}
+}
+private T createClient() throws IOException {
+final T client = this.createClientInstance();
+Assert.notNull(client, "client must not be null");
+client.configure(this.config);
+Assert.hasText(this.username, "username is required");
+if (this.connectTimeout != null) {
+client.setConnectTimeout(this.connectTimeout);
+}
+if (this.defaultTimeout != null) {
+client.setDefaultTimeout(this.defaultTimeout);
+}
+if (this.dataTimeout != null) {
+client.setDataTimeout(this.dataTimeout);
+}
+client.setControlEncoding(this.controlEncoding);
+this.postProcessClientBeforeConnect(client);
+client.connect(this.host, this.port);
+if (!FTPReply.isPositiveCompletion(client.getReplyCode())) {
+throw new MessagingException("Connecting to server [" +
+this.host + ":" + this.port + "] failed. Please check the connection.");
+}
+this.logger.debug("Connected to server [" + this.host + ":" + this.port + "]");
+if (!client.login(this.username, this.password)) {
+throw new IllegalStateException("Login failed. The response from the server is: " +
+client.getReplyString());
+}
+this.postProcessClientAfterConnect(client);
+this.updateClientMode(client);
+client.setFileType(this.fileType);
+client.setBufferSize(this.bufferSize);
+return client;
+}
+private void updateClientMode(FTPClient client) {
+switch (this.clientMode) {
+case FTPClient.ACTIVE_LOCAL_DATA_CONNECTION_MODE:
+client.enterLocalActiveMode();
+break;
+case FTPClient.PASSIVE_LOCAL_DATA_CONNECTION_MODE:
+client.enterLocalPassiveMode();
+break;
+default:
+break;
+}
+}
+protected abstract T createClientInstance();
+protected void postProcessClientAfterConnect(T t) throws IOException {
+}
+protected void postProcessClientBeforeConnect(T client) throws IOException {
+}
+}

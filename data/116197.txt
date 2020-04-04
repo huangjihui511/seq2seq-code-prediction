@@ -1,0 +1,5 @@
+package org.apache.struts2.action;
+import java.util.Map;
+public interface ApplicationAware {
+void withApplication(Map<String, Object> application);
+}

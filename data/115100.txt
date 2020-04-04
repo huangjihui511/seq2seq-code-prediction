@@ -1,0 +1,66 @@
+package io.ebeaninternal.server.autotune;
+import io.ebean.bean.ObjectGraphOrigin;
+import io.ebeaninternal.server.querydefn.OrmQueryDetail;
+import java.util.ArrayList;
+import java.util.List;
+public class AutoTuneCollection {
+final List<Entry> entries = new ArrayList<>();
+public Entry add(ObjectGraphOrigin origin, OrmQueryDetail detail, String sourceQuery) {
+Entry entry = new Entry(origin, detail, sourceQuery);
+entries.add(entry);
+return entry;
+}
+public List<Entry> getEntries() {
+return entries;
+}
+public static class Entry {
+private final ObjectGraphOrigin origin;
+private final OrmQueryDetail detail;
+private final String originalQuery;
+private final List<EntryQuery> queries = new ArrayList<>();
+public Entry(ObjectGraphOrigin origin, OrmQueryDetail detail, String originalQuery) {
+this.origin = origin;
+this.detail = detail;
+this.originalQuery = originalQuery;
+}
+public void addQuery(EntryQuery entryQuery) {
+queries.add(entryQuery);
+}
+public ObjectGraphOrigin getOrigin() {
+return origin;
+}
+public OrmQueryDetail getDetail() {
+return detail;
+}
+public String getOriginalQuery() {
+return originalQuery;
+}
+public List<EntryQuery> getQueries() {
+return queries;
+}
+}
+public static class EntryQuery {
+final String path;
+final long exeCount;
+final long totalBeanLoaded;
+final long totalMicros;
+public EntryQuery(String path, long exeCount, long totalBeanLoaded, long totalMicros) {
+this.path = path;
+this.exeCount = exeCount;
+this.totalBeanLoaded = totalBeanLoaded;
+this.totalMicros = totalMicros;
+}
+public String getPath() {
+return path;
+}
+public long getExeCount() {
+return exeCount;
+}
+public long getTotalBeanLoaded() {
+return totalBeanLoaded;
+}
+public long getTotalMicros() {
+return totalMicros;
+}
+}
+}

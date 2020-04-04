@@ -1,0 +1,8 @@
+package org.jupiter.common.concurrent.disruptor;
+import org.jupiter.common.util.JConstants;
+public interface Dispatcher<T> {
+int BUFFER_SIZE = 32768;
+int MAX_NUM_WORKERS = JConstants.AVAILABLE_PROCESSORS << 3;
+boolean dispatch(T message);
+void shutdown();
+}

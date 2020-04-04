@@ -1,0 +1,30 @@
+package com.google.cloud.tools.jib.registry;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+public class RegistryAliasGroup {
+private static final ImmutableList<ImmutableSet<String>> REGISTRY_ALIAS_GROUPS =
+ImmutableList.of(
+ImmutableSet.of(
+"registry.hub.docker.com", "index.docker.io", "registry-1.docker.io", "docker.io"));
+private static final ImmutableMap<String, String> REGISTRY_HOST_MAP =
+ImmutableMap.of(
+"docker.io", "registry-1.docker.io");
+public static List<String> getAliasesGroup(String registry) {
+for (ImmutableSet<String> aliasGroup : REGISTRY_ALIAS_GROUPS) {
+if (aliasGroup.contains(registry)) {
+Stream<String> self = Stream.of(registry);
+Stream<String> withoutSelf = aliasGroup.stream().filter(alias -> !registry.equals(alias));
+return Stream.concat(self, withoutSelf).collect(Collectors.toList());
+}
+}
+return Collections.singletonList(registry);
+}
+public static String getHost(String registry) {
+return REGISTRY_HOST_MAP.getOrDefault(registry, registry);
+}
+}

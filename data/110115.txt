@@ -1,0 +1,68 @@
+package spark.ssl;
+public class SslStores {
+protected String keystoreFile;
+protected String keystorePassword;
+protected String certAlias;
+protected String truststoreFile;
+protected String truststorePassword;
+protected boolean needsClientCert;
+public static SslStores create(String keystoreFile,
+String keystorePassword,
+String truststoreFile,
+String truststorePassword) {
+return new SslStores(keystoreFile, keystorePassword, null, truststoreFile, truststorePassword, false);
+}
+public static SslStores create(String keystoreFile,
+String keystorePassword,
+String certAlias,
+String truststoreFile,
+String truststorePassword) {
+return new SslStores(keystoreFile, keystorePassword, certAlias, truststoreFile, truststorePassword, false);
+}
+public static SslStores create(String keystoreFile,
+String keystorePassword,
+String truststoreFile,
+String truststorePassword,
+boolean needsClientCert) {
+return new SslStores(keystoreFile, keystorePassword, null, truststoreFile, truststorePassword, needsClientCert);
+}
+public static SslStores create(String keystoreFile,
+String keystorePassword,
+String certAlias,
+String truststoreFile,
+String truststorePassword,
+boolean needsClientCert) {
+return new SslStores(keystoreFile, keystorePassword, certAlias, truststoreFile, truststorePassword, needsClientCert);
+}
+private SslStores(String keystoreFile,
+String keystorePassword,
+String certAlias,
+String truststoreFile,
+String truststorePassword,
+boolean needsClientCert) {
+this.keystoreFile = keystoreFile;
+this.keystorePassword = keystorePassword;
+this.certAlias = certAlias;
+this.truststoreFile = truststoreFile;
+this.truststorePassword = truststorePassword;
+this.needsClientCert = needsClientCert;
+}
+public String keystoreFile() {
+return keystoreFile;
+}
+public String keystorePassword() {
+return keystorePassword;
+}
+public String certAlias() {
+return certAlias;
+}
+public String trustStoreFile() {
+return truststoreFile;
+}
+public String trustStorePassword() {
+return truststorePassword;
+}
+public boolean needsClientCert() {
+return needsClientCert;
+}
+}

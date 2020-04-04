@@ -1,0 +1,141 @@
+package com.taobao.taokeeper.common;
+import static common.toolkit.java.constant.EmptyObjectConstant.EMPTY_STRING;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
+import com.taobao.taokeeper.model.AlarmSettings;
+import com.taobao.taokeeper.model.TaoKeeperSettings;
+import com.taobao.taokeeper.model.ZooKeeperCluster;
+import com.taobao.taokeeper.model.ZooKeeperStatus;
+import com.taobao.taokeeper.model.ZooKeeperStatusV2;
+import common.toolkit.java.entity.HostPerformanceEntity;
+import common.toolkit.java.entity.io.Connection;
+public class GlobalInstance {
+private static long GlobalInstance_TIME_OF_UPDATE_ZOOKEEPER_NODE;
+public static boolean need_node_alive_check = true;
+public static boolean need_host_performance_collect = true;
+public static boolean need_node_checker = true;
+public static boolean need_zk_status_collect = true;
+public static boolean need_client_throughput_stat = true;
+private static Map< String/** IP */
+, ZooKeeperStatusV2 > zooKeeperStatusSet = new ConcurrentHashMap< String, ZooKeeperStatusV2 >();
+private static Map< String/** IP */
+, Integer > zooKeeperStatusTypeSet = new ConcurrentHashMap< String, Integer >();
+public static String timeOfUpdateZooKeeperStatusSet = EMPTY_STRING;
+private static Map< String/** IP */ , HostPerformanceEntity > hostPerformanceEntitySet = new ConcurrentHashMap< String, HostPerformanceEntity >();
+public static String timeOfUpdateHostPerformanceSet = EMPTY_STRING;
+static Map< Integer/** clusterId */
+, ZooKeeperCluster > zooKeeperClusterMap = new ConcurrentHashMap< Integer, ZooKeeperCluster >();
+public static Map< Integer/** clusterId */ , Map< String, Connection > > zooKeeperClientConnectionMapOfCluster = new ConcurrentHashMap< Integer/**clusterId */, Map< String, Connection > >();
+public static Map< String/** clusterId-serverIp */ , Map< String, Connection > > zooKeeperClientConnectionMapOfServer = new ConcurrentHashMap< String/**clusterId */, Map< String, Connection > >();
+static Map< Integer/** clusterId */
+, AlarmSettings > alarmSettingsMap = new ConcurrentHashMap< Integer, AlarmSettings >();
+public static AtomicBoolean needAlarm = new AtomicBoolean( false );
+public static ConcurrentLinkedQueue< String > allCheckingCluster = new ConcurrentLinkedQueue< String >();
+private static Object lockOfAllCheckingCluster = new Object();
+public static void setGlobalInstanceTimeOfUpdateZooKeeperNode( long time ) {
+GlobalInstance_TIME_OF_UPDATE_ZOOKEEPER_NODE = time;
+}
+public static long getGlobalInstanceTimeOfUpdateZooKeeperNode() {
+return GlobalInstance_TIME_OF_UPDATE_ZOOKEEPER_NODE;
+}
+public static void putHostPerformanceEntity( String ip, HostPerformanceEntity hostPerformanceEntity ) {
+hostPerformanceEntitySet.put( ip, hostPerformanceEntity );
+}
+public static HostPerformanceEntity getHostPerformanceEntity( String ip ) {
+return hostPerformanceEntitySet.get( ip );
+}
+public static Map< String/** IP */
+, HostPerformanceEntity > getAllHostPerformanceEntity() {
+return hostPerformanceEntitySet;
+}
+public static void putZooKeeperStatus( String ip, ZooKeeperStatusV2 zooKeeperStatus ) {
+zooKeeperStatusSet.put( ip, zooKeeperStatus );
+}
+public static ZooKeeperStatusV2 getZooKeeperStatus( String ip ) {
+return zooKeeperStatusSet.get( ip );
+}
+public static Map< String/** IP */
+, ZooKeeperStatusV2 > getAllZooKeeperStatus() {
+return zooKeeperStatusSet;
+}
+public static void putZooKeeperStatusType( String ip, int statusType ) {
+zooKeeperStatusTypeSet.put( ip, statusType );
+}
+public static int getZooKeeperStatusType( String ip ) {
+int status = 0;
+try {
+status = zooKeeperStatusTypeSet.get( ip );
+} catch ( Exception e ) {
+return -1;
+}
+return status;
+}
+public static Map< String/** IP */, Integer > getAllZooKeeperStatusType() {
+return zooKeeperStatusTypeSet;
+}
+public static Map< String, Connection > getZooKeeperClientConnectionMapByClusterId( int clusterId ) {
+return zooKeeperClientConnectionMapOfCluster.get( clusterId );
+}
+public static Map< Integer, Map< String, Connection >> getAllZooKeeperClientConnectionMap() {
+return zooKeeperClientConnectionMapOfCluster;
+}
+public static void putZooKeeperClientConnectionMapByClusterId( int clusterId, Map< String, Connection > connectionMap ) {
+zooKeeperClientConnectionMapOfCluster.put( clusterId, connectionMap );
+}
+public static void clearZooKeeperClientConnectionMap() {
+zooKeeperClientConnectionMapOfCluster.clear();
+}
+public static Map< String, Connection > getZooKeeperClientConnectionMapByClusterIdAndServerIp( String clusterIdAndServerIp ) {
+return zooKeeperClientConnectionMapOfServer.get( clusterIdAndServerIp );
+}
+public static Map< String, Map< String, Connection >> getAllZooKeeperClientConnectionMapOfServer() {
+return zooKeeperClientConnectionMapOfServer;
+}
+public static void putZooKeeperClientConnectionMapByClusterIdAndServerIp( String clusterIdAndServerIp, Map< String, Connection > connectionMap ) {
+zooKeeperClientConnectionMapOfServer.put( clusterIdAndServerIp, connectionMap );
+}
+public static void clearZooKeeperClientConnectionMapOfServer() {
+zooKeeperClientConnectionMapOfServer.clear();
+}
+public static ZooKeeperCluster getZooKeeperClusterByClusterId( int clusterId ) {
+return zooKeeperClusterMap.get( clusterId );
+}
+public static Map< Integer/** clusterId */
+, ZooKeeperCluster > getAllZooKeeperCluster() {
+return zooKeeperClusterMap;
+}
+public static void putZooKeeperCluster( int clusterId, ZooKeeperCluster zooKeeperCluster ) {
+zooKeeperClusterMap.put( clusterId, zooKeeperCluster );
+}
+public static void clearZooKeeperCluster() {
+zooKeeperClusterMap.clear();
+}
+public static void putAlarmSettings( int clusterId, AlarmSettings alarmSettings ) {
+alarmSettingsMap.put( clusterId, alarmSettings );
+}
+public static AlarmSettings getAlarmSettingsByClusterId( int clusterId ) {
+return alarmSettingsMap.get( clusterId );
+}
+public static Map< Integer/** clusterId */
+, AlarmSettings > getAllAlarmSettings() {
+return alarmSettingsMap;
+}
+public static boolean addToAllCheckingCluster( String clusterId ) {
+synchronized ( lockOfAllCheckingCluster ) {
+if ( GlobalInstance.allCheckingCluster.contains( clusterId ) )
+return false;
+GlobalInstance.allCheckingCluster.add( clusterId );
+return true;
+}
+}
+public static boolean removeFromAllCheckingCluster( String clusterId ) {
+synchronized ( lockOfAllCheckingCluster ) {
+if ( GlobalInstance.allCheckingCluster.contains( clusterId ) ) {
+return GlobalInstance.allCheckingCluster.remove( clusterId );
+}
+}
+return false;
+}
+}

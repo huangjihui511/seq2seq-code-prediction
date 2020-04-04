@@ -1,0 +1,95 @@
+package com.taobao.taokeeper.monitor.core;
+import com.taobao.taokeeper.common.GlobalInstance;
+import com.taobao.taokeeper.common.SystemInfo;
+import com.taobao.taokeeper.common.constant.SystemConstant;
+import com.taobao.taokeeper.dao.SettingsDAO;
+import com.taobao.taokeeper.model.TaoKeeperSettings;
+import com.taobao.taokeeper.model.type.Message;
+import com.taobao.taokeeper.monitor.core.task.*;
+import com.taobao.taokeeper.monitor.core.task.runable.ClientThroughputStatJob;
+import com.taobao.taokeeper.reporter.alarm.TbMessageSender;
+import common.toolkit.java.constant.BaseConstant;
+import common.toolkit.java.exception.DaoException;
+import common.toolkit.java.util.ObjectUtil;
+import common.toolkit.java.util.StringUtil;
+import common.toolkit.java.util.ThreadUtil;
+import common.toolkit.java.util.db.DbcpUtil;
+import common.toolkit.java.util.number.IntegerUtil;
+import common.toolkit.java.util.system.SystemUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.web.context.ContextLoader;
+import org.springframework.web.context.WebApplicationContext;
+import javax.servlet.Servlet;
+import javax.servlet.http.HttpServlet;
+import java.util.Properties;
+import java.util.Timer;
+public class Initialization extends HttpServlet implements Servlet {
+private static final long serialVersionUID = 1L;
+private static final Logger LOG = LoggerFactory.getLogger( Initialization.class );
+public void init() {
+ThreadPoolManager.init();
+initSystem();
+Thread zooKeeperClusterMapDumpJobThread = new Thread( new ZooKeeperClusterMapDumpJob() );
+zooKeeperClusterMapDumpJobThread.start();
+try {
+Thread.sleep( 5000 );
+} catch ( InterruptedException e ) {
+e.printStackTrace();
+}
+ThreadUtil.startThread( new ClientThroughputStatJob() );
+ThreadUtil.startThread( new ZooKeeperALiveCheckerJob() );
+ThreadUtil.startThread( new ZooKeeperStatusCollectJob() );
+ThreadUtil.startThread( new HostPerformanceCollectTask() );
+ThreadUtil.startThread( new HostPerformanceCollectTask() );
+Timer timer = new Timer();
+timer.schedule( new ZooKeeperNodeChecker(), 5000, 
+BaseConstant.MILLISECONDS_OF_ONE_HOUR *
+SystemConstant.HOURS_RATE_OF_ZOOKEEPER_NODE_CHECK  );
+timer.schedule( new ZooKeeperRTCollectJob(), 5000, 
+BaseConstant.MILLISECONDS_OF_ONE_MINUTE  *
+SystemConstant.MINS_RATE_OF_ZOOKEEPER_RT_MONITOR);
+LOG.info( "*********************************************************" );
+LOG.info( "****************TaoKeeper Startup Success****************" );
+LOG.info( "*********************************************************" );
+}
+private void initSystem() {
+LOG.info( "=================================Start to init system===========================" );
+Properties properties = null;
+try {
+properties = SystemUtil.loadProperty();
+if ( ObjectUtil.isBlank( properties ) )
+throw new Exception( "Please defined,such as -DconfigFilePath=\"W:\\TaoKeeper\\taokeeper\\config\\config-test.properties\"" );
+} catch ( Exception e ) {
+LOG.error( e.getMessage() );
+throw new RuntimeException( e.getMessage(), e.getCause() );
+}
+SystemInfo.envName = StringUtil.defaultIfBlank( properties.getProperty( "systemInfo.envName" ), "TaoKeeper-Deploy" );
+DbcpUtil.driverClassName = StringUtil.defaultIfBlank( properties.getProperty( "dbcp.driverClassName" ), "com.mysql.jdbc.Driver" );
+DbcpUtil.dbJDBCUrl = StringUtil.defaultIfBlank( properties.getProperty( "dbcp.dbJDBCUrl" ), "jdbc:mysql:
+DbcpUtil.characterEncoding = StringUtil.defaultIfBlank( properties.getProperty( "dbcp.characterEncoding" ), "UTF-8" );
+DbcpUtil.username = StringUtil.trimToEmpty( properties.getProperty( "dbcp.username" ) );
+DbcpUtil.password = StringUtil.trimToEmpty( properties.getProperty( "dbcp.password" ) );
+DbcpUtil.maxActive = IntegerUtil.defaultIfError( properties.getProperty( "dbcp.maxActive" ), 30 );
+DbcpUtil.maxIdle = IntegerUtil.defaultIfError( properties.getProperty( "dbcp.maxIdle" ), 10 );
+DbcpUtil.maxWait = IntegerUtil.defaultIfError( properties.getProperty( "dbcp.maxWait" ), 10000 );
+SystemConstant.dataStoreBasePath = StringUtil.defaultIfBlank( properties.getProperty( "SystemConstent.dataStoreBasePath" ),
+"/home/yinshi.nc/taokeeper-monitor/" );
+SystemConstant.userNameOfSSH = StringUtil.defaultIfBlank( properties.getProperty( "SystemConstant.userNameOfSSH" ), "admin" );
+SystemConstant.passwordOfSSH = StringUtil.defaultIfBlank( properties.getProperty( "SystemConstant.passwordOfSSH" ), "123456" );
+SystemConstant.portOfSSH = IntegerUtil.defaultIfError( properties.getProperty( "SystemConstant.portOfSSH" ), 22 );
+SystemConstant.IP_OF_MESSAGE_SEND = StringUtil.trimToEmpty( properties.getProperty( "SystemConstant.IP_OF_MESSAGE_SEND" ) );
+LOG.info( "=================================Finish init system===========================" );
+Message.MessageType.WANGWANG ) ) );
+WebApplicationContext wac = ContextLoader.getCurrentWebApplicationContext();
+SettingsDAO settingsDAO = ( SettingsDAO ) wac.getBean( "taoKeeperSettingsDAO" );
+TaoKeeperSettings taoKeeperSettings = null;
+try {
+taoKeeperSettings = settingsDAO.getTaoKeeperSettingsBySettingsId( 1 );
+} catch ( DaoException e ) {
+e.printStackTrace();
+}
+if ( null != taoKeeperSettings )
+GlobalInstance.taoKeeperSettings = taoKeeperSettings;
+}
+}

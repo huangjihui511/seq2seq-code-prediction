@@ -1,0 +1,91 @@
+package com.google.inject.internal;
+import com.google.inject.internal.InjectorImpl.InjectorOptions;
+import com.google.inject.spi.Dependency;
+import java.util.IdentityHashMap;
+import java.util.Map;
+final class InternalContext implements AutoCloseable {
+private final InjectorOptions options;
+private final Map<Object, ConstructionContext<?>> constructionContexts =
+new IdentityHashMap<Object, ConstructionContext<?>>();
+private Dependency<?> dependency;
+private Object[] dependencyStack = new Object[16];
+private int dependencyStackSize = 0;
+private int enterCount;
+private final Object[] toClear;
+InternalContext(InjectorOptions options, Object[] toClear) {
+this.options = options;
+this.toClear = toClear;
+this.enterCount = 1;
+}
+void enter() {
+enterCount++;
+}
+@Override
+public void close() {
+int newCount = --enterCount;
+if (newCount < 0) {
+throw new IllegalStateException("Called close() too many times");
+}
+if (newCount == 0) {
+toClear[0] = null;
+}
+}
+InjectorOptions getInjectorOptions() {
+return options;
+}
+@SuppressWarnings("unchecked")
+<T> ConstructionContext<T> getConstructionContext(Object key) {
+ConstructionContext<T> constructionContext =
+(ConstructionContext<T>) constructionContexts.get(key);
+if (constructionContext == null) {
+constructionContext = new ConstructionContext<>();
+constructionContexts.put(key, constructionContext);
+}
+return constructionContext;
+}
+Dependency<?> getDependency() {
+return dependency;
+}
+Dependency<?> pushDependency(Dependency<?> dependency, Object source) {
+Dependency<?> previous = this.dependency;
+this.dependency = dependency;
+doPushState(dependency, source);
+return previous;
+}
+void popStateAndSetDependency(Dependency<?> newDependency) {
+popState();
+this.dependency = newDependency;
+}
+void pushState(com.google.inject.Key<?> key, Object source) {
+doPushState(key, source);
+}
+private void doPushState(Object dependencyOrKey, Object source) {
+int localSize = dependencyStackSize;
+Object[] localStack = dependencyStack;
+if (localStack.length < localSize + 2) {
+localStack = dependencyStack =
+java.util.Arrays.copyOf(localStack, (localStack.length * 3) / 2 + 2);
+}
+localStack[localSize++] = dependencyOrKey;
+localStack[localSize++] = source;
+dependencyStackSize = localSize;
+}
+void popState() {
+dependencyStackSize -= 2;
+}
+java.util.List<com.google.inject.spi.DependencyAndSource> getDependencyChain() {
+com.google.common.collect.ImmutableList.Builder<com.google.inject.spi.DependencyAndSource>
+builder = com.google.common.collect.ImmutableList.builder();
+for (int i = 0; i < dependencyStackSize; i += 2) {
+Object evenEntry = dependencyStack[i];
+Dependency<?> dependency;
+if (evenEntry instanceof com.google.inject.Key) {
+dependency = Dependency.get((com.google.inject.Key<?>) evenEntry);
+} else {
+dependency = (Dependency<?>) evenEntry;
+}
+builder.add(new com.google.inject.spi.DependencyAndSource(dependency, dependencyStack[i + 1]));
+}
+return builder.build();
+}
+}

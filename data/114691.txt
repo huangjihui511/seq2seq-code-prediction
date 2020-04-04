@@ -1,0 +1,517 @@
+package com.twelvemonkeys.util;
+import com.twelvemonkeys.lang.StringUtil;
+import com.twelvemonkeys.xml.XMLSerializer;
+import org.w3c.dom.*;
+import org.xml.sax.*;
+import org.xml.sax.helpers.DefaultHandler;
+import org.xml.sax.helpers.XMLReaderFactory;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import java.io.*;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Modifier;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.*;
+public class XMLProperties extends Properties {
+public final static String UTF_8_ENCODING = "UTF-8";
+public final static String XMLNS = "xmlns";
+public final static String PROPERTIES = "properties";
+public final static String PROPERTY = "property";
+public final static String PROPERTY_NAME = "name";
+public final static String PROPERTY_VALUE = "value";
+public final static String PROPERTY_TYPE = "type";
+public final static String PROPERTY_FORMAT = "format";
+public final static String DEFAULT_TYPE = "String";
+public final static String DEFAULT_DATE_FORMAT = "yyyy-MM-dd hh:mm:ss.SSS";
+public final static String DTD =
+"<!ELEMENT properties (property*)>\n<!ELEMENT property (value?, property*)>\n<!ATTLIST property\n\tname  CDATA #REQUIRED\n\tvalue CDATA #IMPLIED\n\ttype  CDATA \"String\"\n>\n<!ELEMENT value (#PCDATA)>\n<!ATTLIST value\n\ttype  CDATA \"String\"\n>";
+public final static String SYSTEM_DTD_URI = "http:
+public final static String NAMESPACE_URI = "http:
+public final static String SAX_VALIDATION_URI = "http:
+private boolean  mValidation = true;
+protected Vector mErrors     = null;
+protected Vector mWarnings   = null;
+protected Hashtable         mFormats       = new Hashtable();
+protected static DateFormat sDefaultFormat = new SimpleDateFormat(DEFAULT_DATE_FORMAT);
+public XMLProperties() {}
+public XMLProperties(Properties pDefaults) {
+super(pDefaults);
+}
+void addXMLError(SAXParseException pException) {
+if (mErrors == null) {
+mErrors = new Vector();
+}
+mErrors.add(pException);
+}
+public SAXParseException[] getXMLErrors() {
+if (mErrors == null) {
+return null;
+}
+return (SAXParseException[]) mErrors.toArray(new SAXParseException[mErrors.size()]);
+}
+void addXMLWarning(SAXParseException pException) {
+if (mWarnings == null) {
+mWarnings = new Vector();
+}
+mWarnings.add(pException);
+}
+public SAXParseException[] getXMLWarnings() {
+if (mWarnings == null) {
+return null;
+}
+return (SAXParseException[]) mWarnings.toArray(new SAXParseException[mWarnings.size()]);
+}
+public synchronized void load(InputStream pInput) throws IOException {
+XMLReader parser;
+String driver = System.getProperty("org.xml.sax.driver");
+if (driver == null) {
+driver = "org.apache.xerces.parsers.SAXParser";
+}
+try {
+parser = XMLReaderFactory.createXMLReader(driver);
+parser.setFeature(SAX_VALIDATION_URI, mValidation);
+} catch (SAXNotRecognizedException saxnre) {
+throw new RuntimeException("Error configuring XML parser \"" + driver + "\": " + saxnre.getClass().getName() + ": "
++ saxnre.getMessage());
+} catch (SAXException saxe) {
+throw new RuntimeException("Error creating XML parser \"" + driver + "\": " + saxe.getClass().getName() + ": " + saxe.getMessage());
+}
+PropertiesHandler handler = new PropertiesHandler(this);
+parser.setContentHandler(handler);
+parser.setErrorHandler(handler);
+parser.setDTDHandler(handler);
+parser.setEntityResolver(handler);
+try {
+parser.parse(new InputSource(pInput));
+} catch (SAXParseException saxpe) {
+throw new IOException("Error parsing XML: " + saxpe.getClass().getName() + ": " + saxpe.getMessage() + " Line: "
++ saxpe.getLineNumber() + " Column: " + saxpe.getColumnNumber());
+} catch (SAXException saxe) {
+throw new IOException("Error parsing XML: " + saxe.getClass().getName() + ": " + saxe.getMessage());
+}
+}
+protected Object initPropertyValue(String pValue, String pType, String pFormat) throws ClassNotFoundException {
+if (pValue == null) {
+return null;
+}
+if ((pType == null) || pType.equals("String") || pType.equals("java.lang.String")) {
+return pValue;
+}
+Object value;
+if (pType.equals("Date") || pType.equals("java.util.Date")) {
+try {
+if (pFormat == null) {
+value = StringUtil.toDate(pValue, sDefaultFormat);
+} else {
+value = StringUtil.toDate(pValue, new SimpleDateFormat(pFormat));
+}
+} catch (IllegalArgumentException e) {
+throw e;
+}
+return value;
+} else if (pType.equals("java.sql.Timestamp")) {
+try {
+value = StringUtil.toTimestamp(pValue);
+} catch (IllegalArgumentException e) {
+throw new RuntimeException(e.getMessage());
+}
+return value;
+} else {
+int dot = pType.indexOf(".");
+if (dot < 0) {
+pType = "java.lang." + pType;
+}
+Class cl = Class.forName(pType);
+value = createInstance(cl, pValue);
+if (value == null) {
+value = invokeStaticMethod(cl, "valueOf", pValue);
+}
+}
+return value;
+}
+private Object createInstance(Class pClass, Object pParam) {
+Object value;
+try {
+Class[]  param = { pParam.getClass() };
+Object[] arg   = { pParam };
+Constructor constructor = pClass.getDeclaredConstructor(param);
+value = constructor.newInstance(arg);
+} catch (Exception e) {
+return null;
+}
+return value;
+}
+private Object invokeStaticMethod(Class pClass, String pMethod, Object pParam) {
+Object value = null;
+try {
+Class[]  param = { pParam.getClass() };
+Object[] arg   = { pParam };
+java.lang.reflect.Method method = pClass.getMethod(pMethod, param);
+if (Modifier.isPublic(method.getModifiers()) && Modifier.isStatic(method.getModifiers())) {
+value = method.invoke(null, arg);
+}
+} catch (Exception e) {
+return null;
+}
+return value;
+}
+public String getPropertyFormat(String pKey) {
+return StringUtil.valueOf(mFormats.get(pKey));
+}
+public synchronized String setPropertyFormat(String pKey, String pFormat) {
+return StringUtil.valueOf(mFormats.put(pKey, pFormat));
+}
+public synchronized Object setPropertyValue(String pKey, Object pValue) {
+return put(pKey, pValue);
+}
+public synchronized Object getPropertyValue(String pKey) {
+return getPropertyValue(pKey, null);
+}
+public Object getPropertyValue(String pKey, Object pDefaultValue) {
+Object value = super.get(pKey);  
+if (value != null) {
+return value;
+}
+if (defaults instanceof XMLProperties) {
+return (((XMLProperties) defaults).getPropertyValue(pKey));
+}
+return ((defaults != null) ? defaults.getProperty(pKey) : pDefaultValue);
+}
+public Object get(Object pKey) {
+Object value = super.get(pKey);
+if ((value != null) && (value instanceof Date)) {  
+String format = getPropertyFormat(StringUtil.valueOf(pKey));
+if (format != null) {
+value = new SimpleDateFormat(format).format(value);
+} else {
+value = sDefaultFormat.format(value);
+}
+return value;
+}
+return StringUtil.valueOf(value);
+}
+public String getProperty(String pKey, String pDefaultValue) {
+String value = (String) get(pKey);  
+if (value != null) {
+return value;
+}
+return ((defaults != null)
+? defaults.getProperty(pKey)
+: pDefaultValue);
+}
+public String getProperty(String pKey) {
+return getProperty(pKey, null);
+}
+public synchronized void store(OutputStream pOutput, String pHeader) throws IOException {
+storeXML(this, pOutput, pHeader);
+}
+public static void storeProperties(Map pProperties, OutputStream pOutput, String pHeader) throws IOException {
+Properties props = new Properties();
+Iterator iterator = pProperties.entrySet().iterator();
+while (iterator.hasNext()) {
+Map.Entry entry = (Map.Entry) iterator.next();
+props.setProperty((String) entry.getKey(), StringUtil.valueOf(entry.getValue()));
+}
+props.store(pOutput, pHeader);
+}
+public static void storeXML(Map pProperties, OutputStream pOutput, String pHeader) throws IOException {
+DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+factory.setNamespaceAware(true);
+DocumentBuilder builder;
+try {
+builder = factory.newDocumentBuilder();
+}
+catch (ParserConfigurationException e) {
+throw (IOException) new IOException(e.getMessage()).initCause(e);
+}
+DOMImplementation dom = builder.getDOMImplementation();
+Document document = dom.createDocument(null, PROPERTIES, dom.createDocumentType(PROPERTIES, null, SYSTEM_DTD_URI));
+Element root = document.getDocumentElement();
+root.setAttribute(XMLNS, NAMESPACE_URI);
+if (pHeader != null) {
+document.insertBefore(document.createComment(" " + pHeader + " "), root);
+}
+document.insertBefore(document.createComment(" " + new Date() + " "), root);
+Iterator iterator = pProperties.entrySet().iterator();
+while (iterator.hasNext()) {
+Map.Entry entry = (Map.Entry) iterator.next();
+String key = (String) entry.getKey();
+Object value = entry.getValue();
+String format = null;
+if (pProperties instanceof XMLProperties) {
+format = ((XMLProperties) pProperties).getPropertyFormat(key);
+}
+insertElement(document, key, value, format);
+}
+XMLSerializer serializer = new XMLSerializer(pOutput, UTF_8_ENCODING);
+serializer.serialize(document);
+}
+private static void insertElement(Document pDocument, String pName, Object pValue, String pFormat) {
+String[] names = StringUtil.toStringArray(pName, ".");
+String value = null;
+if (pValue != null) {
+if (pValue instanceof Date) {
+if (pFormat != null) {
+value = new SimpleDateFormat(pFormat).format(pValue);
+}
+else {
+value = sDefaultFormat.format(pValue);
+}
+}
+else {
+value = String.valueOf(pValue);
+}
+}
+Element element = pDocument.getDocumentElement();
+for (int i = 0; i < names.length; i++) {
+boolean found = false;
+NodeList children = element.getElementsByTagName(PROPERTY);
+Element  child    = null;
+for (int j = 0; j < children.getLength(); j++) {
+child = (Element) children.item(j);
+if (names[i].equals(child.getAttribute(PROPERTY_NAME))) {
+found   = true;
+element = child;
+break;  
+}
+}
+if (!found) {
+child = pDocument.createElement(PROPERTY);
+child.setAttribute(PROPERTY_NAME, names[i]);
+element.appendChild(child);
+element = child;
+}
+if ((i + 1) == names.length) {
+if (StringUtil.contains(value, "\n") || StringUtil.contains(value, "\t") || StringUtil.contains(value, "\"")
+|| StringUtil.contains(value, "&") || StringUtil.contains(value, "<") || StringUtil.contains(value, ">")) {
+Element valueElement = pDocument.createElement(PROPERTY_VALUE);
+String className = pValue.getClass().getName();
+className = StringUtil.replace(className, "java.lang.", "");
+if (!DEFAULT_TYPE.equals(className)) {
+valueElement.setAttribute(PROPERTY_TYPE, className);
+}
+if (pFormat != null) {
+valueElement.setAttribute(PROPERTY_FORMAT, pFormat);
+}
+CDATASection cdata = pDocument.createCDATASection(value);
+valueElement.appendChild(cdata);
+child.appendChild(valueElement);
+}
+else {
+child.setAttribute(PROPERTY_VALUE, value);
+String className = pValue.getClass().getName();
+className = StringUtil.replace(className, "java.lang.", "");
+if (!DEFAULT_TYPE.equals(className)) {
+child.setAttribute(PROPERTY_TYPE, className);
+}
+if (pFormat != null) {
+child.setAttribute(PROPERTY_FORMAT, pFormat);
+}
+}
+}
+}
+}
+public Properties getProperties(String pGroupKey) {
+XMLProperties props    = new XMLProperties();
+String        groupKey = pGroupKey;
+if (groupKey.charAt(groupKey.length()) != '.') {
+groupKey += ".";
+}
+Iterator iterator = entrySet().iterator();
+while (iterator.hasNext()) {
+Map.Entry entry = (Map.Entry) iterator.next();
+String    key   = (String) entry.getKey();
+if (key.startsWith(groupKey)) {
+String subKey = key.substring(key.indexOf(groupKey));
+props.setPropertyValue(subKey, entry.getValue());
+}
+}
+return ((props.size() > 0) ? props : null);
+}
+public Properties setProperties(String pGroupKey, Properties pProperties) {
+XMLProperties old      = new XMLProperties();
+String        groupKey = pGroupKey;
+if (groupKey.charAt(groupKey.length()) != '.') {
+groupKey += ".";
+}
+Iterator iterator = pProperties.entrySet().iterator();
+while (iterator.hasNext()) {
+Map.Entry entry = (Map.Entry) iterator.next();
+String    key   = (String) entry.getKey();
+Object    obj   = setPropertyValue(groupKey + key, entry.getValue());
+if (obj != null) {
+old.setPropertyValue(groupKey + key, entry.getValue());
+}
+}
+return ((old.size() > 0) ? old : null);
+}
+public static void main(String[] pArgs) throws Exception {
+System.out.println("DTD: \n" + DTD);
+System.out.println("--");
+System.out.println("Reading properties from \"" + pArgs[0] + "\"...");
+XMLProperties props = new XMLProperties();
+props.load(new FileInputStream(new File(pArgs[0])));
+props.list(System.out);
+System.out.println("--");
+String     key = "key";
+Object     old = props.setProperty(key, "AAA");
+Properties p1  = new XMLProperties(new XMLProperties(props));
+Properties p2  = new Properties(new Properties(props));
+System.out.println("XMLProperties: " + p1.getProperty(key) + " ==" + " Properties: " + p2.getProperty(key));
+if (old == null) {
+props.remove("key");
+} else {
+props.put("key", old);  
+}
+System.out.println("--");
+File out = new File("copy_of_" + pArgs[0]);
+System.out.println("Writing properties to \"" + out.getName() + "\"");
+if (!out.exists()) {
+props.store(new FileOutputStream(out), "XML Properties file written by XMLProperties.");
+} else {
+System.err.println("File \"" + out.getName() + "\" allready exists, cannot write!");
+}
+out = new File("copy_of_" + pArgs[0].substring(0, pArgs[0].lastIndexOf(".")) + ".properties");
+System.out.println("Writing properties to \"" + out.getName() + "\"");
+if (!out.exists()) {
+storeProperties(props, new FileOutputStream(out), "Properties file written by XMLProperties.");
+} else {
+System.err.println("File \"" + out.getName() + "\" allready exists, cannot write!");
+}
+System.out.println("--");
+System.out.println("getPropertyValue(\"one\"): " + props.getPropertyValue("one") + " class: "
++ props.getPropertyValue("one").getClass());
+System.out.println("setPropertyValue(\"now\", " + new Date() + "): " + props.setPropertyValue("now", new Date()) + " class: "
++ props.getPropertyValue("now").getClass());
+System.out.println("getPropertyValue(\"date\"): " + props.getPropertyValue("date") + " class: "
++ props.getPropertyValue("date").getClass());
+System.out.println("getPropertyValue(\"time\"): " + props.getPropertyValue("time") + " class: "
++ props.getPropertyValue("time").getClass());
+}
+protected class PropertiesHandler extends DefaultHandler {
+protected Stack mStack = null;
+protected char[]        mReadSoFar  = null;
+protected boolean       mIsValue    = false;
+protected String        mType       = null;
+protected String        mFormat     = null;
+protected XMLProperties mProperties = null;
+protected Locator       mLocator    = null;
+PropertiesHandler(XMLProperties pProperties) {
+mProperties = pProperties;
+mStack      = new Stack();
+}
+public void setDocumentLocator(Locator pLocator) {
+mLocator = pLocator;
+}
+public void error(SAXParseException pException) throws SAXParseException {
+mProperties.addXMLError(pException);
+System.err.println("error:  " + pException.getMessage());
+System.err.println("line:   " + mLocator.getLineNumber());
+System.err.println("column: " + mLocator.getColumnNumber());
+}
+public void fatalError(SAXParseException pException) throws SAXParseException {
+throw pException;
+System.err.println("fatal error: " + pException.getMessage());
+System.err.println("line:        " + mLocator.getLineNumber());
+System.err.println("column:      " + mLocator.getColumnNumber());
+}
+public void warning(SAXParseException pException) throws SAXParseException {
+mProperties.addXMLWarning(pException);
+System.err.println("warning: " + pException.getMessage());
+System.err.println("line:    " + mLocator.getLineNumber());
+System.err.println("column:  " + mLocator.getColumnNumber());
+}
+public void startElement(String pNamespaceURI, String pLocalName, String pQualifiedName, Attributes pAttributes) throws SAXException {
+String attributes = "";
+for (int i = 0; i < pAttributes.getLength(); i++) {
+attributes += pAttributes.getQName(i) + "=" +  pAttributes.getValue(i) + (i < pAttributes.getLength() ? ", " : "");
+}
+System.out.println("startElement: " + pNamespaceURI
++ "." + pLocalName
++ " (" + pQualifiedName + ") "
++ attributes);
+if (XMLProperties.PROPERTY.equals(pLocalName)) {
+String name   = pAttributes.getValue(XMLProperties.PROPERTY_NAME);
+String value  = pAttributes.getValue(XMLProperties.PROPERTY_VALUE);
+String type   = pAttributes.getValue(XMLProperties.PROPERTY_TYPE);
+String format = pAttributes.getValue(XMLProperties.PROPERTY_FORMAT);
+if (!mStack.isEmpty()) {
+name = (String) mStack.peek() + "." + name;
+}
+if (value != null) {
+mProperties.setProperty(name, value);
+if (!XMLProperties.DEFAULT_TYPE.equals(type)) {
+mType   = type;
+mFormat = format;  
+}
+}
+mStack.push(name);
+}                        
+else if (XMLProperties.PROPERTY_VALUE.equals(pLocalName)) {
+String name   = (String) mStack.peek();
+String type   = pAttributes.getValue(XMLProperties.PROPERTY_TYPE);
+String format = pAttributes.getValue(XMLProperties.PROPERTY_FORMAT);
+if (!XMLProperties.DEFAULT_TYPE.equals(type)) {
+mType   = type;
+mFormat = format;
+}
+mIsValue = true;
+}
+}
+public void endElement(String pNamespaceURI, String pLocalName, String pQualifiedName) throws SAXException {
+System.out.println("endElement: " + pNamespaceURI
++ "." + pLocalName + " (" + pQualifiedName + ")");
+if (XMLProperties.PROPERTY.equals(pLocalName)) {
+String name = (String) mStack.pop();
+try {
+String prop = mProperties.getProperty(name);
+if (prop != null) {
+Object value = mProperties.initPropertyValue(prop, mType, mFormat);
+if ((mFormat != null) &&!XMLProperties.DEFAULT_DATE_FORMAT.equals(mFormat)) {
+mProperties.setPropertyFormat(name, mFormat);
+}
+mProperties.setPropertyValue(name, value);
+}
+mType   = null;
+mFormat = null;
+} catch (Exception e) {
+e.printStackTrace(System.err);
+throw new SAXException(e);
+}
+} else if (XMLProperties.PROPERTY_VALUE.equals(pLocalName)) {
+if (mStack.isEmpty()) {
+return;
+}
+String name = (String) mStack.peek();
+String value = new String(mReadSoFar);
+if (!StringUtil.isEmpty(value)) {
+if (mProperties.containsKey(name)) {
+throw new SAXParseException(
+"Value can only be specified either using the \"value\" attribute, OR the \"value\" element, not both.", mLocator);
+}
+mProperties.setProperty(name, value);
+}
+mIsValue = false;
+}
+}
+public void characters(char[] pChars, int pStart, int pLength) throws SAXException {
+if (mIsValue) {
+if (mReadSoFar == null) {
+mReadSoFar = new char[pLength];
+System.arraycopy(pChars, pStart, mReadSoFar, 0, pLength);
+}
+else {
+mReadSoFar = (char[]) CollectionUtil.mergeArrays(mReadSoFar, 0, mReadSoFar.length, pChars, pStart, pLength);
+}
+}
+}
+public InputSource resolveEntity(String pPublicId, String pSystemId) {
+if (XMLProperties.SYSTEM_DTD_URI.equals(pSystemId)) {
+return new InputSource(new StringReader(XMLProperties.DTD));
+}
+return null;
+}
+}
+}

@@ -1,0 +1,12 @@
+package org.menacheri.jetserver.app;
+import org.jboss.netty.channel.ChannelFuture;
+public interface Game
+{
+public Object getId();
+public void setId(Object id);
+public String getGameName();
+public void setGameName(String gameName);
+public GameCommandInterpreter getGameCommandInterpreter();
+public void setGameCommandInterpreter(GameCommandInterpreter interpreter);
+public Object unload();
+}

@@ -1,0 +1,31 @@
+package com.baomidou.mybatisplus.core.toolkit;
+import static java.util.stream.Collectors.toList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import net.sf.cglib.beans.BeanMap;
+public final class BeanUtils {
+private BeanUtils() {
+}
+@SuppressWarnings("unchecked")
+public static Map<String, Object> beanToMap(Object bean) {
+return null == bean ? null : BeanMap.create(bean);
+}
+public static <T> T mapToBean(Map<String, Object> map, Class<T> clazz) {
+T bean = ClassUtils.newInstance(clazz);
+BeanMap.create(bean).putAll(map);
+return bean;
+}
+public static <T> List<Map<String, Object>> beansToMaps(List<T> beans) {
+if (CollectionUtils.isEmpty(beans)) {
+return Collections.emptyList();
+}
+return beans.stream().map(BeanUtils::beanToMap).collect(toList());
+}
+public static <T> List<T> mapsToBeans(List<Map<String, Object>> maps, Class<T> clazz) {
+if (CollectionUtils.isEmpty(maps)) {
+return Collections.emptyList();
+}
+return maps.stream().map(e -> mapToBean(e, clazz)).collect(toList());
+}
+}

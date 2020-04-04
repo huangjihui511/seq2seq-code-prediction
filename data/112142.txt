@@ -1,0 +1,7 @@
+package org.menacheri.jetclient.event;
+import org.menacheri.jetclient.communication.DeliveryGuaranty;
+public interface NetworkEvent extends Event
+{
+DeliveryGuaranty getDeliveryGuaranty();
+void setDeliveryGuaranty(DeliveryGuaranty deliveryGuaranty);
+}

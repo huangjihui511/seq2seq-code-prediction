@@ -1,0 +1,5 @@
+package spark;
+@FunctionalInterface
+public interface ExceptionHandler<T extends Exception> {
+void handle(T exception, Request request, Response response);
+}

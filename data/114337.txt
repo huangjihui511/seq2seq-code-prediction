@@ -1,0 +1,9 @@
+package mobi.hsz.idea.gitignore.file.type.kind;
+import mobi.hsz.idea.gitignore.file.type.IgnoreFileType;
+import mobi.hsz.idea.gitignore.lang.kind.FloobitsLanguage;
+public class FloobitsFileType extends IgnoreFileType {
+public static final FloobitsFileType INSTANCE = new FloobitsFileType();
+private FloobitsFileType() {
+super(FloobitsLanguage.INSTANCE);
+}
+}

@@ -1,0 +1,11 @@
+package org.apache.struts2.oval.annotation;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+import java.lang.annotation.ElementType;
+Defines a list of profiles to be activated by OVal when calling a method in an action
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.METHOD)
+public @interface Profiles {
+String[] value();
+}

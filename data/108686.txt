@@ -1,0 +1,8 @@
+package com.xkcoding.websocket.socketio.payload;
+import lombok.Data;
+@Data
+public class GroupMessageRequest {
+private String fromUid;
+private String groupId;
+private String message;
+}

@@ -1,0 +1,8 @@
+package lombok.installer;
+import java.util.List;
+import java.util.regex.Pattern;
+public interface IdeLocationProvider {
+IdeLocation create(String path) throws CorruptedIdeLocationException;
+Pattern getLocationSelectors();
+void findIdes(List<IdeLocation> locations, List<CorruptedIdeLocationException> problems);
+}

@@ -1,0 +1,133 @@
+package org.jb2011.lnf.beautyeye.ch10_internalframe;
+import java.awt.Container;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import javax.swing.ActionMap;
+import javax.swing.JComponent;
+import javax.swing.JInternalFrame;
+import javax.swing.LookAndFeel;
+import javax.swing.SwingUtilities;
+import javax.swing.border.Border;
+import javax.swing.border.EmptyBorder;
+import javax.swing.plaf.ComponentUI;
+import javax.swing.plaf.UIResource;
+import javax.swing.plaf.basic.BasicInternalFrameUI;
+public class BEInternalFrameUI extends BasicInternalFrameUI
+{
+private BEInternalFrameTitlePane titlePane;
+private static final PropertyChangeListener metalPropertyChangeListener = new XZCMetalPropertyChangeHandler();
+private static final Border handyEmptyBorder = new EmptyBorder(0, 0, 0, 0);
+private static String FRAME_TYPE = "JInternalFrame.frameType";
+private static String NORMAL_FRAME = "normal";
+private static String OPTION_DIALOG = "optionDialog";
+public BEInternalFrameUI(JInternalFrame b)
+{
+super(b);
+}
+public static ComponentUI createUI(JComponent c)
+{
+return new BEInternalFrameUI((JInternalFrame) c);
+}
+public void installUI(JComponent c)
+{
+super.installUI(c);
+Container content = frame.getContentPane();
+stripContentBorder(content);
+frame.setOpaque(false);
+}
+public void uninstallUI(JComponent c)
+{
+frame = (JInternalFrame) c;
+Container cont = ((JInternalFrame) (c)).getContentPane();
+if (cont instanceof JComponent)
+{
+JComponent content = (JComponent) cont;
+if (content.getBorder() == handyEmptyBorder)
+{
+content.setBorder(null);
+}
+}
+super.uninstallUI(c);
+}
+protected void installListeners()
+{
+super.installListeners();
+frame.addPropertyChangeListener(metalPropertyChangeListener);
+}
+protected void uninstallListeners()
+{
+frame.removePropertyChangeListener(metalPropertyChangeListener);
+super.uninstallListeners();
+}
+protected void installKeyboardActions()
+{
+super.installKeyboardActions();
+ActionMap map = SwingUtilities.getUIActionMap(frame);
+if (map != null)
+{
+map.remove("showSystemMenu");
+}
+}
+protected void uninstallKeyboardActions()
+{
+super.uninstallKeyboardActions();
+}
+protected void uninstallComponents()
+{
+titlePane = null;
+super.uninstallComponents();
+}
+private void stripContentBorder(Object c)
+{
+if (c instanceof JComponent)
+{
+JComponent contentComp = (JComponent) c;
+Border contentBorder = contentComp.getBorder();
+if (contentBorder == null || contentBorder instanceof UIResource)
+{
+contentComp.setBorder(handyEmptyBorder);
+}
+}
+}
+protected JComponent createNorthPane(JInternalFrame w)
+{
+titlePane = new BEInternalFrameTitlePane(w);
+return titlePane;
+}
+private void setFrameType(String frameType)
+{
+if (frameType.equals(OPTION_DIALOG))
+{
+LookAndFeel.installBorder(frame, "InternalFrame.optionDialogBorder");
+}
+else
+{
+LookAndFeel.installBorder(frame, "InternalFrame.border");
+}
+}
+private static class XZCMetalPropertyChangeHandler implements
+PropertyChangeListener
+{
+public void propertyChange(PropertyChangeEvent e)
+{
+String name = e.getPropertyName();
+JInternalFrame jif = (JInternalFrame) e.getSource();
+if (!(jif.getUI() instanceof BEInternalFrameUI))
+{
+return;
+}
+BEInternalFrameUI ui = (BEInternalFrameUI) jif.getUI();
+if (name.equals(FRAME_TYPE))
+{
+if (e.getNewValue() instanceof String)
+{
+ui.setFrameType((String) e.getNewValue());
+}
+}
+else if (name.equals(JInternalFrame.CONTENT_PANE_PROPERTY))
+{
+ui.stripContentBorder(e.getNewValue());
+}
+}
+} 
+}

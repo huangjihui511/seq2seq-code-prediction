@@ -1,0 +1,6 @@
+package com.xkcoding.websocket.socketio.payload;
+import lombok.Data;
+@Data
+public class BroadcastMessageRequest {
+private String message;
+}

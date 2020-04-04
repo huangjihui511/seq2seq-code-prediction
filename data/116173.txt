@@ -1,0 +1,18 @@
+package net.i2p.crypto.eddsa;
+import java.security.MessageDigest;
+import net.i2p.util.RandomSource;
+public final class RedDSAEngine extends EdDSAEngine {
+public RedDSAEngine() {
+super();
+}
+public RedDSAEngine(MessageDigest digest) {
+super(digest);
+}
+@Override
+protected void digestInitSign(EdDSAPrivateKey privKey) {
+byte[] t = new byte[digest.getDigestLength() + 16];
+RandomSource.getInstance().nextBytes(t);
+digest.update(t);
+digest.update(privKey.getAbyte());
+}
+}

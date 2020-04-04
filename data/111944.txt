@@ -1,0 +1,16 @@
+package io.hawt.util.introspect.support;
+import java.net.URL;
+public class ClassResource {
+final String packageName;
+final URL resource;
+public ClassResource(String packageName, URL resource) {
+this.packageName = packageName;
+this.resource = resource;
+}
+public String getPackageName() {
+return packageName;
+}
+public URL getResource() {
+return resource;
+}
+}

@@ -1,0 +1,42 @@
+package com.springboot.demo.sys.entity;
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.extension.activerecord.Model;
+import java.util.Date;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableField;
+import java.io.Serializable;
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.experimental.Accessors;
+@Data
+@EqualsAndHashCode(callSuper = false)
+@Accessors(chain = true)
+public class SysMenu extends Model<SysMenu> {
+private static final long serialVersionUID = 1L;
+@TableId(value = "MENU_ID", type = IdType.AUTO)
+private Long menuId;
+@TableField("PARENT_ID")
+private Long parentId;
+@TableField("MENU_NAME")
+private String menuName;
+@TableField("URL")
+private String url;
+@TableField("PERMS")
+private String perms;
+@TableField("ICON")
+private String icon;
+@TableField("TYPE")
+private String type;
+@TableField("ORDER_NUM")
+private Long orderNum;
+@TableField("CREATE_TIME")
+private Date createTime;
+@TableField("MODIFY_TIME")
+private Date modifyTime;
+@Override
+protected Serializable pkVal() {
+return this.menuId;
+}
+}

@@ -1,0 +1,33 @@
+package com.github.benmanes.caffeine.cache.simulator.membership.bloom;
+import com.github.benmanes.caffeine.cache.simulator.BasicSettings;
+import com.github.benmanes.caffeine.cache.simulator.BasicSettings.MembershipSettings;
+import com.github.benmanes.caffeine.cache.simulator.membership.Membership;
+import com.google.common.hash.BloomFilter;
+import com.google.common.hash.Funnels;
+import com.typesafe.config.Config;
+public final class GuavaBloomFilter implements Membership {
+private final long expectedInsertions;
+private final double fpp;
+private BloomFilter<Long> bloomFilter;
+public GuavaBloomFilter(Config config) {
+MembershipSettings settings = new BasicSettings(config).membership();
+this.expectedInsertions = settings.expectedInsertions();
+this.fpp = settings.fpp();
+reset();
+}
+@Override
+public boolean mightContain(long e) {
+return bloomFilter.mightContain(e);
+}
+@Override
+public void clear() {
+reset();
+}
+@Override
+public boolean put(long e) {
+return bloomFilter.put(e);
+}
+private void reset() {
+bloomFilter = BloomFilter.create(Funnels.longFunnel(), expectedInsertions, fpp);
+}
+}

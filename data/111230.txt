@@ -1,0 +1,71 @@
+package com.github.benmanes.caffeine.cache;
+import java.util.Comparator;
+import java.util.Deque;
+import java.util.Iterator;
+import java.util.NoSuchElementException;
+import org.checkerframework.checker.nullness.qual.Nullable;
+interface LinkedDeque<E> extends Deque<E> {
+boolean isFirst(E e);
+boolean isLast(E e);
+void moveToFront(E e);
+void moveToBack(E e);
+@Nullable E getPrevious(E e);
+void setPrevious(E e, @Nullable E prev);
+@Nullable E getNext(E e);
+void setNext(E e, @Nullable E next);
+@Override
+PeekingIterator<E> iterator();
+@Override
+PeekingIterator<E> descendingIterator();
+interface PeekingIterator<E> extends Iterator<E> {
+@Nullable E peek();
+static <E> PeekingIterator<E> concat(PeekingIterator<E> first, PeekingIterator<E> second) {
+return new PeekingIterator<E>() {
+@Override public boolean hasNext() {
+return first.hasNext() || second.hasNext();
+}
+@Override public E next() {
+if (first.hasNext()) {
+return first.next();
+} else if (second.hasNext()) {
+return second.next();
+}
+throw new NoSuchElementException();
+}
+@Override public @Nullable E peek() {
+return first.hasNext() ? first.peek() : second.peek();
+}
+};
+}
+static <E> PeekingIterator<E> comparing(PeekingIterator<E> first,
+PeekingIterator<E> second, Comparator<E> comparator) {
+return new PeekingIterator<E>() {
+@Override public boolean hasNext() {
+return first.hasNext() || second.hasNext();
+}
+@Override public E next() {
+if (!first.hasNext()) {
+return second.next();
+} else if (!second.hasNext()) {
+return first.next();
+}
+E o1 = first.peek();
+E o2 = second.peek();
+boolean greaterOrEqual = (comparator.compare(o1, o2) >= 0);
+return greaterOrEqual ? first.next() : second.next();
+}
+@Override public @Nullable E peek() {
+if (!first.hasNext()) {
+return second.peek();
+} else if (!second.hasNext()) {
+return first.peek();
+}
+E o1 = first.peek();
+E o2 = second.peek();
+boolean greaterOrEqual = (comparator.compare(o1, o2) >= 0);
+return greaterOrEqual ? first.peek() : second.peek();
+}
+};
+}
+}
+}

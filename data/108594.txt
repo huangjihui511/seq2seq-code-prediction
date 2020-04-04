@@ -1,0 +1,15 @@
+package com.alibaba.csp.sentinel.cluster.client.config;
+import com.alibaba.csp.sentinel.config.SentinelConfig;
+import com.alibaba.csp.sentinel.log.RecordLog;
+public class ClusterClientStartUpConfig {
+private static final String MAX_PARAM_BYTE_SIZE = "csp.sentinel.cluster.max.param.byte.size";
+public static Integer getMaxParamByteSize() {
+String maxParamByteSize = SentinelConfig.getConfig(MAX_PARAM_BYTE_SIZE);
+try {
+return maxParamByteSize == null ? null : Integer.valueOf(maxParamByteSize);
+} catch (Exception ex) {
+RecordLog.warn("[ClusterClientStartUpConfig] Failed to parse maxParamByteSize: " + maxParamByteSize);
+return null;
+}
+}
+}

@@ -1,0 +1,14 @@
+package com.google.cloud.tools.jib.registry.credentials;
+import java.nio.file.Path;
+public class CredentialHelperUnhandledServerUrlException extends CredentialRetrievalException {
+CredentialHelperUnhandledServerUrlException(
+Path credentialHelper, String serverUrl, String credentialHelperOutput) {
+super(
+"The credential helper ("
++ credentialHelper
++ ") has nothing for server URL: "
++ serverUrl
++ "\n\nGot output:\n\n"
++ credentialHelperOutput);
+}
+}

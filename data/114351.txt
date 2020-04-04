@@ -1,0 +1,9 @@
+package mobi.hsz.idea.gitignore.file.type.kind;
+import mobi.hsz.idea.gitignore.file.type.IgnoreFileType;
+import mobi.hsz.idea.gitignore.lang.kind.SwaggerCodegenLanguage;
+public class SwaggerCodegenFileType extends IgnoreFileType  {
+public static final SwaggerCodegenFileType INSTANCE = new SwaggerCodegenFileType();
+private SwaggerCodegenFileType() {
+super(SwaggerCodegenLanguage.INSTANCE);
+}
+}

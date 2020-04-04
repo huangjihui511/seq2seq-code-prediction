@@ -1,0 +1,13 @@
+package tests;
+import javax.annotation.processing.Generated;
+import javax.inject.Inject;
+@Generated(
+value = "com.google.auto.factory.processor.AutoFactoryProcessor",
+comments = "https:
+)
+final class OnlyPrimitivesFactory {
+@Inject OnlyPrimitivesFactory() {}
+OnlyPrimitives create(int i, long l) {
+return new OnlyPrimitives(i, l);
+}
+}

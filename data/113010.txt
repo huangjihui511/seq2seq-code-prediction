@@ -1,0 +1,27 @@
+package org.apache.pdfbox.pdmodel.documentinterchange.logicalstructure;
+import org.apache.pdfbox.cos.COSArray;
+import org.apache.pdfbox.cos.COSBase;
+import org.apache.pdfbox.cos.COSDictionary;
+import org.apache.pdfbox.pdmodel.common.COSObjectable;
+public class PDParentTreeValue implements COSObjectable
+{
+COSObjectable obj;
+public PDParentTreeValue(COSArray obj)
+{
+this.obj = obj;
+}
+public PDParentTreeValue(COSDictionary obj)
+{
+this.obj = obj;
+}
+@Override
+public COSBase getCOSObject()
+{
+return obj.getCOSObject();
+}
+@Override
+public String toString()
+{
+return obj.toString();
+}
+}

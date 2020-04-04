@@ -1,0 +1,57 @@
+package mobi.hsz.idea.gitignore.projectView;
+import com.intellij.ide.projectView.PresentationData;
+import com.intellij.ide.projectView.ProjectViewNode;
+import com.intellij.ide.projectView.ProjectViewNodeDecorator;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.packageDependencies.ui.PackageDependenciesNode;
+import com.intellij.ui.ColoredTreeCellRenderer;
+import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.UIUtil;
+import mobi.hsz.idea.gitignore.IgnoreBundle;
+import mobi.hsz.idea.gitignore.IgnoreManager;
+import mobi.hsz.idea.gitignore.settings.IgnoreSettings;
+import mobi.hsz.idea.gitignore.util.Utils;
+import org.jetbrains.annotations.NotNull;
+import static com.intellij.ui.SimpleTextAttributes.STYLE_SMALLER;
+public class IgnoreViewNodeDecorator implements ProjectViewNodeDecorator {
+private static final SimpleTextAttributes GRAYED_SMALL_ATTRIBUTES =
+new SimpleTextAttributes(STYLE_SMALLER, UIUtil.getInactiveTextColor());
+private final IgnoreManager manager;
+@NotNull
+private final IgnoreSettings ignoreSettings;
+public IgnoreViewNodeDecorator(@NotNull Project project) {
+this.manager = IgnoreManager.getInstance(project);
+this.ignoreSettings = IgnoreSettings.getInstance();
+}
+@Override
+public void decorate(ProjectViewNode node, PresentationData data) {
+final VirtualFile file = node.getVirtualFile();
+if (file == null) {
+return;
+}
+if (manager.isFileTracked(file) && manager.isFileIgnored(file)) {
+Utils.addColoredText(
+data,
+IgnoreBundle.message("projectView.tracked"),
+GRAYED_SMALL_ATTRIBUTES
+);
+} else if (ignoreSettings.isHideIgnoredFiles() && file.isDirectory()) {
+int count = ContainerUtil.filter(
+file.getChildren(),
+child -> manager.isFileIgnored(child) && !manager.isFileTracked(child)
+).size();
+if (count > 0) {
+Utils.addColoredText(
+data,
+IgnoreBundle.message("projectView.containsHidden", count),
+GRAYED_SMALL_ATTRIBUTES
+);
+}
+}
+}
+@Override
+public void decorate(PackageDependenciesNode node, ColoredTreeCellRenderer cellRenderer) {
+}
+}

@@ -1,0 +1,88 @@
+package org.springframework.integration.mongodb.store;
+import java.util.UUID;
+import org.springframework.data.annotation.AccessType;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.PersistenceConstructor;
+import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.messaging.Message;
+import org.springframework.util.Assert;
+@Document
+@AccessType(AccessType.Type.PROPERTY)
+public class MessageDocument {
+@Id
+private String _id; 
+private final Message<?> message;
+private final UUID messageId;
+private Integer priority;
+private Long createdTime = 0L;
+private Long groupCreatedTime = 0L;
+private Object groupId;
+private Long lastModifiedTime = 0L;
+private Boolean complete = false;
+private Integer lastReleasedSequence = 0;
+private int sequence;
+public MessageDocument(Message<?> message) {
+this(message, message.getHeaders().getId());
+}
+@PersistenceConstructor
+MessageDocument(Message<?> message, UUID messageId) {
+Assert.notNull(message, "'message' must not be null");
+Assert.notNull(messageId, "'message' ID header must not be null");
+this.message = message;
+this.messageId = messageId;
+}
+public Message<?> getMessage() {
+return this.message;
+}
+public UUID getMessageId() {
+return this.messageId;
+}
+public void setGroupId(Object groupId) {
+this.groupId = groupId;
+}
+public void setPriority(Integer priority) {
+this.priority = priority;
+}
+public Long getLastModifiedTime() {
+return this.lastModifiedTime;
+}
+public void setLastModifiedTime(long lastModifiedTime) {
+this.lastModifiedTime = lastModifiedTime;
+}
+public Long getCreatedTime() {
+return this.createdTime;
+}
+public void setCreatedTime(long createdTime) {
+this.createdTime = createdTime;
+}
+public Long getGroupCreatedTime() {
+return this.groupCreatedTime;
+}
+public void setGroupCreatedTime(long groupCreatedTime) {
+this.groupCreatedTime = groupCreatedTime;
+}
+public Boolean isComplete() {
+return this.complete;
+}
+public void setComplete(boolean complete) {
+this.complete = complete;
+}
+public Integer getLastReleasedSequence() {
+return this.lastReleasedSequence;
+}
+public void setLastReleasedSequence(int lastReleasedSequence) {
+this.lastReleasedSequence = lastReleasedSequence;
+}
+public void setSequence(int sequence) {
+this.sequence = sequence;
+}
+public Integer getPriority() {
+return this.priority;
+}
+public Object getGroupId() {
+return this.groupId;
+}
+public int getSequence() {
+return this.sequence;
+}
+}

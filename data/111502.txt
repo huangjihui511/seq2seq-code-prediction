@@ -1,0 +1,14 @@
+package io.grpc;
+import javax.annotation.concurrent.ThreadSafe;
+@ExperimentalApi("https:
+@ThreadSafe
+public abstract class ChannelLogger {
+public enum ChannelLogLevel {
+DEBUG,
+INFO,
+WARNING,
+ERROR
+}
+public abstract void log(ChannelLogLevel level, String message);
+public abstract void log(ChannelLogLevel level, String messageFormat, Object... args);
+}

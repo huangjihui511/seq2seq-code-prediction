@@ -1,0 +1,98 @@
+package com.github.benmanes.caffeine.cache;
+import java.time.Duration;
+import java.util.Map;
+import java.util.Optional;
+import java.util.OptionalInt;
+import java.util.OptionalLong;
+import java.util.concurrent.TimeUnit;
+import org.checkerframework.checker.index.qual.NonNegative;
+import org.checkerframework.checker.nullness.qual.NonNull;
+public interface Policy<K, V> {
+boolean isRecordingStats();
+@NonNull
+Optional<Eviction<K, V>> eviction();
+@NonNull
+Optional<Expiration<K, V>> expireAfterAccess();
+@NonNull
+Optional<Expiration<K, V>> expireAfterWrite();
+@NonNull
+default Optional<VarExpiration<K, V>> expireVariably() {
+return Optional.empty();
+}
+@NonNull
+Optional<Expiration<K, V>> refreshAfterWrite();
+interface Eviction<K, V> {
+boolean isWeighted();
+@NonNull
+default OptionalInt weightOf(@NonNull K key) {
+return OptionalInt.empty();
+}
+@NonNull
+OptionalLong weightedSize();
+@NonNegative
+long getMaximum();
+void setMaximum(@NonNegative long maximum);
+@NonNull
+Map<@NonNull K, @NonNull V> coldest(@NonNegative int limit);
+@NonNull
+Map<@NonNull K, @NonNull V> hottest(@NonNegative int limit);
+}
+interface Expiration<K, V> { 
+@NonNull
+OptionalLong ageOf(@NonNull K key, @NonNull TimeUnit unit);
+@NonNull
+default Optional<Duration> ageOf(@NonNull K key) {
+OptionalLong duration = ageOf(key, TimeUnit.NANOSECONDS);
+return duration.isPresent()
+? Optional.of(Duration.ofNanos(duration.getAsLong()))
+: Optional.empty();
+}
+@NonNegative
+long getExpiresAfter(@NonNull TimeUnit unit);
+@NonNull
+default Duration getExpiresAfter() {
+return Duration.ofNanos(getExpiresAfter(TimeUnit.NANOSECONDS));
+}
+void setExpiresAfter(@NonNegative long duration, @NonNull TimeUnit unit);
+default void setExpiresAfter(@NonNull Duration duration) {
+setExpiresAfter(duration.toNanos(), TimeUnit.NANOSECONDS);
+}
+@NonNull
+Map<@NonNull K, @NonNull V> oldest(@NonNegative int limit);
+@NonNull
+Map<@NonNull K, @NonNull V> youngest(@NonNegative int limit);
+}
+interface VarExpiration<K, V> {
+@NonNull
+OptionalLong getExpiresAfter(@NonNull K key, @NonNull TimeUnit unit);
+@NonNull
+default Optional<Duration> getExpiresAfter(@NonNull K key) {
+OptionalLong duration = getExpiresAfter(key, TimeUnit.NANOSECONDS);
+return duration.isPresent()
+? Optional.of(Duration.ofNanos(duration.getAsLong()))
+: Optional.empty();
+}
+void setExpiresAfter(@NonNull K key, @NonNegative long duration, @NonNull TimeUnit unit);
+default void setExpiresAfter(@NonNull K key, @NonNull Duration duration) {
+setExpiresAfter(key, duration.toNanos(), TimeUnit.NANOSECONDS);
+}
+default boolean putIfAbsent(@NonNull K key, @NonNull V value,
+@NonNegative long duration, @NonNull TimeUnit unit) {
+throw new UnsupportedOperationException();
+}
+default boolean putIfAbsent(@NonNull K key, @NonNull V value, @NonNull Duration duration) {
+return putIfAbsent(key, value, duration.toNanos(), TimeUnit.NANOSECONDS);
+}
+default void put(@NonNull K key, @NonNull V value,
+@NonNegative long duration, @NonNull TimeUnit unit) {
+throw new UnsupportedOperationException();
+}
+default void put(@NonNull K key, @NonNull V value, @NonNull Duration duration) {
+put(key, value, duration.toNanos(), TimeUnit.NANOSECONDS);
+}
+@NonNull
+Map<@NonNull K, @NonNull V> oldest(@NonNegative int limit);
+@NonNull
+Map<@NonNull K, @NonNull V> youngest(@NonNegative int limit);
+}
+}

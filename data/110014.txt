@@ -1,0 +1,95 @@
+package com.google.cloud.tools.jib.event.progress;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Collectors;
+class AllocationCompletionTracker {
+private static class IndexedRemainingUnits implements Comparable<IndexedRemainingUnits> {
+private static final AtomicInteger currentIndex = new AtomicInteger();
+private final int index = currentIndex.getAndIncrement();
+private final AtomicLong remainingUnits;
+private final Allocation allocation;
+private IndexedRemainingUnits(Allocation allocation) {
+this.allocation = allocation;
+remainingUnits = new AtomicLong(allocation.getAllocationUnits());
+}
+private boolean isUnfinished() {
+return remainingUnits.get() != 0;
+}
+@Override
+public int compareTo(IndexedRemainingUnits otherIndexedRemainingUnits) {
+return index - otherIndexedRemainingUnits.index;
+}
+}
+private final ConcurrentHashMap<Allocation, IndexedRemainingUnits> completionMap =
+new ConcurrentHashMap<>();
+boolean updateProgress(Allocation allocation, long units) {
+AtomicBoolean mapUpdated = new AtomicBoolean(units != 0);
+completionMap.compute(
+allocation,
+(ignored, indexedRemainingUnits) -> {
+if (indexedRemainingUnits == null) {
+indexedRemainingUnits = new IndexedRemainingUnits(allocation);
+mapUpdated.set(true);
+}
+if (units != 0) {
+updateIndexedRemainingUnits(indexedRemainingUnits, units);
+}
+return indexedRemainingUnits;
+});
+return mapUpdated.get();
+}
+@VisibleForTesting
+List<Allocation> getUnfinishedAllocations() {
+return completionMap
+.values()
+.stream()
+.filter(IndexedRemainingUnits::isUnfinished)
+.sorted()
+.map(remainingUnits -> remainingUnits.allocation)
+.collect(Collectors.toList());
+}
+private void updateIndexedRemainingUnits(
+IndexedRemainingUnits indexedRemainingUnits, long units) {
+Allocation allocation = indexedRemainingUnits.allocation;
+long newUnits = indexedRemainingUnits.remainingUnits.addAndGet(-units);
+if (newUnits < 0L) {
+throw new IllegalStateException(
+"Progress exceeds max for '"
++ allocation.getDescription()
++ "': "
++ -newUnits
++ " more beyond "
++ allocation.getAllocationUnits());
+}
+if (newUnits == 0L) {
+allocation
+.getParent()
+.ifPresent(
+parentAllocation ->
+updateIndexedRemainingUnits(
+Preconditions.checkNotNull(completionMap.get(parentAllocation)), 1L));
+}
+}
+ImmutableList<String> getUnfinishedLeafTasks() {
+List<Allocation> allUnfinished = getUnfinishedAllocations();
+Set<Allocation> unfinishedLeaves = new LinkedHashSet<>(allUnfinished); 
+for (Allocation allocation : allUnfinished) {
+Optional<Allocation> parent = allocation.getParent();
+while (parent.isPresent()) {
+unfinishedLeaves.remove(parent.get());
+parent = parent.get().getParent();
+}
+}
+return ImmutableList.copyOf(
+unfinishedLeaves.stream().map(Allocation::getDescription).collect(Collectors.toList()));
+}
+}

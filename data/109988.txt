@@ -1,0 +1,6 @@
+package com.google.cloud.tools.jib.plugins.common;
+public class InferredAuthException extends Exception {
+public InferredAuthException(String message) {
+super(message);
+}
+}

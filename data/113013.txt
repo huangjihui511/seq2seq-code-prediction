@@ -1,0 +1,33 @@
+package org.apache.pdfbox.util;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Properties;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+public final class Version
+{
+private static final Log LOG = LogFactory.getLog(Version.class);
+private static final String PDFBOX_VERSION_PROPERTIES =
+"/org/apache/pdfbox/resources/version.properties";
+private Version()
+{
+}
+public static String getVersion()
+{
+try (InputStream is = Version.class.getResourceAsStream(PDFBOX_VERSION_PROPERTIES))
+{
+if (is == null)
+{
+return null;
+}
+Properties properties = new Properties();
+properties.load(is);
+return properties.getProperty("pdfbox.version", null);
+}
+catch (IOException io)
+{
+LOG.debug("Unable to read version from properties - returning null", io);
+return null;
+}
+}
+}

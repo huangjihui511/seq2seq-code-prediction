@@ -1,0 +1,13 @@
+package com.twelvemonkeys.util;
+import java.io.Serializable;
+public class BooleanKey extends TypedMap.AbstractKey implements Serializable {
+public BooleanKey() {
+super();
+}
+public BooleanKey(String pName) {
+super(pName);
+}
+public boolean isCompatibleValue(Object pValue) {
+return pValue instanceof Boolean;
+}
+}

@@ -1,0 +1,18 @@
+package com.facebook.presto.tests.statistics;
+import com.facebook.presto.spi.relation.VariableReferenceExpression;
+import com.google.common.collect.ImmutableMap;
+import java.util.Map;
+import static com.google.common.base.Preconditions.checkArgument;
+public class StatsContext
+{
+private final Map<String, VariableReferenceExpression> columnVariables;
+public StatsContext(Map<String, VariableReferenceExpression> columnVariables)
+{
+this.columnVariables = ImmutableMap.copyOf(columnVariables);
+}
+public VariableReferenceExpression getVariableForColumn(String columnName)
+{
+checkArgument(columnVariables.containsKey(columnName), "no variable found for column '" + columnName + "'");
+return columnVariables.get(columnName);
+}
+}

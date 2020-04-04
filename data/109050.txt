@@ -1,0 +1,5 @@
+package io.vertx.core.impl;
+import io.netty.util.concurrent.FutureListener;
+import io.vertx.core.Promise;
+public interface PromiseInternal<T> extends Promise<T>, FutureListener<T> {
+}

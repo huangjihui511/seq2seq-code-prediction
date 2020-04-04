@@ -1,0 +1,5 @@
+package org.apache.flink.client.program.rest.retry;
+@FunctionalInterface
+public interface WaitStrategy {
+long sleepTime(long attempt);
+}

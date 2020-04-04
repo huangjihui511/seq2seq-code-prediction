@@ -1,0 +1,12 @@
+package the.bytecode.club.bootloader.resource;
+public enum JarType {
+FILE("file:"),
+WEB("");
+private final String prefix;
+private JarType(String prefix) {
+this.prefix = prefix;
+}
+public String prefix() {
+return prefix;
+}
+}

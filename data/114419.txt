@@ -1,0 +1,25 @@
+package com.oreilly.springdata.batch.config;
+import org.springframework.batch.item.ItemReader;
+import org.springframework.batch.item.file.FlatFileItemReader;
+import org.springframework.batch.item.file.MultiResourceItemReader;
+import org.springframework.batch.item.file.mapping.PassThroughFieldSetMapper;
+import org.springframework.batch.item.file.transform.DelimitedLineTokenizer;
+public class ItemReaderBuilder {
+public FlatFileItemReader flatFileItemReader(DelimitedLineTokenizer delimitedLineTokenizer, PassThroughFieldSetMapper passThroughFieldSetMapper) {
+return null;
+}
+public PassThroughFieldSetMapper passThroughFieldSetMapper() {
+return null;
+}
+public DelimitedLineTokenizer delimitedLineTokenizer(String nanes) {
+return null;
+}
+public MultiResourceItemReader multiResourceItemReader(
+ItemReader flatFileReader, String string) {
+return null;
+}
+public MultiResourceItemReader multiResourceItemReader(String string,
+FlatFileItemReader flatFileItemReader) {
+return null;
+}
+}

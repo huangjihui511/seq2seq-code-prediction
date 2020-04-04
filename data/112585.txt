@@ -1,0 +1,383 @@
+package org.jb2011.lnf.beautyeye.ch10_internalframe;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Graphics;
+import java.awt.Insets;
+import java.awt.LayoutManager;
+import java.awt.Rectangle;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import javax.swing.Icon;
+import javax.swing.JInternalFrame;
+import javax.swing.JMenu;
+import javax.swing.JOptionPane;
+import javax.swing.UIManager;
+import javax.swing.border.Border;
+import javax.swing.border.EmptyBorder;
+import javax.swing.plaf.basic.BasicInternalFrameTitlePane;
+import javax.swing.plaf.metal.MetalLookAndFeel;
+import org.jb2011.lnf.beautyeye.ch1_titlepane.BETitlePane;
+import org.jb2011.lnf.beautyeye.utils.MySwingUtilities2;
+import org.jb2011.lnf.beautyeye.winlnfutils.WinUtils;
+public class BEInternalFrameTitlePane extends BasicInternalFrameTitlePane
+{
+private static final Border handyEmptyBorder = new EmptyBorder(0, 0, 0, 0);
+private String selectedBackgroundKey;
+private String selectedForegroundKey;
+private String selectedShadowKey;
+private boolean wasClosable;
+int buttonsWidth = 0;
+public BEInternalFrameTitlePane(JInternalFrame f)
+{
+super(f);
+}
+public void addNotify()
+{
+super.addNotify();
+updateOptionPaneState();
+}
+protected void installDefaults()
+{
+super.installDefaults();
+setFont(UIManager.getFont("InternalFrame.titleFont"));
+wasClosable = frame.isClosable();
+selectedForegroundKey = selectedBackgroundKey = null;
+if (true)
+{
+setOpaque(false);
+}
+}
+protected void uninstallDefaults()
+{
+super.uninstallDefaults();
+if (wasClosable != frame.isClosable())
+{
+frame.setClosable(wasClosable);
+}
+}
+protected void createButtons()
+{
+super.createButtons();
+Boolean paintActive = frame.isSelected() ? Boolean.TRUE : Boolean.FALSE;
+iconButton.putClientProperty("paintActive", paintActive);
+iconButton.setBorder(handyEmptyBorder);
+maxButton.putClientProperty("paintActive", paintActive);
+maxButton.setBorder(handyEmptyBorder);
+closeButton.putClientProperty("paintActive", paintActive);
+closeButton.setBorder(handyEmptyBorder);
+closeButton.setBackground(MetalLookAndFeel.getPrimaryControlShadow());
+if (true)
+{
+iconButton.setContentAreaFilled(false);
+maxButton.setContentAreaFilled(false);
+closeButton.setContentAreaFilled(false);
+}
+}
+protected void assembleSystemMenu()
+{
+}
+protected void addSystemMenuItems(JMenu systemMenu)
+{
+}
+protected void showSystemMenu()
+{
+}
+protected void addSubComponents()
+{
+add(iconButton);
+add(maxButton);
+add(closeButton);
+}
+protected PropertyChangeListener createPropertyChangeListener()
+{
+return new MetalPropertyChangeHandler();
+}
+protected LayoutManager createLayout()
+{
+return new XMetalTitlePaneLayout();
+}
+class MetalPropertyChangeHandler extends
+BasicInternalFrameTitlePane.PropertyChangeHandler
+{
+public void propertyChange(PropertyChangeEvent evt)
+{
+String prop = (String) evt.getPropertyName();
+if (prop.equals(JInternalFrame.IS_SELECTED_PROPERTY))
+{
+Boolean b = (Boolean) evt.getNewValue();
+iconButton.putClientProperty("paintActive", b);
+closeButton.putClientProperty("paintActive", b);
+maxButton.putClientProperty("paintActive", b);
+}
+else if ("JInternalFrame.messageType".equals(prop))
+{
+updateOptionPaneState();
+frame.repaint();
+}
+super.propertyChange(evt);
+}
+}
+class XMetalTitlePaneLayout extends TitlePaneLayout
+{
+public void addLayoutComponent(String name, Component c)
+{
+}
+public void removeLayoutComponent(Component c)
+{
+}
+public Dimension preferredLayoutSize(Container c)
+{
+return minimumLayoutSize(c);
+}
+public Dimension minimumLayoutSize(Container c)
+{
+int width = 30;
+if (frame.isClosable())
+{
+width += 21;
+}
+if (frame.isMaximizable())
+{
+width += 16 + (frame.isClosable() ? 10 : 4);
+}
+if (frame.isIconifiable())
+{
+width += 16 + (frame.isMaximizable() ? 2
+: (frame.isClosable() ? 10 : 4));
+}
+FontMetrics fm = frame.getFontMetrics(getFont());
+String frameTitle = frame.getTitle();
+int title_w = frameTitle != null ? MySwingUtilities2.stringWidth(
+frame, fm, frameTitle) : 0;
+int title_length = frameTitle != null ? frameTitle.length() : 0;
+if (title_length > 2)
+{
+int subtitle_w = MySwingUtilities2.stringWidth(frame, fm, frame
+.getTitle().substring(0, 2)
++ "...");
+width += (title_w < subtitle_w) ? title_w : subtitle_w;
+}
+else
+{
+width += title_w;
+}
+int height = 0;
+{
+int fontHeight = fm.getHeight();
+Icon icon = frame.getFrameIcon();
+int iconHeight = 0;
+if (icon != null)
+{
+iconHeight = Math.min(icon.getIconHeight(), 16);
+}
+iconHeight += 5;
+}
+return new Dimension(width, height);
+}
+public void layoutContainer(Container c)
+{
+boolean leftToRight = WinUtils.isLeftToRight(frame);
+int w = getWidth();
+int x = leftToRight ? w : 0;
+int spacing;
+int buttonHeight = closeButton.getIcon().getIconHeight();
+int buttonWidth = closeButton.getIcon().getIconWidth();
+if (frame.isClosable())
+{
+{
+spacing = 4;
+x += leftToRight ? -spacing - buttonWidth : spacing;
+closeButton.setBounds(x, y, buttonWidth, buttonHeight);
+if (!leftToRight)
+x += buttonWidth;
+}
+}
+if (frame.isMaximizable())
+{
+spacing = frame.isClosable() ? 2 : 4; 
+x += leftToRight ? -spacing - buttonWidth : spacing;
+maxButton.setBounds(x, y, buttonWidth, buttonHeight);
+if (!leftToRight)
+x += buttonWidth;
+}
+if (frame.isIconifiable())
+{
+spacing = frame.isMaximizable() ? 2 : (frame.isClosable() ? 10
+: 4);
+x += leftToRight ? -spacing - buttonWidth : spacing;
+iconButton.setBounds(x, y, buttonWidth, buttonHeight);
+if (!leftToRight)
+x += buttonWidth;
+}
+buttonsWidth = leftToRight ? w - x : x;
+}
+}
+public void paintComponent(Graphics g)
+{
+boolean leftToRight = WinUtils.isLeftToRight(frame);
+int width = getWidth();
+int height = getHeight();
+Color background = null;
+Color foreground = null;
+Color shadow = null;
+if (isSelected)
+{
+if (selectedBackgroundKey != null)
+{
+background = UIManager.getColor(selectedBackgroundKey);
+}
+if (background == null)
+{
+background = UIManager.getColor("activeCaption");
+}
+if (selectedForegroundKey != null)
+{
+foreground = UIManager.getColor(selectedForegroundKey);
+}
+if (selectedShadowKey != null)
+{
+shadow = UIManager.getColor(selectedShadowKey);
+}
+if (shadow == null)
+{
+shadow = UIManager.getColor("activeCaptionBorder");
+}
+if (foreground == null)
+{
+foreground = UIManager.getColor("activeCaptionText");
+}
+}
+else
+{
+if (!true)
+{
+closeButton.setContentAreaFilled(false);
+maxButton.setContentAreaFilled(false);
+iconButton.setContentAreaFilled(false);
+}
+background = UIManager.getColor("inactiveCaption");
+foreground = UIManager.getColor("inactiveCaptionText");
+shadow = UIManager.getColor("inactiveCaptionBorder");
+}
+{
+Insets frameInsets = frame.getInsets();
+paintTitlePaneImpl(frameInsets, g, width,height, isSelected);
+}
+int titleLength = 0;
+int xOffset = leftToRight ? 5 : width - 5;
+String frameTitle = frame.getTitle();
+Icon icon = frame.getFrameIcon();
+if (icon != null)
+{
+if (!leftToRight)
+xOffset -= icon.getIconWidth();
+int iconY = ((height / 2) - (icon.getIconHeight() / 2));
+xOffset += leftToRight ? icon.getIconWidth() + 5 : -5;
+}
+if (frameTitle != null)
+{
+Font f = getFont();
+g.setFont(f);
+FontMetrics fm = MySwingUtilities2.getFontMetrics(frame, g, f);
+int fHeight = fm.getHeight();
+int yOffset = ((height - fm.getHeight()) / 2) + fm.getAscent();
+Rectangle rect = new Rectangle(0, 0, 0, 0);
+if (frame.isIconifiable())
+{
+rect = iconButton.getBounds();
+}
+else if (frame.isMaximizable())
+{
+rect = maxButton.getBounds();
+}
+else if (frame.isClosable())
+{
+rect = closeButton.getBounds();
+}
+int titleW;
+if (leftToRight)
+{
+if (rect.x == 0)
+{
+rect.x = frame.getWidth() - frame.getInsets().right - 2;
+}
+titleW = rect.x - xOffset - 4;
+frameTitle = getTitle(frameTitle, fm, titleW);
+}
+else
+{
+titleW = xOffset - rect.x - rect.width - 4;
+frameTitle = getTitle(frameTitle, fm, titleW);
+xOffset -= MySwingUtilities2.stringWidth(frame, fm, frameTitle);
+}
+titleLength = MySwingUtilities2.stringWidth(frame, fm, frameTitle);
+g.setColor(foreground);
+MySwingUtilities2.drawString(frame, g, frameTitle, xOffset, yOffset);
+xOffset += leftToRight ? titleLength + 5 : -5;
+}
+}
+protected void paintTitlePaneImpl(Insets frameInsets,Graphics g
+, int width,int height, boolean isSelected)
+{
+BETitlePane.paintTitlePane(g
+, frameInsets.left
+, frameInsets.top
+, width-frameInsets.left-frameInsets.right
+, height, isSelected
+);
+}
+private void updateOptionPaneState()
+{
+int type = -2;
+boolean closable = wasClosable;
+Object obj = frame.getClientProperty("JInternalFrame.messageType");
+if (obj == null)
+{
+return;
+}
+if (obj instanceof Integer)
+{
+type = ((Integer) obj).intValue();
+}
+switch (type)
+{
+case JOptionPane.ERROR_MESSAGE:
+selectedBackgroundKey = "OptionPane.errorDialog.titlePane.background";
+selectedForegroundKey = "OptionPane.errorDialog.titlePane.foreground";
+selectedShadowKey = "OptionPane.errorDialog.titlePane.shadow";
+closable = false;
+break;
+case JOptionPane.QUESTION_MESSAGE:
+selectedBackgroundKey = "OptionPane.questionDialog.titlePane.background";
+selectedForegroundKey = "OptionPane.questionDialog.titlePane.foreground";
+selectedShadowKey = "OptionPane.questionDialog.titlePane.shadow";
+closable = false;
+break;
+case JOptionPane.WARNING_MESSAGE:
+selectedBackgroundKey = "OptionPane.warningDialog.titlePane.background";
+selectedForegroundKey = "OptionPane.warningDialog.titlePane.foreground";
+selectedShadowKey = "OptionPane.warningDialog.titlePane.shadow";
+closable = false;
+break;
+case JOptionPane.INFORMATION_MESSAGE:
+case JOptionPane.PLAIN_MESSAGE:
+selectedBackgroundKey = selectedForegroundKey = selectedShadowKey = null;
+closable = false;
+break;
+default:
+selectedBackgroundKey = selectedForegroundKey = selectedShadowKey = null;
+break;
+}
+if (closable != frame.isClosable())
+{
+frame.setClosable(closable);
+}
+}
+public void uninstallListeners() {
+super.uninstallListeners();
+}
+}

@@ -1,0 +1,69 @@
+package org.springframework.integration.util;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Method;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
+import org.springframework.aop.framework.AopProxyUtils;
+import org.springframework.core.annotation.AnnotatedElementUtils;
+import org.springframework.core.annotation.AnnotationUtils;
+import org.springframework.integration.annotation.EndpointId;
+import org.springframework.integration.annotation.Payloads;
+import org.springframework.messaging.MessagingException;
+import org.springframework.messaging.handler.annotation.Header;
+import org.springframework.messaging.handler.annotation.Headers;
+import org.springframework.messaging.handler.annotation.Payload;
+import org.springframework.util.ReflectionUtils;
+import org.springframework.util.StringUtils;
+public final class MessagingAnnotationUtils {
+@SuppressWarnings("unchecked")
+public static <T> T resolveAttribute(List<Annotation> annotations, String name, Class<T> requiredType) {
+for (Annotation annotation : annotations) {
+if (annotation != null) {
+Object value = AnnotationUtils.getValue(annotation, name);
+if (value != null && value.getClass() == requiredType && hasValue(value)) {
+return (T) value;
+}
+}
+}
+return null;
+}
+public static boolean hasValue(Object value) {
+return value != null && (!(value instanceof String) || (StringUtils.hasText((String) value))) 
+&& (!value.getClass().isArray() || ((Object[]) value).length > 0);
+}
+public static Method findAnnotatedMethod(Object target, final Class<? extends Annotation> annotationType) {
+final AtomicReference<Method> reference = new AtomicReference<>();
+ReflectionUtils.doWithMethods(AopProxyUtils.ultimateTargetClass(target),
+method -> reference.compareAndSet(null, method),
+method -> ReflectionUtils.USER_DECLARED_METHODS.matches(method) &&
+AnnotatedElementUtils.isAnnotated(method, annotationType.getName()));
+return reference.get();
+}
+public static Annotation findMessagePartAnnotation(Annotation[] annotations, boolean payloads) {
+if (annotations == null || annotations.length == 0) {
+return null;
+}
+Annotation match = null;
+for (Annotation annotation : annotations) {
+Class<? extends Annotation> type = annotation.annotationType();
+if (type.equals(Payload.class) 
+|| type.equals(Header.class)
+|| type.equals(Headers.class)
+|| (payloads && type.equals(Payloads.class))) {
+if (match != null) {
+throw new MessagingException("At most one parameter annotation can be provided "
++ "for message mapping, but found two: [" + match.annotationType().getName() + "] and ["
++ annotation.annotationType().getName() + "]");
+}
+match = annotation;
+}
+}
+return match;
+}
+public static String endpointIdValue(Method method) {
+EndpointId endpointId = AnnotationUtils.findAnnotation(method, EndpointId.class);
+return endpointId != null ? endpointId.value() : null;
+}
+private MessagingAnnotationUtils() {
+}
+}

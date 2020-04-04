@@ -1,0 +1,31 @@
+package io.grpc.services.internal;
+import static com.google.common.truth.Truth.assertThat;
+import io.grpc.LoadBalancerProvider;
+import io.grpc.LoadBalancerRegistry;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
+@RunWith(JUnit4.class)
+public class HealthCheckingRoundRobinLoadBalancerProviderTest {
+@Test
+public void registry() {
+LoadBalancerProvider hcRoundRobin =
+LoadBalancerRegistry.getDefaultRegistry().getProvider("round_robin");
+assertThat(hcRoundRobin).isInstanceOf(
+HealthCheckingRoundRobinLoadBalancerProvider.class);
+}
+@Test
+public void policyName() {
+LoadBalancerProvider hcRoundRobin = new HealthCheckingRoundRobinLoadBalancerProvider();
+assertThat(hcRoundRobin.getPolicyName())
+.isEqualTo(
+HealthCheckingRoundRobinLoadBalancerProvider.newRoundRobinProvider().getPolicyName());
+}
+@Test
+public void priority() {
+LoadBalancerProvider hcRoundRobin = new HealthCheckingRoundRobinLoadBalancerProvider();
+assertThat(hcRoundRobin.getPriority())
+.isEqualTo(
+HealthCheckingRoundRobinLoadBalancerProvider.newRoundRobinProvider().getPriority() + 1);
+}
+}

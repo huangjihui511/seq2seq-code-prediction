@@ -1,0 +1,6 @@
+package com.example;
+class Example {
+static int meaningOfLife() {
+return 42;
+}
+}

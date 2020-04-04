@@ -1,0 +1,9 @@
+package org.menacheri.jetclient.communication;
+public interface MessageSender
+{
+Object sendMessage(Object message);
+DeliveryGuaranty getDeliveryGuaranty();
+void close();
+public interface Reliable extends MessageSender{}
+public interface Fast extends MessageSender{}
+}

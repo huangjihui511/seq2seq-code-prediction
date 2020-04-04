@@ -1,0 +1,20 @@
+package com.jeff.tianti.cms;
+import java.io.IOException;
+import com.jeff.tianti.cms.entity.Article;
+import com.jeff.tianti.cms.entity.ColumnInfo;
+import com.jeff.tianti.common.util.GenCodeUtil;
+public class GenCodeTest {
+public static void main(String[] args) throws IOException{
+String s = "com.jeff.tianti.cms";
+String writer = "xujianfang";
+GenCodeTest.autoGenAllCode(ColumnInfo.class,s,writer);
+GenCodeTest.autoGenAllCode(Article.class,s,writer);
+}
+public static void autoGenAllCode(Class c,String commonPackage,String writer) throws IOException{
+GenCodeUtil.createQueryDTO(c, commonPackage, writer);
+GenCodeUtil.createDaoCustomInterface(c,commonPackage,writer);
+GenCodeUtil.createDaoInterface(c,commonPackage,writer);
+GenCodeUtil.createDaoClass(c,commonPackage,writer);
+GenCodeUtil.createServiceClass(c,commonPackage,writer);
+}
+}

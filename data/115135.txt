@@ -1,0 +1,21 @@
+package io.ebean;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+public interface RawSqlBuilder {
+static RawSql resultSet(ResultSet resultSet, String... propertyNames) {
+return XServiceProvider.rawSql().resultSet(resultSet, propertyNames);
+}
+static SqlRow sqlRow(ResultSet resultSet, final String dbTrueValue, boolean binaryOptimizedUUID) throws SQLException {
+return XServiceProvider.rawSql().sqlRow(resultSet, dbTrueValue, binaryOptimizedUUID);
+}
+static RawSqlBuilder unparsed(String sql) {
+return XServiceProvider.rawSql().unparsed(sql);
+}
+static RawSqlBuilder parse(String sql) {
+return XServiceProvider.rawSql().parsed(sql);
+}
+RawSqlBuilder columnMapping(String dbColumn, String propertyName);
+RawSqlBuilder columnMappingIgnore(String dbColumn);
+RawSqlBuilder tableAliasMapping(String tableAlias, String path);
+RawSql create();
+}

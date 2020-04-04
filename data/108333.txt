@@ -1,0 +1,8 @@
+package org.apache.flink.client.program;
+import org.apache.flink.util.Preconditions;
+public class ProgramParametrizationException extends RuntimeException {
+private static final long serialVersionUID = 909054589029890262L;
+public ProgramParametrizationException(String message) {
+super(Preconditions.checkNotNull(message));
+}
+}

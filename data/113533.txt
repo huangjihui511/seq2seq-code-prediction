@@ -1,0 +1,6 @@
+package com.pokegoapi.api.listener;
+import com.pokegoapi.api.PokemonGo;
+import com.pokegoapi.api.map.Point;
+public interface LocationListener extends Listener {
+void onLocationUpdate(PokemonGo api, Point point);
+}

@@ -1,0 +1,11 @@
+package me.ramswaroop.jbot.core.slack;
+import me.ramswaroop.jbot.core.common.EventType;
+import org.junit.Test;
+import static org.junit.Assert.assertEquals;
+public class EventTypeTest {
+@Test
+public void numberOfEventsType() {
+EventType[] events = EventType.values();
+assertEquals(87, events.length);
+}
+}

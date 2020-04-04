@@ -1,0 +1,45 @@
+package org.pf4j;
+import java.nio.file.Path;
+import java.util.List;
+import java.util.Set;
+public interface PluginManager {
+List<PluginWrapper> getPlugins();
+List<PluginWrapper> getPlugins(PluginState pluginState);
+List<PluginWrapper> getResolvedPlugins();
+List<PluginWrapper> getUnresolvedPlugins();
+List<PluginWrapper> getStartedPlugins();
+PluginWrapper getPlugin(String pluginId);
+void loadPlugins();
+String loadPlugin(Path pluginPath);
+void startPlugins();
+PluginState startPlugin(String pluginId);
+void stopPlugins();
+PluginState stopPlugin(String pluginId);
+boolean unloadPlugin(String pluginId);
+boolean disablePlugin(String pluginId);
+boolean enablePlugin(String pluginId);
+boolean deletePlugin(String pluginId);
+ClassLoader getPluginClassLoader(String pluginId);
+List<Class<?>> getExtensionClasses(String pluginId);
+<T> List<Class<? extends T>> getExtensionClasses(Class<T> type);
+<T> List<Class<? extends T>> getExtensionClasses(Class<T> type, String pluginId);
+<T> List<T> getExtensions(Class<T> type);
+<T> List<T> getExtensions(Class<T> type, String pluginId);
+List getExtensions(String pluginId);
+Set<String> getExtensionClassNames(String pluginId);
+ExtensionFactory getExtensionFactory();
+RuntimeMode getRuntimeMode();
+default boolean isDevelopment() {
+return RuntimeMode.DEVELOPMENT.equals(getRuntimeMode());
+}
+default boolean isNotDevelopment() {
+return !isDevelopment();
+}
+PluginWrapper whichPlugin(Class<?> clazz);
+void addPluginStateListener(PluginStateListener listener);
+void removePluginStateListener(PluginStateListener listener);
+void setSystemVersion(String version);
+String getSystemVersion();
+Path getPluginsRoot();
+VersionManager getVersionManager();
+}

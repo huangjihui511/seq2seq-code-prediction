@@ -1,0 +1,5 @@
+package com.oracle.svm.core.jdk;
+public class AnnotationSupportConfig {
+public static void initialize() {
+}
+}

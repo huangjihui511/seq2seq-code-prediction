@@ -1,0 +1,394 @@
+package com.JUtils.excel;
+import java.beans.IntrospectionException;
+import java.beans.PropertyDescriptor;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Random;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
+import org.apache.poi.hssf.usermodel.HSSFCell;
+import org.apache.poi.hssf.usermodel.HSSFCellStyle;
+import org.apache.poi.hssf.usermodel.HSSFClientAnchor;
+import org.apache.poi.hssf.usermodel.HSSFFont;
+import org.apache.poi.hssf.usermodel.HSSFPatriarch;
+import org.apache.poi.hssf.usermodel.HSSFRichTextString;
+import org.apache.poi.hssf.usermodel.HSSFRow;
+import org.apache.poi.hssf.usermodel.HSSFSheet;
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.apache.poi.hssf.util.HSSFColor;
+public class ExcelExportHelper {
+private String DATE_PATTERN = "yyyy-MM-dd";
+private int IMAGE_WIDTH = 30;
+private int IMAGE_HEIGHT = 5;
+private int[] maxWidth;
+private int maxRowCount = 2500;
+private String MORE_EXCEL_FLAG = "0001";
+private String MORE_SHEET_FLAG = "0002";
+public ExcelExportHelper(){
+}
+public ExcelExportHelper(String datePattern){
+this.DATE_PATTERN = datePattern;
+}
+public ExcelExportHelper(int imageWidth,int imageHeight){
+this.IMAGE_HEIGHT = imageHeight;
+this.IMAGE_WIDTH = imageWidth;
+}
+public ExcelExportHelper(String datePatter,int imageWidht,int imageHeight){
+this.DATE_PATTERN = datePatter;
+this.IMAGE_HEIGHT = imageHeight;
+this.IMAGE_WIDTH = imageWidht;
+}
+public HSSFWorkbook exportExcel(String[] header,List<Object> excelList,String sheetTitle){
+HSSFWorkbook book = new HSSFWorkbook();
+HSSFSheet sheet = book.createSheet(sheetTitle);
+setExcelContentData(book,sheet,header,excelList);
+return book;
+}
+public HSSFWorkbook exportExcel(String[] header,String[] properties,List<Object> excelList,
+String sheetTitle){
+HSSFWorkbook book = new HSSFWorkbook();
+HSSFSheet sheet = book.createSheet(sheetTitle);
+setExcelContentData(book, sheet, header, properties ,excelList);
+return book;
+}
+public void exportExcelAndSave(String[] header,List<Object> excelList,String sheetTitle,
+String filePath,String fileName){
+HSSFWorkbook book = exportExcel(header, excelList, sheetTitle);
+saveExcel(book,filePath,fileName);
+}
+public void exportExcelAndSave(String[] header,String[] properties,List<Object> excelList,String sheetTitle,
+String filePath,String fileName){
+HSSFWorkbook book = exportExcel(header, properties,excelList, sheetTitle);
+saveExcel(book,filePath,fileName);
+}
+public void exportExcelAndZip(String[] header,List<Object> excelList,String sheetTitle,
+String filePath,String excelName,String zipName){
+HSSFWorkbook book = exportExcel(header, excelList, sheetTitle);
+List<HSSFWorkbook> books = new ArrayList<HSSFWorkbook>();
+books.add(book);
+zipExcelAndSave(books, filePath, zipName, excelName);
+}
+public void exportExcelAndZip(String[] header,String[] properties,List<Object> excelList,String sheetTitle,
+String filePath,String excelName,String zipName){
+HSSFWorkbook book = exportExcel(header, properties,excelList, sheetTitle);
+List<HSSFWorkbook> books = new ArrayList<HSSFWorkbook>();
+books.add(book);
+zipExcelAndSave(books, filePath, zipName, excelName);
+}
+public List<HSSFWorkbook> exportExcelForBigData(String[] header,List<Object> excelList,String sheetTitle,
+String flag){
+int num  = excelList.size() % maxRowCount == 0 ? excelList.size() / maxRowCount : excelList.size() / maxRowCount + 1;
+HSSFWorkbook book = new HSSFWorkbook();
+for(int i = 0 ; i < num ; i++){
+int beginRowNum = maxRowCount * i;
+int endRowNum = maxRowCount * (i + 1) > excelList.size() ? excelList.size() : maxRowCount * (i + 1);
+newList = excelList.subList(beginRowNum, endRowNum);
+newTitle = getSheetTitle(sheetTitle) + "_" + i;
+book = exportExcel(header, newList, newTitle);
+list.add(book);
+}
+HSSFSheet sheet = book.createSheet(newTitle);
+setExcelContentData(book,sheet,header,newList);
+}
+}
+list.add(book);
+}
+return list;
+}
+public List<HSSFWorkbook> exportExcelForBigData(String[] header,String[] properties,
+List<Object> excelList,String sheetTitle, String flag){
+int num = excelList.size() % maxRowCount == 0 ? excelList.size() / maxRowCount : excelList.size() / maxRowCount + 1;
+HSSFWorkbook book = new HSSFWorkbook();
+for (int i = 0; i < num; i++) {
+int beginRowNum = maxRowCount * i;
+int endRowNum = maxRowCount * (i + 1) > excelList.size() ? excelList.size() : maxRowCount * (i + 1);
+newList = excelList.subList(beginRowNum, endRowNum);
+newTitle = getSheetTitle(sheetTitle) + "_" + i;
+book = exportExcel(header,properties, newList, newTitle);
+list.add(book);
+HSSFSheet sheet = book.createSheet(newTitle);
+setExcelContentData(book, sheet, header, properties,newList);
+}
+}
+list.add(book);
+}
+return list;
+}
+public void exportExcelForBigDataAndSave(String[] header,List<Object> excelList,String sheetTitle,
+String flag,String filePath,String fileName){
+List<HSSFWorkbook> books = exportExcelForBigData(header, excelList, sheetTitle, flag);
+String _fileName = "";
+for(int i = 0 ; i < books.size() ; i ++){
+HSSFWorkbook book = books.get(i);
+_fileName = getFileName(fileName) + "_0" + i;
+saveExcel(book, filePath, _fileName);
+}
+}
+public void exportExcelForBigDataAndSave(String[] header,String[] properties,List<Object> excelList,String sheetTitle,
+String flag,String filePath,String fileName){
+List<HSSFWorkbook> books = exportExcelForBigData(header, properties,excelList, sheetTitle, flag);
+String _fileName = "";
+for(int i = 0 ; i < books.size() ; i ++){
+HSSFWorkbook book = books.get(i);
+_fileName = getFileName(fileName) + "_0" + i;
+saveExcel(book, filePath, _fileName);
+}
+}
+public void exportExcelForBigDataAndZipAndSave(String[] header,List<Object> excelList,String sheetTitle,
+String flag,String filePath,String excelName,String zipName){
+List<HSSFWorkbook> books = exportExcelForBigData(header, excelList, sheetTitle, flag);
+zipExcelAndSave(books, filePath, zipName, excelName);
+}
+public void exportExcelForBigDataAndZipAndSave(String[] header,String[] properties,List<Object> excelList,String sheetTitle,
+String flag,String filePath,String excelName,String zipName){
+List<HSSFWorkbook> books = exportExcelForBigData(header, properties,excelList, sheetTitle, flag);
+zipExcelAndSave(books, filePath, zipName, excelName);
+}
+@SuppressWarnings({ "rawtypes", "unchecked", "deprecation" })
+private void setExcelContentData(HSSFWorkbook book,HSSFSheet sheet,String[] header,List<Object> excelList) {
+HSSFCellStyle headerStyle = book.createCellStyle();
+setHeaderStyle(headerStyle, book);
+HSSFCellStyle cellStyle = book.createCellStyle();
+setCellStyle(cellStyle, book);
+HSSFRow row = createHeader(sheet, headerStyle, header);
+HSSFPatriarch patriarch = sheet.createDrawingPatriarch();
+int index = 0;
+Object t = null;
+HSSFCell cell = null;
+Field field = null;
+String fieldName = null;
+String getMethodName = null;
+Class tCls = null;
+Method getMethod = null;
+Object value = null;
+Iterator<Object> it = excelList.iterator();
+while (it.hasNext()) {
+index++;
+row = sheet.createRow(index);
+t = it.next();
+Field[] fields = t.getClass().getDeclaredFields();
+for (short i = 0; i < fields.length; i++) {
+cell = row.createCell(i);
+cell.setCellStyle(cellStyle);
+field = fields[i];
+fieldName = field.getName();
+try {
+tCls = t.getClass();
+getMethod = tCls.getMethod(getMethodName,new Class[] {});
+value = (Object) getMethod.invoke(t, new Object[] {});
+setCellData(row, index, i, value, cell, sheet, patriarch, book);
+} catch (NoSuchMethodException e) {
+e.printStackTrace();
+} catch (SecurityException e) {
+e.printStackTrace();
+} catch (IllegalAccessException e) {
+e.printStackTrace();
+} catch (IllegalArgumentException e) {
+e.printStackTrace();
+} catch (InvocationTargetException e) {
+e.printStackTrace();
+}
+}
+}
+}
+@SuppressWarnings("rawtypes")
+private void setExcelContentData(HSSFWorkbook book, HSSFSheet sheet, String[] header, String[] properties,
+List<Object> excelList) {
+HSSFCellStyle headerStyle = book.createCellStyle();
+setHeaderStyle(headerStyle, book);
+HSSFCellStyle cellStyle = book.createCellStyle();
+setCellStyle(cellStyle, book);
+HSSFRow row = createHeader(sheet, headerStyle, header);
+HSSFPatriarch patriarch = sheet.createDrawingPatriarch();
+int index = 0;
+Object t = null;
+HSSFCell cell = null;
+Object o = null;
+Class clazz = null;
+PropertyDescriptor pd = null;
+Method getMethod = null;
+Iterator<Object> it = excelList.iterator();
+while (it.hasNext()) {
+index++;
+row = sheet.createRow(index);
+t = it.next();
+for(int i = 0 ; i < header.length ; i++){
+cell = row.createCell(i);
+cell.setCellStyle(cellStyle);
+try {
+clazz = t.getClass();
+pd = new PropertyDescriptor(properties[i],clazz);
+if (pd != null) {
+}
+setCellData(row, index, i, o, cell, sheet, patriarch, book);
+} catch (IntrospectionException e) {
+e.printStackTrace();
+} catch (IllegalAccessException e) {
+e.printStackTrace();
+} catch (IllegalArgumentException e) {
+e.printStackTrace();
+} catch (InvocationTargetException e) {
+e.printStackTrace();
+}
+}
+}
+}
+private String getSheetTitle(String sheetTitle) {
+String title = null;
+if(sheetTitle != null && !"".equals(sheetTitle)){
+title = sheetTitle;
+}
+else{
+Date date = new Date();
+SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHH24mmss");
+title = sdf.format(date);
+}
+return title;
+}
+private void setHeaderStyle(HSSFCellStyle headerStyle,HSSFWorkbook book) {
+HSSFFont font = book.createFont();
+headerStyle.setFont(font);
+}
+private void setCellStyle(HSSFCellStyle cellStyle, HSSFWorkbook book) {
+HSSFFont font = book.createFont();
+font.setFontHeightInPoints((short)12);
+cellStyle.setFont(font);
+}
+private HSSFRow createHeader(HSSFSheet sheet,HSSFCellStyle headerStyle,
+String[] header) {
+HSSFRow headRow = sheet.createRow(0);
+HSSFCell cell = null;
+for(int i = 0 ; i < header.length ; i++){
+cell = headRow.createCell(i);
+cell.setCellStyle(headerStyle);
+HSSFRichTextString text = new HSSFRichTextString(header[i]);
+cell.setCellValue(text);
+}
+return headRow;
+}
+private void setCellData(HSSFRow row, int index ,int i ,Object value,HSSFCell cell,HSSFSheet sheet,HSSFPatriarch patriarch,HSSFWorkbook book) {
+String textValue = null;
+Date date = (Date) value;
+SimpleDateFormat sdf = new SimpleDateFormat(DATE_PATTERN);
+textValue = sdf.format(date);
+}
+row.setHeightInPoints((short)(IMAGE_HEIGHT * 10));
+sheet.setColumnWidth(i, IMAGE_WIDTH * 256);
+HSSFClientAnchor anchor = new HSSFClientAnchor(0, 0, 1023, 255,(short) i, index, (short) i, index);
+anchor.setAnchorType(3);
+byte[] bsValue = (byte[]) value;
+patriarch.createPicture(anchor, book.addPicture(bsValue, HSSFWorkbook.PICTURE_TYPE_JPEG));
+}
+if(value != null){
+textValue = String.valueOf(value);
+}
+else{
+textValue = "";
+}
+}
+if (textValue != null) {
+Pattern p = Pattern.compile("^
+Matcher matcher = p.matcher(textValue);
+setCellMaxWidth(textValue,i);
+if (matcher.matches()) {
+cell.setCellValue(Double.parseDouble(textValue));
+} else {
+cell.setCellValue(textValue);
+}
+}
+}
+private String getFileName(String fileName) {
+if(fileName == null || "".equals(fileName)){
+Date date = new Date();
+SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHH24mmss");
+Random random = new Random();
+fileName = sdf.format(date) + String.valueOf(Math.abs(random.nextInt() * 1000000));
+}
+return fileName;
+}
+private void setCellMaxWidth(String textValue,int i ) {
+int size = textValue.length();
+int width = (size + 6) * 256;
+if(maxWidth[i] <= width){
+maxWidth[i] = width;
+}
+}
+private void saveExcel(HSSFWorkbook book, String filePath, String fileName) {
+checkFilePathIsExist(filePath);
+fileName = getFileName(fileName);
+FileOutputStream out = null;
+try {
+out = new FileOutputStream(filePath + "\\" + fileName + ".xls");
+book.write(out);
+} catch (Exception e) {
+e.printStackTrace();
+}finally{
+if(out != null){
+try {
+out.close();
+} catch (IOException e) {
+e.printStackTrace();
+}
+}
+}
+}
+private void zipExcelAndSave(List<HSSFWorkbook> books,String filePath,String zipName,String excelName){
+checkFilePathIsExist(filePath);
+zipName = getFileName(zipName);
+excelName = getFileName(excelName);
+FileOutputStream out = null;
+ZipOutputStream zip = null;
+try {
+out = new FileOutputStream(filePath + "\\" + zipName + ".zip");
+zip = new ZipOutputStream(out);
+HSSFWorkbook book = null;
+String _excelName = "";
+for (int i = 0; i < books.size(); i++) {
+book = books.get(i);
+_excelName = getFileName(excelName) + "_0" + i;
+ZipEntry entry = new ZipEntry(_excelName + ".xls");
+zip.putNextEntry(entry);
+book.write(zip);
+}
+} catch (FileNotFoundException e) {
+e.printStackTrace();
+} catch (IOException e) {
+e.printStackTrace();
+} finally {
+if (zip != null) {
+try {
+zip.flush();
+zip.close();
+} catch (IOException e) {
+e.printStackTrace();
+}
+}
+if (out != null) {
+try {
+out.flush();
+out.close();
+} catch (IOException e) {
+e.printStackTrace();
+}
+}
+}
+}
+private void checkFilePathIsExist(String filePath) {
+File file = new File(filePath);
+if(!file.exists()){
+file.mkdirs();
+}
+}
+}

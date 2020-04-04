@@ -1,0 +1,43 @@
+package org.openrefine.wikidata.qa.scrutinizers;
+import org.openrefine.wikidata.qa.ConstraintFetcher;
+import org.openrefine.wikidata.qa.QAWarning;
+import org.openrefine.wikidata.qa.QAWarning.Severity;
+import org.openrefine.wikidata.qa.QAWarningStore;
+import org.openrefine.wikidata.updates.ItemUpdate;
+public abstract class EditScrutinizer {
+protected QAWarningStore _store;
+protected ConstraintFetcher _fetcher;
+public EditScrutinizer() {
+_fetcher = null;
+_store = null;
+}
+public void setStore(QAWarningStore store) {
+_store = store;
+}
+public void setFetcher(ConstraintFetcher fetcher) {
+_fetcher = fetcher;
+}
+public void batchIsBeginning() {
+}
+public abstract void scrutinize(ItemUpdate edit);
+public void batchIsFinished() {
+}
+protected void addIssue(QAWarning warning) {
+_store.addWarning(warning);
+}
+protected void addIssue(String type, String aggregationId, Severity severity, int count) {
+addIssue(new QAWarning(type, aggregationId, severity, count));
+}
+protected void info(String type) {
+addIssue(type, null, QAWarning.Severity.INFO, 1);
+}
+protected void warning(String type) {
+addIssue(type, null, QAWarning.Severity.WARNING, 1);
+}
+protected void important(String type) {
+addIssue(type, null, QAWarning.Severity.IMPORTANT, 1);
+}
+protected void critical(String type) {
+addIssue(type, null, QAWarning.Severity.CRITICAL, 1);
+}
+}

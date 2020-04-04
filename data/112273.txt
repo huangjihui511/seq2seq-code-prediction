@@ -1,0 +1,298 @@
+package com.github.jknack.handlebars;
+import java.io.IOException;
+import java.io.Writer;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+public class Options {
+public interface Buffer extends Appendable, CharSequence {
+}
+public static class NativeBuffer implements Buffer {
+private Writer writer;
+public NativeBuffer(final Writer writer) {
+this.writer = writer;
+}
+@Override
+public Appendable append(final CharSequence csq) throws IOException {
+writer.append(csq);
+return this;
+}
+@Override
+public Appendable append(final CharSequence csq, final int start, final int end)
+throws IOException {
+writer.append(csq, start, end);
+return this;
+}
+@Override
+public Appendable append(final char c) throws IOException {
+writer.append(c);
+return this;
+}
+@Override
+public int length() {
+return 0;
+}
+@Override
+public char charAt(final int index) {
+throw new UnsupportedOperationException();
+}
+@Override
+public CharSequence subSequence(final int start, final int end) {
+throw new UnsupportedOperationException();
+}
+@Override
+public String toString() {
+return "";
+}
+}
+public static class InMemoryBuffer implements Buffer {
+private StringBuilder buffer = new StringBuilder();
+@Override
+public Appendable append(final CharSequence csq) throws IOException {
+buffer.append(csq);
+return this;
+}
+@Override
+public Appendable append(final CharSequence csq, final int start, final int end)
+throws IOException {
+buffer.append(csq, start, end);
+return this;
+}
+@Override
+public Appendable append(final char c) throws IOException {
+buffer.append(c);
+return this;
+}
+@Override
+public int length() {
+return buffer.length();
+}
+@Override
+public char charAt(final int index) {
+return buffer.charAt(index);
+}
+@Override
+public CharSequence subSequence(final int start, final int end) {
+return buffer.subSequence(start, end);
+}
+}
+public static class Builder {
+private Handlebars handlebars;
+private Context context;
+private Template fn;
+private Template inverse = Template.EMPTY;
+private static Object[] EMPTY_PARAMS = {};
+private Object[] params = EMPTY_PARAMS;
+private Map<String, Object> hash = Collections.emptyMap();
+private TagType tagType;
+private String helperName;
+private Writer writer;
+private List<String> blockParams = Collections.emptyList();
+public Builder(final Handlebars handlebars, final String helperName, final TagType tagType,
+final Context context, final Template fn) {
+this.handlebars = handlebars;
+this.helperName = helperName;
+this.tagType = tagType;
+this.context = context;
+this.fn = fn;
+}
+public Options build() {
+Options options = new Options(handlebars, helperName, tagType, context, fn, inverse, params,
+hash, blockParams);
+options.writer = writer;
+handlebars = null;
+tagType = null;
+context = null;
+fn = null;
+inverse = null;
+params = null;
+hash = null;
+writer = null;
+return options;
+}
+public Builder setHash(final Map<String, Object> hash) {
+this.hash = hash;
+return this;
+}
+public Builder setBlockParams(final List<String> blockParams) {
+this.blockParams = blockParams;
+return this;
+}
+public Builder setInverse(final Template inverse) {
+this.inverse = inverse;
+return this;
+}
+public Builder setParams(final Object[] params) {
+this.params = params;
+return this;
+}
+public Builder setWriter(final Writer writer) {
+this.writer = writer;
+return this;
+}
+}
+public final Handlebars handlebars;
+public final Context context;
+public final Template fn;
+public final Template inverse;
+public final Object[] params;
+public final Map<String, Object> hash;
+public final TagType tagType;
+public final String helperName;
+private Writer writer;
+public final List<String> blockParams;
+private boolean hasBlockParams;
+public Options(final Handlebars handlebars, final String helperName, final TagType tagType,
+final Context context, final Template fn, final Template inverse, final Object[] params,
+final Map<String, Object> hash, final List<String> blockParams) {
+this.handlebars = handlebars;
+this.helperName = helperName;
+this.tagType = tagType;
+this.context = context;
+this.fn = fn;
+this.inverse = inverse;
+this.params = params;
+this.hash = hash;
+this.blockParams = blockParams;
+hasBlockParams = this.blockParams.size() > 0;
+}
+public Options(final Handlebars handlebars, final String helperName, final TagType tagType,
+final Context context, final Template fn, final Template inverse, final Object[] params,
+final Map<String, Object> hash, final List<String> blockParams, final Writer writer) {
+this.handlebars = handlebars;
+this.helperName = helperName;
+this.tagType = tagType;
+this.context = context;
+this.fn = fn;
+this.inverse = inverse;
+this.params = params;
+this.hash = hash;
+this.blockParams = blockParams;
+this.writer = writer;
+hasBlockParams = this.blockParams.size() > 0;
+}
+public CharSequence fn() throws IOException {
+return apply(fn, context, blockParams(context.model));
+}
+public CharSequence fn(final Object context) throws IOException {
+Context ctx = wrap(context);
+return apply(fn, ctx, blockParams(ctx.model));
+}
+public CharSequence fn(final Context context) throws IOException {
+Context ctx = wrap(context);
+return apply(fn, ctx, blockParams(ctx.model));
+}
+public CharSequence inverse() throws IOException {
+return apply(inverse, context, blockParams(context.model));
+}
+public CharSequence inverse(final Object context) throws IOException {
+Context ctx = wrap(context);
+return apply(inverse, ctx, blockParams(ctx.model));
+}
+public CharSequence inverse(final Context context) throws IOException {
+Context ctx = wrap(context);
+return apply(inverse, ctx, blockParams(ctx.model));
+}
+public CharSequence apply(final Template template, final Object context) throws IOException {
+Context ctx = wrap(context);
+return apply(template, ctx, blockParams(ctx.model));
+}
+public CharSequence apply(final Template template, final Context context) throws IOException {
+Context ctx = wrap(context);
+return apply(template, ctx, blockParams(ctx.model));
+}
+public CharSequence apply(final Template template, final Context context,
+final List<Object> blockParams) throws IOException {
+Context ctx = context;
+if (hasBlockParams) {
+ctx = Context.newBlockParamContext(context, this.blockParams, blockParams);
+}
+return template.apply(ctx);
+}
+public CharSequence apply(final Template template, final Object context,
+final List<Object> blockParams) throws IOException {
+return apply(template, wrap(context), blockParams);
+}
+public CharSequence apply(final Template template) throws IOException {
+return apply(template, context, blockParams(context.model));
+}
+@SuppressWarnings("unchecked")
+public <T> T param(final int index) {
+return (T) params[index];
+}
+@SuppressWarnings("unchecked")
+public <T> T param(final int index, final T defaultValue) {
+T value = null;
+if (index >= 0 && index < params.length) {
+value = (T) params[index];
+}
+return value == null ? defaultValue : value;
+}
+public <T> T get(final String name, final T defaultValue) {
+@SuppressWarnings("unchecked")
+T value = (T) context.get(name);
+return value == null ? defaultValue : value;
+}
+public <T> T get(final String name) {
+return get(name, null);
+}
+public Template partial(final String path) {
+return partials().get(path);
+}
+public void partial(final String path, final Template partial) {
+partials().put(path, partial);
+}
+public <T> T hash(final String name) {
+return hash(name, null);
+}
+@SuppressWarnings("unchecked")
+public <T> T hash(final String name, final Object defaultValue) {
+Object value = hash.get(name);
+return (T) (value == null ? defaultValue : value);
+}
+public boolean isFalsy(final Object value) {
+return Handlebars.Utils.isEmpty(value);
+}
+public Context wrap(final Object model) {
+if (model == context.model || model == context) {
+return context;
+}
+if (model instanceof Context) {
+return (Context) model;
+}
+return Context.newContext(context, model);
+}
+private Context wrap(final Context context) {
+if (context != null) {
+return context;
+}
+return Context.newContext(null);
+}
+public <T> T data(final String name) {
+return context.data(name);
+}
+public void data(final String name, final Object value) {
+context.data(name, value);
+}
+public Set<Entry<String, Object>> propertySet(final Object context) {
+return this.context.propertySet(context instanceof Context
+? ((Context) context).model()
+: context);
+}
+@SuppressWarnings("unchecked")
+private Map<String, Template> partials() {
+return (Map<String, Template>) data(Context.PARTIALS);
+}
+public Buffer buffer() {
+return writer == null ? new InMemoryBuffer() : new NativeBuffer(writer);
+}
+private List<Object> blockParams(final Object context) {
+if (this.blockParams.size() == 1) {
+return Arrays.<Object> asList(context);
+}
+return Collections.emptyList();
+}
+}

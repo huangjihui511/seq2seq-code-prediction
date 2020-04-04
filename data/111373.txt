@@ -1,0 +1,6 @@
+package com.example;
+import com.example.dependency.Dependency;
+public class UseClassInLib {
+public static final Dependency DEP = new Dependency();
+private UseClassInLib() {}
+}

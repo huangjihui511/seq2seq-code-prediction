@@ -1,0 +1,154 @@
+package org.gnucash.android.service;
+import android.content.ContentValues;
+import android.content.Context;
+import android.content.Intent;
+import android.database.sqlite.SQLiteDatabase;
+import android.support.annotation.NonNull;
+import android.support.annotation.VisibleForTesting;
+import android.support.v4.app.JobIntentService;
+import android.util.Log;
+import com.crashlytics.android.Crashlytics;
+import org.gnucash.android.app.GnuCashApplication;
+import org.gnucash.android.db.DatabaseHelper;
+import org.gnucash.android.db.DatabaseSchema;
+import org.gnucash.android.db.adapter.BooksDbAdapter;
+import org.gnucash.android.db.adapter.DatabaseAdapter;
+import org.gnucash.android.db.adapter.RecurrenceDbAdapter;
+import org.gnucash.android.db.adapter.ScheduledActionDbAdapter;
+import org.gnucash.android.db.adapter.SplitsDbAdapter;
+import org.gnucash.android.db.adapter.TransactionsDbAdapter;
+import org.gnucash.android.export.ExportAsyncTask;
+import org.gnucash.android.export.ExportParams;
+import org.gnucash.android.model.Book;
+import org.gnucash.android.model.ScheduledAction;
+import org.gnucash.android.model.Transaction;
+import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.concurrent.ExecutionException;
+public class ScheduledActionService extends JobIntentService {
+private static final String LOG_TAG = "ScheduledActionService";
+private static final int JOB_ID = 1001;
+public static void enqueueWork(Context context) {
+Intent intent = new Intent(context, ScheduledActionService.class);
+enqueueWork(context, ScheduledActionService.class, JOB_ID, intent);
+}
+@Override
+protected void onHandleWork(@NonNull Intent intent) {
+Log.i(LOG_TAG, "Starting scheduled action service");
+BooksDbAdapter booksDbAdapter = BooksDbAdapter.getInstance();
+List<Book> books = booksDbAdapter.getAllRecords();
+for (Book book : books) { 
+DatabaseHelper dbHelper = new DatabaseHelper(GnuCashApplication.getAppContext(), book.getUID());
+SQLiteDatabase db = dbHelper.getWritableDatabase();
+RecurrenceDbAdapter recurrenceDbAdapter = new RecurrenceDbAdapter(db);
+ScheduledActionDbAdapter scheduledActionDbAdapter = new ScheduledActionDbAdapter(db, recurrenceDbAdapter);
+List<ScheduledAction> scheduledActions = scheduledActionDbAdapter.getAllEnabledScheduledActions();
+Log.i(LOG_TAG, String.format("Processing %d total scheduled actions for Book: %s",
+scheduledActions.size(), book.getDisplayName()));
+processScheduledActions(scheduledActions, db);
+if (!db.getPath().equals(GnuCashApplication.getActiveDb().getPath()))
+db.close();
+}
+Log.i(LOG_TAG, "Completed service @ " + java.text.DateFormat.getDateTimeInstance().format(new Date()));
+}
+@VisibleForTesting
+public static void processScheduledActions(List<ScheduledAction> scheduledActions, SQLiteDatabase db) {
+for (ScheduledAction scheduledAction : scheduledActions) {
+long now        = System.currentTimeMillis();
+int totalPlannedExecutions = scheduledAction.getTotalPlannedExecutionCount();
+int executionCount = scheduledAction.getExecutionCount();
+if (scheduledAction.getStartTime() > now    
+|| !scheduledAction.isEnabled()     
+|| (totalPlannedExecutions > 0 && executionCount >= totalPlannedExecutions)) { 
+Log.i(LOG_TAG, "Skipping scheduled action: " + scheduledAction.toString());
+continue;
+}
+executeScheduledEvent(scheduledAction, db);
+}
+}
+private static void executeScheduledEvent(ScheduledAction scheduledAction, SQLiteDatabase db){
+Log.i(LOG_TAG, "Executing scheduled action: " + scheduledAction.toString());
+int executionCount = 0;
+switch (scheduledAction.getActionType()){
+case TRANSACTION:
+executionCount += executeTransactions(scheduledAction, db);
+break;
+case BACKUP:
+executionCount += executeBackup(scheduledAction, db);
+break;
+}
+if (executionCount > 0) {
+scheduledAction.setLastRun(System.currentTimeMillis());
+scheduledAction.setExecutionCount(scheduledAction.getExecutionCount() + executionCount);
+ContentValues contentValues = new ContentValues();
+contentValues.put(DatabaseSchema.ScheduledActionEntry.COLUMN_LAST_RUN,
+scheduledAction.getLastRunTime());
+contentValues.put(DatabaseSchema.ScheduledActionEntry.COLUMN_EXECUTION_COUNT,
+scheduledAction.getExecutionCount());
+db.update(DatabaseSchema.ScheduledActionEntry.TABLE_NAME, contentValues,
+DatabaseSchema.ScheduledActionEntry.COLUMN_UID + "=?", new String[]{scheduledAction.getUID()});
+}
+}
+private static int executeBackup(ScheduledAction scheduledAction, SQLiteDatabase db) {
+if (!shouldExecuteScheduledBackup(scheduledAction))
+return 0;
+ExportParams params = ExportParams.parseCsv(scheduledAction.getTag());
+params.setExportStartTime(new Timestamp(scheduledAction.getLastRunTime()));
+Boolean result = false;
+try {
+result = new ExportAsyncTask(GnuCashApplication.getAppContext(), db).execute(params).get();
+} catch (InterruptedException | ExecutionException e) {
+Crashlytics.logException(e);
+Log.e(LOG_TAG, e.getMessage());
+}
+if (!result) {
+Log.i(LOG_TAG, "Backup/export did not occur. There might have been no"
++ " new transactions to export or it might have crashed");
+return 0;
+}
+return 1;
+}
+@SuppressWarnings("RedundantIfStatement")
+private static boolean shouldExecuteScheduledBackup(ScheduledAction scheduledAction) {
+long now = System.currentTimeMillis();
+long endTime = scheduledAction.getEndTime();
+if (endTime > 0 && endTime < now)
+return false;
+if (scheduledAction.computeNextTimeBasedScheduledExecutionTime() > now)
+return false;
+return true;
+}
+private static int executeTransactions(ScheduledAction scheduledAction, SQLiteDatabase db) {
+int executionCount = 0;
+String actionUID = scheduledAction.getActionUID();
+TransactionsDbAdapter transactionsDbAdapter = new TransactionsDbAdapter(db, new SplitsDbAdapter(db));
+Transaction trxnTemplate;
+try {
+trxnTemplate = transactionsDbAdapter.getRecord(actionUID);
+} catch (IllegalArgumentException ex){ 
+Log.e(LOG_TAG, "Scheduled transaction with UID " + actionUID + " could not be found in the db with path " + db.getPath());
+return executionCount;
+}
+long now = System.currentTimeMillis();
+long endTime = scheduledAction.getEndTime() > 0 ? Math.min(scheduledAction.getEndTime(), now) : now;
+int totalPlannedExecutions = scheduledAction.getTotalPlannedExecutionCount();
+List<Transaction> transactions = new ArrayList<>();
+int previousExecutionCount = scheduledAction.getExecutionCount(); 
+long transactionTime = scheduledAction.computeNextCountBasedScheduledExecutionTime();
+while (transactionTime <= endTime) {
+Transaction recurringTrxn = new Transaction(trxnTemplate, true);
+recurringTrxn.setTime(transactionTime);
+transactions.add(recurringTrxn);
+recurringTrxn.setScheduledActionUID(scheduledAction.getUID());
+scheduledAction.setExecutionCount(++executionCount); 
+if (totalPlannedExecutions > 0 && executionCount >= totalPlannedExecutions)
+break; 
+transactionTime = scheduledAction.computeNextCountBasedScheduledExecutionTime();
+}
+transactionsDbAdapter.bulkAddRecords(transactions, DatabaseAdapter.UpdateMethod.insert);
+scheduledAction.setExecutionCount(previousExecutionCount);
+return executionCount;
+}
+}

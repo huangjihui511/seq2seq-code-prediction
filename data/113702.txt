@@ -1,0 +1,15 @@
+package net.pms.formats.image;
+public class PCX extends ImageBase {
+@Override
+public Identifier getIdentifier() {
+return Identifier.PCX;
+}
+@Override
+public String[] getSupportedExtensions() {
+return new String[] { "pcx", "dcx" };
+}
+@Override
+public String mimeType() {
+return "image/vnd.zbrush.pcx";
+}
+}

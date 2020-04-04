@@ -1,0 +1,88 @@
+package com.datumbox.framework.core.common.utilities;
+import java.util.*;
+public class SelectKth {
+public static Double largest(Iterator<Double> elements, int k) {
+Iterator<Double> oppositeElements = new Iterator<Double>() {
+@Override
+public boolean hasNext() {
+return elements.hasNext();
+}
+@Override
+public Double next() {
+return -elements.next(); 
+}
+};
+return -smallest(oppositeElements,k); 
+}
+public static Double smallest(Iterator <Double> elements, int k) {
+if (k <= 0 || !elements.hasNext()) {
+return null;
+}
+else if (k >= Integer.MAX_VALUE / 2) {
+List <Double> list = new ArrayList <> ();
+while (elements.hasNext()) {
+list.add(elements.next());
+}
+Collections.sort(list);
+return list.get(k - 1);
+}
+int bufferCap = k * 2;
+Double[] buffer = new Double[bufferCap];
+Double threshold = elements.next();
+buffer[0] = threshold;
+int bufferSize = 1;
+while (bufferSize < k && elements.hasNext()) {
+Double e = elements.next();
+buffer[bufferSize++] = e;
+threshold = Math.max(threshold, e);
+}
+while (elements.hasNext()) {
+Double e = elements.next();
+if (e >= threshold) {
+continue;
+}
+buffer[bufferSize++] = e;
+if (bufferSize == bufferCap) {
+int left = 0;
+int right = bufferCap - 1;
+int minThresholdPosition = 0;
+while (left < right) {
+int pivotIndex = (left + right + 1) >>> 1;
+Double pivotValue = buffer[pivotIndex];
+buffer[pivotIndex] = buffer[right];
+buffer[right] = pivotValue;
+int pivotNewIndex = left;
+for (int l = left; l < right; l++) {
+if (buffer[l] < pivotValue) {
+Double temp = buffer[pivotNewIndex];
+buffer[pivotNewIndex] = buffer[l];
+buffer[l] = temp;
+pivotNewIndex++;
+}
+}
+Double temp = buffer[right];
+buffer[right] = buffer[pivotNewIndex];
+buffer[pivotNewIndex] = temp;
+if (pivotNewIndex > k) {
+right = pivotNewIndex - 1;
+}
+else if (pivotNewIndex < k) {
+left = Math.max(pivotNewIndex, left + 1);
+minThresholdPosition = pivotNewIndex;
+}
+else {
+break;
+}
+}
+bufferSize = k;
+threshold = buffer[minThresholdPosition];
+for (int i = minThresholdPosition + 1; i < bufferSize; i++) {
+threshold = Math.max(threshold, buffer[i]);
+}
+}
+}
+Arrays.sort(buffer, 0, bufferSize);
+k = Math.min(bufferSize, k);
+return buffer[k-1];
+}
+}

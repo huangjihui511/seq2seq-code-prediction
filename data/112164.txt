@@ -1,0 +1,6 @@
+package org.menacheri.jetserver.app;
+import org.menacheri.jetserver.app.impl.InvalidCommandException;
+public interface GameCommandInterpreter
+{
+public void interpretCommand(Object command) throws InvalidCommandException;
+}

@@ -1,0 +1,37 @@
+package com.github.benmanes.caffeine.jcache.event;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.sameInstance;
+import java.util.Map;
+import javax.cache.Cache;
+import javax.cache.event.EventType;
+import org.mockito.Mockito;
+import org.testng.annotations.Test;
+public final class JCacheEntryEventTest {
+@SuppressWarnings("unchecked")
+Cache<Integer, Integer> cache = Mockito.mock(Cache.class);
+JCacheEntryEvent<Integer, Integer> event = new JCacheEntryEvent<>(
+cache, EventType.CREATED, 1, true, 2, 3);
+@Test(expectedExceptions = IllegalArgumentException.class)
+public void unwrap_fail() {
+event.unwrap(Map.Entry.class);
+}
+@Test
+public void unwrap() {
+assertThat(event.unwrap(Cache.Entry.class), sameInstance(event));
+}
+@Test
+public void isOldValueAvailable_false() {
+JCacheEntryEvent<Integer, Integer> e =
+new JCacheEntryEvent<>(cache, EventType.CREATED, 1, false, null, 3);
+assertThat(e.isOldValueAvailable(), is(false));
+}
+@Test
+public void isOldValueAvailable() {
+assertThat(event.isOldValueAvailable(), is(true));
+}
+@Test
+public void getOldValue() {
+assertThat(event.getOldValue(), is(2));
+}
+}

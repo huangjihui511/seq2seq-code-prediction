@@ -1,0 +1,5 @@
+package io.hawt.jmx;
+import java.util.Map;
+public interface RBACRegistryMBean {
+Map<String, Object> list() throws Exception;
+}

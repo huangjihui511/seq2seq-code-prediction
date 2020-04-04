@@ -1,0 +1,14 @@
+package org.apache.flink.runtime.state.ttl;
+import org.apache.flink.runtime.state.StateBackend;
+import org.apache.flink.runtime.state.ttl.mock.MockStateBackend;
+public class MockTtlStateTest extends TtlStateTestBase {
+@Override
+protected StateBackendTestContext createStateBackendTestContext(TtlTimeProvider timeProvider) {
+return new StateBackendTestContext(timeProvider) {
+@Override
+protected StateBackend createStateBackend() {
+return new MockStateBackend();
+}
+};
+}
+}

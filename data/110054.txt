@@ -1,0 +1,14 @@
+package spark;
+public abstract class ExceptionHandlerImpl<T extends Exception> implements ExceptionHandler<T> {
+protected Class<? extends T> exceptionClass;
+public ExceptionHandlerImpl(Class<T> exceptionClass) {
+this.exceptionClass = exceptionClass;
+}
+public Class<? extends T> exceptionClass() {
+return this.exceptionClass;
+}
+public void exceptionClass(Class<? extends T> exceptionClass) {
+this.exceptionClass = exceptionClass;
+}
+public abstract void handle(T exception, Request request, Response response);
+}

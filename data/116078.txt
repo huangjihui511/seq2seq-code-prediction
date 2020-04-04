@@ -1,0 +1,49 @@
+package org.apache.dubbo.spring.starter.util;
+import org.apache.dubbo.config.ApplicationConfig;
+import org.apache.dubbo.config.spring.beans.factory.annotation.ServiceAnnotationBeanPostProcessor;
+import org.apache.dubbo.config.spring.context.annotation.EnableDubboConfig;
+import org.apache.dubbo.config.spring.context.annotation.EnableDubboConfigBinding;
+import org.apache.dubbo.config.spring.context.properties.DubboConfigBinder;
+import org.springframework.boot.context.ContextIdApplicationContextInitializer;
+import org.springframework.core.env.ConfigurableEnvironment;
+import org.springframework.core.env.PropertyResolver;
+import java.util.Collections;
+import java.util.Map;
+import java.util.SortedMap;
+import java.util.TreeMap;
+public abstract class DubboUtils {
+public static final String LINE_SEPARATOR = System.getProperty("line.separator");
+public static final String PROPERTY_NAME_SEPARATOR = ".";
+public static final String DUBBO_PREFIX = "dubbo";
+public static final String DUBBO_SCAN_PREFIX = DUBBO_PREFIX + PROPERTY_NAME_SEPARATOR + "scan" + PROPERTY_NAME_SEPARATOR;
+public static final String DUBBO_CONFIG_PREFIX = DUBBO_PREFIX + PROPERTY_NAME_SEPARATOR + "config" + PROPERTY_NAME_SEPARATOR;
+public static final String BASE_PACKAGES_PROPERTY_NAME = "base-packages";
+public static final String MULTIPLE_CONFIG_PROPERTY_NAME = "multiple";
+public static final boolean DEFAULT_MULTIPLE_CONFIG_PROPERTY_VALUE = true;
+public static final String OVERRIDE_CONFIG_FULL_PROPERTY_NAME = DUBBO_CONFIG_PREFIX + "override";
+public static final boolean DEFAULT_OVERRIDE_CONFIG_PROPERTY_VALUE = true;
+public static final String DUBBO_SPRING_BOOT_GITHUB_URL = "https:
+public static final String DUBBO_SPRING_BOOT_GIT_URL = "https:
+public static final String DUBBO_SPRING_BOOT_ISSUES_URL = "https:
+public static final String DUBBO_GITHUB_URL = "https:
+public static final String DUBBO_MAILING_LIST = "dev@dubbo.apache.org";
+public static final String RELAXED_DUBBO_CONFIG_BINDER_BEAN_NAME = "relaxedDubboConfigBinder";
+public static final String BASE_PACKAGES_PROPERTY_RESOLVER_BEAN_NAME = "dubboScanBasePackagesPropertyResolver";
+public static final String SPRING_APPLICATION_NAME_PROPERTY = "spring.application.name";
+public static final String DUBBO_APPLICATION_ID_PROPERTY = "dubbo.application.id";
+public static final String DUBBO_APPLICATION_NAME_PROPERTY = "dubbo.application.name";
+public static final String DUBBO_APPLICATION_QOS_ENABLE_PROPERTY = "dubbo.application.qos-enable";
+public static final String DUBBO_CONFIG_MULTIPLE_PROPERTY = "dubbo.config.multiple";
+public static SortedMap<String, Object> filterDubboProperties(ConfigurableEnvironment environment) {
+SortedMap<String, Object> dubboProperties = new TreeMap<>();
+Map<String, Object> properties = EnvironmentUtils.extractProperties(environment);
+for (Map.Entry<String, Object> entry : properties.entrySet()) {
+String propertyName = entry.getKey();
+if (propertyName.startsWith(DUBBO_PREFIX + PROPERTY_NAME_SEPARATOR)
+&& entry.getValue() != null) {
+dubboProperties.put(propertyName, entry.getValue().toString());
+}
+}
+return Collections.unmodifiableSortedMap(dubboProperties);
+}
+}

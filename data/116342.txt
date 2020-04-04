@@ -1,0 +1,66 @@
+package org.spongepowered.api.data.manipulator.mutable.common;
+import static com.google.common.base.Preconditions.checkNotNull;
+import org.spongepowered.api.Sponge;
+import org.spongepowered.api.data.key.Key;
+import org.spongepowered.api.data.manipulator.DataManipulator;
+import org.spongepowered.api.data.manipulator.ImmutableDataManipulator;
+import org.spongepowered.api.data.manipulator.immutable.ImmutableListData;
+import org.spongepowered.api.data.manipulator.mutable.ListData;
+import org.spongepowered.api.data.value.BaseValue;
+import org.spongepowered.api.data.value.mutable.ListValue;
+import org.spongepowered.api.util.CollectionUtils;
+import java.util.List;
+import java.util.Optional;
+@SuppressWarnings("unchecked")
+public abstract class AbstractListData<E, M extends ListData<E, M, I>, I extends ImmutableListData<E, I, M>>
+extends AbstractSingleData<List<E>, M, I> implements ListData<E, M, I> {
+@Deprecated
+protected AbstractListData(List<E> value, Key<? extends BaseValue<List<E>>> usedKey) {
+this((Key<ListValue<E>>) usedKey, value);
+}
+protected AbstractListData(Key<ListValue<E>> usedKey, List<E> value) {
+super(usedKey, CollectionUtils.copyList(value));
+}
+protected AbstractListData(Key<ListValue<E>> usedKey, List<E> value, List<E> defaultValue) {
+super(usedKey, CollectionUtils.copyList(value), CollectionUtils.copyList(defaultValue));
+}
+@Override
+protected ListValue<E> getValueGetter() {
+return Sponge.getRegistry().getValueFactory().createListValue(
+(Key<ListValue<E>>) this.usedKey, getValue(), CollectionUtils.copyList(this.defaultValue));
+}
+@Override
+public <V> Optional<V> get(Key<? extends BaseValue<V>> key) {
+return key == this.usedKey ? Optional.of((V) getValue()) : super.get(key);
+}
+@Override
+public boolean supports(Key<?> key) {
+return checkNotNull(key) == this.usedKey;
+}
+@Override
+public abstract I asImmutable();
+@Override
+protected List<E> getValue() {
+return CollectionUtils.copyList(super.getValue());
+}
+@Override
+protected M setValue(List<E> value) {
+return super.setValue(CollectionUtils.copyList(value));
+}
+@Override
+public int hashCode() {
+return super.hashCode();
+}
+@Override
+public boolean equals(Object obj) {
+return super.equals(obj);
+}
+@Override
+public ListValue<E> getListValue() {
+return getValueGetter();
+}
+@Override
+public List<E> asList() {
+return getValue();
+}
+}

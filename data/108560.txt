@@ -1,0 +1,136 @@
+package org.deeplearning4j.arbiter.optimize.config;
+import lombok.*;
+import org.deeplearning4j.arbiter.optimize.api.CandidateGenerator;
+import org.deeplearning4j.arbiter.optimize.api.data.DataProvider;
+import org.deeplearning4j.arbiter.optimize.api.data.DataSource;
+import org.deeplearning4j.arbiter.optimize.api.saving.ResultSaver;
+import org.deeplearning4j.arbiter.optimize.api.score.ScoreFunction;
+import org.deeplearning4j.arbiter.optimize.api.termination.TerminationCondition;
+import org.deeplearning4j.arbiter.optimize.serde.jackson.JsonMapper;
+import org.nd4j.shade.jackson.annotation.JsonTypeInfo;
+import org.nd4j.shade.jackson.core.JsonProcessingException;
+import org.nd4j.shade.jackson.databind.annotation.JsonSerialize;
+import java.io.IOException;
+import java.lang.reflect.Constructor;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Properties;
+@Data
+@NoArgsConstructor
+@EqualsAndHashCode(exclude = {"dataProvider", "terminationConditions", "candidateGenerator", "resultSaver"})
+@JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY, property = "@class")
+public class OptimizationConfiguration {
+@JsonSerialize
+private DataProvider dataProvider;
+@JsonSerialize
+private Class<? extends DataSource> dataSource;
+@JsonSerialize
+private Properties dataSourceProperties;
+@JsonSerialize
+private CandidateGenerator candidateGenerator;
+@JsonSerialize
+private ResultSaver resultSaver;
+@JsonSerialize
+private ScoreFunction scoreFunction;
+@JsonSerialize
+private List<TerminationCondition> terminationConditions;
+@JsonSerialize
+private Long rngSeed;
+@Getter
+@Setter
+private long executionStartTime;
+private OptimizationConfiguration(Builder builder) {
+this.dataProvider = builder.dataProvider;
+this.dataSource = builder.dataSource;
+this.dataSourceProperties = builder.dataSourceProperties;
+this.candidateGenerator = builder.candidateGenerator;
+this.resultSaver = builder.resultSaver;
+this.scoreFunction = builder.scoreFunction;
+this.terminationConditions = builder.terminationConditions;
+this.rngSeed = builder.rngSeed;
+if (rngSeed != null)
+candidateGenerator.setRngSeed(rngSeed);
+if(dataSource != null){
+try{
+dataSource.getConstructor();
+} catch (NoSuchMethodException e){
+throw new IllegalStateException("Data source class " + dataSource.getName() + " does not have a public no-argument constructor");
+}
+}
+}
+public static class Builder {
+private DataProvider dataProvider;
+private Class<? extends DataSource> dataSource;
+private Properties dataSourceProperties;
+private CandidateGenerator candidateGenerator;
+private ResultSaver resultSaver;
+private ScoreFunction scoreFunction;
+private List<TerminationCondition> terminationConditions;
+private Long rngSeed;
+@Deprecated
+public Builder dataProvider(DataProvider dataProvider) {
+this.dataProvider = dataProvider;
+return this;
+}
+public Builder dataSource(Class<? extends DataSource> dataSource, Properties dataSourceProperties){
+this.dataSource = dataSource;
+this.dataSourceProperties = dataSourceProperties;
+return this;
+}
+public Builder candidateGenerator(CandidateGenerator candidateGenerator) {
+this.candidateGenerator = candidateGenerator;
+return this;
+}
+public Builder modelSaver(ResultSaver resultSaver) {
+this.resultSaver = resultSaver;
+return this;
+}
+public Builder scoreFunction(ScoreFunction scoreFunction) {
+this.scoreFunction = scoreFunction;
+return this;
+}
+public Builder terminationConditions(TerminationCondition... conditions) {
+terminationConditions = Arrays.asList(conditions);
+return this;
+}
+public Builder terminationConditions(List<TerminationCondition> terminationConditions) {
+this.terminationConditions = terminationConditions;
+return this;
+}
+public Builder rngSeed(long rngSeed) {
+this.rngSeed = rngSeed;
+return this;
+}
+public OptimizationConfiguration build() {
+return new OptimizationConfiguration(this);
+}
+}
+public static OptimizationConfiguration fromYaml(String json) {
+try {
+return JsonMapper.getYamlMapper().readValue(json, OptimizationConfiguration.class);
+} catch (IOException e) {
+throw new RuntimeException(e);
+}
+}
+public static OptimizationConfiguration fromJson(String json) {
+try {
+return JsonMapper.getMapper().readValue(json, OptimizationConfiguration.class);
+} catch (IOException e) {
+throw new RuntimeException(e);
+}
+}
+public String toJson() {
+try {
+return JsonMapper.getMapper().writeValueAsString(this);
+} catch (JsonProcessingException e) {
+throw new RuntimeException(e);
+}
+}
+public String toYaml() {
+try {
+return JsonMapper.getYamlMapper().writeValueAsString(this);
+} catch (JsonProcessingException e) {
+throw new RuntimeException(e);
+}
+}
+}

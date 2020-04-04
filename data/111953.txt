@@ -1,0 +1,5 @@
+package io.hawt.config;
+public interface ConfigFacadeMBean {
+String getConfigDir();
+String getVersion();
+}

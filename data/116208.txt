@@ -1,0 +1,7 @@
+package org.apache.struts2.interceptor;
+import org.apache.struts2.dispatcher.HttpParameters;
+@Deprecated
+public interface HttpParametersAware {
+@Deprecated
+void setParameters(HttpParameters parameters);
+}

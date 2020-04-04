@@ -1,0 +1,444 @@
+package freenet.support.CPUInformation;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
+import java.util.Locale;
+import net.i2p.I2PAppContext;
+import net.i2p.data.DataHelper;
+import net.i2p.util.FileUtil;
+import net.i2p.util.SystemVersion;
+public class CPUID {
+private static boolean _nativeOk = false;
+private static int _jcpuidVersion;
+private static boolean _doLog = System.getProperty("jcpuid.dontLog") == null &&
+I2PAppContext.getGlobalContext().isRouterContext();
+private static final boolean isX86 = SystemVersion.isX86();
+private static final boolean isWindows = SystemVersion.isWindows();
+private static final boolean isLinux = System.getProperty("os.name").toLowerCase(Locale.US).contains("linux");
+private static final boolean isKFreebsd = System.getProperty("os.name").toLowerCase(Locale.US).contains("kfreebsd");
+private static final boolean isFreebsd = (!isKFreebsd) && System.getProperty("os.name").toLowerCase(Locale.US).contains("freebsd");
+private static final boolean isNetbsd = System.getProperty("os.name").toLowerCase(Locale.US).contains("netbsd");
+private static final boolean isOpenbsd = System.getProperty("os.name").toLowerCase(Locale.US).contains("openbsd");
+private static final boolean isSunos = System.getProperty("os.name").toLowerCase(Locale.US).contains("sunos");
+private static final boolean isMac = SystemVersion.isMac();
+private static final boolean is64 = SystemVersion.is64Bit();
+static
+{
+loadNative();
+}
+protected static class CPUIDResult {
+final int EAX;
+final int EBX;
+final int ECX;
+final int EDX;
+CPUIDResult(int EAX,int EBX,int ECX, int EDX)
+{
+this.EAX = EAX;
+this.EBX = EBX;
+this.ECX = ECX;
+this.EDX = EDX;
+}
+}
+private static native CPUIDResult doCPUID(int iFunction);
+private native static int nativeJcpuidVersion();
+private static int fetchJcpuidVersion() {
+if (!_nativeOk)
+return 0;
+try {
+return nativeJcpuidVersion();
+} catch (Throwable t) {
+return 2;
+}
+}
+public static int getJcpuidVersion() {
+return _jcpuidVersion;
+}
+static String getCPUVendorID()
+{
+CPUIDResult c = doCPUID(0);
+StringBuilder sb= new StringBuilder(13);
+sb.append((char)( c.EBX & 0xFF));
+sb.append((char)((c.EBX >> 8)  & 0xFF));
+sb.append((char)((c.EBX >> 16) & 0xFF));
+sb.append((char)((c.EBX >> 24) & 0xFF));
+sb.append((char)( c.EDX & 0xFF));
+sb.append((char)((c.EDX >> 8)  & 0xFF));
+sb.append((char)((c.EDX >> 16) & 0xFF));
+sb.append((char)((c.EDX >> 24) & 0xFF));
+sb.append((char)( c.ECX & 0xFF));
+sb.append((char)((c.ECX >> 8)  & 0xFF));
+sb.append((char)((c.ECX >> 16) & 0xFF));
+sb.append((char)((c.ECX >> 24) & 0xFF));
+return sb.toString();
+}
+static int getCPUFamily()
+{
+CPUIDResult c = doCPUID(1);
+return (c.EAX >> 8) & 0xf;
+}
+static int getCPUModel()
+{
+CPUIDResult c = doCPUID(1);
+return (c.EAX >> 4) & 0xf;
+}
+static int getCPUExtendedModel()
+{
+CPUIDResult c = doCPUID(1);
+return (c.EAX >> 16) & 0xf;
+}
+static int getCPUType()
+{
+CPUIDResult c = doCPUID(1);
+return (c.EAX >> 12) & 0xf;
+}
+static int getCPUExtendedFamily()
+{
+CPUIDResult c = doCPUID(1);
+return (c.EAX >> 20) & 0xff;
+}
+static int getCPUStepping()
+{
+CPUIDResult c = doCPUID(1);
+return c.EAX & 0xf;
+}
+static int getEDXCPUFlags()
+{
+CPUIDResult c = doCPUID(1);
+return c.EDX;
+}
+static int getECXCPUFlags()
+{
+CPUIDResult c = doCPUID(1);
+return c.ECX;
+}
+static int getExtendedECXCPUFlags()
+{
+CPUIDResult c = doCPUID(0x80000001);
+return c.ECX;
+}
+static int getExtendedEDXCPUFlags()
+{
+CPUIDResult c = doCPUID(0x80000001);
+return c.EDX;
+}
+static int getExtendedEBXFeatureFlags()
+{
+CPUIDResult c = doCPUID(7);
+return c.EBX;
+}
+static int getExtendedECXFeatureFlags()
+{
+CPUIDResult c = doCPUID(7);
+return c.ECX;
+}
+static String getCPUModelName() {
+CPUIDResult c = doCPUID(0x80000000);
+long maxSupported = c.EAX & 0xFFFFFFFFL;
+if (maxSupported < 0x80000004L)
+return null;
+StringBuilder buf = new StringBuilder(48);
+int[] regs = new int[4];
+for (int fn = 0x80000002; fn <= 0x80000004; fn++) {
+c = doCPUID(fn);
+regs[0] = c.EAX;
+regs[1] = c.EBX;
+regs[2] = c.ECX;
+regs[3] = c.EDX;
+for (int i = 0; i < 4; i++) {
+int reg = regs[i];
+for (int j = 0; j < 4; j++) {
+char ch = (char) (reg & 0xff);
+if (ch == 0)
+return buf.toString().trim();
+buf.append(ch);
+reg >>= 8;
+}
+}
+}
+return buf.toString().trim();
+}
+public static CPUInfo getInfo() throws UnknownCPUException
+{
+if(!_nativeOk) {
+throw new UnknownCPUException("Failed to read CPU information from the system. Please verify the existence of the " +
+getLibraryPrefix() + "jcpuid " + getLibrarySuffix() + " file.");
+}
+String id = getCPUVendorID();
+if(id.equals("CentaurHauls"))
+return new VIAInfoImpl();
+if(!isX86)
+throw new UnknownCPUException("Failed to read CPU information from the system. The CPUID instruction exists on x86 CPUs only.");
+if(id.equals("AuthenticAMD") || id.equals("HygonGenuine"))
+return new AMDInfoImpl();
+if(id.equals("GenuineIntel"))
+return new IntelInfoImpl();
+throw new UnknownCPUException("Unknown CPU type: '" + id + '\'');
+}
+public static void main(String args[])
+{
+_doLog = true; 
+String path = System.getProperty("java.library.path");
+String name = getLibraryPrefix() + "jcpuid" + getLibrarySuffix();
+System.out.println("Native library search path: " + path);
+if (_nativeOk) {
+String sep = System.getProperty("path.separator");
+String[] paths = DataHelper.split(path, sep);
+for (String p : paths) {
+File f = new File(p, name);
+if (f.exists()) {
+System.out.println("Found native library: " + f);
+break;
+}
+}
+} else {
+System.out.println("Failed to retrieve CPUInfo. Please verify the existence of the " +
+name + " file in the library path, or set -Djava.library.path=. in the command line");
+}
+System.out.println("JCPUID Version: " + _jcpuidVersion);
+System.out.println("**CPUInfo**");
+String mname = getCPUModelName();
+if (mname != null)
+System.out.println("CPU Name:     " + mname);
+String vendor = getCPUVendorID();
+System.out.println("CPU Vendor:   " + vendor);
+int family = getCPUFamily();
+int model = getCPUModel();
+if (family == 15 ||
+(family == 6 && "GenuineIntel".equals(vendor))) {
+model += getCPUExtendedModel() << 4;
+}
+if (family == 15) {
+family += getCPUExtendedFamily();
+}
+System.out.println("CPU Family:   " + family);
+System.out.println("CPU Model:    " + model + " (0x" + Integer.toHexString(model) + ')');
+System.out.println("CPU Stepping: " + getCPUStepping());
+System.out.println("CPU Flags (EDX):      0x" + Integer.toHexString(getEDXCPUFlags()));
+System.out.println("CPU Flags (ECX):      0x" + Integer.toHexString(getECXCPUFlags()));
+System.out.println("CPU Ext. Info. (EDX): 0x" + Integer.toHexString(getExtendedEDXCPUFlags()));
+System.out.println("CPU Ext. Info. (ECX): 0x" + Integer.toHexString(getExtendedECXCPUFlags()));
+System.out.println("CPU Ext. Feat. (EBX): 0x" + Integer.toHexString(getExtendedEBXFeatureFlags()));
+System.out.println("CPU Ext. Feat. (ECX): 0x" + Integer.toHexString(getExtendedECXFeatureFlags()));
+CPUInfo c = getInfo();
+System.out.println("\n**More CPUInfo**");
+System.out.println("CPU model name: " + c.getCPUModelString());
+System.out.println("CPU has MMX:    " + c.hasMMX());
+System.out.println("CPU has SSE:    " + c.hasSSE());
+System.out.println("CPU has SSE2:   " + c.hasSSE2());
+System.out.println("CPU has SSE3:   " + c.hasSSE3());
+System.out.println("CPU has SSE4.1: " + c.hasSSE41());
+System.out.println("CPU has SSE4.2: " + c.hasSSE42());
+System.out.println("CPU has SSE4A:  " + c.hasSSE4A());
+System.out.println("CPU has AES-NI: " + c.hasAES());
+System.out.println("CPU has AVX:    " + c.hasAVX());
+System.out.println("CPU has AVX2:   " + c.hasAVX2());
+System.out.println("CPU has AVX512: " + c.hasAVX512());
+System.out.println("CPU has ADX:    " + c.hasADX());
+System.out.println("CPU has TBM:    " + c.hasTBM());
+System.out.println("CPU has BMI1:   " + c.hasBMI1());
+System.out.println("CPU has BMI2:   " + c.hasBMI2());
+System.out.println("CPU has FMA3:   " + c.hasFMA3());
+System.out.println("CPU has MOVBE:  " + c.hasMOVBE());
+System.out.println("CPU has ABM:    " + c.hasABM());
+if(c instanceof IntelCPUInfo){
+IntelCPUInfo cc = (IntelCPUInfo) c;
+System.out.println("\n**Intel-info**");
+System.out.println("Is PII-compatible:       " + cc.IsPentium2Compatible());
+System.out.println("Is PIII-compatible:      " + cc.IsPentium3Compatible());
+System.out.println("Is PIV-compatible:       " + cc.IsPentium4Compatible());
+System.out.println("Is Atom-compatible:      " + cc.IsAtomCompatible());
+System.out.println("Is Pentium M compatible: " + cc.IsPentiumMCompatible());
+System.out.println("Is Core2-compatible:     " + cc.IsCore2Compatible());
+System.out.println("Is Corei-compatible:     " + cc.IsCoreiCompatible());
+System.out.println("Is Sandy-compatible:     " + cc.IsSandyCompatible());
+System.out.println("Is Ivy-compatible:       " + cc.IsIvyCompatible());
+System.out.println("Is Haswell-compatible:   " + cc.IsHaswellCompatible());
+System.out.println("Is Broadwell-compatible: " + cc.IsBroadwellCompatible());
+System.out.println("Is Skylake-compatible:   " + cc.IsSkylakeCompatible());
+} else if (c instanceof AMDCPUInfo) {
+AMDCPUInfo cc = (AMDCPUInfo) c;
+System.out.println("\n**AMD-info**");
+System.out.println("Is K6-compatible:          " + cc.IsK6Compatible());
+System.out.println("Is K6_2-compatible:        " + cc.IsK6_2_Compatible());
+System.out.println("Is K6_3-compatible:        " + cc.IsK6_3_Compatible());
+System.out.println("Is Geode-compatible:       " + cc.IsGeodeCompatible());
+System.out.println("Is Athlon-compatible:      " + cc.IsAthlonCompatible());
+System.out.println("Is Athlon64-compatible:    " + cc.IsAthlon64Compatible());
+System.out.println("Is Bobcat-compatible:      " + cc.IsBobcatCompatible());
+System.out.println("Is K10-compatible:         " + cc.IsK10Compatible());
+System.out.println("Is Jaguar-compatible:      " + cc.IsJaguarCompatible());
+System.out.println("Is Bulldozer-compatible:   " + cc.IsBulldozerCompatible());
+System.out.println("Is Piledriver-compatible:  " + cc.IsPiledriverCompatible());
+System.out.println("Is Steamroller-compatible: " + cc.IsSteamrollerCompatible());
+System.out.println("Is Excavator-compatible:   " + cc.IsExcavatorCompatible());
+}
+}
+private static final void loadNative() {
+try{
+String wantedProp = System.getProperty("jcpuid.enable", "true");
+boolean wantNative = Boolean.parseBoolean(wantedProp);
+if (wantNative) {
+boolean loaded = loadGeneric();
+if (loaded) {
+_nativeOk = true;
+if (_doLog)
+System.err.println("INFO: Native CPUID library " + getLibraryMiddlePart() + " loaded from file");
+} else {
+loaded = loadFromResource();
+if (loaded) {
+_nativeOk = true;
+if (_doLog)
+System.err.println("INFO: Native CPUID library " + getResourceName() + " loaded from resource");
+} else {
+_nativeOk = false;
+if (_doLog)
+System.err.println("WARNING: Native CPUID library jcpuid not loaded - will not be able to read CPU information using CPUID");
+}
+}
+_jcpuidVersion = fetchJcpuidVersion();
+} else {
+if (_doLog)
+System.err.println("INFO: Native CPUID library jcpuid not loaded - will not be able to read CPU information using CPUID");
+}
+}catch(Exception e){
+if (_doLog)
+System.err.println("INFO: Native CPUID library jcpuid not loaded, reason: '"+e.getMessage()+"' - will not be able to read CPU information using CPUID");
+}
+}
+private static final boolean loadGeneric() {
+try {
+System.loadLibrary("jcpuid");
+return true;
+} catch (UnsatisfiedLinkError ule) {
+}
+return false;
+}
+private static final boolean loadFromResource() {
+String resourceName = getResourceName64();
+if (resourceName != null) {
+boolean success = extractLoadAndCopy(resourceName);
+if (success)
+return true;
+if (_doLog)
+System.err.println("WARNING: Resource name [" + resourceName + "] was not found");
+}
+resourceName = getResourceName();
+boolean success = extractLoadAndCopy(resourceName);
+if (success)
+return true;
+if (_doLog)
+System.err.println("WARNING: Resource name [" + resourceName + "] was not found");
+return false;
+}
+private static final boolean extractLoadAndCopy(String resourceName) {
+URL resource = CPUID.class.getClassLoader().getResource(resourceName);
+if (resource == null)
+return false;
+InputStream libStream = null;
+File outFile = null;
+FileOutputStream fos = null;
+String filename = getLibraryPrefix() + "jcpuid" + getLibrarySuffix();
+try {
+libStream = resource.openStream();
+outFile = new File(I2PAppContext.getGlobalContext().getTempDir(), filename);
+fos = new FileOutputStream(outFile);
+DataHelper.copy(libStream, fos);
+fos.close();
+fos = null;
+System.load(outFile.getAbsolutePath());
+} catch (UnsatisfiedLinkError ule) {
+if (_doLog) {
+System.err.println("WARNING: The resource " + resourceName
++ " was not a valid library for this platform " + ule);
+}
+if (outFile != null)
+outFile.delete();
+return false;
+} catch (IOException ioe) {
+if (_doLog) {
+System.err.println("ERROR: Problem writing out the temporary native library data");
+ioe.printStackTrace();
+}
+if (outFile != null)
+outFile.delete();
+return false;
+} finally {
+if (libStream != null) try { libStream.close(); } catch (IOException ioe) {}
+if (fos != null) {
+try { fos.close(); } catch (IOException ioe) {}
+}
+}
+File newFile = new File(I2PAppContext.getGlobalContext().getBaseDir(), filename);
+FileUtil.copy(outFile, newFile, false, true);
+return true;
+}
+private static final String getResourceName()
+{
+return getLibraryPrefix() + getLibraryMiddlePart() + getLibrarySuffix();
+}
+private static final String getResourceName64() {
+if (!is64 && !isMac)
+return null;
+return getLibraryPrefix() + get64LibraryMiddlePart() + getLibrarySuffix();
+}
+private static final String getLibraryPrefix()
+{
+if(isWindows)
+return "";
+else
+return "lib";
+}
+private static final String getLibraryMiddlePart(){
+if(isWindows)
+return "jcpuid-x86-windows"; 
+if(isMac) {
+if(isX86) {
+return "jcpuid-x86_64-osx";  
+}
+return "jcpuid-ppc-osx";
+}
+if(isKFreebsd)
+return "jcpuid-x86-kfreebsd"; 
+if(isFreebsd)
+return "jcpuid-x86-freebsd"; 
+if(isNetbsd)
+return "jcpuid-x86-netbsd"; 
+if(isOpenbsd)
+return "jcpuid-x86-openbsd"; 
+if(isSunos)
+return "jcpuid-x86-solaris"; 
+return "jcpuid-x86-linux";
+}
+private static final String get64LibraryMiddlePart() {
+if(isWindows)
+return "jcpuid-x86_64-windows";
+if(isKFreebsd)
+return "jcpuid-x86_64-kfreebsd";
+if(isFreebsd)
+return "jcpuid-x86_64-freebsd";
+if(isNetbsd)
+return "jcpuid-x86_64-netbsd";
+if(isOpenbsd)
+return "jcpuid-x86_64-openbsd";
+if(isMac){
+if(isX86){
+return "jcpuid-x86_64-osx";
+}
+return "jcpuid-ppc_64-osx";
+}
+if(isSunos)
+return "jcpuid-x86_64-solaris";
+return "jcpuid-x86_64-linux";
+}
+private static final String getLibrarySuffix()
+{
+if(isWindows)
+return ".dll";
+if(isMac)
+return ".jnilib";
+else
+return ".so";
+}
+}

@@ -1,0 +1,26 @@
+package tests;
+import javax.annotation.processing.Generated;
+import javax.inject.Inject;
+import javax.inject.Provider;
+@Generated(
+value = "com.google.auto.factory.processor.AutoFactoryProcessor",
+comments = "https:
+)
+final class CustomNullableFactory {
+private final Provider<Object> objectProvider;
+@Inject
+CustomNullableFactory(Provider<Object> objectProvider) {
+this.objectProvider = checkNotNull(objectProvider, 1);
+}
+CustomNullable create(@CustomNullable.Nullable String string) {
+return new CustomNullable(string, objectProvider.get());
+}
+private static <T> T checkNotNull(T reference, int argumentIndex) {
+if (reference == null) {
+throw new NullPointerException(
+"@AutoFactory method argument is null but is not marked @Nullable. Argument index: "
++ argumentIndex);
+}
+return reference;
+}
+}

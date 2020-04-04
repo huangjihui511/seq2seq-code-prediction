@@ -1,0 +1,13 @@
+package com.datumbox.framework.development;
+import com.datumbox.framework.development.interfaces.Feature;
+import java.util.HashMap;
+import java.util.Map;
+public class FeatureContext {
+private static final Map<Class<? extends Feature>, Enum> ACTIVE_SWITCHES = new HashMap<>();
+static {
+}
+public static boolean isActive(Enum obj) {
+Enum value = ACTIVE_SWITCHES.get((Class)obj.getClass());
+return value != null && value == obj;
+}
+}

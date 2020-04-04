@@ -1,0 +1,134 @@
+package com.pokegoapi.api.settings.templates;
+import POGOProtos.Enums.BadgeTypeOuterClass.BadgeType;
+import POGOProtos.Enums.PokemonIdOuterClass.PokemonId;
+import POGOProtos.Enums.PokemonMoveOuterClass.PokemonMove;
+import POGOProtos.Inventory.Item.ItemIdOuterClass.ItemId;
+import POGOProtos.Networking.Requests.Messages.DownloadItemTemplatesMessageOuterClass.DownloadItemTemplatesMessage;
+import POGOProtos.Networking.Requests.RequestTypeOuterClass.RequestType;
+import POGOProtos.Networking.Responses.DownloadItemTemplatesResponseOuterClass.DownloadItemTemplatesResponse;
+import POGOProtos.Networking.Responses.DownloadItemTemplatesResponseOuterClass.DownloadItemTemplatesResponse.ItemTemplate;
+import POGOProtos.Networking.Responses.DownloadItemTemplatesResponseOuterClass.DownloadItemTemplatesResponse.Result;
+import POGOProtos.Networking.Responses.DownloadRemoteConfigVersionResponseOuterClass.DownloadRemoteConfigVersionResponse;
+import POGOProtos.Settings.Master.BadgeSettingsOuterClass.BadgeSettings;
+import POGOProtos.Settings.Master.GymBattleSettingsOuterClass.GymBattleSettings;
+import POGOProtos.Settings.Master.ItemSettingsOuterClass.ItemSettings;
+import POGOProtos.Settings.Master.MoveSettingsOuterClass.MoveSettings;
+import POGOProtos.Settings.Master.PlayerLevelSettingsOuterClass.PlayerLevelSettings;
+import POGOProtos.Settings.Master.PokemonSettingsOuterClass.PokemonSettings;
+import POGOProtos.Settings.Master.PokemonUpgradeSettingsOuterClass.PokemonUpgradeSettings;
+import com.pokegoapi.api.PokemonGo;
+import com.pokegoapi.api.pokemon.Evolutions;
+import com.pokegoapi.exceptions.request.RequestFailedException;
+import com.pokegoapi.main.ServerRequest;
+import lombok.Getter;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+public class ItemTemplates {
+private final ItemTemplateProvider provider;
+@Getter
+public List<ItemTemplate> templates = new ArrayList<>();
+private Map<PokemonId, PokemonSettings> pokemonSettings = new HashMap<>();
+private Map<PokemonMove, MoveSettings> moveSettings = new HashMap<>();
+private Map<BadgeType, BadgeSettings> badgeSettings = new HashMap<>();
+private Map<ItemId, ItemSettings> itemSettings = new HashMap<>();
+private Map<Float, Double> levelCpMultiplier = new HashMap<>();
+@Getter
+public GymBattleSettings battleSettings;
+@Getter
+public PokemonUpgradeSettings upgradeSettings;
+@Getter
+public Evolutions evolutions;
+private boolean loaded;
+public ItemTemplates(ItemTemplateProvider provider) {
+this.provider = provider;
+reloadTemplates();
+}
+public boolean requiresUpdate(DownloadRemoteConfigVersionResponse response) {
+return provider.getUpdatedTimestamp() < response.getItemTemplatesTimestampMs();
+}
+public void update(PokemonGo api) throws RequestFailedException {
+updatePage(api, 0, 0, api.currentTimeMillis());
+reloadTemplates();
+}
+private void updatePage(PokemonGo api, int page, long timestamp, long loadTime) throws RequestFailedException {
+DownloadItemTemplatesMessage message = DownloadItemTemplatesMessage.newBuilder()
+.setPaginate(true)
+.setPageOffset(page)
+.setPageTimestamp(timestamp)
+.build();
+ServerRequest request = new ServerRequest(RequestType.DOWNLOAD_ITEM_TEMPLATES, message);
+api.requestHandler.sendServerRequests(request, true);
+try {
+DownloadItemTemplatesResponse response = DownloadItemTemplatesResponse.parseFrom(request.getData());
+provider.updateTemplates(response, loadTime);
+if (response.getResult() == Result.PAGE) {
+updatePage(api, response.getPageOffset(), response.getTimestampMs(), loadTime);
+}
+} catch (IOException e) {
+throw new RequestFailedException(e);
+}
+}
+private void reloadTemplates() {
+templates.clear();
+pokemonSettings.clear();
+moveSettings.clear();
+badgeSettings.clear();
+itemSettings.clear();
+for (ItemTemplate template : provider.getTemplates().values()) {
+if (template.hasPokemonSettings()) {
+PokemonSettings pokemonSettings = template.getPokemonSettings();
+this.pokemonSettings.put(pokemonSettings.getPokemonId(), pokemonSettings);
+} else if (template.hasMoveSettings()) {
+MoveSettings moveSettings = template.getMoveSettings();
+this.moveSettings.put(moveSettings.getMovementId(), moveSettings);
+} else if (template.hasBadgeSettings()) {
+BadgeSettings badgeSettings = template.getBadgeSettings();
+this.badgeSettings.put(badgeSettings.getBadgeType(), badgeSettings);
+} else if (template.hasItemSettings()) {
+ItemSettings itemSettings = template.getItemSettings();
+this.itemSettings.put(itemSettings.getItemId(), itemSettings);
+} else if (template.hasBattleSettings()) {
+battleSettings = template.getBattleSettings();
+} else if (template.hasPokemonUpgrades()) {
+upgradeSettings = template.getPokemonUpgrades();
+} else if (template.hasPlayerLevel()) {
+PlayerLevelSettings settings = template.getPlayerLevel();
+List<Float> multipliers = settings.getCpMultiplierList();
+for (int i = 0; i < multipliers.size(); i++) {
+double multiplier = multipliers.get(i);
+levelCpMultiplier.put(i + 1.0F, multiplier);
+double nextMultiplier = multipliers.get(Math.min(multipliers.size() - 1, i + 1));
+double step = ((nextMultiplier * nextMultiplier) - (multiplier * multiplier)) / 2.0F;
+if (i >= 30) {
+step /= 2.0;
+}
+levelCpMultiplier.put(i + 1.5F, Math.sqrt((multiplier * multiplier) + step));
+}
+}
+templates.add(template);
+}
+evolutions = new Evolutions(this);
+loaded = true;
+}
+public PokemonSettings getPokemonSettings(PokemonId pokemon) {
+return pokemonSettings.get(pokemon);
+}
+public MoveSettings getMoveSettings(PokemonMove move) {
+return moveSettings.get(move);
+}
+public BadgeSettings getBadgeSettings(BadgeType badge) {
+return badgeSettings.get(badge);
+}
+public ItemSettings getItemSettings(ItemId item) {
+return itemSettings.get(item);
+}
+public double getLevelCpMultiplier(float level) {
+return levelCpMultiplier.get(level);
+}
+public boolean hasLoaded() {
+return loaded;
+}
+}

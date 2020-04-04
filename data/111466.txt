@@ -1,0 +1,15 @@
+package io.grpc.xds;
+import java.util.concurrent.ThreadLocalRandom;
+import javax.annotation.concurrent.ThreadSafe;
+@ThreadSafe 
+interface ThreadSafeRandom {
+int nextInt(int bound);
+final class ThreadSafeRandomImpl implements ThreadSafeRandom {
+static final ThreadSafeRandom instance = new ThreadSafeRandomImpl();
+private ThreadSafeRandomImpl() {}
+@Override
+public int nextInt(int bound) {
+return ThreadLocalRandom.current().nextInt(bound);
+}
+}
+}

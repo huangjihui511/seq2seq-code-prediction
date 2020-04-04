@@ -1,0 +1,12 @@
+package com.alibaba.csp.sentinel.transport.command.handler;
+import com.alibaba.csp.sentinel.command.CommandHandler;
+import com.alibaba.csp.sentinel.command.CommandRequest;
+import com.alibaba.csp.sentinel.command.CommandResponse;
+import com.alibaba.csp.sentinel.command.annotation.CommandMapping;
+@CommandMapping(name = "aa/bb/cc", desc = "a test handler with multiple / in its name")
+public class MultipleSlashNameCommandTestHandler implements CommandHandler<String> {
+@Override
+public CommandResponse<String> handle(CommandRequest request) {
+return CommandResponse.ofSuccess("MultipleSlashNameCommandTestHandler result");
+}
+}

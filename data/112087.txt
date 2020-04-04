@@ -1,0 +1,10 @@
+package org.springframework.data.mongodb.core.aggregation;
+import java.util.Date;
+class Data {
+public long primitiveLongValue;
+public double primitiveDoubleValue;
+public Double doubleValue;
+public Date dateValue;
+public String stringValue;
+public DataItem item;
+}

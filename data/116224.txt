@@ -1,0 +1,11 @@
+package org.apache.struts2.osgi.action;
+import java.util.List;
+public class ServiceAction implements ServiceAware<Object> {
+private List<Object> services;
+public List<Object> getServices() {
+return services;
+}
+public void withServices(List<Object> services) {
+this.services = services;
+}
+}

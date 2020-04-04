@@ -1,0 +1,16 @@
+package com.twelvemonkeys.lang;
+class MostUnfortunateException extends RuntimeException {
+public MostUnfortunateException() {
+this("Most unfortunate.");
+}
+public MostUnfortunateException(Throwable pCause) {
+this(pCause.getMessage(), pCause);
+}
+public MostUnfortunateException(String pMessage, Throwable pCause) {
+this(pMessage);
+initCause(pCause);
+}
+public MostUnfortunateException(String pMessage) {
+super("A most unfortunate exception has occured: " + pMessage);
+}
+}

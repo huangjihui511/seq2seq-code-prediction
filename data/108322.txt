@@ -1,0 +1,9 @@
+package org.apache.flink.annotation.docs;
+import org.apache.flink.annotation.Internal;
+import java.lang.annotation.Target;
+@Target({})
+@Internal
+public @interface ConfigGroup {
+String name();
+String keyPrefix();
+}

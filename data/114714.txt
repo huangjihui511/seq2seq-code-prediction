@@ -1,0 +1,89 @@
+package com.twelvemonkeys.servlet.jsp.droplet.taglib;
+import com.twelvemonkeys.io.FileUtil;
+import com.twelvemonkeys.lang.StringUtil;
+import com.twelvemonkeys.servlet.jsp.droplet.Oparam;
+import com.twelvemonkeys.servlet.jsp.taglib.BodyReaderTag;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.jsp.JspException;
+import java.io.File;
+import java.io.IOException;
+public class OparamTag extends BodyReaderTag {
+protected final static String COUNTER = "com.twelvemonkeys.servlet.jsp.taglib.OparamTag.counter";
+private File subpage = null;
+private String parameterName = null;
+private String language = null;
+private String prefix = null;
+public void setName(String pName) {
+parameterName = pName;
+}
+public void setLanguage(String pLanguage) {
+language = pLanguage;
+}
+public void setPrefix(String pPrefix) {
+prefix = pPrefix;
+}
+public int doStartTag() throws JspException {
+HttpServletRequest request = (HttpServletRequest) pageContext.getRequest();
+subpage = createFileNameFromRequest(request);
+IncludeTag includeTag = (IncludeTag) getParent();
+includeTag.addParameter(parameterName, new Oparam(subpage.getName()));
+File jsp = new File(pageContext.getServletContext().getRealPath(request.getServletPath()));
+if (!subpage.exists() || jsp.lastModified() > subpage.lastModified()) {
+return EVAL_BODY_BUFFERED;
+}
+return SKIP_BODY;
+}
+protected void checkEnclosedInIncludeTag() throws JspException {
+Tag parentTag = getParent();
+if ((parentTag != null) && (parentTag instanceof IncludeTag)) {
+return;
+}
+String msg = "A class that extends EnclosedIncludeBodyReaderTag " +
+"is not enclosed within an IncludeTag.";
+log(msg);
+throw new JspException(msg);
+}
+protected void clearServiceState() {
+parameterName = null;
+}
+protected void processBody(String pContent) throws JspException {
+String content = pContent;
+if (!StringUtil.isEmpty(language)) {
+content = "<%@page language=\"" + language + "\" %>" + content;
+}
+if (!StringUtil.isEmpty(prefix)) {
+content = "<%@taglib uri=\"/twelvemonkeys-common\" prefix=\"" + prefix + "\" %>" + content;
+}
+try {
+log("Processing subpage " + subpage.getPath());
+FileUtil.write(subpage, content.getBytes());
+}
+catch (IOException ioe) {
+throw new JspException(ioe);
+}
+}
+private File createFileNameFromRequest(HttpServletRequest pRequest) {
+String path = pRequest.getServletPath();
+int splitIndex = path.lastIndexOf("/");
+String name = path.substring(splitIndex + 1);
+path = path.substring(0, splitIndex);
+name = name.replace('.', '_');
+String param = parameterName.replace('.', '_');
+param = param.replace('/', '_');
+param = param.replace('\\', '_');
+param = param.replace(':', '_');
+int count = getOparamCountFromRequest(pRequest);
+return new File(new File(pageContext.getServletContext().getRealPath(path)), name + "_oparam_" + count + "_" + param + ".jsp");
+}
+private int getOparamCountFromRequest(HttpServletRequest pRequest) {
+Integer count = (Integer) pRequest.getAttribute(COUNTER);
+if (count == null) {
+count = new Integer(0);
+}
+else {
+count = new Integer(count.intValue() + 1);
+}
+pRequest.setAttribute(COUNTER, count);
+return count.intValue();
+}
+}

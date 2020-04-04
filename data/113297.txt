@@ -1,0 +1,10 @@
+package org.ocpsoft.prettytime;
+public interface Duration
+{
+public long getQuantity();
+public long getQuantityRounded(int tolerance);
+public TimeUnit getUnit();
+public long getDelta();
+public boolean isInPast();
+public boolean isInFuture();
+}

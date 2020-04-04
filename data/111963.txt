@@ -1,0 +1,5 @@
+package io.hawt.log.osgi;
+import io.hawt.log.support.LogQuerySupportMBean;
+public interface LogQueryMBean extends LogQuerySupportMBean {
+String getBundleMavenCoordinates(long bundleId);
+}

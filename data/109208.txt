@@ -1,0 +1,7 @@
+package io.realm.examples.newsreader.ui;
+public interface Presenter {
+void onCreate();
+void onPause();
+void onResume();
+void onDestroy();
+}

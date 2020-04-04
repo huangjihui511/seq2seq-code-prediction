@@ -1,0 +1,22 @@
+package org.pf4j;
+import org.junit.jupiter.api.Test;
+import org.pf4j.processor.LegacyExtensionStorage;
+import java.io.IOException;
+import java.io.Reader;
+import java.io.StringReader;
+import java.util.HashSet;
+import java.util.Set;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+public class LegacyExtensionStorageTest {
+@Test
+public void testRead() throws IOException {
+Reader reader = new StringReader(
+"# comment\n"
++ "org.pf4j.demo.hello.HelloPlugin$HelloGreeting\n"
++ "org.pf4j.demo.welcome.WelcomePlugin$WelcomeGreeting\n"
++ "org.pf4j.demo.welcome.OtherGreeting\n");
+Set<String> entries = new HashSet<>();
+LegacyExtensionStorage.read(reader, entries);
+assertEquals(3, entries.size());
+}
+}

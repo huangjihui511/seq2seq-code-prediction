@@ -1,0 +1,10 @@
+package com.example.time;
+import org.joda.time.Instant;
+public class SystemClock implements Clock {
+public SystemClock() {
+}
+@Override
+public Instant now() {
+return new Instant();
+}
+}

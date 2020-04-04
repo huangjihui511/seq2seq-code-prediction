@@ -1,0 +1,7 @@
+package com.xkcoding.rbac.security.repository;
+import com.xkcoding.rbac.security.model.UserRole;
+import com.xkcoding.rbac.security.model.unionkey.UserRoleKey;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+public interface UserRoleDao extends JpaRepository<UserRole, UserRoleKey>, JpaSpecificationExecutor<UserRole> {
+}

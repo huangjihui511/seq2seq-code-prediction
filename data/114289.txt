@@ -1,0 +1,17 @@
+package com.datumbox.framework.core.machinelearning.common.abstracts.modelers;
+import com.datumbox.framework.common.Configuration;
+import com.datumbox.framework.core.common.dataobjects.Dataframe;
+import com.datumbox.framework.core.machinelearning.common.abstracts.AbstractTrainer;
+public abstract class AbstractModeler<MP extends AbstractModeler.AbstractModelParameters, TP extends AbstractModeler.AbstractTrainingParameters> extends AbstractTrainer<MP, TP> {
+protected AbstractModeler(TP trainingParameters, Configuration configuration) {
+super(trainingParameters, configuration);
+}
+protected AbstractModeler(String storageName, Configuration configuration) {
+super(storageName, configuration);
+}
+public void predict(Dataframe newData) {
+logger.info("predict()");
+_predict(newData);
+}
+protected abstract void _predict(Dataframe newData);
+}

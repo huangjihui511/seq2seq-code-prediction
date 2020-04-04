@@ -1,0 +1,10 @@
+package net.i2p.router;
+public interface Job {
+public String getName();
+public long getJobId();
+public JobTiming getTiming();
+public void runJob();
+@Deprecated
+public Exception getAddedBy();
+public void dropped();
+}

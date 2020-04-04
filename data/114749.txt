@@ -1,0 +1,8 @@
+package com.springboot.demo.sys.mapper;
+import com.springboot.demo.sys.entity.SysMenu;
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import org.springframework.stereotype.Repository;
+import java.util.List;
+public interface SysMenuMapper extends BaseMapper<SysMenu> {
+List<SysMenu> findUserPermissions(String userName);
+}

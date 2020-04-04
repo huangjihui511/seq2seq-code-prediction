@@ -1,0 +1,5 @@
+package org.menacheri.jetclient.app;
+public interface PlayerSession extends Session
+{
+public abstract Player getPlayer();
+}

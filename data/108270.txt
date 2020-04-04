@@ -1,0 +1,45 @@
+package org.apache.flink.runtime.executiongraph.failover.flip1;
+import org.apache.flink.runtime.jobgraph.JobVertexID;
+import org.apache.flink.runtime.scheduler.strategy.ExecutionVertexID;
+import org.apache.flink.util.TestLogger;
+import org.junit.Test;
+import java.util.HashSet;
+import java.util.Set;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+public class FailureHandlingResultTest extends TestLogger {
+@Test
+public void testNormalFailureHandlingResult() {
+Set<ExecutionVertexID> tasks = new HashSet<>();
+tasks.add(new ExecutionVertexID(new JobVertexID(), 0));
+long delay = 1234;
+FailureHandlingResult result = FailureHandlingResult.restartable(tasks, delay);
+assertTrue(result.canRestart());
+assertEquals(delay, result.getRestartDelayMS());
+assertEquals(tasks, result.getVerticesToRestart());
+try {
+result.getError();
+fail("Cannot get error when the restarting is accepted");
+} catch (IllegalStateException ex) {
+}
+}
+@Test
+public void testRestartingSuppressedFailureHandlingResult() {
+Throwable error = new Exception("test error");
+FailureHandlingResult result = FailureHandlingResult.unrecoverable(error);
+assertFalse(result.canRestart());
+assertEquals(error, result.getError());
+try {
+result.getVerticesToRestart();
+fail("get tasks to restart is not allowed when restarting is suppressed");
+} catch (IllegalStateException ex) {
+}
+try {
+result.getRestartDelayMS();
+fail("get restart delay is not allowed when restarting is suppressed");
+} catch (IllegalStateException ex) {
+}
+}
+}

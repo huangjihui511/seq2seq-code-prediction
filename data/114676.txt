@@ -1,0 +1,906 @@
+package com.twelvemonkeys.util;
+import com.twelvemonkeys.lang.StringUtil;
+import java.io.PrintStream;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+import java.text.DateFormat;
+import java.util.*;
+@Deprecated
+public class DebugUtil {
+public static final String PRINTSTREAM_IS_NULL_ERROR_MESSAGE = "PrintStream is null";
+public static final String OBJECT_IS_NULL_ERROR_MESSAGE = "Object is null";
+public static final String INTARRAY_IS_NULL_ERROR_MESSAGE = "int array is null";
+public static final String STRINGARRAY_IS_NULL_ERROR_MESSAGE = "String array is null";
+public static final String ENUMERATION_IS_NULL_ERROR_MESSAGE = "Enumeration is null";
+public static final String COLLECTION_IS_NULL_ERROR_MESSAGE = "Collection is null";
+public static final String COLLECTION_IS_EMPTY_ERROR_MESSAGE = "Collection contains no elements";
+public static final String MAP_IS_NULL_ERROR_MESSAGE = "Map is null";
+public static final String MAP_IS_EMPTY_ERROR_MESSAGE = "Map contains no elements";
+public static final String PROPERTIES_IS_NULL_ERROR_MESSAGE = "Properties is null";
+public static final String PROPERTIES_IS_EMPTY_ERROR_MESSAGE = "Properties contains no elements";
+public static final String CALENDAR_IS_NULL_ERROR_MESSAGE = "Calendar is null";
+public static final String CALENDAR_CAUSATION_ERROR_MESSAGE = "The causation of the calendars is wrong";
+public static final String TIMEDIFFERENCES_IS_NULL_ERROR_MESSAGE = "Inner TimeDifference object is null";
+public static final String TIMEDIFFERENCES_WRONG_DATATYPE_ERROR_MESSAGE =
+"Element in TimeDifference collection is not a TimeDifference object";
+public static final String DEBUG = "**** external debug: ";
+public static final String INFO = "**** external info: ";
+public static final String WARNING = "**** external warning: ";
+public static final String ERROR = "**** external error: ";
+public static String getPrefixInfoMessage(final Object pObject) {
+StringBuilder buffer = new StringBuilder();
+buffer.append(INFO);
+buffer.append(getTimestamp());
+buffer.append(" ");
+if (pObject == null) {
+buffer.append("[unknown class]");
+} else {
+if (pObject instanceof String) {
+buffer.append((String) pObject);
+} else {
+buffer.append(getClassName(pObject));
+}
+}
+buffer.append(":   ");
+return buffer.toString();
+}
+public static String getPrefixDebugMessage(final Object pObject) {
+StringBuilder buffer = new StringBuilder();
+buffer.append(DEBUG);
+buffer.append(getTimestamp());
+buffer.append(" ");
+if (pObject == null) {
+buffer.append("[unknown class]");
+} else {
+if (pObject instanceof String) {
+buffer.append((String) pObject);
+} else {
+buffer.append(getClassName(pObject));
+}
+}
+buffer.append(":   ");
+return buffer.toString();
+}
+public static String getPrefixWarningMessage(final Object pObject) {
+StringBuilder buffer = new StringBuilder();
+buffer.append(WARNING);
+buffer.append(getTimestamp());
+buffer.append(" ");
+if (pObject == null) {
+buffer.append("[unknown class]");
+} else {
+if (pObject instanceof String) {
+buffer.append((String) pObject);
+} else {
+buffer.append(getClassName(pObject));
+}
+}
+buffer.append(":   ");
+return buffer.toString();
+}
+public static String getPrefixErrorMessage(final Object pObject) {
+StringBuilder buffer = new StringBuilder();
+buffer.append(ERROR);
+buffer.append(getTimestamp());
+buffer.append(" ");
+if (pObject == null) {
+buffer.append("[unknown class]");
+} else {
+if (pObject instanceof String) {
+buffer.append((String) pObject);
+} else {
+buffer.append(getClassName(pObject));
+}
+}
+buffer.append(":   ");
+return buffer.toString();
+}
+public static void printDebug(final Object pObject, final String pMethodName, final PrintStream pPrintStream) {
+if (pPrintStream == null) {
+System.err.println(PRINTSTREAM_IS_NULL_ERROR_MESSAGE);
+return;
+}
+if (pObject == null) {
+pPrintStream.println(OBJECT_IS_NULL_ERROR_MESSAGE);
+return;
+}
+if (!StringUtil.isEmpty(pMethodName)) {
+try {
+Method objectMethod = pObject.getClass().getMethod(pMethodName, null);
+Object retVal       = objectMethod.invoke(pObject, null);
+if (retVal != null) {
+printDebug(retVal, null, pPrintStream);
+} else {
+throw new Exception();
+}
+} catch (Exception e) {
+pPrintStream.println(pObject.toString());
+}
+} else {  
+pPrintStream.println(pObject.toString());
+}
+}
+public static void printDebug(final Object pObject, final PrintStream pPrintStream) {
+printDebug(pObject, null, pPrintStream);
+}
+public static void printDebug(final Object pObject) {
+printDebug(pObject, System.out);
+}
+public static void printDebug() {
+System.out.println();
+}
+public static void printDebug(final boolean pBoolean) {
+printDebug(new Boolean(pBoolean).toString());
+}
+public static void printDebug(final int pInt) {
+printDebug(new Integer(pInt).toString());
+}
+public static void printDebug(final int[] pIntArray, final PrintStream pPrintStream) {
+if (pPrintStream == null) {
+System.err.println(PRINTSTREAM_IS_NULL_ERROR_MESSAGE);
+return;
+}
+if (pIntArray == null) {
+pPrintStream.println(INTARRAY_IS_NULL_ERROR_MESSAGE);
+return;
+}
+for (int i = 0; i < pIntArray.length; i++) {
+pPrintStream.println(pIntArray[i]);
+}
+}
+public static void printDebug(final int[] pIntArray) {
+printDebug(pIntArray, System.out);
+}
+public static void printDebug(final char pChar, final PrintStream pPrintStream) {
+if (pPrintStream == null) {
+System.err.println(PRINTSTREAM_IS_NULL_ERROR_MESSAGE);
+return;
+}
+pPrintStream.println("Character.getNumericValue(pChar): " + Character.getNumericValue(pChar));
+pPrintStream.println("Character.getType(pChar): " + Character.getType(pChar));
+pPrintStream.println("pChar.hashCode(): " + new Character(pChar).hashCode());
+pPrintStream.println("Character.isDefined(pChar): " + Character.isDefined(pChar));
+pPrintStream.println("Character.isDigit(pChar): " + Character.isDigit(pChar));
+pPrintStream.println("Character.isIdentifierIgnorable(pChar): " + Character.isIdentifierIgnorable(pChar));
+pPrintStream.println("Character.isISOControl(pChar): " + Character.isISOControl(pChar));
+pPrintStream.println("Character.isJavaIdentifierPart(pChar): " + Character.isJavaIdentifierPart(pChar));
+pPrintStream.println("Character.isJavaIdentifierStart(pChar): " + Character.isJavaIdentifierStart(pChar));
+pPrintStream.println("Character.isLetter(pChar): " + Character.isLetter(pChar));
+pPrintStream.println("Character.isLetterOrDigit(pChar): " + Character.isLetterOrDigit(pChar));
+pPrintStream.println("Character.isLowerCase(pChar): " + Character.isLowerCase(pChar));
+pPrintStream.println("Character.isSpaceChar(pChar): " + Character.isSpaceChar(pChar));
+pPrintStream.println("Character.isTitleCase(pChar): " + Character.isTitleCase(pChar));
+pPrintStream.println("Character.isUnicodeIdentifierPart(pChar): " + Character.isUnicodeIdentifierPart(pChar));
+pPrintStream.println("Character.isUnicodeIdentifierStart(pChar): " + Character.isUnicodeIdentifierStart(pChar));
+pPrintStream.println("Character.isUpperCase(pChar): " + Character.isUpperCase(pChar));
+pPrintStream.println("Character.isWhitespace(pChar): " + Character.isWhitespace(pChar));
+pPrintStream.println("pChar.toString(): " + new Character(pChar).toString());
+}
+public static void printDebug(final char pChar) {
+printDebug(pChar, System.out);
+}
+public static void printDebug(final String[] pStringArray, final PrintStream pPrintStream) {
+if (pPrintStream == null) {
+System.err.println(PRINTSTREAM_IS_NULL_ERROR_MESSAGE);
+return;
+}
+if (pStringArray == null) {
+pPrintStream.println(STRINGARRAY_IS_NULL_ERROR_MESSAGE);
+return;
+}
+for (int i = 0; i < pStringArray.length; i++) {
+pPrintStream.println(pStringArray[i]);
+}
+}
+public static void printDebug(final String[] pStringArray) {
+printDebug(pStringArray, System.out);
+}
+public static void printDebug(final Enumeration pEnumeration, final String pMethodName, final PrintStream pPrintStream) {
+if (pPrintStream == null) {
+System.err.println(PRINTSTREAM_IS_NULL_ERROR_MESSAGE);
+return;
+}
+if (pEnumeration == null) {
+pPrintStream.println(ENUMERATION_IS_NULL_ERROR_MESSAGE);
+return;
+}
+while (pEnumeration.hasMoreElements()) {
+printDebug(pEnumeration.nextElement(), pMethodName, pPrintStream);
+}
+}
+public static void printDebug(final Enumeration pEnumeration, final String pMethodName) {
+printDebug(pEnumeration, pMethodName, System.out);
+}
+public static void printDebug(final Enumeration pEnumeration) {
+printDebug(pEnumeration, null, System.out);
+}
+public static void printDebug(final Collection pCollection, final String pMethodName, final PrintStream pPrintStream) {
+if (pPrintStream == null) {
+System.err.println(PRINTSTREAM_IS_NULL_ERROR_MESSAGE);
+return;
+}
+if (pCollection == null) {
+pPrintStream.println(COLLECTION_IS_NULL_ERROR_MESSAGE);
+return;
+} else if (pCollection.isEmpty()) {
+pPrintStream.println(COLLECTION_IS_EMPTY_ERROR_MESSAGE);
+return;
+}
+for (Iterator i = pCollection.iterator(); i.hasNext(); ) {
+printDebug(i.next(), pMethodName, pPrintStream);
+}
+}
+public static void printDebug(final Collection pCollection, final String pMethodName) {
+printDebug(pCollection, pMethodName, System.out);
+}
+public static void printDebug(final Collection pCollection, final PrintStream pPrintStream) {
+printDebug(pCollection, null, pPrintStream);
+}
+public static void printDebug(final Collection pCollection) {
+printDebug(pCollection, System.out);
+}
+public static void printDebug(final Map pMap, final String pMethodName, final PrintStream pPrintStream) {
+if (pPrintStream == null) {
+System.err.println(PRINTSTREAM_IS_NULL_ERROR_MESSAGE);
+return;
+}
+if (pMap == null) {
+pPrintStream.println(MAP_IS_NULL_ERROR_MESSAGE);
+return;
+} else if (pMap.isEmpty()) {
+pPrintStream.println(MAP_IS_EMPTY_ERROR_MESSAGE);
+return;
+}
+Object mKeyObject;
+Object mEntryObject;
+for (Iterator i = pMap.keySet().iterator(); i.hasNext(); ) {
+mKeyObject   = i.next();
+mEntryObject = pMap.get(mKeyObject);
+if ((mKeyObject instanceof String) && (mEntryObject instanceof String)) {
+pPrintStream.println((String) mKeyObject + ": " + mEntryObject);
+} else if ((mKeyObject instanceof String) && (mEntryObject instanceof List)) {
+printDebug((List) mEntryObject, pPrintStream);
+} else if ((mKeyObject instanceof String) && (mEntryObject instanceof Set)) {
+printDebug((Set) mEntryObject, pPrintStream);
+} else if (mKeyObject instanceof String) {
+if (!StringUtil.isEmpty(pMethodName)) {
+try {
+Method objectMethod = mEntryObject.getClass().getMethod(pMethodName, null);
+Object retVal       = objectMethod.invoke(mEntryObject, null);
+if (retVal != null) {
+pPrintStream.println((String) mKeyObject + ": " + retVal.toString());
+} else {  
+throw new Exception();
+}
+} catch (Exception e) {
+pPrintStream.println((String) mKeyObject + ": " + mEntryObject.toString());
+}
+} else {      
+pPrintStream.println((String) mKeyObject + ": " + mEntryObject.toString());
+}
+} else if ((mKeyObject instanceof Integer) && (mEntryObject instanceof String)) {
+pPrintStream.println((Integer) mKeyObject + ": " + mEntryObject);
+} else if ((mKeyObject instanceof Integer) && (mEntryObject instanceof List)) {
+printDebug((List) mEntryObject, pPrintStream);
+} else if ((mKeyObject instanceof String) && (mEntryObject instanceof Set)) {
+printDebug((Set) mEntryObject, pPrintStream);
+} else if (mKeyObject instanceof Integer) {
+if (!StringUtil.isEmpty(pMethodName)) {
+try {
+Method objectMethod = mEntryObject.getClass().getMethod(pMethodName, null);
+Object retVal       = objectMethod.invoke(mEntryObject, null);
+if (retVal != null) {
+pPrintStream.println((Integer) mKeyObject + ": " + retVal.toString());
+} else {  
+throw new Exception();
+}
+} catch (Exception e) {
+pPrintStream.println((Integer) mKeyObject + ": " + mEntryObject.toString());
+}
+} else {      
+pPrintStream.println((Integer) mKeyObject + ": " + mEntryObject.toString());
+}
+}
+}
+}
+public static void printDebug(final Map pMap, final String pMethodName) {
+printDebug(pMap, pMethodName, System.out);
+}
+public static void printDebug(final Map pMap, final PrintStream pPrintStream) {
+printDebug(pMap, null, pPrintStream);
+}
+public static void printDebug(final Map pMap) {
+printDebug(pMap, System.out);
+}
+public static void printDebug(final Properties pProperties, final PrintStream pPrintStream) {
+if (pPrintStream == null) {
+System.err.println(PRINTSTREAM_IS_NULL_ERROR_MESSAGE);
+return;
+}
+if (pProperties == null) {
+pPrintStream.println(PROPERTIES_IS_NULL_ERROR_MESSAGE);
+return;
+} else if (pProperties.isEmpty()) {
+pPrintStream.println(PROPERTIES_IS_EMPTY_ERROR_MESSAGE);
+return;
+}
+for (Enumeration e = pProperties.propertyNames(); e.hasMoreElements(); ) {
+String key = (String) e.nextElement();
+pPrintStream.println(key + ": " + pProperties.getProperty(key));
+}
+}
+public static void printDebug(final Properties pProperties) {
+printDebug(pProperties, System.out);
+}
+public static void printTimestamp(final Calendar pCalendar, final PrintStream pPrintStream) {
+if (pPrintStream == null) {
+System.err.println(PRINTSTREAM_IS_NULL_ERROR_MESSAGE);
+return;
+}
+pPrintStream.println(getTimestamp(pCalendar));
+}
+public static void printTimestamp(final PrintStream pPrintStream) {
+GregorianCalendar cal = new GregorianCalendar();
+printTimestamp(cal, pPrintStream);
+}
+public static void printTimestamp() {
+printTimestamp(System.out);
+}
+public static String getTimestamp(final String pMilliseconds) {
+return getTimestamp(Long.parseLong(pMilliseconds));
+}
+public static String getTimestamp(final long pMilliseconds) {
+java.util.Date     date     = new java.util.Date(pMilliseconds);
+java.util.Calendar calendar = new GregorianCalendar();
+calendar.setTime(date);
+return getTimestamp(calendar);
+}
+public static String getTimestamp(final Calendar pCalendar) {
+return buildTimestamp(pCalendar);
+}
+public static String getTimestamp() {
+GregorianCalendar cal = new GregorianCalendar();
+return getTimestamp(cal);
+}
+protected static String buildTimestamp(final Calendar pCalendar) {
+if (pCalendar == null) {
+return CALENDAR_IS_NULL_ERROR_MESSAGE;
+}
+StringBuilder timestamp = new StringBuilder();
+timestamp.append(DateFormat.getDateInstance(DateFormat.MEDIUM).format(pCalendar.getTime()));
+timestamp.append(" ");
+timestamp.append(StringUtil.pad(new Integer(pCalendar.get(Calendar.HOUR_OF_DAY)).toString(), 2, "0", true) + ":");
+timestamp.append(StringUtil.pad(new Integer(pCalendar.get(Calendar.MINUTE)).toString(), 2, "0", true) + ":");
+timestamp.append(StringUtil.pad(new Integer(pCalendar.get(Calendar.SECOND)).toString(), 2, "0", true) + ":");
+timestamp.append(StringUtil.pad(new Integer(pCalendar.get(Calendar.MILLISECOND)).toString(), 3, "0", true));
+return timestamp.toString();
+}
+public static String buildTimeDifference(final long pStartTime, final long pEndTime) {
+StringBuilder retVal = new StringBuilder();
+long timeDifference = pEndTime - pStartTime;
+if (timeDifference < 1000) {
+retVal.append(timeDifference);
+retVal.append(" ms");
+} else {
+long seconds = timeDifference / 1000;
+timeDifference = timeDifference % 1000;
+retVal.append(seconds);
+retVal.append("s ");
+retVal.append(timeDifference);
+retVal.append("ms");
+}
+return retVal.toString();
+}
+public static String buildTimeDifference(final long pStartTime) {
+long presentTime = System.currentTimeMillis();
+return buildTimeDifference(pStartTime, presentTime);
+}
+public static void printTimeDifference(final long pStartTime, final long pEndTime, final PrintStream pPrintStream) {
+if (pPrintStream == null) {
+System.err.println(PRINTSTREAM_IS_NULL_ERROR_MESSAGE);
+return;
+}
+pPrintStream.println(buildTimeDifference(pStartTime, pEndTime));
+}
+public static void printTimeDifference(final long pStartTime, final long pEndTime) {
+printTimeDifference(pStartTime, pEndTime, System.out);
+}
+public static void printTimeDifference(final long pStartTime, final PrintStream pPrintStream) {
+printTimeDifference(pStartTime, System.currentTimeMillis(), pPrintStream);
+}
+public static void printTimeDifference(final long pStartTime) {
+printTimeDifference(pStartTime, System.out);
+}
+public static String buildTimeDifference(final Calendar pStartCalendar, final Calendar pEndCalendar) {
+if (pStartCalendar == null) {
+return CALENDAR_IS_NULL_ERROR_MESSAGE;
+}
+if (pEndCalendar == null) {
+return CALENDAR_IS_NULL_ERROR_MESSAGE;
+}
+if (pEndCalendar.before(pStartCalendar)) {
+return CALENDAR_CAUSATION_ERROR_MESSAGE;
+}
+int dateDiff        = pEndCalendar.get(Calendar.DATE) - pStartCalendar.get(Calendar.DATE);
+int hourDiff        = pEndCalendar.get(Calendar.HOUR_OF_DAY) - pStartCalendar.get(Calendar.HOUR_OF_DAY);
+int minuteDiff      = pEndCalendar.get(Calendar.MINUTE) - pStartCalendar.get(Calendar.MINUTE);
+int secondDiff      = pEndCalendar.get(Calendar.SECOND) - pStartCalendar.get(Calendar.SECOND);
+int milliSecondDiff = pEndCalendar.get(Calendar.MILLISECOND) - pStartCalendar.get(Calendar.MILLISECOND);
+if (milliSecondDiff < 0) {
+secondDiff--;
+milliSecondDiff += 1000;
+}
+if (secondDiff < 0) {
+minuteDiff--;
+secondDiff += 60;
+}
+if (minuteDiff < 0) {
+hourDiff--;
+minuteDiff += 60;
+}
+while (dateDiff > 0) {
+dateDiff--;
+hourDiff += 24;
+}
+StringBuilder buffer = new StringBuilder();
+if ((hourDiff == 0) && (minuteDiff == 0) && (secondDiff == 0)) {
+buffer.append(milliSecondDiff);
+buffer.append("ms");
+} else if ((hourDiff == 0) && (minuteDiff == 0)) {
+buffer.append(secondDiff);
+buffer.append("s ");
+buffer.append(milliSecondDiff);
+buffer.append("ms");
+} else if (hourDiff == 0) {
+buffer.append(minuteDiff);
+buffer.append("m ");
+buffer.append(secondDiff);
+buffer.append(",");
+buffer.append(milliSecondDiff);
+buffer.append("s");
+} else {
+buffer.append(hourDiff);
+buffer.append("h ");
+buffer.append(minuteDiff);
+buffer.append("m ");
+buffer.append(secondDiff);
+buffer.append(",");
+buffer.append(milliSecondDiff);
+buffer.append("s");
+}
+return buffer.toString();
+}
+public static void printTimeDifference(final Calendar pStartCalendar, final Calendar pEndCalendar, final PrintStream pPrintStream) {
+if (pPrintStream == null) {
+System.err.println(PRINTSTREAM_IS_NULL_ERROR_MESSAGE);
+return;
+}
+pPrintStream.println(buildTimeDifference(pStartCalendar, pEndCalendar));
+}
+public static void printTimeDifference(final Calendar pStartCalendar, final Calendar pEndCalendar) {
+printTimeDifference(pStartCalendar, pEndCalendar, System.out);
+}
+public static void printTimeDifference(final Calendar pStartCalendar, final PrintStream pPrintStream) {
+GregorianCalendar endCalendar = new GregorianCalendar();
+printTimeDifference(pStartCalendar, endCalendar, pPrintStream);
+}
+public static void printTimeDifference(final Calendar pStartCalendar) {
+GregorianCalendar endCalendar = new GregorianCalendar();
+printTimeDifference(pStartCalendar, endCalendar);
+}
+public static void printTimeDifference(final TimeDifference pTimeDifference, final PrintStream pPrintStream) {
+printTimeDifference(pTimeDifference.getStartCalendar(), pTimeDifference.getEndCalendar(), pPrintStream);
+}
+public static void printTimeDifference(final TimeDifference pTimeDifference) {
+printTimeDifference(pTimeDifference.getStartCalendar(), pTimeDifference.getEndCalendar(), System.out);
+}
+public static class TimeDifference {
+Calendar mStartCalendar;
+Calendar mEndCalendar;
+public TimeDifference() {}
+public TimeDifference(final Calendar pStartCalendar, final Calendar pEndCalendar) {
+this.mStartCalendar = pStartCalendar;
+this.mEndCalendar   = pEndCalendar;
+}
+public void setStartCalendar(Calendar pStartCalendar) {
+this.mStartCalendar = pStartCalendar;
+}
+public Calendar getStartCalendar() {
+return this.mStartCalendar;
+}
+public void setEndCalendar(Calendar pEndCalendar) {
+this.mEndCalendar = pEndCalendar;
+}
+public Calendar getEndCalendar() {
+return this.mEndCalendar;
+}
+}
+public static void printTimeAverage(final Collection pTimeDifferences, final PrintStream pPrintStream) {
+if (pPrintStream == null) {
+System.err.println(PRINTSTREAM_IS_NULL_ERROR_MESSAGE);
+return;
+}
+if (pTimeDifferences == null) {
+pPrintStream.println(TIMEDIFFERENCES_IS_NULL_ERROR_MESSAGE);
+return;
+}
+Object         o;
+TimeDifference timeDifference;
+Calendar       startCalendar      = null;
+Calendar       endCalendar        = null;
+Calendar       totalStartCalendar = null;
+Calendar       totalEndCalendar   = null;
+long           startCalendarMilliSeconds, endCalendarMilliSeconds;
+List           timeDifferenceList = new Vector();
+Iterator       i                  = pTimeDifferences.iterator();
+if (i.hasNext()) {
+o = i.next();
+if (!(o instanceof TimeDifference)) {
+pPrintStream.println(TIMEDIFFERENCES_WRONG_DATATYPE_ERROR_MESSAGE);
+return;
+}
+timeDifference            = (TimeDifference) o;
+startCalendar             = timeDifference.getStartCalendar();
+totalStartCalendar        = startCalendar;
+endCalendar               = timeDifference.getEndCalendar();
+startCalendarMilliSeconds = startCalendar.getTime().getTime();
+endCalendarMilliSeconds   = endCalendar.getTime().getTime();
+timeDifferenceList.add(new Long(endCalendarMilliSeconds - startCalendarMilliSeconds));
+}
+while (i.hasNext()) {
+o = i.next();
+if (!(o instanceof TimeDifference)) {
+pPrintStream.println(TIMEDIFFERENCES_WRONG_DATATYPE_ERROR_MESSAGE);
+return;
+}
+timeDifference            = (TimeDifference) o;
+startCalendar             = timeDifference.getStartCalendar();
+endCalendar               = timeDifference.getEndCalendar();
+startCalendarMilliSeconds = startCalendar.getTime().getTime();
+endCalendarMilliSeconds   = endCalendar.getTime().getTime();
+timeDifferenceList.add(new Long(endCalendarMilliSeconds - startCalendarMilliSeconds));
+}
+totalEndCalendar = endCalendar;
+int  numberOfElements = timeDifferenceList.size();
+long timeDifferenceElement;
+long timeDifferenceSum = 0;
+for (Iterator i2 = timeDifferenceList.iterator(); i2.hasNext(); ) {
+timeDifferenceElement = ((Long) i2.next()).longValue();
+timeDifferenceSum     += timeDifferenceElement;
+}
+String totalElapsedTime = buildTimeDifference(totalStartCalendar, totalEndCalendar);
+pPrintStream.println("Average time difference: " + timeDifferenceSum / numberOfElements + "ms (" + numberOfElements
++ " elements, total elapsed time: " + totalElapsedTime + ")");
+}
+public static void printTimeAverage(final Collection pTimeDifferences) {
+printTimeAverage(pTimeDifferences, System.out);
+}
+public static void printClassName(final Object pObject, final PrintStream pPrintStream) {
+if (pPrintStream == null) {
+System.err.println(PRINTSTREAM_IS_NULL_ERROR_MESSAGE);
+return;
+}
+pPrintStream.println(getClassName(pObject));
+}
+public static void printClassName(final Object pObject) {
+printClassName(pObject, System.out);
+}
+public static String getClassName(final Object pObject) {
+if (pObject == null) {
+return OBJECT_IS_NULL_ERROR_MESSAGE;
+}
+return pObject.getClass().getName();
+}
+public static void printClassDetails(final Object pObject, final String pObjectName, final PrintStream pPrintStream) {
+if (pPrintStream == null) {
+System.err.println(PRINTSTREAM_IS_NULL_ERROR_MESSAGE);
+return;
+}
+pPrintStream.println(getClassDetails(pObject, pObjectName));
+}
+public static void printClassDetails(final Object pObject, final String pObjectName) {
+printClassDetails(pObject, pObjectName, System.out);
+}
+public static void printClassDetails(final Object pObject) {
+printClassDetails(pObject, null, System.out);
+}
+public static void printClassDetails(final Object pObject, final PrintStream pPrintStream) {
+printClassDetails(pObject, null, pPrintStream);
+}
+public static String getClassDetails(final Object pObject) {
+return getClassDetails(pObject, null);
+}
+public static String getClassDetails(final Object pObject, final String pObjectName) {
+if (pObject == null) {
+return OBJECT_IS_NULL_ERROR_MESSAGE;
+}
+final String    endOfLine   = System.getProperty("line.separator");
+final String    dividerLine = "---------------------------------------------------------";
+Class           c           = pObject.getClass();
+StringTokenizer tokenizedString;
+String          str;
+String          className      = new String();
+String          superClassName = new String();
+StringBuilder    buffer         = new StringBuilder();
+buffer.append(endOfLine);
+buffer.append("**** class details");
+if (!StringUtil.isEmpty(pObjectName)) {
+buffer.append(" for \"" + pObjectName + "\"");
+}
+buffer.append(" ****");
+buffer.append(endOfLine);
+Package p = c.getPackage();
+if (p != null) {
+buffer.append(p.getName());
+}
+buffer.append(endOfLine);
+if (c.isInterface()) {
+buffer.append("I n t e r f a c e   ");
+} else {
+buffer.append("C l a s s   ");
+}
+str             = c.getName();
+tokenizedString = new StringTokenizer(str, ".");
+while (tokenizedString.hasMoreTokens()) {
+className = tokenizedString.nextToken().trim();
+}
+str = new String();
+char[] charArray = className.toCharArray();
+for (int i = 0; i < charArray.length; i++) {
+str += charArray[i] + " ";
+}
+buffer.append(str);
+buffer.append(endOfLine);
+buffer.append(endOfLine);
+List classNameList = new Vector();
+classNameList.add(c.getName());
+Class superclass = c.getSuperclass();
+while (superclass != null) {
+classNameList.add(superclass.getName());
+superclass = superclass.getSuperclass();
+}
+Object[] classNameArray = classNameList.toArray();
+int      counter        = 0;
+for (int i = classNameArray.length - 1; i >= 0; i--) {
+for (int j = 0; j < counter; j++) {
+buffer.append(" ");
+}
+if (counter > 0) {
+buffer.append("|");
+buffer.append(endOfLine);
+}
+for (int j = 0; j < counter; j++) {
+buffer.append(" ");
+}
+if (counter > 0) {
+buffer.append("+-");
+}
+buffer.append((String) classNameArray[i]);
+buffer.append(endOfLine);
+counter++;
+}
+buffer.append(endOfLine);
+buffer.append(dividerLine);
+buffer.append(endOfLine);
+buffer.append(endOfLine);
+int classModifier = c.getModifiers();
+buffer.append(Modifier.toString(classModifier) + " ");
+if (c.isInterface()) {
+buffer.append("Interface ");
+} else {
+buffer.append("Class ");
+}
+buffer.append(className);
+buffer.append(endOfLine);
+if ((classNameArray != null) && (classNameArray[classNameArray.length - 2] != null)) {
+str             = (String) classNameArray[classNameArray.length - 2];
+tokenizedString = new StringTokenizer(str, ".");
+while (tokenizedString.hasMoreTokens()) {
+superClassName = tokenizedString.nextToken().trim();
+}
+buffer.append("extends " + superClassName);
+buffer.append(endOfLine);
+}
+if (!c.isInterface()) {
+Class[] interfaces = c.getInterfaces();
+if ((interfaces != null) && (interfaces.length > 0)) {
+buffer.append("implements ");
+str             = interfaces[0].getName();
+tokenizedString = new StringTokenizer(str, ".");
+while (tokenizedString.hasMoreTokens()) {
+str = tokenizedString.nextToken().trim();
+}
+buffer.append(str);
+for (int i = 1; i < interfaces.length; i++) {
+str             = interfaces[i].getName();
+tokenizedString = new StringTokenizer(str, ".");
+while (tokenizedString.hasMoreTokens()) {
+str = tokenizedString.nextToken().trim();
+}
+buffer.append(", " + str);
+}
+buffer.append(endOfLine);
+}
+}
+buffer.append(endOfLine);
+buffer.append(dividerLine);
+buffer.append(endOfLine);
+buffer.append(endOfLine);
+buffer.append("F I E L D   S U M M A R Y");
+buffer.append(endOfLine);
+Field[] fields = c.getFields();
+if (fields != null) {
+for (int i = 0; i < fields.length; i++) {
+buffer.append(Modifier.toString(fields[i].getType().getModifiers()) + " ");
+str             = fields[i].getType().getName();
+tokenizedString = new StringTokenizer(str, ".");
+while (tokenizedString.hasMoreTokens()) {
+str = tokenizedString.nextToken().trim();
+}
+buffer.append(str + " ");
+buffer.append(fields[i].getName());
+buffer.append(endOfLine);
+}
+}
+buffer.append(endOfLine);
+buffer.append("C O N S T R U C T O R   S U M M A R Y");
+buffer.append(endOfLine);
+Constructor[] constructors = c.getConstructors();
+if (constructors != null) {
+for (int i = 0; i < constructors.length; i++) {
+buffer.append(className + "(");
+Class[] parameterTypes = constructors[i].getParameterTypes();
+if (parameterTypes != null) {
+if (parameterTypes.length > 0) {
+str             = parameterTypes[0].getName();
+tokenizedString = new StringTokenizer(str, ".");
+while (tokenizedString.hasMoreTokens()) {
+str = tokenizedString.nextToken().trim();
+}
+buffer.append(str);
+for (int j = 1; j < parameterTypes.length; j++) {
+str             = parameterTypes[j].getName();
+tokenizedString = new StringTokenizer(str, ".");
+while (tokenizedString.hasMoreTokens()) {
+str = tokenizedString.nextToken().trim();
+}
+buffer.append(", " + str);
+}
+}
+}
+buffer.append(")");
+buffer.append(endOfLine);
+}
+}
+buffer.append(endOfLine);
+buffer.append("M E T H O D   S U M M A R Y");
+buffer.append(endOfLine);
+Method[] methods = c.getMethods();
+if (methods != null) {
+for (int i = 0; i < methods.length; i++) {
+buffer.append(Modifier.toString(methods[i].getModifiers()) + " ");
+str             = methods[i].getReturnType().getName();
+tokenizedString = new StringTokenizer(str, ".");
+while (tokenizedString.hasMoreTokens()) {
+str = tokenizedString.nextToken().trim();
+}
+buffer.append(str + " ");
+buffer.append(methods[i].getName() + "(");
+Class[] parameterTypes = methods[i].getParameterTypes();
+if ((parameterTypes != null) && (parameterTypes.length > 0)) {
+if (parameterTypes[0] != null) {
+str             = parameterTypes[0].getName();
+tokenizedString = new StringTokenizer(str, ".");
+while (tokenizedString.hasMoreTokens()) {
+str = tokenizedString.nextToken().trim();
+}
+if (str.charAt(str.length() - 1) == ';') {
+str = str.substring(0, str.length() - 1) + "[]";
+}
+buffer.append(str);
+for (int j = 1; j < parameterTypes.length; j++) {
+str             = parameterTypes[j].getName();
+tokenizedString = new StringTokenizer(str, ".");
+while (tokenizedString.hasMoreTokens()) {
+str = tokenizedString.nextToken().trim();
+}
+buffer.append(", " + str);
+}
+}
+}
+buffer.append(")");
+buffer.append(endOfLine);
+}
+}
+buffer.append(endOfLine);
+buffer.append("**** class details");
+if (!StringUtil.isEmpty(pObjectName)) {
+buffer.append(" for \"" + pObjectName + "\"");
+}
+buffer.append(" end ****");
+buffer.append(endOfLine);
+return buffer.toString();
+}
+public static String getLargeNumber(final long pBigNumber) {
+StringBuilder buffer       = new StringBuilder(new Long(pBigNumber).toString());
+char[]       number       = new Long(pBigNumber).toString().toCharArray();
+int          reverseIndex = 0;
+for (int i = number.length; i >= 0; i--) {
+reverseIndex++;
+if ((reverseIndex % 3 == 0) && (i > 1)) {
+buffer = buffer.insert(i - 1, '.');
+}
+}
+return buffer.toString();
+}
+public static String getTimeInterval(final long pMilliseconds) {
+long         timeIntervalMilliseconds = pMilliseconds;
+long         timeIntervalSeconds      = 0;
+long         timeIntervalMinutes      = 0;
+long         timeIntervalHours        = 0;
+long         timeIntervalDays         = 0;
+boolean      printMilliseconds        = true;
+boolean      printSeconds             = false;
+boolean      printMinutes             = false;
+boolean      printHours               = false;
+boolean      printDays                = false;
+final long MILLISECONDS_IN_SECOND = 1000;
+final long MILLISECONDS_IN_MINUTE = 60 * MILLISECONDS_IN_SECOND;  
+final long MILLISECONDS_IN_HOUR = 60 * MILLISECONDS_IN_MINUTE;  
+final long MILLISECONDS_IN_DAY = 24 * MILLISECONDS_IN_HOUR;    
+StringBuilder timeIntervalBuffer       = new StringBuilder();
+if (timeIntervalMilliseconds >= MILLISECONDS_IN_DAY) {
+timeIntervalDays         = timeIntervalMilliseconds / MILLISECONDS_IN_DAY;
+timeIntervalMilliseconds = timeIntervalMilliseconds % MILLISECONDS_IN_DAY;
+printDays                = true;
+printHours               = true;
+printMinutes             = true;
+printSeconds             = true;
+}
+if (timeIntervalMilliseconds >= MILLISECONDS_IN_HOUR) {
+timeIntervalHours        = timeIntervalMilliseconds / MILLISECONDS_IN_HOUR;
+timeIntervalMilliseconds = timeIntervalMilliseconds % MILLISECONDS_IN_HOUR;
+printHours               = true;
+printMinutes             = true;
+printSeconds             = true;
+}
+if (timeIntervalMilliseconds >= MILLISECONDS_IN_MINUTE) {
+timeIntervalMinutes      = timeIntervalMilliseconds / MILLISECONDS_IN_MINUTE;
+timeIntervalMilliseconds = timeIntervalMilliseconds % MILLISECONDS_IN_MINUTE;
+printMinutes             = true;
+printSeconds             = true;
+}
+if (timeIntervalMilliseconds >= MILLISECONDS_IN_SECOND) {
+timeIntervalSeconds      = timeIntervalMilliseconds / MILLISECONDS_IN_SECOND;
+timeIntervalMilliseconds = timeIntervalMilliseconds % MILLISECONDS_IN_SECOND;
+printSeconds             = true;
+}
+if (printDays) {
+timeIntervalBuffer.append(timeIntervalDays);
+if (timeIntervalDays > 1) {
+timeIntervalBuffer.append("days ");
+} else {
+timeIntervalBuffer.append("day ");
+}
+}
+if (printHours) {
+timeIntervalBuffer.append(timeIntervalHours);
+timeIntervalBuffer.append("h ");
+}
+if (printMinutes) {
+timeIntervalBuffer.append(timeIntervalMinutes);
+timeIntervalBuffer.append("m ");
+}
+if (printSeconds) {
+timeIntervalBuffer.append(timeIntervalSeconds);
+timeIntervalBuffer.append("s ");
+}
+if (printMilliseconds) {
+timeIntervalBuffer.append(timeIntervalMilliseconds);
+timeIntervalBuffer.append("ms");
+}
+return timeIntervalBuffer.toString();
+}
+}

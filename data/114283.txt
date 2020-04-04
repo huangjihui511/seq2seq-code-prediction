@@ -1,0 +1,173 @@
+package com.datumbox.framework.core.machinelearning.common.abstracts.algorithms;
+import com.datumbox.framework.common.Configuration;
+import com.datumbox.framework.common.concurrency.ForkJoinStream;
+import com.datumbox.framework.common.concurrency.StreamMethods;
+import com.datumbox.framework.common.dataobjects.AssociativeArray;
+import com.datumbox.framework.core.common.dataobjects.Dataframe;
+import com.datumbox.framework.core.common.dataobjects.Record;
+import com.datumbox.framework.common.dataobjects.TypeInference;
+import com.datumbox.framework.common.storage.interfaces.BigMap;
+import com.datumbox.framework.common.storage.interfaces.StorageEngine;
+import com.datumbox.framework.common.storage.interfaces.StorageEngine.MapType;
+import com.datumbox.framework.common.storage.interfaces.StorageEngine.StorageHint;
+import com.datumbox.framework.core.machinelearning.common.abstracts.AbstractTrainer;
+import com.datumbox.framework.core.machinelearning.common.abstracts.modelers.AbstractClassifier;
+import com.datumbox.framework.core.machinelearning.common.interfaces.PredictParallelizable;
+import com.datumbox.framework.core.machinelearning.common.interfaces.TrainParallelizable;
+import com.datumbox.framework.core.statistics.descriptivestatistics.Descriptives;
+import java.util.*;
+public abstract class AbstractNaiveBayes<MP extends AbstractNaiveBayes.AbstractModelParameters, TP extends AbstractNaiveBayes.AbstractTrainingParameters> extends AbstractClassifier<MP, TP> implements PredictParallelizable, TrainParallelizable {
+public static abstract class AbstractModelParameters extends AbstractClassifier.AbstractModelParameters {
+private Map<Object, Double> logPriors = new HashMap<>(); 
+@BigMap(keyClass=List.class, valueClass=Double.class, mapType=MapType.HASHMAP, storageHint=StorageHint.IN_MEMORY, concurrent=true)
+private Map<List<Object>, Double> logLikelihoods; 
+protected AbstractModelParameters(StorageEngine storageEngine) {
+super(storageEngine);
+}
+public Map<Object, Double> getLogPriors() {
+return logPriors;
+}
+protected void setLogPriors(Map<Object, Double> logPriors) {
+this.logPriors = logPriors;
+}
+public Map<List<Object>, Double> getLogLikelihoods() {
+return logLikelihoods;
+}
+protected void setLogLikelihoods(Map<List<Object>, Double> logLikelihoods) {
+this.logLikelihoods = logLikelihoods;
+}
+}
+public static abstract class AbstractTrainingParameters extends AbstractClassifier.AbstractTrainingParameters {
+private boolean multiProbabilityWeighted=false; 
+public boolean isMultiProbabilityWeighted() {
+return multiProbabilityWeighted;
+}
+public void setMultiProbabilityWeighted(boolean multiProbabilityWeighted) {
+this.multiProbabilityWeighted = multiProbabilityWeighted;
+}
+}
+protected AbstractNaiveBayes(TP trainingParameters, Configuration configuration) {
+super(trainingParameters, configuration);
+streamExecutor = new ForkJoinStream(knowledgeBase.getConfiguration().getConcurrencyConfiguration());
+}
+protected AbstractNaiveBayes(String storageName, Configuration configuration) {
+super(storageName, configuration);
+streamExecutor = new ForkJoinStream(knowledgeBase.getConfiguration().getConcurrencyConfiguration());
+}
+protected abstract boolean isBinarized();
+private boolean parallelized = true;
+protected final ForkJoinStream streamExecutor;
+@Override
+public boolean isParallelized() {
+return parallelized;
+}
+@Override
+public void setParallelized(boolean parallelized) {
+this.parallelized = parallelized;
+}
+@Override
+protected void _predict(Dataframe newData) {
+_predictDatasetParallel(newData, knowledgeBase.getStorageEngine(), knowledgeBase.getConfiguration().getConcurrencyConfiguration());
+}
+@Override
+public Prediction _predictRecord(Record r) {
+AbstractModelParameters modelParameters = knowledgeBase.getModelParameters();
+Map<List<Object>, Double> logLikelihoods = modelParameters.getLogLikelihoods();
+Map<Object, Double> logPriors = modelParameters.getLogPriors();
+Set<Object> classesSet = modelParameters.getClasses();
+Object someClass = classesSet.iterator().next();
+boolean isBinarized = isBinarized();
+AssociativeArray predictionScores = new AssociativeArray(new HashMap<>(logPriors));
+for(Map.Entry<Object, Object> entry : r.getX().entrySet()) {
+Object feature = entry.getKey();
+if(!logLikelihoods.containsKey(Arrays.asList(feature, someClass))) {
+continue;
+}
+AssociativeArray classLogScoresForThisFeature = new AssociativeArray();
+for(Object theClass : classesSet) {
+Double logScore = logLikelihoods.get(Arrays.asList(feature, theClass));
+classLogScoresForThisFeature.put(theClass, logScore);
+}
+Double occurrences=TypeInference.toDouble(entry.getValue());
+if((!knowledgeBase.getTrainingParameters().isMultiProbabilityWeighted() || isBinarized) && occurrences>0) {
+occurrences=1.0;
+}
+for(Map.Entry<Object, Object> entry2 : classLogScoresForThisFeature.entrySet()) {
+Object theClass = entry2.getKey();
+Double logScore = TypeInference.toDouble(entry2.getValue());
+Double previousValue = predictionScores.getDouble(theClass);
+predictionScores.put(theClass, previousValue+occurrences*logScore);
+}
+}
+Object predictedClass=getSelectedClassFromClassScores(predictionScores);
+Descriptives.normalizeExp(predictionScores);
+return new Prediction(predictedClass, predictionScores);
+}
+@Override
+protected void _fit(Dataframe trainingData) {
+AbstractModelParameters modelParameters = knowledgeBase.getModelParameters();
+int n = trainingData.size();
+int d = trainingData.xColumnSize();
+Map<List<Object>, Double> logLikelihoods = modelParameters.getLogLikelihoods();
+Map<Object, Double> logPriors = modelParameters.getLogPriors();
+Set<Object> classesSet = modelParameters.getClasses();
+boolean isBinarized = isBinarized();
+Map<Object, Double> totalFeatureOccurrencesForEachClass = new HashMap<>();
+for(Record r : trainingData) {
+Object theClass=r.getY();
+if(classesSet.add(theClass)) { 
+logPriors.put(theClass, 1.0);
+totalFeatureOccurrencesForEachClass.put(theClass, 0.0);
+}
+else { 
+logPriors.put(theClass,logPriors.get(theClass)+1.0);
+}
+}
+Implementation note:
+The code below uses the metadata from the Dataframe to avoid looping through all the data.
+This means that if the metadata are stale (contain more columns than the actual data due to
+updates/removes) we will initialize more parameters here. Nevertheless this should not have
+any effects on the results of the algorithm since the scores will be the same in all classes
+and it will be taken care by the normalization.
+streamExecutor.forEach(StreamMethods.stream(trainingData.getXDataTypes().keySet().stream(), isParallelized()), feature -> {
+for(Object theClass : classesSet) {
+List<Object> featureClassTuple = Arrays.asList(feature, theClass);
+logLikelihoods.put(featureClassTuple, 0.0); 
+}
+});
+streamExecutor.forEach(StreamMethods.stream(trainingData.stream(), isParallelized()), r -> {
+Object theClass = r.getY();
+double sumOfOccurrences = 0.0;
+for(Map.Entry<Object, Object> entry : r.getX().entrySet()) {
+Object feature = entry.getKey();
+Double occurrences=TypeInference.toDouble(entry.getValue());
+if(occurrences!= null && occurrences>0.0) {
+if(isBinarized) {
+occurrences=1.0;
+}
+List<Object> featureClassTuple = Arrays.asList(feature, theClass);
+logLikelihoods.put(featureClassTuple, logLikelihoods.get(featureClassTuple)+occurrences); 
+sumOfOccurrences+=occurrences;
+}
+}
+synchronized(totalFeatureOccurrencesForEachClass) {
+totalFeatureOccurrencesForEachClass.put(theClass,totalFeatureOccurrencesForEachClass.get(theClass)+sumOfOccurrences);
+}
+});
+for(Map.Entry<Object, Double> entry : logPriors.entrySet()) {
+Object theClass = entry.getKey();
+Double count = entry.getValue();
+logPriors.put(theClass, Math.log(count/n));
+}
+streamExecutor.forEach(StreamMethods.stream(logLikelihoods.entrySet().stream(), isParallelized()), featureClassCounts -> {
+List<Object> featureClassTuple = featureClassCounts.getKey();
+Object theClass = featureClassTuple.get(1);
+Double occurrences = featureClassCounts.getValue();
+if(occurrences==null) {
+occurrences=0.0;
+}
+Double smoothedProbability = (occurrences+1.0)/(totalFeatureOccurrencesForEachClass.get(theClass)+d); 
+logLikelihoods.put(featureClassTuple, Math.log( smoothedProbability )); 
+});
+}
+}

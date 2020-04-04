@@ -1,0 +1,22 @@
+package org.pf4j;
+import org.junit.jupiter.api.Test;
+import org.pf4j.plugin.FailTestExtension;
+import org.pf4j.plugin.TestExtension;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertSame;
+public class SingletonExtensionFactoryTest {
+@Test
+public void create() {
+ExtensionFactory extensionFactory = new SingletonExtensionFactory();
+Object extensionOne = extensionFactory.create(TestExtension.class);
+Object extensionTwo = extensionFactory.create(TestExtension.class);
+assertSame(extensionOne, extensionTwo);
+}
+@Test
+public void createNewEachTime() {
+ExtensionFactory extensionFactory = new SingletonExtensionFactory(FailTestExtension.class.getName());
+Object extensionOne = extensionFactory.create(TestExtension.class);
+Object extensionTwo = extensionFactory.create(TestExtension.class);
+assertNotSame(extensionOne, extensionTwo);
+}
+}

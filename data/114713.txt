@@ -1,0 +1,31 @@
+package com.twelvemonkeys.servlet.jsp.droplet.taglib;
+import org.xml.sax.InputSource;
+import org.xml.sax.helpers.DefaultHandler;
+import javax.servlet.jsp.tagext.PageData;
+import javax.servlet.jsp.tagext.TagLibraryValidator;
+import javax.servlet.jsp.tagext.ValidationMessage;
+import javax.xml.parsers.SAXParser;
+import javax.xml.parsers.SAXParserFactory;
+import java.util.ArrayList;
+import java.util.List;
+public class NestingValidator extends TagLibraryValidator {
+private List<ValidationMessage> errors = new ArrayList<ValidationMessage>();
+public ValidationMessage[] validate(String pPrefix, String pURI, PageData pPage) {
+DefaultHandler handler = new NestingHandler(pPrefix, pURI, this);
+SAXParserFactory factory = SAXParserFactory.newInstance();
+try {
+SAXParser parser = factory.newSAXParser();
+InputSource source =
+new InputSource(pPage.getInputStream());
+parser.parse(source, handler);
+}
+catch (Exception e) {
+String errorMessage = e.getMessage();
+reportError(errorMessage);
+}
+return errors.toArray(new ValidationMessage[errors.size()]);
+}
+public void reportError(String pMessage) {
+errors.add(new ValidationMessage(null, pMessage));
+}
+}

@@ -1,0 +1,7 @@
+package com.briup.dao;
+import com.briup.bean.Customer;
+public interface ICustomerDao {
+void saveCustomer(Customer customer) throws Exception;
+void updateCustomer(Customer customer);
+Customer findCustomerByName(String name) throws Exception;
+}

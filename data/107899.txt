@@ -1,0 +1,42 @@
+package org.apache.zookeeper.server.jersey.cfg;
+public class Endpoint {
+private String context;
+private HostPortSet hostPort;
+private Credentials credentials;
+private Credentials zookeeperAuth;
+public Endpoint(String context, String hostPortList) {
+this.context = context;
+this.hostPort = new HostPortSet(hostPortList);
+}
+public String getContext() {
+return context;
+}
+public String getHostPort() {
+return hostPort.toString();
+}
+public Credentials getCredentials() {
+return credentials;
+}
+public void setCredentials(String c) {
+this.credentials = new Credentials(c);
+}
+public void setZooKeeperAuthInfo(String digest) {
+zookeeperAuth = new Credentials(digest);
+}
+public final Credentials getZooKeeperAuthInfo() {
+return zookeeperAuth;
+}
+@Override
+public boolean equals(Object o) {
+Endpoint e = (Endpoint) o;
+return context.equals(e.context);
+}
+@Override
+public int hashCode() {
+return context.hashCode();
+}
+@Override
+public String toString() {
+return String.format("<Endpoint %s %s>", context, hostPort.toString());
+}
+}

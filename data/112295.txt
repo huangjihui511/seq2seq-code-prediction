@@ -1,0 +1,29 @@
+package com.github.jknack.handlebars.internal;
+public final class Throwing {
+public interface Runnable {
+void run() throws Throwable;
+}
+public interface Supplier<R> {
+R get() throws Throwable;
+}
+private Throwing() {
+}
+public static void run(final Runnable task) {
+try {
+task.run();
+} catch (Throwable x) {
+throw sneakyThrow(x);
+}
+}
+public static <T> T get(final Supplier<T> task) {
+try {
+return task.get();
+} catch (Throwable x) {
+throw sneakyThrow(x);
+}
+}
+@SuppressWarnings("unchecked")
+public static <T extends Throwable> RuntimeException sneakyThrow(final Throwable x) throws T {
+throw (T) x;
+}
+}

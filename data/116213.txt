@@ -1,0 +1,7 @@
+package org.apache.struts2.interceptor;
+import javax.servlet.http.HttpServletRequest;
+@Deprecated
+public interface ServletRequestAware {
+@Deprecated
+public void setServletRequest(HttpServletRequest request);
+}

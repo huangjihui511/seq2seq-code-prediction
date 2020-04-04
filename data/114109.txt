@@ -1,0 +1,13 @@
+package org.apache.parquet.column;
+public interface ColumnWriteStore {
+abstract public ColumnWriter getColumnWriter(ColumnDescriptor path);
+abstract public void flush();
+abstract public void endRecord();
+abstract public long getAllocatedSize();
+abstract public long getBufferedSize();
+abstract public String memUsageString();
+abstract public void close();
+default boolean isColumnFlushNeeded() {
+return false;
+}
+}

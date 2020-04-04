@@ -1,0 +1,54 @@
+package org.dstadler.jgit.porcelain;
+import org.apache.commons.io.FileUtils;
+import org.dstadler.jgit.helper.CookbookHelper;
+import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.lib.Repository;
+import java.io.File;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
+public class RevertChanges {
+public static void main(String[] args) throws IOException, GitAPIException {
+final File localPath;
+try (Repository repository = CookbookHelper.createNewRepository()) {
+localPath = repository.getWorkTree();
+System.out.println("Listing local branches:");
+try (Git git = new Git(repository)) {
+String fileName = "temptFile.txt";
+File tempFile = new File(repository.getDirectory().getParentFile(), fileName);
+if(!tempFile.createNewFile()) {
+throw new IOException("Could not create temporary file " + tempFile);
+}
+Path tempFilePath = tempFile.toPath();
+String initialText = "Initial Text";
+System.out.println("Writing text [" + initialText + "] to file [" + tempFile.toString() + "]");
+Files.write(tempFilePath, initialText.getBytes());
+git.add().addFilepattern(fileName).call();
+git.commit().setMessage("Added untracked file " + fileName + "to repo").call();
+Files.write(tempFilePath, "Some modifications".getBytes(), StandardOpenOption.APPEND);
+if (initialText.equals(getTextFromFilePath(tempFilePath))) {
+throw new IllegalStateException("Modified file's text should not equal " +
+"its original state after modification");
+}
+System.out.println("File now has text [" + getTextFromFilePath(tempFilePath) + "]");
+git.checkout().addPath(fileName).call();
+if (!initialText.equals(getTextFromFilePath(tempFilePath))) {
+throw new IllegalStateException("Reverted file's text should equal its initial text");
+}
+System.out.println("File modifications were reverted. " +
+"File now has text [" + getTextFromFilePath(tempFilePath) + "]");
+}
+}
+FileUtils.deleteDirectory(localPath);
+}
+private static String getTextFromFilePath(Path file) throws IOException {
+byte[] bytes = Files.readAllBytes(file);
+CharBuffer chars = Charset.defaultCharset().decode(ByteBuffer.wrap(bytes));
+return chars.toString();
+}
+}

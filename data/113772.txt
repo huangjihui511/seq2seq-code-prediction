@@ -1,0 +1,340 @@
+package com.spazedog.lib.rootfw4.utils;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.regex.Pattern;
+import com.spazedog.lib.rootfw4.Common;
+import com.spazedog.lib.rootfw4.Shell;
+import com.spazedog.lib.rootfw4.Shell.Result;
+import com.spazedog.lib.rootfw4.containers.BasicContainer;
+import com.spazedog.lib.rootfw4.utils.File.FileData;
+public class Memory {
+public static final String TAG = Common.TAG + ".Memory";
+protected final static Pattern oPatternSpaceSearch = Pattern.compile("[ \t]+");
+protected static Boolean oCompCacheSupport;
+protected static Boolean oSwapSupport;
+protected Shell mShell;
+public static class SwapStat extends BasicContainer {
+private String mDevice;
+private Long mSize;
+private Long mUsage;
+public String device() {
+return mDevice;
+}
+public Long size() {
+return mSize;
+}
+public Long usage() {
+return mUsage;
+}
+}
+public static class MemStat extends BasicContainer {
+private Long mMemTotal = 0L;
+private Long mMemFree = 0L;
+private Long mMemCached = 0L;
+private Long mSwapTotal = 0L;
+private Long mSwapFree = 0L;
+private Long mSwapCached = 0L;
+public Long total() {
+return mMemTotal + mSwapTotal;
+}
+public Long free() {
+return mMemFree + mSwapFree + (mMemCached + mSwapCached);
+}
+public Long cached() {
+return mMemCached + mSwapCached;
+}
+public Long usage() {
+return total() - free();
+}
+public Integer percentage() {
+return ((Long) ((usage() * 100L) / total())).intValue();
+}
+public Long memTotal() {
+return mMemTotal;
+}
+public Long memFree() {
+return mMemFree + mMemCached;
+}
+public Long memCached() {
+return mMemCached;
+}
+public Long memUsage() {
+return memTotal() - memFree();
+}
+public Integer memPercentage() {
+try {
+return ((Long) ((memUsage() * 100L) / memTotal())).intValue();
+} catch (Throwable e) {
+return 0;
+}
+}
+public Long swapTotal() {
+return mSwapTotal;
+}
+public Long swapFree() {
+return mSwapFree + mSwapCached;
+}
+public Long swapCached() {
+return mSwapCached;
+}
+public Long swapUsage() {
+return swapTotal() - swapFree();
+}
+public Integer swapPercentage() {
+try {
+return ((Long) ((swapUsage() * 100L) / swapTotal())).intValue();
+} catch (Throwable e) {
+return 0;
+}
+}
+}
+public Memory(Shell shell) {
+mShell = shell;
+}
+public MemStat getUsage() {
+FileData data = mShell.getFile("/proc/meminfo").read();
+if (data != null && data.size() > 0) {
+String[] lines = data.getArray();
+MemStat stat = new MemStat();
+for (int i=0; i < lines.length; i++) {
+String[] parts = oPatternSpaceSearch.split(lines[i]);
+if (parts[0].equals("MemTotal:")) {
+stat.mMemTotal = Long.parseLong(parts[1]) * 1024L;
+} else if (parts[0].equals("MemFree:")) {
+stat.mMemFree = Long.parseLong(parts[1]) * 1024L;
+} else if (parts[0].equals("Cached:")) {
+stat.mMemCached = Long.parseLong(parts[1]) * 1024L;
+} else if (parts[0].equals("SwapTotal:")) {
+stat.mSwapTotal = Long.parseLong(parts[1]) * 1024L;
+} else if (parts[0].equals("SwapFree:")) {
+stat.mSwapFree = Long.parseLong(parts[1]) * 1024L;
+} else if (parts[0].equals("SwapCached:")) {
+stat.mSwapCached = Long.parseLong(parts[1]) * 1024L;
+}
+}
+return stat;
+}
+return null;
+}
+public SwapStat[] getSwapList() {
+File file = mShell.getFile("/proc/swaps");
+if (file.exists()) {
+String[] data = file.readMatch("/dev/", false).trim().getArray();
+List<SwapStat> statList = new ArrayList<SwapStat>();
+if (data != null && data.length > 0) {
+for (int i=0; i < data.length; i++) {
+try {
+String[] sections = oPatternSpaceSearch.split(data[i].trim());
+SwapStat stat = new SwapStat();
+stat.mDevice = sections[0];
+stat.mSize = Long.parseLong(sections[2]) * 1024L;
+stat.mUsage = Long.parseLong(sections[3]) * 1024L;
+statList.add(stat);
+} catch(Throwable e) {}
+}
+return statList.size() > 0 ? statList.toArray( new SwapStat[ statList.size() ] ) : null;
+}
+}
+return null;
+}
+public Boolean hasCompCacheSupport() {
+if (oCompCacheSupport == null) {
+oCompCacheSupport = false;
+if (hasSwapSupport()) {
+String[] files = new String[]{"/dev/block/ramzswap0", "/dev/block/zram0", "/system/lib/modules/ramzswap.ko", "/system/lib/modules/zram.ko"};
+for (String file : files) {
+if (mShell.getFile(file).exists()) {
+oCompCacheSupport = true; break;
+}
+}
+}
+}
+return oCompCacheSupport;
+}
+public Boolean hasSwapSupport() {
+if (oSwapSupport == null) {
+oSwapSupport = mShell.getFile("/proc/swaps").exists();
+}
+return oSwapSupport;
+}
+public Swap getSwap(String device) {
+return new Swap(mShell, device);
+}
+public CompCache getCompCache() {
+return new CompCache(mShell);
+}
+public Boolean setSwappiness(Integer level) {
+Result result = null;
+if (level >= 0 && level <= 100 && hasSwapSupport()) {
+result = mShell.execute("echo '" + level + "' > /proc/sys/vm/swappiness");
+}
+return result != null && result.wasSuccessful();
+}
+public Integer getSwappiness() {
+if (hasSwapSupport()) {
+String output = mShell.getFile("/proc/sys/vm/swappiness").readOneLine();
+if (output != null) {
+try {
+return Integer.parseInt(output);
+} catch (Throwable e) {}
+}
+}
+return 0;
+}
+public static class Swap extends Memory {
+protected File mSwapDevice;
+public Swap(Shell shell, String device) {
+super(shell);
+if (device != null) {
+mSwapDevice = mShell.getFile(device);
+if (!mSwapDevice.getAbsolutePath().startsWith("/dev/")) {
+mSwapDevice = null;
+}
+}
+}
+public SwapStat getSwapDetails() {
+if (exists()) {
+File file = mShell.getFile("/proc/swaps");
+if (file.exists()) {
+String data = file.readMatch(mSwapDevice.getAbsolutePath(), false).getLine();
+if (data != null && data.length() > 0) {
+try {
+String[] sections = oPatternSpaceSearch.split(data);
+SwapStat stat = new SwapStat();
+stat.mDevice = sections[0];
+stat.mSize = Long.parseLong(sections[2]) * 1024L;
+stat.mUsage = Long.parseLong(sections[3]) * 1024L;
+return stat;
+} catch(Throwable e) {}
+}
+}
+}
+return null;
+}
+public Boolean exists() {
+return mSwapDevice != null && mSwapDevice.exists();
+}
+public Boolean isActive() {
+return getSwapDetails() != null;
+}
+public String getPath() {
+return mSwapDevice != null ? mSwapDevice.getResolvedPath() : null;
+}
+public Boolean setSwapOn() {
+return setSwapOn(0);
+}
+public Boolean setSwapOn(Integer priority) {
+if (exists()) {
+Boolean status = isActive();
+if (!status) {
+String[] commands = null;
+if (priority > 0) {
+commands = new String[]{"swapon -p '" + priority + "' '" + mSwapDevice.getAbsolutePath() + "'", "swapon '" + mSwapDevice.getAbsolutePath() + "'"};
+} else {
+commands = new String[]{"swapon '" + mSwapDevice.getAbsolutePath() + "'"};
+}
+for (String command : commands) {
+Result result = mShell.createAttempts(command).execute();
+if (result != null && result.wasSuccessful()) {
+return true;
+}
+}
+}
+return status;
+}
+return false;
+}
+public Boolean setSwapOff() {
+if (exists()) {
+Boolean status = isActive();
+if (status) {
+Result result = mShell.createAttempts("swapoff '" + mSwapDevice.getAbsolutePath() + "'").execute();
+return result != null && result.wasSuccessful();
+}
+return status;
+}
+return true;
+}
+}
+public static class CompCache extends Swap {
+protected static String oCachedDevice;
+public CompCache(Shell shell) {
+super(shell, oCachedDevice);
+if (oCachedDevice == null) {
+String[] blockDevices = new String[]{"/dev/block/ramzswap0", "/dev/block/zram0"};
+String[] libraries = new String[]{"/system/lib/modules/ramzswap.ko", "/system/lib/modules/zram.ko"};
+for (int i=0; i < blockDevices.length; i++) {
+if (mShell.getFile(blockDevices[i]).exists()) {
+oCachedDevice = blockDevices[i]; break;
+} else if (mShell.getFile(libraries[i]).exists()) {
+Result result = mShell.createAttempts("insmod '" + libraries[i] + "'").execute();
+if (result != null && result.wasSuccessful()) {
+oCachedDevice = blockDevices[i]; break;
+}
+}
+}
+if (oCachedDevice != null) {
+mSwapDevice = mShell.getFile(oCachedDevice);
+}
+}
+}
+@Override
+public Boolean setSwapOn(Integer priority) {
+return setSwapOn(priority, 18);
+}
+public Boolean setSwapOn(Integer priority, Integer cacheSize) {
+cacheSize = cacheSize > 35 ? 35 : (cacheSize <= 0 ? 18 : cacheSize);
+if (exists()) {
+Boolean status = isActive();
+if (!status) {
+Result result = null;
+MemStat stat = getUsage();
+if (stat != null) {
+if (oCachedDevice.endsWith("/zram0")) {
+result = mShell.createAttempts(
+"echo 1 > /sys/block/zram0/reset && " +
+"echo '" + ((stat.memTotal() * cacheSize) / 100) + "' > /sys/block/zram0/disksize && " +
+"%binary mkswap '" + mSwapDevice.getAbsolutePath() + "'"
+).execute();
+} else {
+result = mShell.execute("rzscontrol '" + mSwapDevice.getAbsolutePath() + "' --disksize_kb='" + (((stat.memTotal() * cacheSize) / 100) * 1024) + "' --init");
+}
+if (result != null && result.wasSuccessful()) {
+String[] commands = null;
+if (priority > 0) {
+commands = new String[]{"swapon -p '" + priority + "' '" + mSwapDevice.getAbsolutePath() + "'", "swapon '" + mSwapDevice.getAbsolutePath() + "'"};
+} else {
+commands = new String[]{"swapon '" + mSwapDevice.getAbsolutePath() + "'"};
+}
+for (String command : commands) {
+result = mShell.createAttempts(command).execute();
+if (result != null && result.wasSuccessful()) {
+return true;
+}
+}
+}
+}
+}
+return status;
+}
+return false;
+}
+@Override
+public Boolean setSwapOff() {
+if (exists()) {
+Boolean status = isActive();
+if (status) {
+Result result = null;
+if (oCachedDevice.endsWith("/zram0")) {
+result = mShell.createAttempts("swapoff '" + mSwapDevice.getAbsolutePath() + "' && echo 1 > /sys/block/zram0/reset").execute();
+} else {
+result = mShell.createAttempts("swapoff '" + mSwapDevice.getAbsolutePath() + "' && rzscontrol '" + mSwapDevice.getAbsolutePath() + "' --reset").execute();
+}
+return result != null && result.wasSuccessful();
+}
+return status;
+}
+return true;
+}
+}
+}

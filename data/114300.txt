@@ -1,0 +1,126 @@
+package mobi.hsz.idea.gitignore.command;
+import com.intellij.notification.NotificationType;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.VisualPosition;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
+import com.intellij.util.containers.ContainerUtil;
+import mobi.hsz.idea.gitignore.IgnoreBundle;
+import mobi.hsz.idea.gitignore.psi.IgnoreEntry;
+import mobi.hsz.idea.gitignore.psi.IgnoreVisitor;
+import mobi.hsz.idea.gitignore.settings.IgnoreSettings;
+import mobi.hsz.idea.gitignore.util.Constants;
+import mobi.hsz.idea.gitignore.util.Notify;
+import mobi.hsz.idea.gitignore.util.Utils;
+import org.jetbrains.annotations.NotNull;
+import java.util.*;
+public class AppendFileCommandAction extends CommandAction<PsiFile> {
+private final Project project;
+private final PsiFile file;
+private final Set<String> content;
+private final PsiDocumentManager manager;
+private final boolean ignoreDuplicates;
+private final boolean ignoreComments;
+private final boolean insertAtCursor;
+public AppendFileCommandAction(@NotNull Project project, @NotNull PsiFile file, @NotNull Set<String> content,
+boolean ignoreDuplicates, boolean ignoreComments) {
+super(project);
+this.project = project;
+this.file = file;
+this.content = content;
+this.manager = PsiDocumentManager.getInstance(project);
+this.ignoreDuplicates = ignoreDuplicates;
+this.ignoreComments = ignoreComments;
+this.insertAtCursor = IgnoreSettings.getInstance().isInsertAtCursor();
+}
+public AppendFileCommandAction(@NotNull Project project, @NotNull PsiFile file, @NotNull final String content,
+boolean ignoreDuplicates, boolean ignoreComments) {
+this(project, file, ContainerUtil.newHashSet(content), ignoreDuplicates, ignoreComments);
+}
+@Override
+protected PsiFile compute() {
+if (!content.isEmpty()) {
+final Document document = manager.getDocument(file);
+if (document != null) {
+file.acceptChildren(new IgnoreVisitor() {
+@Override
+public void visitEntry(@NotNull IgnoreEntry entry) {
+final VirtualFile moduleDir = Utils.getModuleRootForFile(file.getVirtualFile(), project);
+if (content.contains(entry.getText()) && moduleDir != null) {
+Notify.show(
+project,
+IgnoreBundle.message("action.appendFile.entryExists", entry.getText()),
+IgnoreBundle.message(
+"action.appendFile.entryExists.in",
+Utils.getRelativePath(moduleDir, file.getVirtualFile())
+),
+NotificationType.WARNING
+);
+content.remove(entry.getText());
+}
+}
+});
+int offset = document.getTextLength();
+if (insertAtCursor) {
+Editor[] editors = EditorFactory.getInstance().getEditors(document);
+if (editors.length > 0) {
+VisualPosition position = editors[0].getSelectionModel().getSelectionStartPosition();
+if (position != null) {
+offset = document.getLineStartOffset(position.line);
+}
+}
+}
+for (String entry : content) {
+if (ignoreDuplicates) {
+List<String> currentLines = ContainerUtil.filter(
+document.getText().split(Constants.NEWLINE),
+s -> !s.isEmpty() && !s.startsWith(Constants.HASH)
+);
+List<String> entryLines = new ArrayList<>(Arrays.asList(entry.split(Constants.NEWLINE)));
+Iterator<String> iterator = entryLines.iterator();
+while (iterator.hasNext()) {
+String line = iterator.next().trim();
+if (line.isEmpty() || line.startsWith(Constants.HASH)) {
+continue;
+}
+if (currentLines.contains(line)) {
+iterator.remove();
+} else {
+currentLines.add(line);
+}
+}
+entry = StringUtil.join(entryLines, Constants.NEWLINE);
+}
+if (ignoreComments) {
+List<String> entryLines = new ArrayList<>(Arrays.asList(entry.split(Constants.NEWLINE)));
+Iterator<String> iterator = entryLines.iterator();
+while (iterator.hasNext()) {
+String line = iterator.next().trim();
+if (line.isEmpty() || line.startsWith(Constants.HASH)) {
+iterator.remove();
+}
+}
+entry = StringUtil.join(entryLines, Constants.NEWLINE);
+}
+entry = StringUtil.replace(entry, "\r", "");
+if (!StringUtil.isEmpty(entry)) {
+entry += Constants.NEWLINE;
+}
+if (!insertAtCursor && !document.getText().endsWith(Constants.NEWLINE)
+&& !StringUtil.isEmpty(entry)) {
+entry = Constants.NEWLINE + entry;
+}
+document.insertString(offset, entry);
+offset += entry.length();
+}
+manager.commitDocument(document);
+}
+}
+return file;
+}
+}

@@ -1,0 +1,3 @@
+package com.graphhopper.jsprit.core.algorithm.listener;
+public interface SearchStrategyListener extends VehicleRoutingAlgorithmListener {
+}

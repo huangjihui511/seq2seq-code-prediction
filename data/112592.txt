@@ -1,0 +1,71 @@
+package org.jb2011.lnf.beautyeye.ch13_radio$cb_btn;
+import javax.swing.ImageIcon;
+import org.jb2011.lnf.beautyeye.utils.RawCache;
+public class __IconFactory__ extends RawCache<ImageIcon>
+{
+public final static String IMGS_ROOT="imgs";
+private static __IconFactory__ instance = null;
+public static __IconFactory__ getInstance()
+{
+if(instance==null)
+instance = new __IconFactory__();
+return instance;
+}
+@Override
+protected ImageIcon getResource(String relativePath, Class baseClass)
+{
+return new ImageIcon(baseClass.getResource(relativePath));
+}
+public ImageIcon getImage(String relativePath)
+{
+return  getRaw(relativePath,this.getClass());
+}
+public ImageIcon getRadioButtonIcon_disable()
+{
+return getImage(IMGS_ROOT+"/rb_disable.png");
+}
+public ImageIcon getRadioButtonIcon_normal()
+{
+return getImage(IMGS_ROOT+"/rb_normal.png");
+}
+public ImageIcon getRadioButtonIcon_pressed()
+{
+return getImage(IMGS_ROOT+"/rb_pressed.png");
+}
+public ImageIcon getRadioButtonIcon_unchecked_disable()
+{
+return getImage(IMGS_ROOT+"/rb_un_disable.png");
+}
+public ImageIcon getRadioButtonIcon_unchecked_normal()
+{
+return getImage(IMGS_ROOT+"/rb_un_normal.png");
+}
+public ImageIcon getRadioButtonIcon_unchecked_pressed()
+{
+return getImage(IMGS_ROOT+"/rb_un_pressed.png");
+}
+public ImageIcon getCheckBoxButtonIcon_disable()
+{
+return getImage(IMGS_ROOT+"/cb_disable.png");
+}
+public ImageIcon getCheckBoxButtonIcon_normal()
+{
+return getImage(IMGS_ROOT+"/cb_normal.png");
+}
+public ImageIcon getCheckBoxButtonIcon_pressed()
+{
+return getImage(IMGS_ROOT+"/cb_pressed.png");
+}
+public ImageIcon getCheckBoxButtonIcon_unchecked_disable()
+{
+return getImage(IMGS_ROOT+"/cb_un_disable.png");
+}
+public ImageIcon getCheckBoxButtonIcon_unchecked_normal()
+{
+return getImage(IMGS_ROOT+"/cb_un_normal.png");
+}
+public ImageIcon getCheckBoxButtonIcon_unchecked_pressed()
+{
+return getImage(IMGS_ROOT+"/cb_un_pressed.png");
+}
+}

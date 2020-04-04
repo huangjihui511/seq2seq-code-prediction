@@ -1,0 +1,4 @@
+package org.apache.flink.runtime.taskmanager;
+public interface TaskActions {
+void failExternally(Throwable cause);
+}

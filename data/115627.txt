@@ -1,0 +1,24 @@
+package com.netflix.astyanax.query;
+import java.util.Collection;
+import com.netflix.astyanax.connectionpool.Host;
+import com.netflix.astyanax.model.ConsistencyLevel;
+import com.netflix.astyanax.retry.RetryPolicy;
+public interface ColumnFamilyQuery<K, C> {
+ColumnFamilyQuery<K, C> setConsistencyLevel(ConsistencyLevel consistencyLevel);
+ColumnFamilyQuery<K, C> withRetryPolicy(RetryPolicy retry);
+ColumnFamilyQuery<K, C> pinToHost(Host host);
+RowQuery<K, C> getKey(K rowKey);
+RowQuery<K, C> getRow(K rowKey);
+RowSliceQuery<K, C> getKeyRange(K startKey, K endKey, String startToken, String endToken, int count);
+RowSliceQuery<K, C> getRowRange(K startKey, K endKey, String startToken, String endToken, int count);
+RowSliceQuery<K, C> getKeySlice(K... keys);
+RowSliceQuery<K, C> getRowSlice(K... keys);
+RowSliceQuery<K, C> getKeySlice(Collection<K> keys);
+RowSliceQuery<K, C> getRowSlice(Collection<K> keys);
+RowSliceQuery<K, C> getKeySlice(Iterable<K> keys);
+RowSliceQuery<K, C> getRowSlice(Iterable<K> keys);
+AllRowsQuery<K, C> getAllRows();
+CqlQuery<K, C> withCql(String cql);
+IndexQuery<K, C> searchWithIndex();
+ColumnFamilyQuery<K, C> withCaching(boolean condition);
+}

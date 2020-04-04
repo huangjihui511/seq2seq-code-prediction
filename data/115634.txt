@@ -1,0 +1,23 @@
+package com.netflix.astyanax.query;
+import java.nio.ByteBuffer;
+import java.util.Collection;
+import com.netflix.astyanax.Execution;
+import com.netflix.astyanax.model.ByteBufferRange;
+import com.netflix.astyanax.model.ColumnSlice;
+import com.netflix.astyanax.model.Rows;
+public interface IndexQuery<K, C> extends Execution<Rows<K, C>> {
+@Deprecated
+IndexQuery<K, C> setLimit(int count);
+IndexQuery<K, C> setRowLimit(int count);
+IndexQuery<K, C> setStartKey(K key);
+IndexColumnExpression<K, C> addExpression();
+IndexQuery<K, C> addPreparedExpressions(Collection<PreparedIndexExpression<K, C>> expressions);
+IndexQuery<K, C> withColumnSlice(C... columns);
+IndexQuery<K, C> withColumnSlice(Collection<C> columns);
+IndexQuery<K, C> withColumnSlice(ColumnSlice<C> columns);
+IndexQuery<K, C> withColumnRange(C startColumn, C endColumn, boolean reversed, int count);
+IndexQuery<K, C> withColumnRange(ByteBuffer startColumn, ByteBuffer endColumn, boolean reversed, int count);
+IndexQuery<K, C> withColumnRange(ByteBufferRange range);
+IndexQuery<K, C> setIsPaginating();
+IndexQuery<K, C> autoPaginateRows(boolean autoPaginate);
+}

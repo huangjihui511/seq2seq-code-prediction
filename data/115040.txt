@@ -1,0 +1,113 @@
+import com.google.api.client.googleapis.json.GoogleJsonResponseException;
+import com.google.api.client.http.HttpHeaders;
+import com.google.api.client.http.InputStreamContent;
+import com.google.api.services.storage.Storage;
+import com.google.api.services.storage.model.RewriteResponse;
+import java.io.IOException;
+import java.io.InputStream;
+class CustomerSuppliedEncryptionKeysSamples {
+private static final String CSEK_KEY = "4RzDI0TeWa9M/nAvYH05qbCskPaSU/CFV5HeCxk0IUA=";
+private static final String CSEK_KEY_HASH = "aanjNC2nwso8e2FqcWILC3/Tt1YumvIwEj34kr6PRpI=";
+private static final String ANOTHER_CESK_KEY = "oevtavYZC+TfGtV86kJBKTeytXAm1s2r3xIqam+QPKM=";
+private static final String ANOTHER_CSEK_KEY_HASH =
+"/gd0N3k3MK0SEDxnUiaswl0FFv6+5PHpo+5KD5SBCeA=";
+private static final String OBJECT_NAME = "encrypted_file.txt";
+public static InputStream downloadObject(
+Storage storage,
+String bucketName,
+String objectName,
+String base64CseKey,
+String base64CseKeyHash)
+throws Exception {
+final HttpHeaders httpHeaders = new HttpHeaders();
+httpHeaders.set("x-goog-encryption-algorithm", "AES256");
+httpHeaders.set("x-goog-encryption-key", base64CseKey);
+httpHeaders.set("x-goog-encryption-key-sha256", base64CseKeyHash);
+Storage.Objects.Get getObject = storage.objects().get(bucketName, objectName);
+getObject.setRequestHeaders(httpHeaders);
+try {
+return getObject.executeMediaAsInputStream();
+} catch (GoogleJsonResponseException e) {
+System.out.println("Error downloading: " + e.getContent());
+System.exit(1);
+return null;
+}
+}
+public static void uploadObject(
+Storage storage,
+String bucketName,
+String objectName,
+InputStream data,
+String base64CseKey,
+String base64CseKeyHash)
+throws IOException {
+InputStreamContent mediaContent = new InputStreamContent("text/plain", data);
+Storage.Objects.Insert insertObject =
+storage.objects().insert(bucketName, null, mediaContent).setName(objectName);
+insertObject.getMediaHttpUploader().setDisableGZipContent(true);
+final HttpHeaders httpHeaders = new HttpHeaders();
+httpHeaders.set("x-goog-encryption-algorithm", "AES256");
+httpHeaders.set("x-goog-encryption-key", base64CseKey);
+httpHeaders.set("x-goog-encryption-key-sha256", base64CseKeyHash);
+insertObject.setRequestHeaders(httpHeaders);
+try {
+insertObject.execute();
+} catch (GoogleJsonResponseException e) {
+System.out.println("Error uploading: " + e.getContent());
+System.exit(1);
+}
+}
+public static void rotateKey(
+Storage storage,
+String bucketName,
+String objectName,
+String originalBase64Key,
+String originalBase64KeyHash,
+String newBase64Key,
+String newBase64KeyHash)
+throws Exception {
+final HttpHeaders httpHeaders = new HttpHeaders();
+httpHeaders.set("x-goog-copy-source-encryption-algorithm", "AES256");
+httpHeaders.set("x-goog-copy-source-encryption-key", originalBase64Key);
+httpHeaders.set("x-goog-copy-source-encryption-key-sha256", originalBase64KeyHash);
+httpHeaders.set("x-goog-encryption-algorithm", "AES256");
+httpHeaders.set("x-goog-encryption-key", newBase64Key);
+httpHeaders.set("x-goog-encryption-key-sha256", newBase64KeyHash);
+Storage.Objects.Rewrite rewriteObject =
+storage.objects().rewrite(bucketName, objectName, bucketName, objectName, null);
+rewriteObject.setRequestHeaders(httpHeaders);
+try {
+RewriteResponse rewriteResponse = rewriteObject.execute();
+while (!rewriteResponse.getDone()) {
+System.out.println("Rewrite did not complete. Resuming...");
+rewriteObject.setRewriteToken(rewriteResponse.getRewriteToken());
+rewriteResponse = rewriteObject.execute();
+}
+} catch (GoogleJsonResponseException e) {
+System.out.println("Error rotating key: " + e.getContent());
+System.exit(1);
+}
+}
+public static void main(String[] args) throws Exception {
+if (args.length != 1) {
+System.out.println("\nPlease run this with one argument: "
++ "the GCS bucket into which this program should upload an object.\n\n"
++ "You can create a bucket using gsutil like this:\n\n\t"
++ "gsutil mb gs:
+System.exit(1);
+}
+String bucketName = args[0];
+Storage storage = StorageFactory.getService();
+InputStream dataToUpload = new StorageUtils.ArbitrarilyLargeInputStream(10000000);
+System.out.format("Uploading object gs:
+uploadObject(storage, bucketName, OBJECT_NAME, dataToUpload, CSEK_KEY, CSEK_KEY_HASH);
+System.out.format("Downloading object gs:
+InputStream objectData =
+downloadObject(storage, bucketName, OBJECT_NAME, CSEK_KEY, CSEK_KEY_HASH);
+StorageUtils.readStream(objectData);
+System.out.println("Rotating object to use a different CSEK.");
+rotateKey(storage, bucketName, OBJECT_NAME, CSEK_KEY, CSEK_KEY_HASH,
+ANOTHER_CESK_KEY, ANOTHER_CSEK_KEY_HASH);
+System.out.println("Done");
+}
+}

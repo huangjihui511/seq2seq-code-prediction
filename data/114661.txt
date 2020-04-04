@@ -1,0 +1,506 @@
+package com.twelvemonkeys.net;
+import com.twelvemonkeys.lang.StringUtil;
+import java.io.*;
+import java.net.*;
+import java.util.*;
+public class HttpURLConnection extends java.net.HttpURLConnection {
+public final static int HTTP_REDIRECT = 307;
+private final static int HTTP_DEFAULT_PORT = 80;
+private final static String HTTP_HEADER_END = "\r\n\r\n";
+private static final String HEADER_WWW_AUTH = "WWW-Authenticate";
+private final static int BUF_SIZE = 8192;
+private int maxRedirects = (System.getProperty("http.maxRedirects") != null)
+? Integer.parseInt(System.getProperty("http.maxRedirects"))
+: 20;
+protected int timeout = -1;
+protected int connectTimeout = -1;
+private Socket socket = null;
+protected InputStream errorStream = null;
+protected InputStream inputStream = null;
+protected OutputStream outputStream = null;
+private String[] responseHeaders = null;
+protected Properties responseHeaderFields = null;
+protected Properties requestProperties = new Properties();
+protected HttpURLConnection(URL pURL) {
+this(pURL, 0, 0);
+}
+protected HttpURLConnection(URL pURL, int pTimeout) {
+this(pURL, pTimeout, pTimeout);
+}
+protected HttpURLConnection(URL pURL, int pTimeout, int pConnectTimeout) {
+super(pURL);
+setTimeout(pTimeout);
+connectTimeout = pConnectTimeout;
+}
+public void setRequestProperty(String pKey, String pValue) {
+if (connected) {
+throw new IllegalAccessError("Already connected");
+}
+String oldValue = requestProperties.getProperty(pKey);
+if (oldValue == null) {
+requestProperties.setProperty(pKey, pValue);
+}
+else {
+requestProperties.setProperty(pKey, oldValue + ", " + pValue);
+}
+}
+public String getRequestProperty(String pKey) {
+if (connected) {
+throw new IllegalAccessError("Already connected");
+}
+return requestProperties.getProperty(pKey);
+}
+public int getResponseCode() throws IOException {
+if (responseCode != -1) {
+return responseCode;
+}
+getInputStream();
+String resp = getHeaderField(0);
+int ind;
+try {
+ind = resp.indexOf(' ');
+while (resp.charAt(ind) == ' ') {
+ind++;
+}
+responseCode = Integer.parseInt(resp.substring(ind, ind + 3));
+responseMessage = resp.substring(ind + 4).trim();
+return responseCode;
+}
+catch (Exception e) {
+return responseCode;
+}
+}
+public String getHeaderField(String pName) {
+return responseHeaderFields.getProperty(StringUtil.toLowerCase(pName));
+}
+public String getHeaderField(int pIndex) {
+if (pIndex >= responseHeaders.length) {
+return null;
+}
+String field = responseHeaders[pIndex];
+if ((pIndex == 0) || (field == null)) {
+return field;
+}
+int idx = field.indexOf(':');
+return ((idx > 0)
+? field.substring(idx).trim()
+: "");  
+}
+public String getHeaderFieldKey(int pIndex) {
+if (pIndex >= responseHeaders.length) {
+return null;
+}
+String field = responseHeaders[pIndex];
+if (StringUtil.isEmpty(field)) {
+return null;
+}
+int idx = field.indexOf(':');
+return StringUtil.toLowerCase(((idx > 0)
+? field.substring(0, idx)
+: field));
+}
+public void setTimeout(int pTimeout) {
+if (pTimeout < 0) {  
+throw new IllegalArgumentException("Timeout must be positive.");
+}
+timeout = pTimeout;
+if (socket != null) {
+try {
+socket.setSoTimeout(pTimeout);
+}
+catch (SocketException se) {
+}
+}
+}
+public int getTimeout() {
+try {
+return ((socket != null)
+? socket.getSoTimeout()
+: timeout);
+}
+catch (SocketException se) {
+return timeout;
+}
+}
+public synchronized InputStream getInputStream() throws IOException {
+if (!connected) {
+connect();
+}
+if (responseCode == HTTP_NOT_FOUND) {
+throw new FileNotFoundException(url.toString());
+}
+int length;
+if (inputStream == null) {
+return null;
+}
+else if ("chunked".equalsIgnoreCase(getHeaderField("Transfer-Encoding"))) {
+if (!(inputStream instanceof ChunkedInputStream)) {
+inputStream = new ChunkedInputStream(inputStream);
+}
+}
+else if ((length = getHeaderFieldInt("Content-Length", -1)) >= 0) {
+if (!(inputStream instanceof FixedLengthInputStream)) {
+inputStream = new FixedLengthInputStream(inputStream, length);
+}
+}
+return inputStream;
+}
+public synchronized OutputStream getOutputStream() throws IOException {
+if (!connected) {
+connect();
+}
+return outputStream;
+}
+public void disconnect() {
+if (socket != null) {
+try {
+socket.close();
+}
+catch (IOException ioe) {
+}
+socket = null;
+}
+connected = false;
+}
+private void connect(final URL pURL, PasswordAuthentication pAuth, String pAuthType, int pRetries) throws IOException {
+final int port = (pURL.getPort() > 0)
+? pURL.getPort()
+: HTTP_DEFAULT_PORT;
+if (socket == null) {
+socket = createSocket(pURL, port, connectTimeout);
+socket.setSoTimeout(timeout);
+}
+OutputStream os = socket.getOutputStream();
+writeRequestHeaders(os, pURL, method, requestProperties, usingProxy(), pAuth, pAuthType);
+InputStream sis = socket.getInputStream();
+BufferedInputStream is = new BufferedInputStream(sis);
+InputStream header = detatchResponseHeader(is);
+responseHeaders = parseResponseHeader(header);
+responseHeaderFields = parseHeaderFields(responseHeaders);
+switch (getResponseCode()) {
+case HTTP_OK:
+inputStream = is;
+errorStream = null;
+break;
+case HTTP_PROXY_AUTH:
+case HTTP_UNAUTHORIZED:
+responseCode = -1;
+String auth = getHeaderField(HEADER_WWW_AUTH);
+if (StringUtil.isEmpty(auth)) {
+throw new ProtocolException("Missing \"" + HEADER_WWW_AUTH + "\" header for response: 401 " + responseMessage);
+}
+int SP = auth.indexOf(" ");
+String method;
+String realm = null;
+if (SP >= 0) {
+method = auth.substring(0, SP);
+if (auth.length() >= SP + 7) {
+realm = auth.substring(SP + 7);  
+}
+}
+else {
+method = SimpleAuthenticator.BASIC;
+}
+PasswordAuthentication pa = Authenticator.requestPasswordAuthentication(NetUtil.createInetAddressFromURL(pURL), port,
+pURL.getProtocol(), realm, method);
+if (pRetries++ <= 0) {
+throw new ProtocolException("Server redirected too many times (" + maxRedirects + ") (Authentication required: " + auth + ")");  
+}
+else if (pa != null) {
+connect(pURL, pa, method, pRetries);
+}
+break;
+case HTTP_MOVED_PERM:
+case HTTP_MOVED_TEMP:
+case HTTP_SEE_OTHER:
+case HTTP_USE_PROXY:
+case HTTP_REDIRECT:
+if (instanceFollowRedirects) {
+responseCode = -1;                 
+String location = getHeaderField("Location");
+URL newLoc = new URL(pURL, location);
+if (!(newLoc.getAuthority().equals(pURL.getAuthority()) && (newLoc.getPort() == pURL.getPort()))) {
+socket.close();                 
+socket = null;
+}
+if (location != null) {
+if (--pRetries <= 0) {
+throw new ProtocolException("Server redirected too many times (5)");
+}
+else {
+connect(newLoc, pAuth, pAuthType, pRetries);
+}
+}
+break;
+}
+default :
+errorStream = is;
+inputStream = null;
+}
+outputStream = os;
+}
+private static interface SocketConnector extends Runnable {
+public Socket getSocket() throws IOException;
+}
+private Socket createSocket(final URL pURL, final int pPort, int pConnectTimeout) throws IOException {
+Socket socket;
+final Object current = this;
+SocketConnector connector;
+Thread t = new Thread(connector = new SocketConnector() {
+private IOException mConnectException = null;
+private Socket mLocalSocket = null;
+public Socket getSocket() throws IOException {
+if (mConnectException != null) {
+throw mConnectException;
+}
+return mLocalSocket;
+}
+public void run() {
+try {
+mLocalSocket = new Socket(pURL.getHost(), pPort);  
+}
+catch (IOException ioe) {
+mConnectException = ioe;
+}
+synchronized (current) {
+current.notify();
+}
+}
+});
+t.start();
+synchronized (this) {
+try {
+if (t.isAlive()) {
+if (pConnectTimeout > 0) {
+wait(pConnectTimeout);
+}
+else {
+wait();
+}
+}
+}
+catch (InterruptedException ie) {
+}
+}
+if ((socket = connector.getSocket()) == null) {
+throw new ConnectException("Socket connect timed out!");
+}
+return socket;
+}
+public void connect() throws IOException {
+if (connected) {
+return;  
+}
+connected = true;
+connect(url, null, null, maxRedirects);
+}
+public boolean usingProxy() {
+return false;
+}
+private static void writeRequestHeaders(OutputStream pOut, URL pURL, String pMethod, Properties pProps, boolean pUsingProxy,
+PasswordAuthentication pAuth, String pAuthType) {
+PrintWriter out = new PrintWriter(pOut, true);  
+if (!pUsingProxy) {
+out.println(pMethod + " " + (!StringUtil.isEmpty(pURL.getPath())
+? pURL.getPath()
+: "/") + ((pURL.getQuery() != null)
+? "?" + pURL.getQuery()
+: "") + " HTTP/1.1");  
+System.err.println(pMethod + " "
++ (!StringUtil.isEmpty(pURL.getPath()) ? pURL.getPath() : "/")
++ (pURL.getQuery() != null ? "?" + pURL.getQuery() : "")
++ " HTTP/1.1"); 
+out.println("Host: " + pURL.getHost() + ((pURL.getPort() != -1)
+? ":" + pURL.getPort()
+: ""));
+System.err.println("Host: " + pURL.getHost()
++ (pURL.getPort() != -1 ? ":" + pURL.getPort() : ""));
+}
+else {
+out.println(pMethod + " " + pURL.getProtocol() + ":
+? ":" + pURL.getPort()
+: "") + pURL.getPath() + ((pURL.getQuery() != null)
+? "?" + pURL.getQuery()
+: "") + " HTTP/1.1");
+}
+if (pAuth != null) {
+byte[] userPass = (pAuth.getUserName() + ":" + new String(pAuth.getPassword())).getBytes();
+out.println("Authorization: " + pAuthType + " " + BASE64.encode(userPass));
+System.err.println("Authorization: " + pAuthType + " "
++ BASE64.encode(userPass));
+}
+for (Map.Entry<Object, Object> property : pProps.entrySet()) {
+out.println(property.getKey() + ": " + property.getValue());
+}
+out.println();  
+}
+private static int findEndOfHeader(byte[] pBytes, int pEnd) {
+byte[] header = HTTP_HEADER_END.getBytes();
+for (int i = 0; i < pEnd - 4; i++) {  
+if ((pBytes[i] == header[0]) && (pBytes[i + 1] == header[1]) && (pBytes[i + 2] == header[2]) && (pBytes[i + 3] == header[3])) {
+return i + 4;
+}
+}
+if ((pEnd - 1 >= 0) && (pBytes[pEnd - 1] == header[0])) {
+return -2;  
+}
+else if ((pEnd - 2 >= 0) && (pBytes[pEnd - 2] == header[0]) && (pBytes[pEnd - 1] == header[1])) {
+return -3;  
+}
+else if ((pEnd - 3 >= 0) && (pBytes[pEnd - 3] == header[0]) && (pBytes[pEnd - 2] == header[1]) && (pBytes[pEnd - 1] == header[2])) {
+return -4;  
+}
+return -1;  
+}
+private static InputStream detatchResponseHeader(BufferedInputStream pIS) throws IOException {
+ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+pIS.mark(BUF_SIZE);
+byte[] buffer = new byte[BUF_SIZE];
+int length;
+int headerEnd;
+while ((length = pIS.read(buffer)) != -1) {
+headerEnd = findEndOfHeader(buffer, length);
+if (headerEnd >= 0) {
+bytes.write(buffer, 0, headerEnd);
+pIS.reset();
+pIS.skip(headerEnd);
+break;
+}
+else if (headerEnd < -1) {
+bytes.write(buffer, 0, length - 4);
+pIS.reset();
+pIS.skip(length - 4);
+}
+else {
+bytes.write(buffer, 0, length);
+}
+pIS.mark(BUF_SIZE);
+}
+return new ByteArrayInputStream(bytes.toByteArray());
+}
+private static Properties parseHeaderFields(String[] pHeaders) {
+Properties headers = new Properties();
+int split;
+String field;
+String value;
+for (String header : pHeaders) {
+if ((split = header.indexOf(":")) > 0) {
+field = header.substring(0, split);
+value = header.substring(split + 1);
+headers.setProperty(StringUtil.toLowerCase(field), value.trim());
+}
+}
+return headers;
+}
+private static String[] parseResponseHeader(InputStream pIS) throws IOException {
+List<String> headers = new ArrayList<String>();
+BufferedReader in = new BufferedReader(new InputStreamReader(pIS));
+String header;
+while ((header = in.readLine()) != null) {
+headers.add(header);
+}
+return headers.toArray(new String[headers.size()]);
+}
+protected static class FixedLengthInputStream extends FilterInputStream {
+private int mBytesLeft = 0;
+protected FixedLengthInputStream(InputStream pIS, int pLength) {
+super(pIS);
+mBytesLeft = pLength;
+}
+public int available() throws IOException {
+int available = in.available();
+return ((available < mBytesLeft)
+? available
+: mBytesLeft);
+}
+public int read() throws IOException {
+if (mBytesLeft-- > 0) {
+return in.read();
+}
+return -1;
+}
+public int read(byte[] pBytes, int pOffset, int pLength) throws IOException {
+int read;
+if (mBytesLeft <= 0) {
+return -1;  
+}
+else if (mBytesLeft < pLength) {
+read = in.read(pBytes, pOffset, mBytesLeft);
+mBytesLeft -= read;
+return read;
+}
+read = in.read(pBytes, pOffset, pLength);
+mBytesLeft -= read;
+return read;
+}
+}
+protected static class ChunkedInputStream extends FilterInputStream {
+private int mAvailableInCurrentChunk = 0;
+protected ChunkedInputStream(InputStream pIS) {
+super(pIS);
+if (pIS == null) {
+throw new IllegalArgumentException("InputStream may not be null!");
+}
+}
+public int available() throws IOException {
+if (mAvailableInCurrentChunk == 0) {
+mAvailableInCurrentChunk = parseChunkSize();
+}
+int realAvail = in.available();
+return (mAvailableInCurrentChunk < realAvail)
+? mAvailableInCurrentChunk
+: realAvail;
+}
+public int read(byte[] pBytes, int pOffset, int pLength) throws IOException {
+int read;
+if (mAvailableInCurrentChunk == -1) {
+return -1;  
+}
+if (mAvailableInCurrentChunk == 0) {
+mAvailableInCurrentChunk = parseChunkSize();
+return read(pBytes, pOffset, pLength);
+}
+else if (mAvailableInCurrentChunk < pLength) {
+read = in.read(pBytes, pOffset, mAvailableInCurrentChunk);
+mAvailableInCurrentChunk -= read;
+return read;
+}
+read = in.read(pBytes, pOffset, pLength);
+mAvailableInCurrentChunk -= read;
+return read;
+}
+public int read() throws IOException {
+if (mAvailableInCurrentChunk == -1) {
+return -1;
+}
+else if (mAvailableInCurrentChunk == 0) {
+mAvailableInCurrentChunk = parseChunkSize();
+return read();
+}
+mAvailableInCurrentChunk--;
+return in.read();
+}
+protected int parseChunkSize() throws IOException {
+StringBuilder buf = new StringBuilder();
+int b;
+while ((b = in.read()) > 0) {
+if ((b == '\r') && (in.read() == '\n')) {  
+break;                                   
+}
+buf.append((char) b);
+}
+String line = buf.toString();
+if (line.length() == 0) {
+return 0;
+}
+int spIdx = line.indexOf(' ');
+int size = Integer.parseInt(((spIdx >= 0)
+? line.substring(0, spIdx)
+: line), 16);
+if (size == 0) {
+return -1;
+}
+return size;
+}
+}
+}

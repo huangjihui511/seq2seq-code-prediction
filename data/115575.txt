@@ -1,0 +1,24 @@
+package com.netflix.astyanax.ddl;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+public interface KeyspaceDefinition {
+KeyspaceDefinition setName(String name);
+String getName();
+KeyspaceDefinition setStrategyClass(String strategyClass);
+String getStrategyClass();
+KeyspaceDefinition setStrategyOptions(Map<String, String> options);
+KeyspaceDefinition addStrategyOption(String name, String value);
+Map<String, String> getStrategyOptions();
+KeyspaceDefinition addColumnFamily(ColumnFamilyDefinition cfDef);
+List<ColumnFamilyDefinition> getColumnFamilyList();
+ColumnFamilyDefinition getColumnFamily(String columnFamily);
+Collection<String> getFieldNames();
+Object getFieldValue(String name);
+KeyspaceDefinition setFieldValue(String name, Object value);
+Collection<FieldMetadata> getFieldsMetadata();
+void setFields(Map<String, Object> options);
+Properties getProperties() throws Exception;
+void setProperties(Properties props) throws Exception;
+}

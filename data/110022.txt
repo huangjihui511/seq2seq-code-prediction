@@ -1,0 +1,32 @@
+package com.google.cloud.tools.jib.filesystem;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.util.concurrent.atomic.AtomicInteger;
+import org.junit.Assert;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
+public class LockFileTest {
+@Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
+@Test
+public void testLockAndRelease() throws InterruptedException {
+AtomicInteger atomicInt = new AtomicInteger(0);
+Runnable procedure =
+() -> {
+try (LockFile ignored =
+LockFile.lock(temporaryFolder.getRoot().toPath().resolve("testLock"))) {
+Assert.assertTrue(Files.exists(temporaryFolder.getRoot().toPath().resolve("testLock")));
+int valueBeforeSleep = atomicInt.intValue();
+Thread.sleep(100);
+atomicInt.set(valueBeforeSleep + 1);
+} catch (InterruptedException | IOException ex) {
+throw new AssertionError(ex);
+}
+};
+Thread thread = new Thread(procedure);
+thread.start();
+procedure.run();
+thread.join();
+Assert.assertEquals(2, atomicInt.intValue());
+}
+}

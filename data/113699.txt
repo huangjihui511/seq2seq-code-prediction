@@ -1,0 +1,17 @@
+package net.pms.formats.image;
+public class IFF extends ImageBase {
+@Override
+public Identifier getIdentifier() {
+return Identifier.IFF;
+}
+@Override
+public String[] getSupportedExtensions() {
+return new String[] {
+"iff"
+};
+}
+@Override
+public String mimeType() {
+return "image/iff";
+}
+}

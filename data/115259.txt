@@ -1,0 +1,5 @@
+package org.smssecure.smssecure.util;
+public interface FutureTaskListener<V> {
+public void onSuccess(V result);
+public void onFailure(Throwable error);
+}

@@ -1,0 +1,24 @@
+package org.openrefine.wikidata.qa;
+import java.util.Set;
+import org.wikidata.wdtk.datamodel.interfaces.ItemIdValue;
+import org.wikidata.wdtk.datamodel.interfaces.PropertyIdValue;
+import org.wikidata.wdtk.datamodel.interfaces.Value;
+public interface ConstraintFetcher {
+String getFormatRegex(PropertyIdValue pid);
+PropertyIdValue getInversePid(PropertyIdValue pid);
+boolean isSymmetric(PropertyIdValue pid);
+boolean allowedAsValue(PropertyIdValue pid);
+boolean allowedAsQualifier(PropertyIdValue pid);
+boolean allowedAsReference(PropertyIdValue pid);
+Set<PropertyIdValue> allowedQualifiers(PropertyIdValue pid);
+Set<PropertyIdValue> mandatoryQualifiers(PropertyIdValue pid);
+Set<Value> allowedValues(PropertyIdValue pid);
+Set<Value> disallowedValues(PropertyIdValue pid);
+boolean hasSingleValue(PropertyIdValue pid);
+boolean hasSingleBestValue(PropertyIdValue pid);
+boolean hasDistinctValues(PropertyIdValue pid);
+boolean boundsAllowed(PropertyIdValue pid);
+boolean integerValued(PropertyIdValue pid);
+Set<ItemIdValue> allowedUnits(PropertyIdValue pid);
+boolean usableOnItems(PropertyIdValue pid);
+}

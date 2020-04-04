@@ -1,0 +1,5 @@
+package org.apache.zookeeper.inspector.encryption;
+public interface DataEncryptionManager {
+public byte[] encryptData(String data) throws Exception;
+public String decryptData(byte[] encrypted) throws Exception;
+}

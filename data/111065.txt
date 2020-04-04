@@ -1,0 +1,13 @@
+package org.apereo.cas.ticket;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import java.io.Serializable;
+@JsonTypeInfo(use = JsonTypeInfo.Id.CLASS)
+public interface ExpirationPolicy extends Serializable {
+boolean isExpired(TicketState ticketState);
+default Long getTimeToLive(final TicketState ticketState) {
+return getTimeToLive();
+}
+Long getTimeToLive();
+Long getTimeToIdle();
+String getName();
+}

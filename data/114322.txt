@@ -1,0 +1,49 @@
+package mobi.hsz.idea.gitignore.codeInspection;
+import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.psi.PsiFile;
+import com.intellij.util.containers.MultiMap;
+import mobi.hsz.idea.gitignore.IgnoreBundle;
+import mobi.hsz.idea.gitignore.psi.IgnoreEntry;
+import mobi.hsz.idea.gitignore.psi.IgnoreFile;
+import mobi.hsz.idea.gitignore.psi.IgnoreVisitor;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.Map;
+public class IgnoreDuplicateEntryInspection extends LocalInspectionTool {
+@Nullable
+@Override
+public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager,
+boolean isOnTheFly) {
+if (!(file instanceof IgnoreFile)) {
+return null;
+}
+final ProblemsHolder problemsHolder = new ProblemsHolder(manager, file, isOnTheFly);
+final MultiMap<String, IgnoreEntry> entries = MultiMap.create();
+file.acceptChildren(new IgnoreVisitor() {
+@Override
+public void visitEntry(@NotNull IgnoreEntry entry) {
+entries.putValue(entry.getText(), entry);
+super.visitEntry(entry);
+}
+});
+for (Map.Entry<String, Collection<IgnoreEntry>> stringCollectionEntry : entries.entrySet()) {
+Iterator<IgnoreEntry> iterator = stringCollectionEntry.getValue().iterator();
+iterator.next();
+while (iterator.hasNext()) {
+IgnoreEntry entry = iterator.next();
+problemsHolder.registerProblem(entry, IgnoreBundle.message("codeInspection.duplicateEntry.message"),
+new IgnoreRemoveEntryFix(entry));
+}
+}
+return problemsHolder.getResultsArray();
+}
+@Override
+public boolean runForWholeFile() {
+return true;
+}
+}

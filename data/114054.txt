@@ -1,0 +1,189 @@
+package com.flipkart.android.proteus.value;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+import androidx.annotation.Nullable;
+public class ObjectValue extends Value {
+private final HashMap<String, Value> members = new HashMap<>();
+@Override
+public ObjectValue copy() {
+ObjectValue result = new ObjectValue();
+for (Map.Entry<String, Value> entry : members.entrySet()) {
+result.add(entry.getKey(), entry.getValue().copy());
+}
+return result;
+}
+public void add(String property, Value value) {
+if (value == null) {
+value = Null.INSTANCE;
+}
+members.put(property, value);
+}
+public Value remove(String property) {
+return members.remove(property);
+}
+public void addProperty(String property, String value) {
+add(property, createValue(value));
+}
+public void addProperty(String property, Number value) {
+add(property, createValue(value));
+}
+public void addProperty(String property, Boolean value) {
+add(property, createValue(value));
+}
+public void addProperty(String property, Character value) {
+add(property, createValue(value));
+}
+private Value createValue(java.lang.Object value) {
+return value == null ? Null.INSTANCE : new Primitive(value);
+}
+public Set<Map.Entry<String, Value>> entrySet() {
+return members.entrySet();
+}
+public int size() {
+return members.size();
+}
+public boolean has(String memberName) {
+return members.containsKey(memberName);
+}
+public boolean isPrimitive(String memberName) {
+return has(memberName) && get(memberName).isPrimitive();
+}
+public boolean isBoolean(String memberName) {
+if (has(memberName) && get(memberName).isPrimitive()) {
+return getAsPrimitive(memberName).isBoolean();
+}
+return false;
+}
+public boolean isNumber(String memberName) {
+if (has(memberName) && get(memberName).isPrimitive()) {
+return getAsPrimitive(memberName).isNumber();
+}
+return false;
+}
+public boolean isObject(String memberName) {
+return has(memberName) && get(memberName).isObject();
+}
+public boolean isArray(String memberName) {
+return has(memberName) && get(memberName).isArray();
+}
+public boolean isNull(String memberName) {
+return has(memberName) && get(memberName).isNull();
+}
+public boolean isLayout(String memberName) {
+return has(memberName) && get(memberName).isLayout();
+}
+public boolean isBinding(String memberName) {
+return has(memberName) && get(memberName).isBinding();
+}
+public Value get(String memberName) {
+return members.get(memberName);
+}
+public Primitive getAsPrimitive(String memberName) {
+return (Primitive) members.get(memberName);
+}
+@Nullable
+public Boolean getAsBoolean(String memberName) {
+if (isBoolean(memberName)) {
+return getAsPrimitive(memberName).getAsBoolean();
+}
+return null;
+}
+public boolean getAsBoolean(String memberName, boolean defaultValue) {
+if (isBoolean(memberName)) {
+return getAsPrimitive(memberName).getAsBoolean();
+}
+return defaultValue;
+}
+@Nullable
+public Integer getAsInteger(String memberName) {
+if (isNumber(memberName)) {
+return getAsPrimitive(memberName).getAsInt();
+}
+return null;
+}
+public int getAsInteger(String memberName, int defaultValue) {
+if (isNumber(memberName)) {
+return getAsPrimitive(memberName).getAsInt();
+}
+return defaultValue;
+}
+@Nullable
+public Float getAsFloat(String memberName) {
+if (isNumber(memberName)) {
+return getAsPrimitive(memberName).getAsFloat();
+}
+return null;
+}
+public float getAsFloat(String memberName, float defaultValue) {
+if (isNumber(memberName)) {
+return getAsPrimitive(memberName).getAsFloat();
+}
+return defaultValue;
+}
+@Nullable
+public Double getAsDouble(String memberName) {
+if (isNumber(memberName)) {
+return getAsPrimitive(memberName).getAsDouble();
+}
+return null;
+}
+public double getAsDouble(String memberName, double defaultValue) {
+if (isNumber(memberName)) {
+return getAsPrimitive(memberName).getAsDouble();
+}
+return defaultValue;
+}
+@Nullable
+public Long getAsLong(String memberName) {
+if (isNumber(memberName)) {
+return getAsPrimitive(memberName).getAsLong();
+}
+return null;
+}
+public long getAsLong(String memberName, long defaultValue) {
+if (isNumber(memberName)) {
+return getAsPrimitive(memberName).getAsLong();
+}
+return defaultValue;
+}
+@Nullable
+public String getAsString(String memberName) {
+if (isPrimitive(memberName)) {
+return getAsPrimitive(memberName).getAsString();
+}
+return null;
+}
+public Array getAsArray(String memberName) {
+return (Array) members.get(memberName);
+}
+@Nullable
+public ObjectValue getAsObject(String memberName) {
+if (isObject(memberName)) {
+return (ObjectValue) members.get(memberName);
+}
+return null;
+}
+@Nullable
+public Layout getAsLayout(String memberName) {
+if (isLayout(memberName)) {
+return (Layout) members.get(memberName);
+}
+return null;
+}
+@Nullable
+public Binding getAsBinding(String memberName) {
+if (isBinding(memberName)) {
+return (Binding) members.get(memberName);
+}
+return null;
+}
+@Override
+public boolean equals(java.lang.Object o) {
+return (o == this) || (o instanceof ObjectValue && ((ObjectValue) o).members.equals(members));
+}
+@Override
+public int hashCode() {
+return members.hashCode();
+}
+}

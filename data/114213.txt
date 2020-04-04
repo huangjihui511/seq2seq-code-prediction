@@ -1,0 +1,66 @@
+package com.datumbox.framework.common.concurrency;
+import java.util.concurrent.*;
+import java.util.function.Consumer;
+import java.util.stream.Stream;
+public class ThreadMethods {
+public static <T> void throttledExecution(Stream<T> stream, Consumer<T> consumer, ConcurrencyConfiguration concurrencyConfiguration) {
+if(concurrencyConfiguration.isParallelized()) {
+int maxThreads = concurrencyConfiguration.getMaxNumberOfThreadsPerTask();
+int maxTasks = 2*maxThreads;
+ExecutorService executorService = Executors.newFixedThreadPool(maxThreads);
+ThrottledExecutor executor = new ThrottledExecutor(executorService, maxTasks);
+stream.sequential().forEach(i -> {
+executor.execute(() -> {
+consumer.accept(i);
+});
+});
+executorService.shutdown();
+try {
+executorService.awaitTermination(Integer.MAX_VALUE, TimeUnit.SECONDS);
+}
+catch (InterruptedException ex) {
+throw new RuntimeException(ex);
+}
+}
+else {
+Runnable runnable = () -> stream.forEach(consumer);
+runnable.run();
+}
+}
+public static <T> T forkJoinExecution(Callable<T> callable, ConcurrencyConfiguration concurrencyConfiguration, boolean parallelStream) {
+if(parallelStream && concurrencyConfiguration.isParallelized()) {
+try {
+ForkJoinPool pool = new ForkJoinPool(concurrencyConfiguration.getMaxNumberOfThreadsPerTask());
+T results = pool.submit(callable).get();
+pool.shutdown();
+return results;
+}
+catch (InterruptedException | ExecutionException ex) {
+throw new RuntimeException(ex);
+}
+}
+else {
+try {
+return callable.call();
+}
+catch (Exception ex) {
+throw new RuntimeException(ex);
+}
+}
+}
+public static void forkJoinExecution(Runnable runnable, ConcurrencyConfiguration concurrencyConfiguration, boolean parallelStream) {
+if(parallelStream && concurrencyConfiguration.isParallelized()) {
+try {
+ForkJoinPool pool = new ForkJoinPool(concurrencyConfiguration.getMaxNumberOfThreadsPerTask());
+pool.submit(runnable).get();
+pool.shutdown();
+}
+catch (InterruptedException | ExecutionException ex) {
+throw new RuntimeException(ex);
+}
+}
+else {
+runnable.run();
+}
+}
+}

@@ -1,0 +1,17 @@
+package org.fusesource.mqtt.client;
+public class ProxyCallback<T> implements Callback<T> {
+public final Callback<T> next;
+public ProxyCallback(Callback<T> next) {
+this.next = next;
+}
+public void onSuccess(T value) {
+if( next!=null ) {
+next.onSuccess(value);
+}
+}
+public void onFailure(Throwable value) {
+if( next!=null ) {
+next.onFailure(value);
+}
+}
+}

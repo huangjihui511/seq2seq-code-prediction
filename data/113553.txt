@@ -1,0 +1,10 @@
+package org.fusesource.mqtt.client;
+import org.fusesource.mqtt.codec.MQTTFrame;
+public class Tracer {
+public void debug(String message, Object...args) {
+}
+public void onSend(MQTTFrame frame) {
+}
+public void onReceive(MQTTFrame frame) {
+}
+}

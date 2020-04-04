@@ -1,0 +1,284 @@
+package net.i2p.router.tunnel.pool;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import net.i2p.data.DataHelper;
+import net.i2p.data.Hash;
+import net.i2p.data.PublicKey;
+import net.i2p.data.router.RouterInfo;
+import net.i2p.data.TunnelId;
+import net.i2p.data.i2np.TunnelBuildMessage;
+import net.i2p.data.i2np.VariableTunnelBuildMessage;
+import net.i2p.router.JobImpl;
+import net.i2p.router.OutNetMessage;
+import net.i2p.router.RouterContext;
+import net.i2p.router.TunnelInfo;
+import net.i2p.router.TunnelManagerFacade;
+import net.i2p.router.TunnelPoolSettings;
+import net.i2p.router.tunnel.BuildMessageGenerator;
+import net.i2p.util.Log;
+import net.i2p.util.VersionComparator;
+abstract class BuildRequestor {
+private static final List<Integer> ORDER = new ArrayList<Integer>(TunnelBuildMessage.MAX_RECORD_COUNT);
+private static final boolean SEND_VARIABLE = true;
+private static final int SHORT_RECORDS = 4;
+private static final List<Integer> SHORT_ORDER = new ArrayList<Integer>(SHORT_RECORDS);
+private static final int MEDIUM_RECORDS = 5;
+private static final List<Integer> MEDIUM_ORDER = new ArrayList<Integer>(MEDIUM_RECORDS);
+static {
+for (int i = 0; i < TunnelBuildMessage.MAX_RECORD_COUNT; i++) {
+ORDER.add(Integer.valueOf(i));
+}
+for (int i = 0; i < SHORT_RECORDS; i++) {
+SHORT_ORDER.add(Integer.valueOf(i));
+}
+for (int i = 0; i < MEDIUM_RECORDS; i++) {
+MEDIUM_ORDER.add(Integer.valueOf(i));
+}
+}
+private static final int PRIORITY = OutNetMessage.PRIORITY_MY_BUILD_REQUEST;
+static final int REQUEST_TIMEOUT = 13*1000;
+private static final int FIRST_HOP_TIMEOUT = 10*1000;
+private static final int BUILD_MSG_TIMEOUT = 60*1000;
+private static boolean usePairedTunnels(RouterContext ctx) {
+return true;
+}
+private static void prepare(RouterContext ctx, PooledTunnelCreatorConfig cfg) {
+int len = cfg.getLength();
+boolean isIB = cfg.isInbound();
+for (int i = 0; i < len; i++) {
+if ( (!isIB) && (i == 0) ) {
+if (len <= 1)  { 
+long id = ctx.tunnelDispatcher().getNewOBGWID();
+cfg.getConfig(i).setSendTunnelId(DataHelper.toLong(4, id));
+}
+} else {
+long id;
+if (isIB && len == 1)
+id = ctx.tunnelDispatcher().getNewIBZeroHopID();
+else if (isIB && i == len - 1)
+id = ctx.tunnelDispatcher().getNewIBEPID();
+else
+id = 1 + ctx.random().nextLong(TunnelId.MAX_ID_VALUE);
+cfg.getConfig(i).setReceiveTunnelId(DataHelper.toLong(4, id));
+}
+if (i > 0)
+cfg.getConfig(i-1).setSendTunnelId(cfg.getConfig(i).getReceiveTunnelId());
+byte iv[] = new byte[16];
+ctx.random().nextBytes(iv);
+cfg.getConfig(i).setReplyIV(iv);
+cfg.getConfig(i).setReplyKey(ctx.keyGenerator().generateSessionKey());
+}
+}
+public static boolean request(RouterContext ctx,
+PooledTunnelCreatorConfig cfg, BuildExecutor exec) {
+prepare(ctx, cfg);
+if (cfg.getLength() <= 1) {
+buildZeroHop(ctx, cfg, exec);
+return true;
+}
+Log log = ctx.logManager().getLog(BuildRequestor.class);
+final TunnelPool pool = cfg.getTunnelPool();
+final TunnelPoolSettings settings = pool.getSettings();
+TunnelInfo pairedTunnel = null;
+Hash farEnd = cfg.getFarEnd();
+TunnelManagerFacade mgr = ctx.tunnelManager();
+boolean isInbound = settings.isInbound();
+if (settings.isExploratory() || !usePairedTunnels(ctx)) {
+if (isInbound)
+pairedTunnel = mgr.selectOutboundExploratoryTunnel(farEnd);
+else
+pairedTunnel = mgr.selectInboundExploratoryTunnel(farEnd);
+} else {
+if (isInbound)
+pairedTunnel = mgr.selectOutboundTunnel(settings.getDestination(), farEnd);
+else
+pairedTunnel = mgr.selectInboundTunnel(settings.getDestination(), farEnd);
+if (pairedTunnel == null) {
+if (isInbound) {
+pairedTunnel = mgr.selectOutboundTunnel();
+if (pairedTunnel != null &&
+pairedTunnel.getLength() <= 1 &&
+mgr.getOutboundSettings().getLength() > 0 &&
+mgr.getOutboundSettings().getLength() + mgr.getOutboundSettings().getLengthVariance() > 0) {
+pairedTunnel = null;
+}
+} else {
+pairedTunnel = mgr.selectInboundTunnel();
+if (pairedTunnel != null &&
+pairedTunnel.getLength() <= 1 &&
+mgr.getInboundSettings().getLength() > 0 &&
+mgr.getInboundSettings().getLength() + mgr.getInboundSettings().getLengthVariance() > 0) {
+pairedTunnel = null;
+}
+}
+if (pairedTunnel != null && log.shouldLog(Log.INFO))
+log.info("Couldn't find a paired tunnel for " + cfg + ", using exploratory tunnel");
+}
+}
+if (pairedTunnel == null) {
+if (log.shouldLog(Log.WARN))
+log.warn("Tunnel build failed, as we couldn't find a paired tunnel for " + cfg);
+exec.buildComplete(cfg);
+int ms = settings.isExploratory() ? 250 : 25;
+try { Thread.sleep(ms); } catch (InterruptedException ie) {}
+return false;
+}
+TunnelBuildMessage msg = createTunnelBuildMessage(ctx, pool, cfg, pairedTunnel, exec);
+if (msg == null) {
+if (log.shouldLog(Log.WARN))
+log.warn("Tunnel build failed, as we couldn't create the tunnel build message for " + cfg);
+exec.buildComplete(cfg);
+return false;
+}
+if (cfg.isInbound()) {
+if (log.shouldLog(Log.INFO))
+log.info("Sending the tunnel build request " + msg.getUniqueId() + " out the tunnel " + pairedTunnel + " to "
++ cfg.getPeer(0) + " for " + cfg + " waiting for the reply of "
++ cfg.getReplyMessageId());
+ctx.tunnelDispatcher().dispatchOutbound(msg, pairedTunnel.getSendTunnelId(0), cfg.getPeer(0));
+} else {
+if (log.shouldLog(Log.INFO))
+log.info("Sending the tunnel build request directly to " + cfg.getPeer(1)
++ " for " + cfg + " waiting for the reply of " + cfg.getReplyMessageId()
++ " with msgId=" + msg.getUniqueId());
+msg.setMessageExpiration(ctx.clock().now() + BUILD_MSG_TIMEOUT + ctx.random().nextLong(20*1000));
+RouterInfo peer = ctx.netDb().lookupRouterInfoLocally(cfg.getPeer(1));
+if (peer == null) {
+if (log.shouldLog(Log.WARN))
+log.warn("Could not find the next hop to send the outbound request to: " + cfg);
+exec.buildComplete(cfg);
+return false;
+}
+OutNetMessage outMsg = new OutNetMessage(ctx, msg, ctx.clock().now() + FIRST_HOP_TIMEOUT, PRIORITY, peer);
+outMsg.setOnFailedSendJob(new TunnelBuildFirstHopFailJob(ctx, cfg, exec));
+try {
+ctx.outNetMessagePool().add(outMsg);
+} catch (RuntimeException re) {
+log.error("failed sending build message", re);
+return false;
+}
+}
+return true;
+}
+we can assume everybody supports variable now...
+keep this here for the next time we change the build protocol
+private static boolean supportsVariable(RouterContext ctx, Hash h) {
+RouterInfo ri = ctx.netDb().lookupRouterInfoLocally(h);
+if (ri == null)
+return false;
+String v = ri.getVersion();
+return VersionComparator.comp(v, MIN_VARIABLE_VERSION) >= 0;
+}
+private static TunnelBuildMessage createTunnelBuildMessage(RouterContext ctx, TunnelPool pool,
+PooledTunnelCreatorConfig cfg,
+TunnelInfo pairedTunnel, BuildExecutor exec) {
+Log log = ctx.logManager().getLog(BuildRequestor.class);
+long replyTunnel = 0;
+Hash replyRouter;
+boolean useVariable = SEND_VARIABLE && cfg.getLength() <= MEDIUM_RECORDS;
+if (cfg.isInbound()) {
+replyRouter = ctx.routerHash();
+we can assume everybody supports variable now...
+keep this here for the next time we change the build protocol
+if (useVariable) {
+if (!supportsVariable(ctx, pairedTunnel.getPeer(pairedTunnel.getLength() - 1))) {
+useVariable = false;
+} else {
+for (int i = 0; i < cfg.getLength() - 1; i++) {
+if (!supportsVariable(ctx, cfg.getPeer(i))) {
+useVariable = false;
+break;
+}
+}
+}
+}
+} else {
+replyTunnel = pairedTunnel.getReceiveTunnelId(0).getTunnelId();
+replyRouter = pairedTunnel.getPeer(0);
+we can assume everybody supports variable now
+keep this here for the next time we change the build protocol
+if (useVariable) {
+if (!supportsVariable(ctx, replyRouter)) {
+useVariable = false;
+} else {
+for (int i = 1; i < cfg.getLength() - 1; i++) {
+if (!supportsVariable(ctx, cfg.getPeer(i))) {
+useVariable = false;
+break;
+}
+}
+}
+}
+}
+TunnelBuildMessage msg;
+List<Integer> order;
+if (useVariable) {
+if (cfg.getLength() <= SHORT_RECORDS) {
+msg = new VariableTunnelBuildMessage(ctx, SHORT_RECORDS);
+order = new ArrayList<Integer>(SHORT_ORDER);
+} else {
+msg = new VariableTunnelBuildMessage(ctx, MEDIUM_RECORDS);
+order = new ArrayList<Integer>(MEDIUM_ORDER);
+}
+} else {
+msg = new TunnelBuildMessage(ctx);
+order = new ArrayList<Integer>(ORDER);
+}
+Collections.shuffle(order, ctx.random()); 
+cfg.setReplyOrder(order);
+if (log.shouldLog(Log.DEBUG))
+log.debug("Build order: " + order + " for " + cfg);
+for (int i = 0; i < msg.getRecordCount(); i++) {
+int hop = order.get(i).intValue();
+PublicKey key = null;
+if (BuildMessageGenerator.isBlank(cfg, hop)) {
+} else {
+Hash peer = cfg.getPeer(hop);
+RouterInfo peerInfo = ctx.netDb().lookupRouterInfoLocally(peer);
+if (peerInfo == null) {
+if (log.shouldLog(Log.WARN))
+log.warn("Peer selected for hop " + i + "/" + hop + " was not found locally: "
++ peer + " for " + cfg);
+return null;
+} else {
+key = peerInfo.getIdentity().getPublicKey();
+}
+}
+if (log.shouldLog(Log.DEBUG))
+log.debug(cfg.getReplyMessageId() + ": record " + i + "/" + hop + " has key " + key);
+BuildMessageGenerator.createRecord(i, hop, msg, cfg, replyRouter, replyTunnel, ctx, key);
+}
+BuildMessageGenerator.layeredEncrypt(ctx, msg, cfg, order);
+return msg;
+}
+private static void buildZeroHop(RouterContext ctx, PooledTunnelCreatorConfig cfg, BuildExecutor exec) {
+Log log = ctx.logManager().getLog(BuildRequestor.class);
+if (log.shouldLog(Log.DEBUG))
+log.debug("Build zero hop tunnel " + cfg);
+exec.buildComplete(cfg);
+if (cfg.isInbound())
+ctx.tunnelDispatcher().joinInbound(cfg);
+else
+ctx.tunnelDispatcher().joinOutbound(cfg);
+cfg.getTunnelPool().addTunnel(cfg);
+exec.buildSuccessful(cfg);
+ExpireJob expireJob = new ExpireJob(ctx, cfg);
+ctx.jobQueue().addJob(expireJob);
+}
+private static class TunnelBuildFirstHopFailJob extends JobImpl {
+private final PooledTunnelCreatorConfig _cfg;
+private final BuildExecutor _exec;
+private TunnelBuildFirstHopFailJob(RouterContext ctx, PooledTunnelCreatorConfig cfg, BuildExecutor exec) {
+super(ctx);
+_cfg = cfg;
+_exec = exec;
+}
+public String getName() { return "Timeout contacting first peer for OB tunnel"; }
+public void runJob() {
+_exec.buildComplete(_cfg);
+getContext().profileManager().tunnelTimedOut(_cfg.getPeer(1));
+getContext().statManager().addRateData("tunnel.buildFailFirstHop", 1, 0);
+}
+}
+}

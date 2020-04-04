@@ -1,0 +1,45 @@
+package io.kubernetes.client.extended.controller.reconciler;
+import java.time.Duration;
+public class Result {
+public Result(boolean requeue) {
+this(requeue, null);
+}
+private boolean requeue;
+private Duration requeueAfter;
+public Result(boolean requeue, Duration requeueAfter) {
+this.requeue = requeue;
+this.requeueAfter = requeueAfter;
+}
+public boolean isRequeue() {
+return requeue;
+}
+public void setRequeue(boolean requeue) {
+this.requeue = requeue;
+}
+public Duration getRequeueAfter() {
+return requeueAfter;
+}
+@Override
+public String toString() {
+return "Result{" + "requeue=" + requeue + ", requeueAfter=" + requeueAfter + '}';
+}
+public void setRequeueAfter(Duration requeueAfter) {
+this.requeueAfter = requeueAfter;
+}
+@Override
+public boolean equals(Object o) {
+if (this == o) return true;
+if (o == null || getClass() != o.getClass()) return false;
+Result result = (Result) o;
+if (requeue != result.requeue) return false;
+return requeueAfter != null
+? requeueAfter.equals(result.requeueAfter)
+: result.requeueAfter == null;
+}
+@Override
+public int hashCode() {
+int result = (requeue ? 1 : 0);
+result = 31 * result + (requeueAfter != null ? requeueAfter.hashCode() : 0);
+return result;
+}
+}

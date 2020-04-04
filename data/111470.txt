@@ -1,0 +1,49 @@
+package io.grpc.internal;
+import com.google.common.base.MoreObjects;
+import com.google.common.base.Objects;
+import com.google.common.collect.ImmutableSet;
+import io.grpc.Status.Code;
+import java.util.Collections;
+import java.util.Set;
+import javax.annotation.concurrent.Immutable;
+@Immutable
+final class HedgingPolicy {
+final int maxAttempts;
+final long hedgingDelayNanos;
+final Set<Code> nonFatalStatusCodes;
+static final HedgingPolicy DEFAULT =
+new HedgingPolicy(1, 0, Collections.<Code>emptySet());
+HedgingPolicy(int maxAttempts, long hedgingDelayNanos, Set<Code> nonFatalStatusCodes) {
+this.maxAttempts = maxAttempts;
+this.hedgingDelayNanos = hedgingDelayNanos;
+this.nonFatalStatusCodes = ImmutableSet.copyOf(nonFatalStatusCodes);
+}
+@Override
+public boolean equals(Object other) {
+if (this == other) {
+return true;
+}
+if (other == null || getClass() != other.getClass()) {
+return false;
+}
+HedgingPolicy that = (HedgingPolicy) other;
+return maxAttempts == that.maxAttempts
+&& hedgingDelayNanos == that.hedgingDelayNanos
+&& Objects.equal(nonFatalStatusCodes, that.nonFatalStatusCodes);
+}
+@Override
+public int hashCode() {
+return Objects.hashCode(maxAttempts, hedgingDelayNanos, nonFatalStatusCodes);
+}
+@Override
+public String toString() {
+return MoreObjects.toStringHelper(this)
+.add("maxAttempts", maxAttempts)
+.add("hedgingDelayNanos", hedgingDelayNanos)
+.add("nonFatalStatusCodes", nonFatalStatusCodes)
+.toString();
+}
+interface Provider {
+HedgingPolicy get();
+}
+}

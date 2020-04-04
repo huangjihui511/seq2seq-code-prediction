@@ -1,0 +1,17 @@
+package mobi.hsz.idea.gitignore.lang.kind;
+import mobi.hsz.idea.gitignore.file.type.IgnoreFileType;
+import mobi.hsz.idea.gitignore.file.type.kind.CvsFileType;
+import mobi.hsz.idea.gitignore.lang.IgnoreLanguage;
+import mobi.hsz.idea.gitignore.util.Icons;
+import org.jetbrains.annotations.NotNull;
+public class CvsLanguage extends IgnoreLanguage {
+public static final CvsLanguage INSTANCE = new CvsLanguage();
+private CvsLanguage() {
+super("Cvs", "cvsignore", null, Icons.CVS);
+}
+@NotNull
+@Override
+public IgnoreFileType getFileType() {
+return CvsFileType.INSTANCE;
+}
+}

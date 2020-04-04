@@ -1,0 +1,70 @@
+package org.apache.flink.streaming.util;
+import org.apache.flink.streaming.api.watermark.Watermark;
+import org.apache.flink.streaming.runtime.streamrecord.StreamRecord;
+import org.apache.flink.shaded.guava18.com.google.common.collect.Iterables;
+import org.junit.Assert;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Queue;
+import static org.junit.Assert.assertEquals;
+public class TestHarnessUtil {
+@SuppressWarnings("unchecked")
+public static <OUT> List<OUT> getRawElementsFromOutput(Queue<Object> output) {
+List<OUT> resultElements = new LinkedList<>();
+for (Object e: output) {
+if (e instanceof StreamRecord) {
+resultElements.add(((StreamRecord<OUT>) e).getValue());
+}
+}
+return resultElements;
+}
+public static <T> void assertOutputEquals(String message, Queue<T> expected, Queue<T> actual) {
+Assert.assertArrayEquals(message,
+expected.toArray(),
+actual.toArray());
+}
+public static void assertOutputEqualsSorted(String message, Iterable<Object> expected, Iterable<Object> actual, Comparator<Object> comparator) {
+assertEquals(Iterables.size(expected), Iterables.size(actual));
+Iterator<Object> exIt = expected.iterator();
+Iterator<Object> actIt = actual.iterator();
+while (exIt.hasNext()) {
+Object nextEx = exIt.next();
+Object nextAct = actIt.next();
+if (nextEx instanceof Watermark) {
+assertEquals(nextEx, nextAct);
+}
+}
+List<Object> expectedRecords = new ArrayList<>();
+List<Object> actualRecords = new ArrayList<>();
+for (Object ex: expected) {
+if (ex instanceof StreamRecord) {
+expectedRecords.add(ex);
+}
+}
+for (Object act: actual) {
+if (act instanceof StreamRecord) {
+actualRecords.add(act);
+}
+}
+Object[] sortedExpected = expectedRecords.toArray();
+Object[] sortedActual = actualRecords.toArray();
+Arrays.sort(sortedExpected, comparator);
+Arrays.sort(sortedActual, comparator);
+Assert.assertArrayEquals(message, sortedExpected, sortedActual);
+}
+public static void assertNoLateRecords(Iterable<Object> elements) {
+long highestWatermark = Long.MIN_VALUE;
+for (Object elem : elements) {
+if (elem instanceof Watermark) {
+highestWatermark = ((Watermark) elem).asWatermark().getTimestamp();
+} else if (elem instanceof StreamRecord) {
+boolean dataIsOnTime = highestWatermark < ((StreamRecord) elem).getTimestamp();
+Assert.assertTrue("Late data was emitted after join", dataIsOnTime);
+}
+}
+}
+}

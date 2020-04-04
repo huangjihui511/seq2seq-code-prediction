@@ -1,0 +1,62 @@
+package com.alibaba.csp.sentinel.transport.command.netty;
+import com.alibaba.csp.sentinel.command.CommandHandler;
+import com.alibaba.csp.sentinel.command.CommandHandlerProvider;
+import com.alibaba.csp.sentinel.command.handler.BasicInfoCommandHandler;
+import com.alibaba.csp.sentinel.command.handler.VersionCommandHandler;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
+import java.util.Map;
+import static org.junit.Assert.*;
+public class HttpServerTest {
+private static HttpServer httpServer;
+@BeforeClass
+public static void beforeClass() {
+HttpServer.handlerMap.clear();
+httpServer = new HttpServer();
+assertEquals(0, HttpServer.handlerMap.size());
+}
+@Before
+public void before() {
+HttpServer.handlerMap.clear();
+}
+@Test
+public void testRegisterCommand() {
+String commandName;
+CommandHandler handler;
+commandName = null;
+handler = new VersionCommandHandler();
+httpServer.registerCommand(commandName, handler);
+assertEquals(0, HttpServer.handlerMap.size());
+commandName = "";
+handler = new VersionCommandHandler();
+httpServer.registerCommand(commandName, handler);
+assertEquals(0, HttpServer.handlerMap.size());
+commandName = "version";
+handler = null;
+httpServer.registerCommand(commandName, handler);
+assertEquals(0, HttpServer.handlerMap.size());
+commandName = "version";
+handler = new VersionCommandHandler();
+httpServer.registerCommand(commandName, handler);
+assertEquals(1, HttpServer.handlerMap.size());
+commandName = "version";
+handler = new VersionCommandHandler();
+httpServer.registerCommand(commandName, handler);
+assertEquals(1, HttpServer.handlerMap.size());
+commandName = "basicInfo";
+handler = new BasicInfoCommandHandler();
+httpServer.registerCommand(commandName, handler);
+assertEquals(2, HttpServer.handlerMap.size());
+}
+@Test
+public void testRegisterCommands() {
+Map<String, CommandHandler> handlerMap = null;
+httpServer.registerCommands(handlerMap);
+assertEquals(0, HttpServer.handlerMap.size());
+handlerMap = CommandHandlerProvider.getInstance().namedHandlers();
+httpServer.registerCommands(handlerMap);
+assertEquals(handlerMap.size(), HttpServer.handlerMap.size());
+assertTrue(handlerMap != HttpServer.handlerMap);
+}
+}

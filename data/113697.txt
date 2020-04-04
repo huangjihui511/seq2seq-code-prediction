@@ -1,0 +1,15 @@
+package net.pms.formats.image;
+public class ICNS extends ImageBase {
+@Override
+public Identifier getIdentifier() {
+return Identifier.ICNS;
+}
+@Override
+public String[] getSupportedExtensions() {
+return new String[] { "icns" };
+}
+@Override
+public String mimeType() {
+return "image/icns";
+}
+}

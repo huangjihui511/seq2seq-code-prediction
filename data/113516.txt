@@ -1,0 +1,77 @@
+package com.pokegoapi.util.hash.pokehash;
+import lombok.Getter;
+import java.net.HttpURLConnection;
+import java.util.Map;
+import java.util.WeakHashMap;
+public class PokeHashKey {
+private static final Map<String, PokeHashKey> KEYS = new WeakHashMap<>();
+@Getter
+public final String key;
+private int rpm;
+@Getter
+private int maxRequests = 150;
+@Getter
+public int requestsRemaining = this.maxRequests;
+@Getter
+private long keyExpiration;
+@Getter
+public long ratePeriodEnd;
+private boolean tested;
+private PokeHashKey(String key) {
+this.key = key;
+}
+public static synchronized PokeHashKey from(String key) {
+if (key == null || key.length() == 0) {
+throw new IllegalArgumentException("Key cannot be null or empty!");
+}
+PokeHashKey from = KEYS.get(key);
+if (from == null) {
+from = new PokeHashKey(key);
+KEYS.put(key, from);
+}
+return from;
+}
+synchronized void setProperties(HttpURLConnection connection) {
+this.checkPeriod();
+this.ratePeriodEnd = this.getHeaderLong(connection, "X-RatePeriodEnd", this.ratePeriodEnd);
+this.maxRequests = this.getHeaderInteger(connection, "X-MaxRequestCount", this.maxRequests);
+this.requestsRemaining = this.getHeaderInteger(connection, "X-RateRequestsRemaining", this.requestsRemaining);
+this.keyExpiration = this.getHeaderLong(connection, "X-AuthTokenExpiration", this.keyExpiration);
+this.tested = true;
+}
+private long getHeaderLong(HttpURLConnection connection, String name, long defaultValue) {
+try {
+return Long.parseLong(connection.getHeaderField(name));
+} catch (Exception e) {
+return defaultValue;
+}
+}
+private int getHeaderInteger(HttpURLConnection connection, String name, int defaultValue) {
+try {
+return Integer.parseInt(connection.getHeaderField(name));
+} catch (Exception e) {
+return defaultValue;
+}
+}
+void await() throws InterruptedException {
+if (this.requestsRemaining <= 0) {
+long timeToPeriodEnd = System.currentTimeMillis() - this.ratePeriodEnd;
+if (this.tested && timeToPeriodEnd > 0) {
+Thread.sleep(Math.min(timeToPeriodEnd, 3600000));
+this.checkPeriod();
+}
+}
+}
+private synchronized void checkPeriod() {
+if (System.currentTimeMillis() > this.ratePeriodEnd) {
+this.rpm = this.maxRequests - this.requestsRemaining;
+this.requestsRemaining = this.maxRequests;
+}
+}
+public int getRPM() {
+return this.rpm;
+}
+public boolean hasTested() {
+return this.tested;
+}
+}

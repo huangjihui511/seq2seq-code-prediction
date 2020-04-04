@@ -1,0 +1,185 @@
+package org.menacheri.jetclient.app.impl;
+import java.net.InetSocketAddress;
+import java.net.UnknownHostException;
+import java.util.concurrent.atomic.AtomicInteger;
+import org.jboss.netty.buffer.ChannelBuffer;
+import org.jboss.netty.channel.Channel;
+import org.jboss.netty.channel.socket.DatagramChannel;
+import org.menacheri.jetclient.NettyTCPClient;
+import org.menacheri.jetclient.NettyUDPClient;
+import org.menacheri.jetclient.app.Player;
+import org.menacheri.jetclient.app.PlayerSession;
+import org.menacheri.jetclient.app.Session;
+import org.menacheri.jetclient.app.impl.DefaultSession.SessionBuilder;
+import org.menacheri.jetclient.communication.MessageBuffer;
+import org.menacheri.jetclient.communication.MessageSender.Fast;
+import org.menacheri.jetclient.communication.MessageSender.Reliable;
+import org.menacheri.jetclient.communication.NettyTCPMessageSender;
+import org.menacheri.jetclient.communication.NettyUDPMessageSender;
+import org.menacheri.jetclient.event.Event;
+import org.menacheri.jetclient.event.EventHandler;
+import org.menacheri.jetclient.event.Events;
+import org.menacheri.jetclient.event.SessionEventHandler;
+import org.menacheri.jetclient.handlers.netty.TCPPipelineFactory;
+import org.menacheri.jetclient.handlers.netty.UDPPipelineFactory;
+import org.menacheri.jetclient.util.LoginHelper;
+public class SessionFactory
+{
+private final LoginHelper loginHelper;
+private final NettyTCPClient tcpClient;
+private final NettyUDPClient udpClient;
+private static final AtomicInteger sessionId = new AtomicInteger(0);
+public SessionFactory(final LoginHelper theLoginHelper)
+throws UnknownHostException, Exception
+{
+this.loginHelper = theLoginHelper;
+InetSocketAddress tcpAddress = loginHelper.getTcpServerAddress();
+this.tcpClient = new NettyTCPClient(tcpAddress);
+InetSocketAddress udpAddress = loginHelper.getUdpServerAddress();
+if (null == udpAddress)
+{
+udpClient = null;
+}
+else
+{
+udpClient = new NettyUDPClient(udpAddress,
+UDPPipelineFactory.getInstance());
+}
+}
+public Session createAndConnectSession() throws InterruptedException,
+Exception
+{
+return createAndConnectSession((EventHandler[]) null);
+}
+public Session createAndConnectSession(EventHandler... eventHandlers)
+throws InterruptedException, Exception
+{
+Session session = createSession();
+connectSession(session, eventHandlers);
+return session;
+}
+public Session createSession()
+{
+SessionBuilder sessionBuilder = new SessionBuilder().id(sessionId
+.incrementAndGet());
+return sessionBuilder.build();
+}
+public void connectSession(final Session session)
+throws InterruptedException, Exception
+{
+connectSession(session, (EventHandler[]) null);
+}
+public void connectSession(final Session session,
+EventHandler... eventHandlers) throws InterruptedException,
+Exception
+{
+InetSocketAddress udpAddress = null;
+if (null != udpClient)
+{
+udpAddress = doUdpConnection(session);
+}
+if (null != eventHandlers)
+{
+for (EventHandler eventHandler : eventHandlers)
+{
+session.addHandler(eventHandler);
+if (eventHandler instanceof SessionEventHandler)
+{
+((SessionEventHandler) eventHandler).setSession(session);
+}
+}
+}
+MessageBuffer<ChannelBuffer> buffer = loginHelper
+.getLoginBuffer(udpAddress);
+Event loginEvent = Events.event(buffer, Events.LOG_IN);
+doTcpConnection(session, loginEvent);
+}
+public void reconnectSession(final Session session, String reconnectKey)
+throws InterruptedException, Exception
+{
+session.getTcpMessageSender().close();
+if (null != session.getUdpMessageSender())
+session.getUdpMessageSender().close();
+InetSocketAddress udpAddress = null;
+if (null != udpClient)
+{
+udpAddress = doUdpConnection(session);
+}
+Event reconnectEvent = Events.event(
+loginHelper.getReconnectBuffer(reconnectKey, udpAddress),
+Events.RECONNECT);
+doTcpConnection(session, reconnectEvent);
+}
+protected void doTcpConnection(final Session session, Event event)
+throws Exception, InterruptedException
+{
+TCPPipelineFactory tcpFactory = new TCPPipelineFactory(session);
+Channel channel = tcpClient.connect(tcpFactory, event);
+if (null != channel)
+{
+Reliable tcpMessageSender = new NettyTCPMessageSender(channel);
+session.setTcpMessageSender(tcpMessageSender);
+}
+else
+{
+throw new Exception("Could not create TCP connection to server");
+}
+}
+protected InetSocketAddress doUdpConnection(final Session session)
+throws UnknownHostException
+{
+InetSocketAddress localAddress;
+final DatagramChannel datagramChannel = udpClient
+.createDatagramChannel();
+localAddress = datagramChannel.getLocalAddress();
+final EventHandler startEventHandler = new EventHandler()
+{
+@Override
+public void onEvent(Event event)
+{
+try
+{
+udpClient.connect(session, datagramChannel);
+session.removeHandler(this);
+}
+catch (UnknownHostException e)
+{
+throw new RuntimeException(e);
+}
+catch (InterruptedException e)
+{
+throw new RuntimeException(e);
+}
+}
+@Override
+public int getEventType()
+{
+return Events.START;
+}
+};
+session.addHandler(startEventHandler);
+Fast udpMessageSender = new NettyUDPMessageSender(
+udpClient.getServerAddress(), datagramChannel);
+session.setUdpMessageSender(udpMessageSender);
+return localAddress;
+}
+public PlayerSession createPlayerSession(Player player)
+{
+SessionBuilder sessionBuilder = new SessionBuilder();
+DefaultPlayerSession playerSession = new DefaultPlayerSession(
+sessionBuilder, player);
+return playerSession;
+}
+public LoginHelper getLoginHelper()
+{
+return loginHelper;
+}
+public NettyTCPClient getTcpClient()
+{
+return tcpClient;
+}
+public NettyUDPClient getUdpClient()
+{
+return udpClient;
+}
+}

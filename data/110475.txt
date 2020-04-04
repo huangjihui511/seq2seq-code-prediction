@@ -1,0 +1,5 @@
+package com.baomidou.mybatisplus.dts.sender;
+import com.baomidou.mybatisplus.dts.DtsMeta;
+public interface IRmtSender {
+void send(DtsMeta dtsMeta);
+}

@@ -1,0 +1,6 @@
+package cn.hutool.bloomfilter;
+import java.io.Serializable;
+public interface BloomFilter extends Serializable{
+boolean contains(String str);
+boolean add(String str);
+}

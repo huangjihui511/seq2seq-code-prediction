@@ -1,0 +1,114 @@
+package com.github.jknack.handlebars.internal;
+import java.util.ArrayList;
+import java.util.List;
+import org.antlr.v4.runtime.CommonToken;
+import org.antlr.v4.runtime.Token;
+import com.github.jknack.handlebars.internal.HbsParser.AmpvarContext;
+import com.github.jknack.handlebars.internal.HbsParser.BlockContext;
+import com.github.jknack.handlebars.internal.HbsParser.CommentContext;
+import com.github.jknack.handlebars.internal.HbsParser.DelimitersContext;
+import com.github.jknack.handlebars.internal.HbsParser.ElseStmtChainContext;
+import com.github.jknack.handlebars.internal.HbsParser.ElseStmtContext;
+import com.github.jknack.handlebars.internal.HbsParser.NewlineContext;
+import com.github.jknack.handlebars.internal.HbsParser.PartialContext;
+import com.github.jknack.handlebars.internal.HbsParser.SpacesContext;
+import com.github.jknack.handlebars.internal.HbsParser.TemplateContext;
+import com.github.jknack.handlebars.internal.HbsParser.TextContext;
+import com.github.jknack.handlebars.internal.HbsParser.TvarContext;
+import com.github.jknack.handlebars.internal.HbsParser.UnlessContext;
+import com.github.jknack.handlebars.internal.HbsParser.VarContext;
+public class WhiteSpaceControl extends HbsParserBaseListener {
+private List<CommonToken> spaces = new ArrayList<>();
+private int pending = 0;
+@Override
+public void enterSpaces(final SpacesContext ctx) {
+CommonToken space = (CommonToken) ctx.SPACE().getSymbol();
+spaces.add(space);
+}
+@Override
+public void enterNewline(final NewlineContext ctx) {
+CommonToken newline = (CommonToken) ctx.NL().getSymbol();
+spaces.add(newline);
+}
+@Override
+public void exitTemplate(final TemplateContext ctx) {
+trimRight();
+}
+private void trimLeft() {
+hideSpaces();
+}
+private void hideSpaces() {
+for (CommonToken space : spaces) {
+space.setChannel(Token.HIDDEN_CHANNEL);
+}
+}
+private void trimRight() {
+if (pending > 0) {
+hideSpaces();
+pending -= 1;
+}
+}
+@Override
+public void enterText(final TextContext ctx) {
+trim(ctx.start, ctx.stop);
+}
+@Override
+public void enterBlock(final BlockContext ctx) {
+trim(ctx.start, ctx.END(0).getSymbol());
+}
+@Override
+public void enterElseStmt(final ElseStmtContext ctx) {
+trim(ctx.start, ctx.END().getSymbol());
+}
+@Override
+public void enterElseStmtChain(final ElseStmtChainContext ctx) {
+trim(ctx.start, ctx.END().getSymbol());
+}
+@Override
+public void exitBlock(final BlockContext ctx) {
+trim(ctx.END_BLOCK().getSymbol(), ctx.END(1).getSymbol());
+}
+@Override
+public void enterComment(final CommentContext ctx) {
+trim(ctx.start, ctx.stop);
+}
+@Override
+public void enterPartial(final PartialContext ctx) {
+trim(ctx.start, ctx.stop);
+}
+@Override
+public void enterDelimiters(final DelimitersContext ctx) {
+trim(ctx.start, ctx.stop);
+}
+@Override
+public void enterUnless(final UnlessContext ctx) {
+trim(ctx.start, ctx.END().get(0).getSymbol());
+}
+@Override
+public void enterAmpvar(final AmpvarContext ctx) {
+trim(ctx.start, ctx.stop);
+}
+@Override
+public void enterTvar(final TvarContext ctx) {
+trim(ctx.start, ctx.stop);
+}
+@Override
+public void enterVar(final VarContext ctx) {
+trim(ctx.start, ctx.stop);
+}
+private void trim(final Token startToken, final Token endToken) {
+trimRight();
+String start = text(startToken);
+if (start.indexOf("~") > 0) {
+trimLeft();
+}
+String end = text(endToken);
+if (end.indexOf("~") >= 0) {
+pending += 1;
+}
+spaces.clear();
+}
+private String text(final Token token) {
+return token.getText();
+}
+}

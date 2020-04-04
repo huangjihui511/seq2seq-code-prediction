@@ -1,0 +1,52 @@
+package io.grpc.internal;
+import io.grpc.Attributes;
+import io.grpc.Compressor;
+import io.grpc.Deadline;
+import io.grpc.DecompressorRegistry;
+import io.grpc.Status;
+import java.io.InputStream;
+import javax.annotation.Nonnull;
+public class NoopClientStream implements ClientStream {
+public static final NoopClientStream INSTANCE = new NoopClientStream();
+@Override
+public void setAuthority(String authority) {}
+@Override
+public void start(ClientStreamListener listener) {}
+@Override
+public Attributes getAttributes() {
+return Attributes.EMPTY;
+}
+@Override
+public void request(int numMessages) {}
+@Override
+public void writeMessage(InputStream message) {}
+@Override
+public void flush() {}
+@Override
+public boolean isReady() {
+return false;
+}
+@Override
+public void cancel(Status status) {}
+@Override
+public void halfClose() {}
+@Override
+public void setMessageCompression(boolean enable) {
+}
+@Override
+public void setCompressor(Compressor compressor) {}
+@Override
+public void setFullStreamDecompression(boolean fullStreamDecompression) {}
+@Override
+public void setDecompressorRegistry(DecompressorRegistry decompressorRegistry) {}
+@Override
+public void setMaxInboundMessageSize(int maxSize) {}
+@Override
+public void setMaxOutboundMessageSize(int maxSize) {}
+@Override
+public void setDeadline(@Nonnull Deadline deadline) {}
+@Override
+public void appendTimeoutInsight(InsightBuilder insight) {
+insight.append("noop");
+}
+}

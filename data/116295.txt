@@ -1,0 +1,38 @@
+package org.spongepowered.api.entity.living;
+import org.spongepowered.api.data.key.Keys;
+import org.spongepowered.api.data.manipulator.mutable.entity.ArmorStandData;
+import org.spongepowered.api.data.manipulator.mutable.entity.BodyPartRotationalData;
+import org.spongepowered.api.data.manipulator.mutable.entity.DisabledSlotsData;
+import org.spongepowered.api.data.value.mutable.SetValue;
+import org.spongepowered.api.data.value.mutable.Value;
+import org.spongepowered.api.entity.ArmorEquipable;
+import org.spongepowered.api.item.inventory.equipment.EquipmentType;
+public interface ArmorStand extends Living, ArmorEquipable {
+default BodyPartRotationalData getBodyPartRotationalData() {
+return get(BodyPartRotationalData.class).get();
+}
+default Value<Boolean> marker() {
+return getValue(Keys.ARMOR_STAND_MARKER).get();
+}
+default Value<Boolean> small() {
+return getValue(Keys.ARMOR_STAND_IS_SMALL).get();
+}
+default Value<Boolean> basePlate() {
+return getValue(Keys.ARMOR_STAND_HAS_BASE_PLATE).get();
+}
+default Value<Boolean> arms() {
+return getValue(Keys.ARMOR_STAND_HAS_ARMS).get();
+}
+default ArmorStandData getArmorStandData() {
+return get(ArmorStandData.class).get();
+}
+default SetValue<EquipmentType> placingDisabled() {
+return getValue(Keys.ARMOR_STAND_PLACING_DISABLED).get();
+}
+default SetValue<EquipmentType> takingDisabled() {
+return getValue(Keys.ARMOR_STAND_TAKING_DISABLED).get();
+}
+default DisabledSlotsData getDisabledSlotsData() {
+return get(DisabledSlotsData.class).get();
+}
+}

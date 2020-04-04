@@ -1,0 +1,13 @@
+package tests;
+import com.google.auto.factory.AutoFactory;
+import javax.inject.Provider;
+@AutoFactory(implementing = ProviderArgumentToCreateMethod.CustomCreator.class)
+final class ProviderArgumentToCreateMethod {
+private final Provider<String> stringProvider;
+ProviderArgumentToCreateMethod(Provider<String> stringProvider) {
+this.stringProvider = stringProvider;
+}
+interface CustomCreator {
+ProviderArgumentToCreateMethod newInstance(Provider<String> stringProvider);
+}
+}

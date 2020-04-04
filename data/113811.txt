@@ -1,0 +1,28 @@
+package shared.turboeditor.util;
+import android.content.Context;
+import androidx.annotation.NonNull;
+import android.widget.Toast;
+public class ToastUtils {
+@NonNull
+public static Toast showShort(@NonNull Context context, @NonNull CharSequence text) {
+return show(context, text, Toast.LENGTH_SHORT);
+}
+@NonNull
+public static Toast showShort(@NonNull Context context, int stringRes) {
+return showShort(context, context.getString(stringRes));
+}
+@NonNull
+public static Toast showLong(@NonNull Context context, @NonNull CharSequence text) {
+return show(context, text, Toast.LENGTH_LONG);
+}
+@NonNull
+public static Toast showLong(@NonNull Context context, int stringRes) {
+return showLong(context, context.getString(stringRes));
+}
+@NonNull
+private static Toast show(@NonNull Context context, CharSequence text, int duration) {
+Toast toast = Toast.makeText(context, text, duration);
+toast.show();
+return toast;
+}
+}

@@ -1,0 +1,37 @@
+package org.menacheri.jetserver.concurrent;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+public class DataFlowVariable
+{
+final CountDownLatch latch;
+Object val = null;
+public DataFlowVariable()
+{
+this.latch = new CountDownLatch(1);
+}
+public DataFlowVariable(CountDownLatch latch)
+{
+this.latch = latch;
+}
+public void bind(Object val)
+{
+this.val = val;
+latch.countDown();
+}
+public Object getVal() throws InterruptedException
+{
+latch.await();
+return val;
+}
+public Object getVal(long waitTime, TimeUnit timeUnit)
+throws InterruptedException
+{
+if(latch.await(waitTime, timeUnit)){
+return val;
+}
+else
+{
+return null;
+}
+}
+}

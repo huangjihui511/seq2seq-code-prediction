@@ -1,0 +1,34 @@
+package com.google.inject;
+import static com.google.common.base.Preconditions.checkState;
+import com.google.inject.internal.Messages;
+import com.google.inject.spi.Message;
+import java.util.Collection;
+public final class ConfigurationException extends RuntimeException {
+private final com.google.common.collect.ImmutableSet<Message> messages;
+private Object partialValue = null;
+public ConfigurationException(Iterable<Message> messages) {
+this.messages = com.google.common.collect.ImmutableSet.copyOf(messages);
+initCause(Messages.getOnlyCause(this.messages));
+}
+public ConfigurationException withPartialValue(Object partialValue) {
+checkState(this.partialValue == null,
+"Can't clobber existing partial value %s with %s", this.partialValue, partialValue);
+ConfigurationException result = new ConfigurationException(messages);
+result.partialValue = partialValue;
+return result;
+}
+public Collection<Message> getErrorMessages() {
+return messages;
+}
+@SuppressWarnings({
+"unchecked",
+"TypeParameterUnusedInFormals"
+}) 
+public <E> E getPartialValue() {
+return (E) partialValue;
+}
+@Override public String getMessage() {
+return Messages.formatMessages("Guice configuration errors", messages);
+}
+private static final long serialVersionUID = 0;
+}

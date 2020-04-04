@@ -1,0 +1,69 @@
+package com.alibaba.csp.sentinel;
+import java.lang.reflect.Method;
+import java.util.List;
+import com.alibaba.csp.sentinel.log.RecordLog;
+import com.alibaba.csp.sentinel.context.ContextUtil;
+import com.alibaba.csp.sentinel.slots.block.BlockException;
+import com.alibaba.csp.sentinel.slots.block.Rule;
+import com.alibaba.csp.sentinel.slots.block.degrade.DegradeRuleManager;
+import com.alibaba.csp.sentinel.slots.block.flow.FlowRuleManager;
+import com.alibaba.csp.sentinel.slots.system.SystemRule;
+import com.alibaba.csp.sentinel.slots.system.SystemRuleManager;
+public class SphO {
+private static final Object[] OBJECTS0 = new Object[0];
+public static boolean entry(String name) {
+return entry(name, EntryType.OUT, 1, OBJECTS0);
+}
+public static boolean entry(Method method) {
+return entry(method, EntryType.OUT, 1, OBJECTS0);
+}
+public static boolean entry(Method method, int count) {
+return entry(method, EntryType.OUT, count, OBJECTS0);
+}
+public static boolean entry(String name, int count) {
+return entry(name, EntryType.OUT, count, OBJECTS0);
+}
+public static boolean entry(Method method, EntryType type) {
+return entry(method, type, 1, OBJECTS0);
+}
+public static boolean entry(String name, EntryType type) {
+return entry(name, type, 1, OBJECTS0);
+}
+public static boolean entry(Method method, EntryType type, int count) {
+return entry(method, type, count, OBJECTS0);
+}
+public static boolean entry(String name, EntryType type, int count) {
+return entry(name, type, count, OBJECTS0);
+}
+public static boolean entry(String name, EntryType type, int count, Object... args) {
+try {
+Env.sph.entry(name, type, count, args);
+} catch (BlockException e) {
+return false;
+} catch (Throwable e) {
+RecordLog.info("[Sentinel] Fatal error", e);
+return true;
+}
+return true;
+}
+public static boolean entry(Method method, EntryType type, int count, Object... args) {
+try {
+Env.sph.entry(method, type, count, args);
+} catch (BlockException e) {
+return false;
+} catch (Throwable e) {
+RecordLog.info("[Sentinel] Fatal error", e);
+return true;
+}
+return true;
+}
+public static void exit(int count, Object... args) {
+ContextUtil.getContext().getCurEntry().exit(count, args);
+}
+public static void exit(int count) {
+ContextUtil.getContext().getCurEntry().exit(count, OBJECTS0);
+}
+public static void exit() {
+exit(1, OBJECTS0);
+}
+}

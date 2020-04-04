@@ -1,0 +1,6 @@
+package com.baomidou.mybatisplus.core.conditions;
+import java.io.Serializable;
+@FunctionalInterface
+public interface ISqlSegment extends Serializable {
+String getSqlSegment();
+}

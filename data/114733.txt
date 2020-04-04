@@ -1,0 +1,57 @@
+package com.springboot.demo.common.config.generatir;
+import com.baomidou.mybatisplus.core.exceptions.MybatisPlusException;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
+import com.baomidou.mybatisplus.generator.AutoGenerator;
+import com.baomidou.mybatisplus.generator.InjectionConfig;
+import com.baomidou.mybatisplus.generator.config.DataSourceConfig;
+import com.baomidou.mybatisplus.generator.config.GlobalConfig;
+import com.baomidou.mybatisplus.generator.config.PackageConfig;
+import com.baomidou.mybatisplus.generator.config.StrategyConfig;
+import com.baomidou.mybatisplus.generator.config.rules.NamingStrategy;
+import java.util.Scanner;
+public class CodeGenerator {
+public static String scanner(String tip) {
+Scanner scanner = new Scanner(System.in);
+StringBuilder help = new StringBuilder();
+System.out.println(help.toString());
+if (scanner.hasNext()) {
+String ipt = scanner.next();
+if (StringUtils.isNotEmpty(ipt)) {
+return ipt;
+}
+}
+}
+public static void main(String[] args) {
+AutoGenerator mpg = new AutoGenerator();
+GlobalConfig gc = new GlobalConfig();
+String projectPath = System.getProperty("user.dir");
+gc.setOutputDir(projectPath + "/src/main/java");
+gc.setAuthor("hjy");
+gc.setOpen(false);
+mpg.setGlobalConfig(gc);
+DataSourceConfig dsc = new DataSourceConfig();
+dsc.setUrl("jdbc:mysql:
+dsc.setDriverName("com.mysql.cj.jdbc.Driver");
+dsc.setUsername("honey");
+dsc.setPassword("Honey521.");
+mpg.setDataSource(dsc);
+PackageConfig pc = new PackageConfig();
+pc.setParent("com.springboot.demo");
+mpg.setPackageInfo(pc);
+InjectionConfig cfg = new InjectionConfig() {
+@Override
+public void initMap() {
+}
+};
+StrategyConfig strategy = new StrategyConfig();
+strategy.setNaming(NamingStrategy.underline_to_camel);
+strategy.setColumnNaming(NamingStrategy.underline_to_camel);
+strategy.setEntityLombokModel(true);
+strategy.setRestControllerStyle(true);
+strategy.setSuperEntityColumns("id");
+strategy.setControllerMappingHyphenStyle(true);
+strategy.setTablePrefix(pc.getModuleName() + "_");
+mpg.setStrategy(strategy);
+mpg.execute();
+}
+}

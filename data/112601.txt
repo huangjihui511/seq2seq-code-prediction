@@ -1,0 +1,15 @@
+package org.jb2011.lnf.beautyeye.ch15_slider;
+import java.awt.Color;
+import javax.swing.UIManager;
+import javax.swing.plaf.ColorUIResource;
+import org.jb2011.lnf.beautyeye.BeautyEyeLNFHelper;
+public class __UI__
+{
+public static void uiImpl()
+{
+UIManager.put("Slider.background",new ColorUIResource(BeautyEyeLNFHelper.commonBackgroundColor));
+UIManager.put("Slider.tickColor",new ColorUIResource(new Color(154,154,154)));
+UIManager.put("Slider.foreground",new ColorUIResource(BeautyEyeLNFHelper.commonForegroundColor));
+UIManager.put("SliderUI",org.jb2011.lnf.beautyeye.ch15_slider.BESliderUI.class.getName());
+}
+}

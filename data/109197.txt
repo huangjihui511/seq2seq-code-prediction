@@ -1,0 +1,30 @@
+package io.realm.examples.realmmultiprocessexample.models;
+import java.util.Date;
+import io.realm.RealmObject;
+import io.realm.annotations.PrimaryKey;
+import io.realm.annotations.Required;
+public class ProcessInfo extends RealmObject {
+@PrimaryKey
+private String name;
+private int pid;
+@Required
+private Date lastResponseDate;
+public int getPid() {
+return pid;
+}
+public void setPid(int pid) {
+this.pid = pid;
+}
+public String getName() {
+return name;
+}
+public void setName(String name) {
+this.name = name;
+}
+public Date getLastResponseDate() {
+return lastResponseDate;
+}
+public void setLastResponseDate(Date lastResponseDate) {
+this.lastResponseDate = lastResponseDate;
+}
+}

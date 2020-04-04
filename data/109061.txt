@@ -1,0 +1,19 @@
+package examples;
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
+import io.vertx.core.json.pointer.JsonPointer;
+import java.net.URI;
+public class JsonPointerExamples {
+public void example1Pointers() {
+JsonPointer pointer1 = JsonPointer.from("/hello/world");
+JsonPointer pointer2 = JsonPointer.create()
+.append("hello")
+.append("world");
+}
+public void example2Pointers(JsonPointer objectPointer, JsonObject jsonObject, JsonPointer arrayPointer, JsonArray jsonArray) {
+Object result1 = objectPointer.queryJson(jsonObject);
+Object result2 = arrayPointer.queryJson(jsonArray);
+objectPointer.writeJson(jsonObject, "new element");
+arrayPointer.writeJson(jsonArray, "new element");
+}
+}

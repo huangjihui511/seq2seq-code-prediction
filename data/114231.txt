@@ -1,0 +1,82 @@
+package com.datumbox.framework.common.storage.abstracts;
+import com.datumbox.framework.common.storage.interfaces.StorageConfiguration;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
+public abstract class AbstractFileStorageEngine<SC extends AbstractFileStorageConfiguration> extends AbstractStorageEngine<SC> {
+protected AbstractFileStorageEngine(String storageName, SC storageConfiguration) {
+super(storageName, storageConfiguration);
+}
+protected String getDirectory() {
+String directory = storageConfiguration.getDirectory();
+if(directory == null || directory.isEmpty()) {
+directory = System.getProperty("java.io.tmpdir"); 
+}
+return directory;
+}
+protected Path getRootPath(String storageName) {
+return Paths.get(getDirectory() + File.separator + storageName);
+}
+protected boolean deleteIfExistsRecursively(Path path) throws IOException {
+try {
+return Files.deleteIfExists(path);
+}
+catch (DirectoryNotEmptyException ex) {
+Files.walkFileTree(path, new SimpleFileVisitor<Path>() {
+@Override
+public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+Files.delete(file);
+return FileVisitResult.CONTINUE;
+}
+@Override
+public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+Files.delete(dir);
+return FileVisitResult.CONTINUE;
+}
+});
+return true;
+}
+}
+protected boolean deleteDirectory(Path path, boolean cleanParent) throws IOException {
+boolean pathExists = deleteIfExistsRecursively(path);
+if(pathExists && cleanParent) {
+cleanEmptyParentDirectory(path.getParent());
+return true;
+}
+return false;
+}
+private void cleanEmptyParentDirectory(Path path) throws IOException {
+Path normPath = path.normalize();
+if(normPath.equals(Paths.get(getDirectory()).normalize()) || normPath.equals(Paths.get(System.getProperty("java.io.tmpdir")).normalize())) { 
+return;
+}
+try {
+Files.deleteIfExists(path); 
+cleanEmptyParentDirectory(path.getParent()); 
+}
+catch(DirectoryNotEmptyException ex) {
+}
+}
+protected boolean moveDirectory(Path src, Path target) throws IOException {
+if(Files.exists(src)) {
+createDirectoryIfNotExists(target.getParent());
+deleteDirectory(target, false);
+Files.move(src, target);
+cleanEmptyParentDirectory(src.getParent());
+return true;
+}
+else {
+return false;
+}
+}
+protected boolean createDirectoryIfNotExists(Path path) throws IOException {
+if(!Files.exists(path)) {
+Files.createDirectories(path);
+return true;
+}
+else {
+return false;
+}
+}
+}

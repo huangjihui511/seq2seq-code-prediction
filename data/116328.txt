@@ -1,0 +1,26 @@
+package org.spongepowered.api.entity.living.golem;
+import org.spongepowered.api.data.key.Keys;
+import org.spongepowered.api.data.manipulator.mutable.DyeableData;
+import org.spongepowered.api.data.manipulator.mutable.block.DirectionalData;
+import org.spongepowered.api.data.type.DyeColor;
+import org.spongepowered.api.data.value.mutable.Value;
+import org.spongepowered.api.entity.Entity;
+import org.spongepowered.api.entity.projectile.EntityTargetingProjectile;
+import org.spongepowered.api.entity.projectile.source.ProjectileSource;
+import org.spongepowered.api.util.Direction;
+import java.util.Optional;
+public interface Shulker extends Golem, ProjectileSource {
+default DyeableData getDyeData() {
+return get(DyeableData.class).get();
+}
+default Value<DyeColor> color() {
+return getValue(Keys.DYE_COLOR).get();
+}
+default DirectionalData getDirectionalData() {
+return get(DirectionalData.class).get();
+}
+default Value<Direction> direction() {
+return getValue(Keys.DIRECTION).get();
+}
+<P extends EntityTargetingProjectile> Optional<P> launchWithTarget(Class<P> projectileClass, Entity target);
+}

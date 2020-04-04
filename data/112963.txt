@@ -1,0 +1,16 @@
+package io.kubernetes.client.extended.controller.builder;
+import io.kubernetes.client.extended.controller.reconciler.Request;
+import io.kubernetes.client.extended.workqueue.WorkQueue;
+import io.kubernetes.client.informer.SharedInformerFactory;
+public class ControllerBuilder {
+public static DefaultControllerBuilder defaultBuilder(SharedInformerFactory factory) {
+return new DefaultControllerBuilder(factory);
+}
+public static ControllerManagerBuilder controllerManagerBuilder(SharedInformerFactory factory) {
+return new ControllerManagerBuilder(factory);
+}
+public static <ApiType> ControllerWatchBuilder<ApiType> controllerWatchBuilder(
+Class<ApiType> apiTypeClass, WorkQueue<Request> workQueue) {
+return new ControllerWatchBuilder(apiTypeClass, workQueue);
+}
+}

@@ -1,0 +1,21 @@
+package mage.cards.s;
+import java.util.UUID;
+import mage.abilities.effects.common.counter.AddCountersAllEffect;
+import mage.cards.CardImpl;
+import mage.cards.CardSetInfo;
+import mage.constants.CardType;
+import mage.counters.CounterType;
+import mage.filter.common.FilterControlledCreaturePermanent;
+public final class StrengthOfThePack extends CardImpl {
+public StrengthOfThePack(UUID ownerId, CardSetInfo setInfo) {
+super(ownerId,setInfo,new CardType[]{CardType.SORCERY},"{4}{G}{G}");
+this.getSpellAbility().addEffect(new AddCountersAllEffect(CounterType.P1P1.createInstance(2), new FilterControlledCreaturePermanent()));
+}
+public StrengthOfThePack(final StrengthOfThePack card) {
+super(card);
+}
+@Override
+public StrengthOfThePack copy() {
+return new StrengthOfThePack(this);
+}
+}

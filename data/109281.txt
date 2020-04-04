@@ -1,0 +1,31 @@
+package org.jeecg.modules.shiro.authc.aop;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import org.apache.shiro.subject.Subject;
+import org.apache.shiro.web.filter.AccessControlFilter;
+import lombok.extern.slf4j.Slf4j;
+@Slf4j
+public class ResourceCheckFilter extends AccessControlFilter {
+private String errorUrl;
+public String getErrorUrl() {
+return errorUrl;
+}
+public void setErrorUrl(String errorUrl) {
+this.errorUrl = errorUrl;
+}
+@Override
+protected boolean isAccessAllowed(ServletRequest servletRequest, ServletResponse servletResponse, Object o) throws Exception {
+Subject subject = getSubject(servletRequest, servletResponse);
+String url = getPathWithinApplication(servletRequest);
+return subject.isPermitted(url);
+}
+@Override
+protected boolean onAccessDenied(ServletRequest servletRequest, ServletResponse servletResponse) throws Exception {
+HttpServletRequest request = (HttpServletRequest) servletRequest;
+HttpServletResponse response = (HttpServletResponse) servletResponse;
+response.sendRedirect(request.getContextPath() + this.errorUrl);
+return false;
+}
+}

@@ -1,0 +1,6 @@
+package org.apache.zookeeper.inspector.gui;
+import java.util.List;
+import org.apache.zookeeper.inspector.gui.nodeviewer.ZooInspectorNodeViewer;
+public interface NodeViewersChangeListener {
+public void nodeViewersChanged(List<ZooInspectorNodeViewer> newViewers);
+}

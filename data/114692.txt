@@ -1,0 +1,169 @@
+package com.twelvemonkeys.util.regex;
+import com.twelvemonkeys.util.DebugUtil;
+import java.io.PrintStream;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
+public class REWildcardStringParser /*extends EntityObject*/ {
+public static final char[] ALPHABET = {
+'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', '\u00e6',
+'\u00f8', '\u00e5', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'N', 'M', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y',
+'Z', '\u00c6', '\u00d8', '\u00c5', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.', '_', '-'
+};
+public static final char FREE_RANGE_CHARACTER = '*';
+public static final char FREE_PASS_CHARACTER = '?';
+Pattern mRegexpParser;
+String      mStringMask;
+boolean     mInitialized = false;
+int         mTotalNumberOfStringsParsed;
+boolean     mDebugging;
+PrintStream out;
+public REWildcardStringParser(final String pStringMask) {
+this(pStringMask, false);
+}
+public REWildcardStringParser(final String pStringMask, final boolean pDebugging) {
+this(pStringMask, pDebugging, System.out);
+}
+public REWildcardStringParser(final String pStringMask, final boolean pDebugging, final PrintStream pDebuggingPrintStream) {
+this.mStringMask = pStringMask;
+this.mDebugging  = pDebugging;
+this.out         = pDebuggingPrintStream;
+mInitialized     = buildRegexpParser();
+}
+private String convertWildcardExpressionToRegularExpression(final String pWildcardExpression) {
+if (pWildcardExpression == null) {
+if (mDebugging) {
+out.println(DebugUtil.getPrefixDebugMessage(this) + "wildcard expression is null - also returning null as regexp!");
+}
+return null;
+}
+StringBuilder regexpBuffer    = new StringBuilder();
+boolean      convertingError = false;
+for (int i = 0; i < pWildcardExpression.length(); i++) {
+if (convertingError) {
+return null;
+}
+char stringMaskChar = pWildcardExpression.charAt(i);
+if (isFreeRangeCharacter(stringMaskChar)) {
+regexpBuffer.append("(([a-�A-�0-9]|.|_|-)*)");
+}
+else if (isFreePassCharacter(stringMaskChar)) {
+regexpBuffer.append("([a-�A_�0-9]|.|_|-)");
+}
+else if (isInAlphabet(stringMaskChar)) {
+regexpBuffer.append(stringMaskChar);
+}
+else {
+if (mDebugging) {
+out.println(DebugUtil.getPrefixDebugMessage(this)
++ "one or more characters in string mask are not legal characters - returning null as regexp!");
+}
+convertingError = true;
+}
+}
+return regexpBuffer.toString();
+}
+private boolean buildRegexpParser() {
+String regexp = convertWildcardExpressionToRegularExpression(mStringMask);
+if (regexp == null) {
+out.println(DebugUtil.getPrefixErrorMessage(this)
++ "irregularity in regexp conversion - now not able to parse any strings, all strings will be rejected!");
+return false;
+}
+try {
+mRegexpParser = Pattern.compile(regexp);
+}
+catch (PatternSyntaxException e) {
+if (mDebugging) {
+out.println(DebugUtil.getPrefixErrorMessage(this) + "RESyntaxException \"" + e.getMessage()
++ "\" caught - now not able to parse any strings, all strings will be rejected!");
+}
+if (mDebugging) {
+e.printStackTrace(System.err);
+}
+return false;
+}
+if (mDebugging) {
+out.println(DebugUtil.getPrefixDebugMessage(this) + "regular expression parser from regular expression " + regexp
++ " extracted from wildcard string mask " + mStringMask + ".");
+}
+return true;
+}
+private boolean checkStringToBeParsed(final String pStringToBeParsed) {
+if (pStringToBeParsed == null) {
+if (mDebugging) {
+out.println(DebugUtil.getPrefixDebugMessage(this) + "string to be parsed is null - rejection!");
+}
+return false;
+}
+for (int i = 0; i < pStringToBeParsed.length(); i++) {
+if (!isInAlphabet(pStringToBeParsed.charAt(i))) {
+if (mDebugging) {
+out.println(DebugUtil.getPrefixDebugMessage(this)
++ "one or more characters in string to be parsed are not legal characters - rejection!");
+}
+return false;
+}
+}
+return true;
+}
+public static boolean isInAlphabet(final char pCharToCheck) {
+for (int i = 0; i < ALPHABET.length; i++) {
+if (pCharToCheck == ALPHABET[i]) {
+return true;
+}
+}
+return false;
+}
+public static boolean isFreeRangeCharacter(final char pCharToCheck) {
+return pCharToCheck == FREE_RANGE_CHARACTER;
+}
+public static boolean isFreePassCharacter(final char pCharToCheck) {
+return pCharToCheck == FREE_PASS_CHARACTER;
+}
+public static boolean isWildcardCharacter(final char pCharToCheck) {
+return ((isFreeRangeCharacter(pCharToCheck)) || (isFreePassCharacter(pCharToCheck)));
+}
+public String getStringMask() {
+return mStringMask;
+}
+public boolean parseString(final String pStringToBeParsed) {
+if (mDebugging) {
+out.println();
+}
+if (mDebugging) {
+out.println(DebugUtil.getPrefixDebugMessage(this) + "parsing \"" + pStringToBeParsed + "\"...");
+}
+mTotalNumberOfStringsParsed++;
+if (!checkStringToBeParsed(pStringToBeParsed)) {
+return false;
+}
+if (mInitialized) {
+return mRegexpParser.matcher(pStringToBeParsed).matches();
+} else {
+out.println(DebugUtil.getPrefixErrorMessage(this) + "trying to use non-initialized parser - string rejected!");
+}
+return false;
+}
+public String toString() {
+StringBuilder buffer = new StringBuilder();
+buffer.append(DebugUtil.getClassName(this));
+buffer.append(":  String mask ");
+buffer.append(mStringMask);
+buffer.append("\n");
+return buffer.toString();
+}
+public boolean equals(Object pObject) {
+if (pObject instanceof REWildcardStringParser) {
+REWildcardStringParser externalParser = (REWildcardStringParser) pObject;
+return (externalParser.mStringMask == this.mStringMask);
+}
+return ((Object) this).equals(pObject);
+}
+public int hashCode() {
+return ((Object) this).hashCode();
+}
+protected Object clone() throws CloneNotSupportedException {
+return new REWildcardStringParser(mStringMask);
+}
+protected void finalize() throws Throwable {}
+}

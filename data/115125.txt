@@ -1,0 +1,5 @@
+package io.ebean;
+public interface AutoTune {
+void collectProfiling();
+void reportProfiling();
+}

@@ -1,0 +1,9 @@
+package org.pf4j;
+import java.util.List;
+import java.util.Set;
+public interface ExtensionFinder {
+<T> List<ExtensionWrapper<T>> find(Class<T> type);
+<T> List<ExtensionWrapper<T>> find(Class<T> type, String pluginId);
+List<ExtensionWrapper> find(String pluginId);
+Set<String> findClassNames(String pluginId);
+}

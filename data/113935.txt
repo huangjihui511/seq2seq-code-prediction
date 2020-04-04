@@ -1,0 +1,33 @@
+package org.spongepowered.mod.network;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.SimpleChannelInboundHandler;
+import net.minecraft.network.INetHandler;
+import net.minecraftforge.fml.common.network.NetworkRegistry;
+import org.spongepowered.api.Platform;
+import org.spongepowered.api.network.Message;
+import org.spongepowered.api.network.MessageHandler;
+import org.spongepowered.api.network.RemoteConnection;
+import org.spongepowered.common.util.SpongeHooks;
+public class SpongeMessageInboundHandler<M extends Message> extends SimpleChannelInboundHandler<M> {
+private final MessageHandler<M> messageHandler;
+private final Platform.Type side;
+public SpongeMessageInboundHandler(MessageHandler<M> handler, Class<M> requestType, Platform.Type side) {
+super(requestType);
+this.messageHandler = handler;
+this.side = side;
+}
+@Override
+protected void channelRead0(ChannelHandlerContext ctx, M msg) throws Exception {
+INetHandler iNetHandler = ctx.channel().attr(NetworkRegistry.NET_HANDLER).get();
+if (iNetHandler instanceof RemoteConnection) {
+this.messageHandler.handleMessage(msg, (RemoteConnection) iNetHandler, this.side);
+} else {
+ctx.fireChannelRead(msg); 
+}
+}
+@Override
+public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+SpongeHooks.logSevere("SpongeMessageInboundHandler exception", cause);
+super.exceptionCaught(ctx, cause);
+}
+}

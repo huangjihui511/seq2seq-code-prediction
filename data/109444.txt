@@ -1,0 +1,18 @@
+package com.facebook.presto.cost;
+import com.facebook.presto.util.MoreMath;
+import static java.lang.Double.isNaN;
+import static java.lang.String.format;
+public final class EstimateAssertion
+{
+private EstimateAssertion() {}
+private static final double TOLERANCE = 0.0000001;
+public static void assertEstimateEquals(double actual, double expected, String messageFormat, Object... messageObjects)
+{
+if (isNaN(actual) && isNaN(expected)) {
+return;
+}
+if (!MoreMath.nearlyEqual(actual, expected, TOLERANCE)) {
+throw new AssertionError(format(messageFormat, messageObjects) + format(", expected [%f], but got [%f]", expected, actual));
+}
+}
+}

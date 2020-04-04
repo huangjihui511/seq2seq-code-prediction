@@ -1,0 +1,49 @@
+package com.github.benmanes.caffeine.cache;
+import java.util.Deque;
+import org.checkerframework.checker.nullness.qual.Nullable;
+import com.github.benmanes.caffeine.cache.AccessOrderDeque.AccessOrder;
+final class AccessOrderDeque<E extends AccessOrder<E>> extends AbstractLinkedDeque<E> {
+@Override
+public boolean contains(Object o) {
+return (o instanceof AccessOrder<?>) && contains((AccessOrder<?>) o);
+}
+boolean contains(AccessOrder<?> e) {
+return (e.getPreviousInAccessOrder() != null)
+|| (e.getNextInAccessOrder() != null)
+|| (e == first);
+}
+@Override
+@SuppressWarnings("unchecked")
+public boolean remove(Object o) {
+return (o instanceof AccessOrder<?>) && remove((E) o);
+}
+boolean remove(E e) {
+if (contains(e)) {
+unlink(e);
+return true;
+}
+return false;
+}
+@Override
+public @Nullable E getPrevious(E e) {
+return e.getPreviousInAccessOrder();
+}
+@Override
+public void setPrevious(E e, @Nullable E prev) {
+e.setPreviousInAccessOrder(prev);
+}
+@Override
+public @Nullable E getNext(E e) {
+return e.getNextInAccessOrder();
+}
+@Override
+public void setNext(E e, @Nullable E next) {
+e.setNextInAccessOrder(next);
+}
+interface AccessOrder<T extends AccessOrder<T>> {
+@Nullable T getPreviousInAccessOrder();
+void setPreviousInAccessOrder(@Nullable T prev);
+@Nullable T getNextInAccessOrder();
+void setNextInAccessOrder(@Nullable T next);
+}
+}

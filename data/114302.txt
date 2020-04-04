@@ -1,0 +1,51 @@
+package mobi.hsz.idea.gitignore.util;
+import mobi.hsz.idea.gitignore.Common;
+import org.junit.Test;
+import java.util.regex.Pattern;
+public class MatcherUtilTest extends Common<MatcherUtil> {
+@Test
+public void testMatch() {
+final Pattern pattern = Pattern.compile("foo");
+final MatcherUtil util = new MatcherUtil();
+assertFalse(util.match(null, null));
+assertFalse(util.match(null, "foo"));
+assertFalse(util.match(pattern, null));
+assertFalse(util.match(pattern, "fo"));
+assertTrue(util.match(pattern, "foo"));
+assertTrue(util.match(pattern, "xfooy"));
+}
+@Test
+public void testMatchAllParts() {
+final String[] partsA = new String[]{"foo"};
+final String[] partsB = new String[]{"foo", "bar"};
+assertFalse(MatcherUtil.matchAllParts(null, null));
+assertFalse(MatcherUtil.matchAllParts(null, "foo"));
+assertFalse(MatcherUtil.matchAllParts(partsA, null));
+assertFalse(MatcherUtil.matchAllParts(partsA, "fo"));
+assertTrue(MatcherUtil.matchAllParts(partsA, "foo"));
+assertTrue(MatcherUtil.matchAllParts(partsA, "xfooy"));
+assertFalse(MatcherUtil.matchAllParts(partsB, "xfooxba"));
+assertTrue(MatcherUtil.matchAllParts(partsB, "xfooxbar"));
+}
+@Test
+public void testMatchAnyPart() {
+final String[] partsA = new String[]{"foo"};
+final String[] partsB = new String[]{"foo", "bar"};
+assertFalse(MatcherUtil.matchAnyPart(null, null));
+assertFalse(MatcherUtil.matchAnyPart(null, "foo"));
+assertFalse(MatcherUtil.matchAnyPart(partsA, null));
+assertFalse(MatcherUtil.matchAnyPart(partsA, "fo"));
+assertTrue(MatcherUtil.matchAnyPart(partsA, "foo"));
+assertTrue(MatcherUtil.matchAnyPart(partsA, "xfooy"));
+assertTrue(MatcherUtil.matchAnyPart(partsB, "xfooxba"));
+assertTrue(MatcherUtil.matchAnyPart(partsB, "xfooxbar"));
+}
+@Test
+public void testGetParts() {
+Pattern pattern = Pattern.compile("foo[ba]rbuz.*hi");
+assertEquals(MatcherUtil.getParts(null).length, 0);
+assertEquals(MatcherUtil.getParts(pattern).length, 2);
+pattern = Pattern.compile("$$_!@[fd]");
+assertEquals(MatcherUtil.getParts(pattern).length, 0);
+}
+}

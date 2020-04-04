@@ -1,0 +1,8 @@
+package org.ocpsoft.prettytime;
+public interface TimeFormat
+{
+public abstract String format(final Duration duration);
+public String formatUnrounded(Duration duration);
+public String decorate(Duration duration, String time);
+public String decorateUnrounded(Duration duration, String time);
+}

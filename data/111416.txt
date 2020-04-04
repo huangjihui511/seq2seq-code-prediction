@@ -1,0 +1,358 @@
+package io.grpc.internal;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
+import static io.grpc.internal.GrpcUtil.CONTENT_ENCODING_KEY;
+import static io.grpc.internal.GrpcUtil.MESSAGE_ENCODING_KEY;
+import static io.grpc.internal.GrpcUtil.TIMEOUT_KEY;
+import static java.lang.Math.max;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
+import com.google.common.io.ByteStreams;
+import io.grpc.Attributes;
+import io.grpc.CallOptions;
+import io.grpc.Codec;
+import io.grpc.Compressor;
+import io.grpc.Deadline;
+import io.grpc.Decompressor;
+import io.grpc.DecompressorRegistry;
+import io.grpc.Grpc;
+import io.grpc.Metadata;
+import io.grpc.Status;
+import io.grpc.internal.ClientStreamListener.RpcProgress;
+import java.io.InputStream;
+import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.annotation.Nullable;
+public abstract class AbstractClientStream extends AbstractStream
+implements ClientStream, MessageFramer.Sink {
+private static final Logger log = Logger.getLogger(AbstractClientStream.class.getName());
+protected interface Sink {
+void writeHeaders(Metadata metadata, @Nullable byte[] payload);
+void writeFrame(
+@Nullable WritableBuffer frame, boolean endOfStream, boolean flush, int numMessages);
+void request(int numMessages);
+void cancel(Status status);
+}
+private final TransportTracer transportTracer;
+private final Framer framer;
+private boolean shouldBeCountedForInUse;
+private boolean useGet;
+private Metadata headers;
+private volatile boolean cancelled;
+protected AbstractClientStream(
+WritableBufferAllocator bufferAllocator,
+StatsTraceContext statsTraceCtx,
+TransportTracer transportTracer,
+Metadata headers,
+CallOptions callOptions,
+boolean useGet) {
+checkNotNull(headers, "headers");
+this.transportTracer = checkNotNull(transportTracer, "transportTracer");
+this.shouldBeCountedForInUse = GrpcUtil.shouldBeCountedForInUse(callOptions);
+this.useGet = useGet;
+if (!useGet) {
+framer = new MessageFramer(this, bufferAllocator, statsTraceCtx);
+this.headers = headers;
+} else {
+framer = new GetFramer(headers, statsTraceCtx);
+}
+}
+@Override
+public void setDeadline(Deadline deadline) {
+headers.discardAll(TIMEOUT_KEY);
+long effectiveTimeout = max(0, deadline.timeRemaining(TimeUnit.NANOSECONDS));
+headers.put(TIMEOUT_KEY, effectiveTimeout);
+}
+@Override
+public void setMaxOutboundMessageSize(int maxSize) {
+framer.setMaxOutboundMessageSize(maxSize);
+}
+@Override
+public void setMaxInboundMessageSize(int maxSize) {
+transportState().setMaxInboundMessageSize(maxSize);
+}
+@Override
+public final void setFullStreamDecompression(boolean fullStreamDecompression) {
+transportState().setFullStreamDecompression(fullStreamDecompression);
+}
+@Override
+public final void setDecompressorRegistry(DecompressorRegistry decompressorRegistry) {
+transportState().setDecompressorRegistry(decompressorRegistry);
+}
+@Override
+protected abstract TransportState transportState();
+@Override
+public final void start(ClientStreamListener listener) {
+transportState().setListener(listener);
+if (!useGet) {
+abstractClientStreamSink().writeHeaders(headers, null);
+headers = null;
+}
+}
+protected abstract Sink abstractClientStreamSink();
+@Override
+protected final Framer framer() {
+return framer;
+}
+public final boolean shouldBeCountedForInUse() {
+return shouldBeCountedForInUse;
+}
+@Override
+public final void request(int numMessages) {
+abstractClientStreamSink().request(numMessages);
+}
+@Override
+public final void deliverFrame(
+WritableBuffer frame, boolean endOfStream, boolean flush, int numMessages) {
+Preconditions.checkArgument(frame != null || endOfStream, "null frame before EOS");
+abstractClientStreamSink().writeFrame(frame, endOfStream, flush, numMessages);
+}
+@Override
+public final void halfClose() {
+if (!transportState().isOutboundClosed()) {
+transportState().setOutboundClosed();
+endOfMessages();
+}
+}
+@Override
+public final void cancel(Status reason) {
+Preconditions.checkArgument(!reason.isOk(), "Should not cancel with OK status");
+cancelled = true;
+abstractClientStreamSink().cancel(reason);
+}
+@Override
+public final boolean isReady() {
+return super.isReady() && !cancelled;
+}
+@Override
+public final void appendTimeoutInsight(InsightBuilder insight) {
+Attributes attrs = getAttributes();
+insight.appendKeyValue("remote_addr", attrs.get(Grpc.TRANSPORT_ATTR_REMOTE_ADDR));
+}
+protected TransportTracer getTransportTracer() {
+return transportTracer;
+}
+protected abstract static class TransportState extends AbstractStream.TransportState {
+private final StatsTraceContext statsTraceCtx;
+private boolean listenerClosed;
+private ClientStreamListener listener;
+private boolean fullStreamDecompression;
+private DecompressorRegistry decompressorRegistry = DecompressorRegistry.getDefaultInstance();
+private boolean deframerClosed = false;
+private Runnable deframerClosedTask;
+private volatile boolean outboundClosed;
+private boolean statusReported;
+private boolean statusReportedIsOk;
+protected TransportState(
+int maxMessageSize,
+StatsTraceContext statsTraceCtx,
+TransportTracer transportTracer) {
+super(maxMessageSize, statsTraceCtx, transportTracer);
+this.statsTraceCtx = checkNotNull(statsTraceCtx, "statsTraceCtx");
+}
+private void setFullStreamDecompression(boolean fullStreamDecompression) {
+this.fullStreamDecompression = fullStreamDecompression;
+}
+private void setDecompressorRegistry(DecompressorRegistry decompressorRegistry) {
+checkState(this.listener == null, "Already called start");
+this.decompressorRegistry =
+checkNotNull(decompressorRegistry, "decompressorRegistry");
+}
+@VisibleForTesting
+public final void setListener(ClientStreamListener listener) {
+checkState(this.listener == null, "Already called setListener");
+this.listener = checkNotNull(listener, "listener");
+}
+@Override
+public void deframerClosed(boolean hasPartialMessage) {
+checkState(statusReported, "status should have been reported on deframer closed");
+deframerClosed = true;
+if (statusReportedIsOk && hasPartialMessage) {
+transportReportStatus(
+Status.INTERNAL.withDescription("Encountered end-of-stream mid-frame"),
+true,
+new Metadata());
+}
+if (deframerClosedTask != null) {
+deframerClosedTask.run();
+deframerClosedTask = null;
+}
+}
+@Override
+protected final ClientStreamListener listener() {
+return listener;
+}
+private final void setOutboundClosed() {
+outboundClosed = true;
+}
+protected final boolean isOutboundClosed() {
+return outboundClosed;
+}
+protected void inboundHeadersReceived(Metadata headers) {
+checkState(!statusReported, "Received headers on closed stream");
+statsTraceCtx.clientInboundHeaders();
+boolean compressedStream = false;
+String streamEncoding = headers.get(CONTENT_ENCODING_KEY);
+if (fullStreamDecompression && streamEncoding != null) {
+if (streamEncoding.equalsIgnoreCase("gzip")) {
+setFullStreamDecompressor(new GzipInflatingBuffer());
+compressedStream = true;
+} else if (!streamEncoding.equalsIgnoreCase("identity")) {
+deframeFailed(
+Status.INTERNAL
+.withDescription(
+String.format("Can't find full stream decompressor for %s", streamEncoding))
+.asRuntimeException());
+return;
+}
+}
+String messageEncoding = headers.get(MESSAGE_ENCODING_KEY);
+if (messageEncoding != null) {
+Decompressor decompressor = decompressorRegistry.lookupDecompressor(messageEncoding);
+if (decompressor == null) {
+deframeFailed(
+Status.INTERNAL
+.withDescription(String.format("Can't find decompressor for %s", messageEncoding))
+.asRuntimeException());
+return;
+} else if (decompressor != Codec.Identity.NONE) {
+if (compressedStream) {
+deframeFailed(
+Status.INTERNAL
+.withDescription(
+String.format("Full stream and gRPC message encoding cannot both be set"))
+.asRuntimeException());
+return;
+}
+setDecompressor(decompressor);
+}
+}
+listener().headersRead(headers);
+}
+protected void inboundDataReceived(ReadableBuffer frame) {
+checkNotNull(frame, "frame");
+boolean needToCloseFrame = true;
+try {
+if (statusReported) {
+log.log(Level.INFO, "Received data on closed stream");
+return;
+}
+needToCloseFrame = false;
+deframe(frame);
+} finally {
+if (needToCloseFrame) {
+frame.close();
+}
+}
+}
+protected void inboundTrailersReceived(Metadata trailers, Status status) {
+checkNotNull(status, "status");
+checkNotNull(trailers, "trailers");
+if (statusReported) {
+log.log(Level.INFO, "Received trailers on closed stream:\n {1}\n {2}",
+new Object[]{status, trailers});
+return;
+}
+statsTraceCtx.clientInboundTrailers(trailers);
+transportReportStatus(status, false, trailers);
+}
+public final void transportReportStatus(final Status status, boolean stopDelivery,
+final Metadata trailers) {
+transportReportStatus(status, RpcProgress.PROCESSED, stopDelivery, trailers);
+}
+public final void transportReportStatus(
+final Status status,
+final RpcProgress rpcProgress,
+boolean stopDelivery,
+final Metadata trailers) {
+checkNotNull(status, "status");
+checkNotNull(trailers, "trailers");
+if (statusReported && !stopDelivery) {
+return;
+}
+statusReported = true;
+statusReportedIsOk = status.isOk();
+onStreamDeallocated();
+if (deframerClosed) {
+deframerClosedTask = null;
+closeListener(status, rpcProgress, trailers);
+} else {
+deframerClosedTask =
+new Runnable() {
+@Override
+public void run() {
+closeListener(status, rpcProgress, trailers);
+}
+};
+closeDeframer(stopDelivery);
+}
+}
+private void closeListener(
+Status status, RpcProgress rpcProgress, Metadata trailers) {
+if (!listenerClosed) {
+listenerClosed = true;
+statsTraceCtx.streamClosed(status);
+listener().closed(status, rpcProgress, trailers);
+if (getTransportTracer() != null) {
+getTransportTracer().reportStreamClosed(status.isOk());
+}
+}
+}
+}
+private class GetFramer implements Framer {
+private Metadata headers;
+private boolean closed;
+private final StatsTraceContext statsTraceCtx;
+private byte[] payload;
+public GetFramer(Metadata headers, StatsTraceContext statsTraceCtx) {
+this.headers = checkNotNull(headers, "headers");
+this.statsTraceCtx = checkNotNull(statsTraceCtx, "statsTraceCtx");
+}
+@SuppressWarnings("BetaApi") 
+@Override
+public void writePayload(InputStream message) {
+checkState(payload == null, "writePayload should not be called multiple times");
+try {
+payload = ByteStreams.toByteArray(message);
+} catch (java.io.IOException ex) {
+throw new RuntimeException(ex);
+}
+statsTraceCtx.outboundMessage(0);
+statsTraceCtx.outboundMessageSent(0, payload.length, payload.length);
+statsTraceCtx.outboundUncompressedSize(payload.length);
+statsTraceCtx.outboundWireSize(payload.length);
+}
+@Override
+public void flush() {}
+@Override
+public boolean isClosed() {
+return closed;
+}
+@Override
+public void close() {
+closed = true;
+checkState(payload != null,
+"Lack of request message. GET request is only supported for unary requests");
+abstractClientStreamSink().writeHeaders(headers, payload);
+payload = null;
+headers = null;
+}
+@Override
+public void dispose() {
+closed = true;
+payload = null;
+headers = null;
+}
+@Override
+public Framer setMessageCompression(boolean enable) {
+return this;
+}
+@Override
+public Framer setCompressor(Compressor compressor) {
+return this;
+}
+@Override
+public void setMaxOutboundMessageSize(int maxSize) {}
+}
+}

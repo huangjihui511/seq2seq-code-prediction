@@ -1,0 +1,225 @@
+package com.datumbox.framework.core.machinelearning.classification;
+import com.datumbox.framework.common.Configuration;
+import com.datumbox.framework.common.dataobjects.AssociativeArray;
+import com.datumbox.framework.core.common.dataobjects.Dataframe;
+import com.datumbox.framework.core.common.dataobjects.Record;
+import com.datumbox.framework.common.dataobjects.TypeInference;
+import com.datumbox.framework.common.storage.interfaces.BigMap;
+import com.datumbox.framework.common.storage.interfaces.StorageEngine;
+import com.datumbox.framework.common.storage.interfaces.StorageEngine.MapType;
+import com.datumbox.framework.common.storage.interfaces.StorageEngine.StorageHint;
+import com.datumbox.framework.common.utilities.RandomGenerator;
+import com.datumbox.framework.core.machinelearning.common.abstracts.AbstractTrainer;
+import com.datumbox.framework.core.machinelearning.common.abstracts.modelers.AbstractClassifier;
+import com.datumbox.framework.core.machinelearning.common.interfaces.PredictParallelizable;
+import com.datumbox.framework.core.statistics.descriptivestatistics.Descriptives;
+import libsvm.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+uses internally the LIBSVM library.
+WARNING: This class copies the Dataframe to double arrays which forces all of the
+data to be loaded in memory.
+References:
+http:
+https:
+https:
+public class SupportVectorMachine extends AbstractClassifier<SupportVectorMachine.ModelParameters, SupportVectorMachine.TrainingParameters> implements PredictParallelizable {
+public static class ModelParameters extends AbstractClassifier.AbstractModelParameters {
+private static final long serialVersionUID = 1L;
+@BigMap(keyClass=Object.class, valueClass=Integer.class, mapType= MapType.HASHMAP, storageHint= StorageHint.IN_MEMORY, concurrent=false)
+private Map<Object, Integer> featureIds; 
+private Map<Object, Integer> classIds = new HashMap<>(); 
+private svm_model svmModel; 
+protected ModelParameters(StorageEngine storageEngine) {
+super(storageEngine);
+}
+public Map<Object, Integer> getFeatureIds() {
+return featureIds;
+}
+protected void setFeatureIds(Map<Object, Integer> featureIds) {
+this.featureIds = featureIds;
+}
+public svm_model getSvmModel() {
+return svmModel;
+}
+protected void setSvmModel(svm_model svmModel) {
+this.svmModel = svmModel;
+}
+public Map<Object, Integer> getClassIds() {
+return classIds;
+}
+protected void setClassIds(Map<Object, Integer> classIds) {
+this.classIds = classIds;
+}
+}
+public static class TrainingParameters extends AbstractClassifier.AbstractTrainingParameters {
+private static final long serialVersionUID = 1L;
+private svm_parameter svmParameter = new svm_parameter();
+public TrainingParameters() {
+super();
+svmParameter.svm_type = svm_parameter.C_SVC;
+svmParameter.kernel_type = svm_parameter.LINEAR; 
+svmParameter.degree = 3;
+svmParameter.gamma = 0;	
+svmParameter.coef0 = 0;
+svmParameter.nu = 0.5;
+svmParameter.cache_size = 100;
+svmParameter.C = 1;
+svmParameter.eps = 1e-3;
+svmParameter.p = 0.1;
+svmParameter.shrinking = 1;
+svmParameter.probability = 1; 
+svmParameter.nr_weight = 0;
+svmParameter.weight_label = new int[0];
+svmParameter.weight = new double[0];
+}
+public svm_parameter getSvmParameter() {
+return svmParameter;
+}
+public void setSvmParameter(svm_parameter svmParameter) {
+this.svmParameter = svmParameter;
+}
+}
+{
+svm.rand.setSeed(RandomGenerator.getThreadLocalRandom().nextLong()); 
+}
+protected SupportVectorMachine(TrainingParameters trainingParameters, Configuration configuration) {
+super(trainingParameters, configuration);
+}
+protected SupportVectorMachine(String storageName, Configuration configuration) {
+super(storageName, configuration);
+}
+private boolean parallelized = true;
+@Override
+public boolean isParallelized() {
+return parallelized;
+}
+@Override
+public void setParallelized(boolean parallelized) {
+this.parallelized = parallelized;
+}
+@Override
+protected void _predict(Dataframe newData) {
+_predictDatasetParallel(newData, knowledgeBase.getStorageEngine(), knowledgeBase.getConfiguration().getConcurrencyConfiguration());
+}
+@Override
+public Prediction _predictRecord(Record r) {
+AssociativeArray predictionScores = calculateClassScores(r.getX());
+Object predictedClass=getSelectedClassFromClassScores(predictionScores);
+Descriptives.normalize(predictionScores);
+return new Prediction(predictedClass, predictionScores);
+}
+@Override
+protected void _fit(Dataframe trainingData) {
+knowledgeBase.getTrainingParameters().getSvmParameter().probability=1; 
+ModelParameters modelParameters = knowledgeBase.getModelParameters();
+Map<Object, Integer> featureIds = modelParameters.getFeatureIds();
+Map<Object, Integer> classIds = modelParameters.getClassIds();
+Set<Object> classesSet = modelParameters.getClasses(); 
+int classId = 0;
+int featureId = 0;
+for(Record r : trainingData) {
+Object theClass=r.getY();
+if(classesSet.add(theClass)) {
+classIds.put(theClass, classId++);
+}
+for(Map.Entry<Object, Object> entry : r.getX().entrySet()) {
+Object feature = entry.getKey();
+if(featureIds.putIfAbsent(feature, featureId) == null) {
+featureId++;
+}
+}
+}
+libSVMTrainer(trainingData);
+}
+private void libSVMTrainer(Dataframe trainingData) {
+ModelParameters modelParameters = knowledgeBase.getModelParameters();
+Map<Object, Integer> featureIds = modelParameters.getFeatureIds();
+Map<Object, Integer> classIds = modelParameters.getClassIds();
+int n = trainingData.size();
+int sparseD = featureIds.size();
+svm_problem prob = new svm_problem();
+prob.l = n;
+prob.y = new double[n];
+prob.x = new svm_node[n][sparseD];
+int rowId = 0;
+for(Record r : trainingData.values()) {
+Object theClass=r.getY();
+int classId = classIds.get(theClass);
+prob.y[rowId] = classId;
+for(Map.Entry<Object, Object> entry : r.getX().entrySet()) {
+Object feature = entry.getKey();
+int featureId = featureIds.get(feature);
+Double value = TypeInference.toDouble(entry.getValue());
+if(value==null) {
+value = 0.0;
+}
+svm_node node=new svm_node();
+node.index=(featureId+1); 
+node.value=value;
+prob.x[rowId][featureId] = node;
+}
+for(int featureId = 0;featureId<sparseD; ++featureId) {
+if(prob.x[rowId][featureId]==null) {
+svm_node node=new svm_node();
+node.index=(featureId+1);
+node.value=0.0;
+prob.x[rowId][featureId] = node;
+}
+}
+++rowId;
+}
+svm_parameter params = knowledgeBase.getTrainingParameters().getSvmParameter();
+svm.svm_set_print_string_function((String s) -> {
+if(s != null) {
+logger.debug(s.trim());
+}
+});
+svm_model model = svm.svm_train(prob, params);
+modelParameters.setSvmModel(model);
+}
+private AssociativeArray calculateClassScores(AssociativeArray x) {
+ModelParameters modelParameters = knowledgeBase.getModelParameters();
+Map<Object, Integer> featureIds = modelParameters.getFeatureIds();
+Map<Object, Integer> classIds = modelParameters.getClassIds();
+svm_model model = modelParameters.getSvmModel();
+int sparseD = featureIds.size();
+int c = modelParameters.getC();
+svm_node[] xSVM = new svm_node[sparseD];
+for(Map.Entry<Object, Object> entry : x.entrySet()) {
+Object feature = entry.getKey();
+Integer featureId = featureIds.get(feature);
+if(featureId==null) {
+continue; 
+}
+Double value = TypeInference.toDouble(entry.getValue());
+if(value==null) {
+value = 0.0;
+}
+svm_node node = new svm_node();
+node.index = (featureId+1); 
+node.value = value;
+xSVM[featureId] = node;
+}
+for(int featureId = 0;featureId<sparseD; ++featureId) {
+if(xSVM[featureId]==null) {
+svm_node node=new svm_node();
+node.index=(featureId+1);
+node.value=0.0;
+xSVM[featureId] = node;
+}
+}
+int[] labels = new int[c];
+svm.svm_get_labels(model,labels);
+double[] prob_estimates = new double[c];
+svm.svm_predict_probability(model, xSVM, prob_estimates);
+AssociativeArray classScores = new AssociativeArray();
+for(Map.Entry<Object, Integer> entry : classIds.entrySet()) {
+Object theClass = entry.getKey();
+int classId = entry.getValue();
+classScores.put(theClass, prob_estimates[classId]);
+}
+return classScores;
+}
+}

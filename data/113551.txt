@@ -1,0 +1,6 @@
+package org.fusesource.mqtt.client;
+public enum QoS {
+AT_MOST_ONCE,
+AT_LEAST_ONCE,
+EXACTLY_ONCE
+}

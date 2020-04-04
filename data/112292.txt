@@ -1,0 +1,19 @@
+package com.github.jknack.handlebars.internal;
+import java.io.IOException;
+import com.github.jknack.handlebars.Context;
+public class StrParam implements Param {
+private final String literal;
+private String value;
+public StrParam(final String literal) {
+this.literal = literal;
+this.value = literal.substring(1, literal.length() - 1);
+}
+@Override
+public Object apply(final Context context) throws IOException {
+return value;
+}
+@Override
+public String toString() {
+return literal;
+}
+}

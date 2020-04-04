@@ -1,0 +1,75 @@
+package com.google.cloud.tools.jib.configuration;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
+import java.time.Duration;
+import java.util.List;
+import java.util.Optional;
+import javax.annotation.Nullable;
+public class DockerHealthCheck {
+public static class Builder {
+private final ImmutableList<String> command;
+@Nullable private Duration interval;
+@Nullable private Duration timeout;
+@Nullable private Duration startPeriod;
+@Nullable private Integer retries;
+private Builder(ImmutableList<String> command) {
+this.command = command;
+}
+public Builder setInterval(Duration interval) {
+this.interval = interval;
+return this;
+}
+public Builder setTimeout(Duration timeout) {
+this.timeout = timeout;
+return this;
+}
+public Builder setStartPeriod(Duration startPeriod) {
+this.startPeriod = startPeriod;
+return this;
+}
+public Builder setRetries(int retries) {
+this.retries = retries;
+return this;
+}
+public DockerHealthCheck build() {
+return new DockerHealthCheck(command, interval, timeout, startPeriod, retries);
+}
+}
+public static DockerHealthCheck.Builder fromCommand(List<String> command) {
+Preconditions.checkArgument(command.size() > 0, "command must not be empty");
+Preconditions.checkArgument(!command.contains(null), "command must not contain null elements");
+return new Builder(ImmutableList.copyOf(command));
+}
+private final ImmutableList<String> command;
+@Nullable private final Duration interval;
+@Nullable private final Duration timeout;
+@Nullable private final Duration startPeriod;
+@Nullable private final Integer retries;
+private DockerHealthCheck(
+ImmutableList<String> command,
+@Nullable Duration interval,
+@Nullable Duration timeout,
+@Nullable Duration startPeriod,
+@Nullable Integer retries) {
+this.command = command;
+this.interval = interval;
+this.timeout = timeout;
+this.startPeriod = startPeriod;
+this.retries = retries;
+}
+public List<String> getCommand() {
+return command;
+}
+public Optional<Duration> getInterval() {
+return Optional.ofNullable(interval);
+}
+public Optional<Duration> getTimeout() {
+return Optional.ofNullable(timeout);
+}
+public Optional<Duration> getStartPeriod() {
+return Optional.ofNullable(startPeriod);
+}
+public Optional<Integer> getRetries() {
+return Optional.ofNullable(retries);
+}
+}

@@ -1,0 +1,8 @@
+package org.apache.zookeeper.graph.filterops;
+import org.apache.zookeeper.graph.FilterOp.*;
+public class StringArg extends Arg<String> {
+public StringArg(String value) {
+super(ArgType.STRING);
+this.value = value;
+}
+};

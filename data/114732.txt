@@ -1,0 +1,6 @@
+package com.springboot.demo.common.config.generatir;
+public class App {
+public static void main(String[] args) {
+GeneratorUtils.generateCode();
+}
+}

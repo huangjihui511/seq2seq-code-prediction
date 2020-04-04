@@ -1,0 +1,32 @@
+package mobi.hsz.idea.gitignore.codeInspection;
+import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.psi.PsiElementVisitor;
+import mobi.hsz.idea.gitignore.IgnoreBundle;
+import mobi.hsz.idea.gitignore.lang.IgnoreLanguage;
+import mobi.hsz.idea.gitignore.psi.IgnoreSyntax;
+import mobi.hsz.idea.gitignore.psi.IgnoreVisitor;
+import org.jetbrains.annotations.NotNull;
+public class IgnoreSyntaxEntryInspection extends LocalInspectionTool {
+@NotNull
+@Override
+public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
+return new IgnoreVisitor() {
+@Override
+public void visitSyntax(@NotNull IgnoreSyntax syntax) {
+IgnoreLanguage language = (IgnoreLanguage) syntax.getContainingFile().getLanguage();
+if (!language.isSyntaxSupported()) {
+return;
+}
+String value = syntax.getValue().getText();
+for (IgnoreBundle.Syntax s : IgnoreBundle.Syntax.values()) {
+if (s.toString().equals(value)) {
+return;
+}
+}
+holder.registerProblem(syntax, IgnoreBundle.message("codeInspection.syntaxEntry.message"),
+new IgnoreSyntaxEntryFix(syntax));
+}
+};
+}
+}

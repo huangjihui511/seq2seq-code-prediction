@@ -1,0 +1,22 @@
+package org.jeecg.modules.demo.test.vo;
+import java.util.List;
+import org.jeecg.modules.demo.test.entity.JeecgOrderCustomer;
+import org.jeecg.modules.demo.test.entity.JeecgOrderTicket;
+import org.jeecgframework.poi.excel.annotation.Excel;
+import org.jeecgframework.poi.excel.annotation.ExcelCollection;
+import lombok.Data;
+@Data
+public class JeecgOrderMainPage {
+private java.lang.String id;
+private java.lang.String orderCode;
+private java.lang.String ctype;
+private java.util.Date orderDate;
+private java.lang.Double orderMoney;
+private java.lang.String content;
+private java.lang.String createBy;
+private java.util.Date createTime;
+private java.lang.String updateBy;
+private java.util.Date updateTime;
+private List<JeecgOrderCustomer> jeecgOrderCustomerList;
+private List<JeecgOrderTicket> jeecgOrderTicketList;
+}

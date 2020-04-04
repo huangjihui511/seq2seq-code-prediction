@@ -1,0 +1,6 @@
+package com.google.cloud.tools.jib.image;
+public class LayerPropertyNotFoundException extends RuntimeException {
+LayerPropertyNotFoundException(String message) {
+super(message);
+}
+}

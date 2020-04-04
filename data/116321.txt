@@ -1,0 +1,45 @@
+package org.spongepowered.api.data.key;
+import com.google.common.reflect.TypeToken;
+import org.spongepowered.api.CatalogType;
+import org.spongepowered.api.Sponge;
+import org.spongepowered.api.data.DataContainer;
+import org.spongepowered.api.data.DataHolder;
+import org.spongepowered.api.data.DataQuery;
+import org.spongepowered.api.data.DataSerializable;
+import org.spongepowered.api.data.value.BaseValue;
+import org.spongepowered.api.data.value.ValueContainer;
+import org.spongepowered.api.event.EventListener;
+import org.spongepowered.api.event.data.ChangeDataHolderEvent;
+import org.spongepowered.api.util.CatalogBuilder;
+import org.spongepowered.api.util.TypeTokens;
+import org.spongepowered.api.util.annotation.CatalogedBy;
+import java.lang.reflect.Type;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+@CatalogedBy(Keys.class)
+public interface Key<V extends BaseValue<?>> extends CatalogType {
+@SuppressWarnings("unchecked")
+static Builder<?, ?> builder() {
+return Sponge.getRegistry().createBuilder(Builder.class);
+}
+TypeToken<V> getValueToken();
+TypeToken<?> getElementToken();
+DataQuery getQuery();
+<E extends DataHolder> void registerEvent(Class<E> holderFilter, EventListener<ChangeDataHolderEvent.ValueChange> listener);
+interface Builder<E, V extends BaseValue<E>> extends CatalogBuilder<Key<V>, Builder<E, V>> {
+<T, B extends BaseValue<T>> Builder<T, B> type(TypeToken<B> token);
+@Override
+Builder<E, V> id(String id);
+@Override
+Builder<E, V> name(String name);
+Builder<E, V> query(DataQuery query);
+@Override
+Key<V> build();
+@Override
+@Deprecated
+default Builder<E, V> from(Key<V> value) throws UnsupportedOperationException {
+throw new UnsupportedOperationException("Cannot create duplicate keys!");
+}
+}
+}

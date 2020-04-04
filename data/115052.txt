@@ -1,0 +1,36 @@
+package com.example.appengine;
+import com.google.appengine.api.datastore.DatastoreService;
+import com.google.appengine.api.datastore.DatastoreServiceFactory;
+import com.google.appengine.api.datastore.Entity;
+import com.google.appengine.api.datastore.FetchOptions;
+import com.google.appengine.api.datastore.Query;
+import com.google.appengine.api.datastore.Query.CompositeFilterOperator;
+import com.google.appengine.api.datastore.Query.FilterOperator;
+import com.google.appengine.api.datastore.Query.FilterPredicate;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.List;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+public class IndexesServlet extends HttpServlet {
+private final DatastoreService datastore;
+public IndexesServlet() {
+datastore = DatastoreServiceFactory.getDatastoreService();
+}
+@Override
+public void doGet(HttpServletRequest req, HttpServletResponse resp)
+throws IOException, ServletException {
+Query q =
+new Query("Widget")
+.setFilter(
+CompositeFilterOperator.and(
+new FilterPredicate("x", FilterOperator.EQUAL, 1),
+new FilterPredicate("y", FilterOperator.EQUAL, "red")))
+.addSort("date", Query.SortDirection.ASCENDING);
+List<Entity> results = datastore.prepare(q).asList(FetchOptions.Builder.withDefaults());
+PrintWriter out = resp.getWriter();
+out.printf("Got %d widgets.\n", results.size());
+}
+}

@@ -1,0 +1,524 @@
+package com.twelvemonkeys.net;
+import com.twelvemonkeys.io.FileUtil;
+import com.twelvemonkeys.lang.StringUtil;
+import com.twelvemonkeys.util.CollectionUtil;
+import java.io.*;
+import java.net.*;
+import java.net.HttpURLConnection;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Properties;
+public final class NetUtil {
+private final static String VERSION_ID = "NetUtil/2.1";
+private static Authenticator sAuthenticator = null;
+private final static int BUF_SIZE = 8192;
+private final static String HTTP = "http:
+private final static String HTTPS = "https:
+public final static String HTTP_PROTOCOL = "http";
+public final static String HTTPS_PROTOCOL = "https";
+public final static String HTTP_GET = "GET";
+public final static String HTTP_POST = "POST";
+public final static String HTTP_HEAD = "HEAD";
+public final static String HTTP_OPTIONS = "OPTIONS";
+public final static String HTTP_PUT = "PUT";
+public final static String HTTP_DELETE = "DELETE";
+public final static String HTTP_TRACE = "TRACE";
+private NetUtil() {
+}
+public static void main(String[] pArgs) throws IOException {
+int timeout = 0;
+boolean followRedirects = true;
+boolean debugHeaders = false;
+String requestPropertiesFile = null;
+String requestHeaders = null;
+String postData = null;
+File putData = null;
+int argIdx = 0;
+boolean errArgs = false;
+boolean writeToFile = false;
+boolean writeToStdOut = false;
+String outFileName = null;
+while ((argIdx < pArgs.length) && (pArgs[argIdx].charAt(0) == '-') && (pArgs[argIdx].length() >= 2)) {
+if ((pArgs[argIdx].charAt(1) == 't') || pArgs[argIdx].equals("--timeout")) {
+argIdx++;
+try {
+timeout = Integer.parseInt(pArgs[argIdx++]);
+}
+catch (NumberFormatException nfe) {
+errArgs = true;
+break;
+}
+}
+else if ((pArgs[argIdx].charAt(1) == 'd') || pArgs[argIdx].equals("--debugheaders")) {
+debugHeaders = true;
+argIdx++;
+}
+else if ((pArgs[argIdx].charAt(1) == 'n') || pArgs[argIdx].equals("--nofollowredirects")) {
+followRedirects = false;
+argIdx++;
+}
+else if ((pArgs[argIdx].charAt(1) == 'r') || pArgs[argIdx].equals("--requestproperties")) {
+argIdx++;
+requestPropertiesFile = pArgs[argIdx++];
+}
+else if ((pArgs[argIdx].charAt(1) == 'p') || pArgs[argIdx].equals("--postdata")) {
+argIdx++;
+postData = pArgs[argIdx++];
+}
+else if ((pArgs[argIdx].charAt(1) == 'u') || pArgs[argIdx].equals("--putdata")) {
+argIdx++;
+putData = new File(pArgs[argIdx++]);
+if (!putData.exists()) {
+errArgs = true;
+break;
+}
+}
+else if ((pArgs[argIdx].charAt(1) == 'h') || pArgs[argIdx].equals("--header")) {
+argIdx++;
+requestHeaders = pArgs[argIdx++];
+}
+else if ((pArgs[argIdx].charAt(1) == 'f') || pArgs[argIdx].equals("--file")) {
+argIdx++;
+writeToFile = true;
+if (!((argIdx >= (pArgs.length - 1)) || (pArgs[argIdx].charAt(0) == '-'))) {
+outFileName = pArgs[argIdx++];
+}
+}
+else if ((pArgs[argIdx].charAt(1) == 'o') || pArgs[argIdx].equals("--output")) {
+argIdx++;
+writeToStdOut = true;
+}
+else {
+System.err.println("Unknown option \"" + pArgs[argIdx++] + "\"");
+}
+}
+if (errArgs || (pArgs.length < (argIdx + 1))) {
+System.err.println("Usage: java  NetUtil [-f|--file [<file name>]] [-d|--debugheaders] [-h|--header <header data>] [-p|--postdata <URL-encoded postdata>] [-u|--putdata <file name>] [-r|--requestProperties <properties file>] [-t|--timeout <miliseconds>] [-n|--nofollowredirects] fromUrl");
+System.exit(5);
+}
+String url = pArgs[argIdx/*++*/];
+Properties requestProperties = new Properties();
+if (requestPropertiesFile != null) {
+requestProperties.load(new FileInputStream(new File(requestPropertiesFile)));
+}
+if (requestHeaders != null) {
+String[] headerPairs = StringUtil.toStringArray(requestHeaders, ",");
+for (String headerPair : headerPairs) {
+String[] pair = StringUtil.toStringArray(headerPair, ":");
+String key = (pair.length > 0)
+? pair[0].trim()
+: null;
+String value = (pair.length > 1)
+? pair[1].trim()
+: "";
+if (key != null) {
+requestProperties.setProperty(key, value);
+}
+}
+}
+HttpURLConnection conn;
+URL reqURL = getURLAndSetAuthorization(url, requestProperties);
+conn = createHttpURLConnection(reqURL, requestProperties, followRedirects, timeout);
+if (postData != null) {
+conn.setRequestMethod(HTTP_POST);
+conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+conn.setRequestProperty("Content-Length", String.valueOf(postData.length()));
+conn.setRequestProperty("Content-Encoding", "ISO-8859-1");
+OutputStream os = conn.getOutputStream();
+System.err.println("OutputStream: " + os.getClass().getName() + "@" + System.identityHashCode(os));
+OutputStreamWriter writer = new OutputStreamWriter(os, "ISO-8859-1");
+writer.write(postData);
+writer.write("\r\n");
+writer.close();  
+}
+else if (putData != null) {
+conn.setRequestMethod(HTTP_PUT);
+conn.setRequestProperty("Content-Length", String.valueOf(putData.length()));
+OutputStream os = conn.getOutputStream();
+System.err.println("OutputStream: " + os.getClass().getName() + "@" + System.identityHashCode(os));
+FileUtil.copy(new FileInputStream(putData), os);
+os.close();
+}
+InputStream is;
+if (conn.getResponseCode() == 200) {
+is = conn.getInputStream();
+}
+else {
+is = conn.getErrorStream();
+}
+if (debugHeaders) {
+System.err.println("Request (debug):");
+System.err.println(conn.getClass());
+System.err.println("Response (debug):");
+System.err.println(conn.getHeaderField(0));
+for (int i = 1; ; i++) {
+String key = conn.getHeaderFieldKey(i);
+if (key == null) {
+break;
+}
+System.err.println(key + ": " + conn.getHeaderField(key));
+}
+}
+OutputStream os;
+if (writeToFile) {
+if (outFileName == null) {
+outFileName = reqURL.getFile();
+if (StringUtil.isEmpty(outFileName)) {
+outFileName = conn.getHeaderField("Location");
+if (StringUtil.isEmpty(outFileName)) {
+outFileName = "index";
+String ext = conn.getContentType();
+if (!StringUtil.isEmpty(ext)) {
+int idx = ext.lastIndexOf('/');
+if (idx >= 0) {
+ext = ext.substring(idx + 1);
+}
+idx = ext.indexOf(';');
+if (idx >= 0) {
+ext = ext.substring(0, idx);
+}
+outFileName += "." + ext;
+}
+}
+}
+int idx = outFileName.lastIndexOf('/');
+if (idx >= 0) {
+outFileName = outFileName.substring(idx + 1);
+}
+idx = outFileName.indexOf('?');
+if (idx >= 0) {
+outFileName = outFileName.substring(0, idx);
+}
+}
+File outFile = new File(outFileName);
+if (!outFile.createNewFile()) {
+if (outFile.exists()) {
+System.err.println("Cannot write to file " + outFile.getAbsolutePath() + ", file allready exists.");
+}
+else {
+System.err.println("Cannot write to file " + outFile.getAbsolutePath() + ", check write permissions.");
+}
+System.exit(5);
+}
+os = new FileOutputStream(outFile);
+}
+else if (writeToStdOut) {
+os = System.out;
+}
+else {
+os = null;
+}
+if ((writeToFile || writeToStdOut) && is != null) {
+FileUtil.copy(is, os);
+}
+Hashtable postData = new Hashtable();
+postData.put("SearchText", "condition");
+try {
+InputStream in = getInputStreamHttpPost(pArgs[argIdx], postData,
+props, true, 0);
+out = new FileOutputStream(file);
+FileUtil.copy(in, out);
+}
+catch (Exception e) {
+System.err.println("Error: " + e);
+e.printStackTrace(System.err);
+continue;
+}
+}
+public static class Cookie {
+String mName = null;
+String mValue = null;
+public Cookie(String pName, String pValue) {
+mName = pName;
+mValue = pValue;
+}
+public String toString() {
+return mName + "=" + mValue;
+}
+if (pCookies != null) {
+String cookieStr = "";
+for (int i = 0; i < pCookies.length; i++)
+cookieStr += ((i == pCookies.length) ? pCookies[i].toString()
+: pCookies[i].toString() + ";");
+conn.setRequestProperty("Cookie", cookieStr);
+}
+}
+public static boolean isHttpURL(String pURL) {
+return ((pURL != null) && pURL.startsWith(HTTP));
+}
+public static boolean isHttpURL(URL pURL) {
+return ((pURL != null) && pURL.getProtocol().equals("http"));
+}
+public static byte[] getBytesHttp(String pURL) throws IOException {
+return getBytesHttp(pURL, 0);
+}
+public static byte[] getBytesHttp(URL pURL) throws IOException {
+return getBytesHttp(pURL, 0);
+}
+public static InputStream getInputStreamHttp(String pURL) throws IOException {
+return getInputStreamHttp(pURL, 0);
+}
+public static InputStream getInputStreamHttp(URL pURL) throws IOException {
+return getInputStreamHttp(pURL, 0);
+}
+public static InputStream getInputStreamHttp(String pURL, int pTimeout) throws IOException {
+return getInputStreamHttp(pURL, null, true, pTimeout);
+}
+public static InputStream getInputStreamHttp(final String pURL, final Properties pProperties, final boolean pFollowRedirects, final int pTimeout)
+throws IOException {
+Properties properties = pProperties != null ? pProperties : new Properties();
+URL url = getURLAndSetAuthorization(pURL, properties);
+return getInputStreamHttp(url, properties, pFollowRedirects, pTimeout);
+}
+private static URL getURLAndSetAuthorization(final String pURL, final Properties pProperties) throws MalformedURLException {
+String url = pURL;
+String userPass = null;
+String protocolPrefix = HTTP;
+int httpIdx = url.indexOf(HTTPS);
+if (httpIdx >= 0) {
+protocolPrefix = HTTPS;
+url = url.substring(httpIdx + HTTPS.length());
+}
+else {
+httpIdx = url.indexOf(HTTP);
+if (httpIdx >= 0) {
+url = url.substring(httpIdx + HTTP.length());
+}
+}
+int atIdx = url.indexOf("@");
+if (atIdx >= 0) {
+userPass = url.substring(0, atIdx);
+url = url.substring(atIdx + 1);
+}
+if (userPass != null) {
+pProperties.setProperty("Authorization", "Basic " + BASE64.encode(userPass.getBytes()));
+}
+return new URL(protocolPrefix + url);
+}
+public static InputStream getInputStreamHttp(URL pURL, int pTimeout) throws IOException {
+return getInputStreamHttp(pURL, null, true, pTimeout);
+}
+public static InputStream getInputStreamHttp(URL pURL, Properties pProperties, boolean pFollowRedirects, int pTimeout)
+throws IOException {
+HttpURLConnection conn = createHttpURLConnection(pURL, pProperties, pFollowRedirects, pTimeout);
+conn.setRequestMethod(HTTP_GET);
+InputStream is = conn.getInputStream();
+if (conn.getResponseCode() != HttpURLConnection.HTTP_OK) {
+throw new IOException("The request gave the response: " + conn.getResponseCode() + ": " + conn.getResponseMessage());
+}
+return is;
+}
+public static InputStream getInputStreamHttpPost(String pURL, Map pPostData, Properties pProperties, boolean pFollowRedirects, int pTimeout)
+throws IOException {
+pProperties = pProperties != null ? pProperties : new Properties();
+URL url = getURLAndSetAuthorization(pURL, pProperties);
+return getInputStreamHttpPost(url, pPostData, pProperties, pFollowRedirects, pTimeout);
+}
+public static InputStream getInputStreamHttpPost(URL pURL, Map pPostData, Properties pProperties, boolean pFollowRedirects, int pTimeout)
+throws IOException {
+HttpURLConnection conn = createHttpURLConnection(pURL, pProperties, pFollowRedirects, pTimeout);
+conn.setRequestMethod(HTTP_POST);
+StringBuilder postStr = new StringBuilder();
+if (pPostData != null) {
+Iterator data = pPostData.entrySet().iterator();
+while (data.hasNext()) {
+Map.Entry entry = (Map.Entry) data.next();
+postStr.append(URLEncoder.encode((String) entry.getKey(), "UTF-8"));
+postStr.append('=');
+postStr.append(URLEncoder.encode(entry.getValue().toString(), "UTF-8"));
+if (data.hasNext()) {
+postStr.append('&');
+}
+}
+}
+String encoding = conn.getRequestProperty("Content-Encoding");
+if (StringUtil.isEmpty(encoding)) {
+encoding = "UTF-8";
+}
+conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+conn.setRequestProperty("Content-Length", String.valueOf(postStr.length()));
+conn.setRequestProperty("Content-Encoding", encoding);
+OutputStream os = conn.getOutputStream();
+OutputStreamWriter writer = new OutputStreamWriter(os, encoding);
+writer.write(postStr.toString());
+writer.write("\r\n");
+writer.close();  
+InputStream is = conn.getInputStream();
+if (conn.getResponseCode() != HttpURLConnection.HTTP_OK) {
+throw new IOException("The request gave the response: " + conn.getResponseCode() + ": " + conn.getResponseMessage());
+}
+return is;
+}
+public static HttpURLConnection createHttpURLConnection(URL pURL, Properties pProperties, boolean pFollowRedirects, int pTimeout)
+throws IOException {
+HttpURLConnection conn;
+if (pTimeout > 0) {
+conn = new com.twelvemonkeys.net.HttpURLConnection(pURL, pTimeout);
+}
+else {
+conn = (HttpURLConnection) pURL.openConnection();
+}
+if ((pProperties == null) || !pProperties.containsKey("User-Agent")) {
+conn.setRequestProperty("User-Agent",
+VERSION_ID
++ " (" + System.getProperty("os.name") + "/" + System.getProperty("os.version") + "; "
++ System.getProperty("os.arch") + "; "
++ System.getProperty("java.vm.name") + "/" + System.getProperty("java.vm.version") + ")");
+}
+if (pProperties != null) {
+for (Map.Entry<Object, Object> entry : pProperties.entrySet()) {
+conn.setRequestProperty((String) entry.getKey(), entry.getValue().toString());
+}
+}
+try {
+conn.setInstanceFollowRedirects(pFollowRedirects);
+}
+catch (LinkageError le) {
+HttpURLConnection.setFollowRedirects(pFollowRedirects);
+System.err.println("You are using an old Java Spec, consider upgrading.");
+System.err.println("java.net.HttpURLConnection.setInstanceFollowRedirects(" + pFollowRedirects + ") failed.");
+}
+conn.setDoInput(true);
+conn.setDoOutput(true);
+return conn;
+}
+private static class TimedHttpURLConnection
+extends com.twelvemonkeys.net.HttpURLConnection {
+TimedHttpURLConnection(URL pURL, int pTimeout) {
+super(pURL, pTimeout);
+}
+}
+public static byte[] getBytesHttp(String pURL, int pTimeout) throws IOException {
+InputStream in = new BufferedInputStream(getInputStreamHttp(pURL, pTimeout), BUF_SIZE * 2);
+ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+int count;
+byte[] buffer = new byte[BUF_SIZE];
+try {
+while ((count = in.read(buffer)) != -1) {
+bytes.write(buffer, 0, count);
+}
+}
+finally {
+in.close();
+}
+return bytes.toByteArray();
+}
+public static byte[] getBytesHttp(URL pURL, int pTimeout) throws IOException {
+InputStream in = new BufferedInputStream(getInputStreamHttp(pURL, pTimeout), BUF_SIZE * 2);
+ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+int count;
+byte[] buffer = new byte[BUF_SIZE];
+try {
+while ((count = in.read(buffer)) != -1) {
+bytes.write(buffer, 0, count);
+}
+}
+finally {
+in.close();
+}
+return bytes.toByteArray();
+}
+private static void unregisterPassword(URL pURL) {
+Authenticator auth = registerAuthenticator();
+if (auth != null && auth instanceof SimpleAuthenticator)
+((SimpleAuthenticator) auth)
+.unregisterPasswordAuthentication(pURL);
+}
+private static URL getURLAndRegisterPassword(String pURL)
+throws MalformedURLException
+{
+String userPass = null;
+String protocolPrefix = HTTP;
+int httpIdx = pURL.indexOf(HTTPS);
+if (httpIdx >= 0) {
+protocolPrefix = HTTPS;
+pURL = pURL.substring(httpIdx + HTTPS.length());
+}
+else {
+httpIdx = pURL.indexOf(HTTP);
+if (httpIdx >= 0)
+pURL = pURL.substring(httpIdx + HTTP.length());
+}
+int atIdx = pURL.indexOf("@");
+if (atIdx >= 0) {
+userPass = pURL.substring(0, atIdx);
+pURL = pURL.substring(atIdx + 1);
+}
+URL url = new URL(protocolPrefix + pURL);
+if (userPass != null) {
+int colIdx = userPass.indexOf(":");
+if (colIdx < 0)
+throw new MalformedURLException("Error in username/password!");
+String userName = userPass.substring(0, colIdx);
+String passWord = userPass.substring(colIdx + 1);
+Authenticator auth = registerAuthenticator();
+if (auth != null && auth instanceof SimpleAuthenticator) {
+((SimpleAuthenticator) auth)
+.registerPasswordAuthentication(url,
+new PasswordAuthentication(userName,
+passWord.toCharArray()));
+}
+else {
+throw new RuntimeException("Could not register PasswordAuthentication");
+}
+}
+return url;
+}
+public synchronized static Authenticator registerAuthenticator() {
+if (sAuthenticator != null) {
+return sAuthenticator;
+}
+String authenticatorName = System.getProperty("java.net.Authenticator");
+if (authenticatorName != null) {
+try {
+Class authenticatorClass = Class.forName(authenticatorName);
+sAuthenticator = (Authenticator) authenticatorClass.newInstance();
+}
+catch (ClassNotFoundException cnfe) {
+}
+catch (InstantiationException ie) {
+}
+catch (IllegalAccessException iae) {
+}
+}
+if (sAuthenticator == null) {
+sAuthenticator = SimpleAuthenticator.getInstance();
+}
+Authenticator.setDefault(sAuthenticator);
+return sAuthenticator;
+}
+public static InetAddress createInetAddressFromURL(URL pURL) {
+try {
+return InetAddress.getByName(pURL.getHost());
+}
+catch (UnknownHostException e) {
+return null;
+}
+}
+public static URL createURLFromInetAddress(InetAddress pIP, String pProtocol) {
+try {
+return new URL(pProtocol, pIP.getHostName(), "");
+}
+catch (MalformedURLException e) {
+return null;
+}
+}
+public static URL createURLFromInetAddress(InetAddress pIP) {
+return createURLFromInetAddress(pIP, HTTP);
+}
+static byte[] getBytesHttpOld(String pURL) throws IOException {
+InputStream in = new BufferedInputStream(getInputStreamHttp(pURL), BUF_SIZE * 2);
+byte[] bytes = new byte[0];
+int count;
+byte[] buffer = new byte[BUF_SIZE];
+try {
+while ((count = in.read(buffer)) != -1) {
+bytes = (byte[]) CollectionUtil.mergeArrays(bytes, 0, bytes.length, buffer, 0, count);
+}
+}
+finally {
+in.close();
+}
+return bytes;
+}
+}

@@ -1,0 +1,53 @@
+package com.google.auto.factory.processor;
+import static com.google.auto.common.MoreElements.isAnnotationPresent;
+import static com.google.auto.factory.processor.Mirrors.isProvider;
+import static com.google.auto.factory.processor.Mirrors.unwrapOptionalEquivalence;
+import static com.google.auto.factory.processor.Mirrors.wrapOptionalInEquivalence;
+import com.google.auto.common.AnnotationMirrors;
+import com.google.auto.common.MoreTypes;
+import com.google.auto.value.AutoValue;
+import com.google.common.base.Equivalence;
+import com.google.common.base.Optional;
+import com.google.common.collect.FluentIterable;
+import com.google.common.collect.ImmutableSet;
+import javax.inject.Qualifier;
+import javax.lang.model.element.AnnotationMirror;
+import javax.lang.model.type.TypeMirror;
+import javax.lang.model.util.Types;
+@AutoValue
+abstract class Key {
+abstract Equivalence.Wrapper<TypeMirror> type();
+abstract Optional<Equivalence.Wrapper<AnnotationMirror>> qualifierWrapper();
+Optional<AnnotationMirror> qualifier() {
+return unwrapOptionalEquivalence(qualifierWrapper());
+}
+static Key create(
+TypeMirror type, Iterable<? extends AnnotationMirror> annotations, Types types) {
+ImmutableSet.Builder<AnnotationMirror> qualifiers = ImmutableSet.builder();
+for (AnnotationMirror annotation : annotations) {
+if (isAnnotationPresent(annotation.getAnnotationType().asElement(), Qualifier.class)) {
+qualifiers.add(annotation);
+}
+}
+Optional<AnnotationMirror> qualifier = FluentIterable.from(qualifiers.build()).first();
+TypeMirror keyType =
+isProvider(type)
+? MoreTypes.asDeclared(type).getTypeArguments().get(0)
+: boxedType(type, types);
+return new AutoValue_Key(
+MoreTypes.equivalence().wrap(keyType),
+wrapOptionalInEquivalence(AnnotationMirrors.equivalence(), qualifier));
+}
+private static TypeMirror boxedType(TypeMirror type, Types types) {
+return type.getKind().isPrimitive()
+? types.boxedClass(MoreTypes.asPrimitiveType(type)).asType()
+: type;
+}
+@Override
+public String toString() {
+String typeQualifiedName = MoreTypes.asTypeElement(type().get()).toString();
+return qualifier().isPresent()
+? qualifier().get() + "/" + typeQualifiedName
+: typeQualifiedName;
+}
+}

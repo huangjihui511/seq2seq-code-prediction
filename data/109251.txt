@@ -1,0 +1,11 @@
+package org.jeecg.modules.message.entity;
+import java.io.Serializable;
+import lombok.Data;
+@Data
+public class MsgParams implements Serializable  {
+private static final long serialVersionUID = 1L;
+private String msgType;
+private String receiver;
+private String templateCode;
+private String testData;
+}

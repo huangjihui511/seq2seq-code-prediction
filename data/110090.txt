@@ -1,0 +1,13 @@
+package spark.http.matching;
+import javax.servlet.http.HttpServletResponse;
+import spark.HaltException;
+public class Halt {
+public static void modify(HttpServletResponse httpResponse, Body body, HaltException halt) {
+httpResponse.setStatus(halt.statusCode());
+if (halt.body() != null) {
+body.set(halt.body());
+} else {
+body.set("");
+}
+}
+}

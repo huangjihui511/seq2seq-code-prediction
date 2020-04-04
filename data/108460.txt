@@ -1,0 +1,8 @@
+package com.oracle.svm.core.jdk;
+import jdk.internal.module.Modules;
+public class ModuleUtils {
+public static void addOpensToAllUnnamed(String moduleName, String packageName) {
+final Module loadedModule = Modules.loadModule(moduleName);
+Modules.addOpensToAllUnnamed(loadedModule, packageName);
+}
+}

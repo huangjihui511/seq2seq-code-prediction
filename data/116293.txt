@@ -1,0 +1,13 @@
+package org.spongepowered.api.event.entity.living.humanoid;
+import org.spongepowered.api.event.Cancellable;
+import org.spongepowered.api.event.entity.ChangeEntityExperienceEvent;
+import org.spongepowered.api.event.entity.living.humanoid.player.TargetPlayerEvent;
+import org.spongepowered.api.util.annotation.eventgen.GenerateFactoryMethod;
+@GenerateFactoryMethod
+@Deprecated
+public interface ChangeLevelEvent extends TargetHumanoidEvent, Cancellable {
+int getOriginalLevel();
+int getLevel();
+void setLevel(int level);
+interface TargetPlayer extends ChangeLevelEvent, TargetPlayerEvent {}
+}

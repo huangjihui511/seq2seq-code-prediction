@@ -1,0 +1,34 @@
+package org.msgpack.core.buffer;
+import java.nio.ByteBuffer;
+import static org.msgpack.core.Preconditions.checkNotNull;
+public class ByteBufferInput
+implements MessageBufferInput
+{
+private ByteBuffer input;
+private boolean isRead = false;
+public ByteBufferInput(ByteBuffer input)
+{
+this.input = checkNotNull(input, "input ByteBuffer is null").slice();
+}
+public ByteBuffer reset(ByteBuffer input)
+{
+ByteBuffer old = this.input;
+this.input = checkNotNull(input, "input ByteBuffer is null").slice();
+isRead = false;
+return old;
+}
+@Override
+public MessageBuffer next()
+{
+if (isRead) {
+return null;
+}
+MessageBuffer b = MessageBuffer.wrap(input);
+isRead = true;
+return b;
+}
+@Override
+public void close()
+{
+}
+}

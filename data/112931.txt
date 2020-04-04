@@ -1,0 +1,50 @@
+package io.kubernetes.client.informer.cache;
+import com.google.common.base.Strings;
+import io.kubernetes.client.informer.exception.BadObjectException;
+import io.kubernetes.client.openapi.models.V1ObjectMeta;
+import io.kubernetes.client.util.ObjectAccessor;
+import io.kubernetes.client.util.exception.ObjectMetaReflectException;
+import java.util.Collections;
+import java.util.List;
+public class Caches {
+public static final String NAMESPACE_INDEX = "namespace";
+public static <ApiType> String deletionHandlingMetaNamespaceKeyFunc(ApiType object) {
+if (object instanceof DeltaFIFO.DeletedFinalStateUnknown) {
+DeltaFIFO.DeletedFinalStateUnknown deleteObj = (DeltaFIFO.DeletedFinalStateUnknown) object;
+return deleteObj.getKey();
+}
+return metaNamespaceKeyFunc(object);
+}
+public static String metaNamespaceKeyFunc(Object obj) {
+try {
+V1ObjectMeta metadata;
+if (obj instanceof String) {
+return (String) obj;
+} else if (obj instanceof V1ObjectMeta) {
+metadata = (V1ObjectMeta) obj;
+} else {
+metadata = ObjectAccessor.objectMetadata(obj);
+if (metadata == null) {
+throw new BadObjectException(obj);
+}
+}
+if (!Strings.isNullOrEmpty(metadata.getNamespace())) {
+return metadata.getNamespace() + "/" + metadata.getName();
+}
+return metadata.getName();
+} catch (ObjectMetaReflectException e) {
+throw new RuntimeException(e);
+}
+}
+public static List<String> metaNamespaceIndexFunc(Object obj) {
+try {
+V1ObjectMeta metadata = ObjectAccessor.objectMetadata(obj);
+if (metadata == null) {
+return Collections.emptyList();
+}
+return Collections.singletonList(metadata.getNamespace());
+} catch (ObjectMetaReflectException e) {
+throw new RuntimeException(e);
+}
+}
+}

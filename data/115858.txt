@@ -1,0 +1,16 @@
+package com.jeff.tianti.org;
+import java.io.IOException;
+import com.jeff.tianti.common.util.GenCodeUtil;
+public class GenCodeTest {
+public static void main(String[] args) throws IOException{
+String s = "com.jeff.tianti.org";
+String writer = "xujianfang";
+}
+public static void autoGenAllCode(Class c,String commonPackage,String writer) throws IOException{
+GenCodeUtil.createQueryDTO(c, commonPackage, writer);
+GenCodeUtil.createDaoCustomInterface(c,commonPackage,writer);
+GenCodeUtil.createDaoInterface(c,commonPackage,writer);
+GenCodeUtil.createDaoClass(c,commonPackage,writer);
+GenCodeUtil.createServiceClass(c,commonPackage,writer);
+}
+}

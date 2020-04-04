@@ -1,0 +1,17 @@
+package com.google.cloud.tools.jib.event.events;
+import com.google.cloud.tools.jib.api.JibEvent;
+import com.google.cloud.tools.jib.event.progress.Allocation;
+public class ProgressEvent implements JibEvent {
+private final Allocation allocation;
+private final long progressUnits;
+public ProgressEvent(Allocation allocation, long progressUnits) {
+this.allocation = allocation;
+this.progressUnits = progressUnits;
+}
+public Allocation getAllocation() {
+return allocation;
+}
+public long getUnits() {
+return progressUnits;
+}
+}

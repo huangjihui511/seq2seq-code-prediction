@@ -1,0 +1,310 @@
+package com.pokegoapi.api.pokemon;
+import POGOProtos.Data.PokemonDataOuterClass.PokemonData;
+import POGOProtos.Data.PokemonDisplayOuterClass.PokemonDisplay;
+import POGOProtos.Enums.PokemonFamilyIdOuterClass;
+import POGOProtos.Enums.PokemonIdOuterClass;
+import POGOProtos.Enums.PokemonIdOuterClass.PokemonId;
+import POGOProtos.Enums.PokemonMoveOuterClass.PokemonMove;
+import POGOProtos.Inventory.Item.ItemIdOuterClass.ItemId;
+import POGOProtos.Settings.Master.Pokemon.EvolutionBranchOuterClass.EvolutionBranch;
+import POGOProtos.Settings.Master.Pokemon.StatsAttributesOuterClass.StatsAttributes;
+import POGOProtos.Settings.Master.PokemonSettingsOuterClass;
+import POGOProtos.Settings.Master.PokemonSettingsOuterClass.PokemonSettings;
+import com.pokegoapi.api.PokemonGo;
+import com.pokegoapi.api.settings.templates.ItemTemplates;
+import com.pokegoapi.exceptions.NoSuchItemException;
+import com.pokegoapi.util.Log;
+import java.util.List;
+public class PokemonDetails {
+private static final String TAG = Pokemon.class.getSimpleName();
+protected final PokemonGo api;
+protected PokemonSettingsOuterClass.PokemonSettings settings;
+protected long id;
+protected PokemonIdOuterClass.PokemonId pokemonId;
+protected int cp;
+protected int maxStamina;
+protected int stamina;
+protected PokemonMove move1;
+protected PokemonMove move2;
+protected String deployedFortId;
+protected String ownerName;
+protected boolean isEgg;
+protected double eggKmWalkedTarget;
+protected double eggKmWalkedStart;
+protected int origin;
+protected float height;
+protected float weight;
+protected int individualAttack;
+protected int individualDefense;
+protected int individualStamina;
+protected float cpMultiplier;
+protected float additionalCpMultiplier;
+protected ItemId pokeball;
+protected long capturedCellId;
+protected int battlesAttacked;
+protected int battlesDefended;
+protected String eggIncubatorId;
+protected long creationTimeMs;
+protected int favorite;
+protected String nickname;
+protected int fromFort;
+protected String protoData;
+protected int numUpgrades;
+protected PokemonDisplay pokemonDisplay;
+protected int buddyCandyAwarded;
+protected float buddyTotalKmWalked;
+public PokemonDetails(PokemonGo api, PokemonData proto) {
+this.api = api;
+this.applyProto(proto);
+}
+public void applyProto(PokemonData proto) {
+id = proto.getId();
+pokemonId = proto.getPokemonId();
+cp = proto.getCp();
+maxStamina = proto.getStaminaMax();
+stamina = proto.getStamina();
+move1 = proto.getMove1();
+move2 = proto.getMove2();
+deployedFortId = proto.getDeployedFortId();
+ownerName = proto.getOwnerName();
+isEgg = proto.getIsEgg();
+eggKmWalkedTarget = proto.getEggKmWalkedTarget();
+eggKmWalkedStart = proto.getEggKmWalkedStart();
+origin = proto.getOrigin();
+height = proto.getHeightM();
+weight = proto.getWeightKg();
+individualAttack = proto.getIndividualAttack();
+individualDefense = proto.getIndividualDefense();
+individualStamina = proto.getIndividualStamina();
+cpMultiplier = proto.getCpMultiplier();
+additionalCpMultiplier = proto.getAdditionalCpMultiplier();
+pokeball = proto.getPokeball();
+capturedCellId = proto.getCapturedCellId();
+battlesAttacked = proto.getBattlesAttacked();
+battlesDefended = proto.getBattlesDefended();
+eggIncubatorId = proto.getEggIncubatorId();
+creationTimeMs = proto.getCreationTimeMs();
+favorite = proto.getFavorite();
+nickname = proto.getNickname();
+fromFort = proto.getFromFort();
+numUpgrades = proto.getNumUpgrades();
+pokemonDisplay = proto.getPokemonDisplay();
+buddyCandyAwarded = proto.getBuddyCandyAwarded();
+buddyTotalKmWalked = proto.getBuddyTotalKmWalked();
+protoData = proto.toString();
+}
+public int getCandy() {
+return api.inventories.candyjar.getCandies(getPokemonFamily());
+}
+public PokemonFamilyIdOuterClass.PokemonFamilyId getPokemonFamily() {
+return getSettings().getFamilyId();
+}
+public PokemonData getDefaultInstanceForType() {
+return PokemonData.getDefaultInstance();
+}
+public long getId() {
+return id;
+}
+public PokemonIdOuterClass.PokemonId getPokemonId() {
+return pokemonId;
+}
+public int getCp() {
+return cp;
+}
+public int getMaxStamina() {
+return maxStamina;
+}
+public int getStamina() {
+return stamina;
+}
+public PokemonMove getMove1() {
+return move1;
+}
+public PokemonMove getMove2() {
+return move2;
+}
+public String getDeployedFortId() {
+return deployedFortId;
+}
+public boolean isDeployed() {
+return deployedFortId != null && deployedFortId.trim().length() > 0;
+}
+public String getOwnerName() {
+return ownerName;
+}
+public boolean isEgg() {
+return isEgg;
+}
+public double getEggKmWalkedTarget() {
+return eggKmWalkedTarget;
+}
+public double getEggKmWalkedStart() {
+return eggKmWalkedStart;
+}
+public int getOrigin() {
+return origin;
+}
+public float getHeightM() {
+return height;
+}
+public float getWeightKg() {
+return weight;
+}
+public int getIndividualAttack() {
+return individualAttack;
+}
+public int getIndividualDefense() {
+return individualDefense;
+}
+public int getIndividualStamina() {
+return individualStamina;
+}
+public double getIvRatio() {
+return (this.getIndividualAttack() + this.getIndividualDefense() + this.getIndividualStamina()) / 45.0;
+}
+public float getCpMultiplier() {
+return cpMultiplier;
+}
+public float getAdditionalCpMultiplier() {
+return additionalCpMultiplier;
+}
+public float getCombinedCpMultiplier() {
+return getCpMultiplier() + getAdditionalCpMultiplier();
+}
+public ItemId getPokeball() {
+return pokeball;
+}
+public long getCapturedS2CellId() {
+return capturedCellId;
+}
+public int getBattlesAttacked() {
+return battlesAttacked;
+}
+public int getBattlesDefended() {
+return battlesDefended;
+}
+public String getEggIncubatorId() {
+return eggIncubatorId;
+}
+public long getCreationTimeMs() {
+return creationTimeMs;
+}
+public boolean isFavorite() {
+return favorite > 0;
+}
+@Deprecated
+public boolean getFavorite() {
+return favorite > 0;
+}
+public String getNickname() {
+return nickname;
+}
+public boolean getFromFort() {
+return fromFort > 0;
+}
+public void debug() {
+Log.d(TAG, protoData);
+}
+public int getBaseStamina() {
+return getSettings().getStats().getBaseStamina();
+}
+public double getBaseCaptureRate() {
+return getSettings().getEncounter().getBaseCaptureRate();
+}
+public int getCandiesToEvolve() {
+Evolution evolution = api.itemTemplates.evolutions.getEvolution(pokemonId);
+if (evolution.evolutionBranch != null && evolution.evolutionBranch.size() > 0) {
+return evolution.evolutionBranch.get(0).getCandyCost();
+}
+return 0;
+}
+public List<EvolutionBranch> getEvolutionBranch() {
+Evolution evolution = api.itemTemplates.evolutions.getEvolution(pokemonId);
+return evolution.evolutionBranch;
+}
+public double getBaseFleeRate() {
+return getSettings().getEncounter().getBaseFleeRate();
+}
+public float getLevel() {
+return PokemonCpUtils.getLevelFromCpMultiplier(getCombinedCpMultiplier());
+}
+public PokemonSettingsOuterClass.PokemonSettings getSettings() {
+if (settings == null) {
+settings = api.itemTemplates.getPokemonSettings(pokemonId);
+}
+return settings;
+}
+public int getMaxCp() throws NoSuchItemException {
+if (settings == null) {
+throw new NoSuchItemException("Cannot find meta data for " + pokemonId.name());
+}
+int attack = getIndividualAttack() + settings.getStats().getBaseAttack();
+int defense = getIndividualDefense() + settings.getStats().getBaseDefense();
+int stamina = getIndividualStamina() + settings.getStats().getBaseStamina();
+return PokemonCpUtils.getMaxCp(api, attack, defense, stamina);
+}
+public int getMaxCpForPlayer() throws NoSuchItemException {
+if (settings == null) {
+throw new NoSuchItemException("Cannot find meta data for " + pokemonId.name());
+}
+int attack = getIndividualAttack() + settings.getStats().getBaseAttack();
+int defense = getIndividualDefense() + settings.getStats().getBaseDefense();
+int stamina = getIndividualStamina() + settings.getStats().getBaseStamina();
+int playerLevel = api.playerProfile.getStats().getLevel();
+return PokemonCpUtils.getMaxCpForPlayer(api, attack, defense, stamina, playerLevel);
+}
+public int getAbsoluteMaxCp() throws NoSuchItemException {
+return PokemonCpUtils.getAbsoluteMaxCp(api, getPokemonId());
+}
+public int getCpFullEvolveAndPowerup(PokemonIdOuterClass.PokemonId highestEvolution) {
+return getMaxCpFullEvolveAndPowerup(40, highestEvolution);
+}
+public int getMaxCpFullEvolveAndPowerupForPlayer(PokemonId highestEvolution) {
+return getMaxCpFullEvolveAndPowerup(api.playerProfile.getStats().getLevel(), highestEvolution);
+}
+private int getMaxCpFullEvolveAndPowerup(int playerLevel, PokemonId highestEvolution) {
+PokemonSettings settings = api.itemTemplates.getPokemonSettings(highestEvolution);
+StatsAttributes stats = settings.getStats();
+int attack = getIndividualAttack() + stats.getBaseAttack();
+int defense = getIndividualDefense() + stats.getBaseDefense();
+int stamina = getIndividualStamina() + stats.getBaseStamina();
+return PokemonCpUtils.getMaxCpForPlayer(api, attack, defense, stamina, playerLevel);
+}
+public int getCpAfterEvolve(PokemonId evolution) {
+PokemonSettings settings = api.itemTemplates.getPokemonSettings(evolution);
+StatsAttributes stats = settings.getStats();
+int attack = getIndividualAttack() + stats.getBaseAttack();
+int defense = getIndividualDefense() + stats.getBaseDefense();
+int stamina = getIndividualStamina() + stats.getBaseStamina();
+return PokemonCpUtils.getCp(attack, defense, stamina, getCombinedCpMultiplier());
+}
+public int getCpAfterFullEvolve(PokemonId highestEvolution) {
+PokemonSettings settings = api.itemTemplates.getPokemonSettings(highestEvolution);
+StatsAttributes stats = settings.getStats();
+int attack = getIndividualAttack() + stats.getBaseAttack();
+int defense = getIndividualDefense() + stats.getBaseDefense();
+int stamina = getIndividualStamina() + stats.getBaseStamina();
+return PokemonCpUtils.getCp(attack, defense, stamina, getCombinedCpMultiplier());
+}
+public int getNumerOfPowerupsDone() {
+return numUpgrades;
+}
+public int getCpAfterPowerup() {
+return PokemonCpUtils.getCpAfterPowerup(getCp(), getCombinedCpMultiplier());
+}
+public int getCandyCostsForPowerup() {
+return PokemonCpUtils.getCandyCostsForPowerup(api, getCombinedCpMultiplier());
+}
+public int getStardustCostsForPowerup() {
+return PokemonCpUtils.getStartdustCostsForPowerup(api, getCombinedCpMultiplier());
+}
+public PokemonDisplay getPokemonDisplay() {
+return pokemonDisplay;
+}
+public int getBuddyCandyAwarded() {
+return buddyCandyAwarded;
+}
+public float getBuddyTotalKmWalked() {
+return buddyTotalKmWalked;
+}
+}

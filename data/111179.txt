@@ -1,0 +1,18 @@
+package com.github.benmanes.caffeine.cache;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentMap;
+import org.checkerframework.checker.nullness.qual.NonNull;
+public interface AsyncLoadingCache<K, V> extends AsyncCache<K, V> {
+@NonNull
+CompletableFuture<V> get(@NonNull K key);
+@NonNull
+CompletableFuture<Map<K, V>> getAll(@NonNull Iterable<? extends @NonNull K> keys);
+@Override
+default @NonNull ConcurrentMap<@NonNull K, @NonNull CompletableFuture<V>> asMap() {
+throw new UnsupportedOperationException();
+}
+@NonNull
+@Override
+LoadingCache<K, V> synchronous();
+}

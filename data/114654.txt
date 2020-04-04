@@ -1,0 +1,52 @@
+package com.twelvemonkeys.lang;
+import java.lang.reflect.UndeclaredThrowableException;
+import static com.twelvemonkeys.lang.Validate.notNull;
+public final class ExceptionUtil {
+if (pThrowable instanceof Error) {
+throw (Error) pThrowable;
+}
+if (pThrowable instanceof RuntimeException) {
+throw (RuntimeException) pThrowable;
+}
+for (Class<? extends Throwable> expectedType : pExpectedTypes) {
+if (expectedType.isInstance(pThrowable)) {
+throw new RuntimeException(pThrowable);
+}
+}
+throw new UndeclaredThrowableException(pThrowable);
+}
+@SuppressWarnings({"unchecked", "UnusedDeclaration"})
+static <T extends Throwable> void throwAs(final Class<T> pType, final Throwable pThrowable) throws T {
+throw (T) pThrowable;
+}
+public static void throwUnchecked(final Throwable pThrowable)  {
+throwAs(RuntimeException.class, pThrowable);
+}
+@SuppressWarnings({"unchecked", "varargs"})
+handleImpl(pThrowable, (ThrowableHandler<Throwable>[]) pHandlers);
+}
+private static void handleImpl(final Throwable pThrowable, final ThrowableHandler<Throwable>... pHandlers) {
+for (ThrowableHandler<Throwable> handler : pHandlers) {
+if (handler.handles(pThrowable)) {
+handler.handle(pThrowable);
+return;
+}
+}
+throwUnchecked(pThrowable);
+}
+public static abstract class ThrowableHandler<T extends Throwable> {
+private final Class<? extends T>[] throwables;
+protected ThrowableHandler(final Class<? extends T>... pThrowables) {
+throwables = notNull(pThrowables).clone();
+}
+final public boolean handles(final Throwable pThrowable) {
+for (Class<? extends T> throwable : throwables) {
+if (throwable.isAssignableFrom(pThrowable.getClass())) {
+return true;
+}
+}
+return false;
+}
+public abstract void handle(T pThrowable);
+}
+}

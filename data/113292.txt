@@ -1,0 +1,3 @@
+package org.pf4j.plugin;
+public class FailTestPlugin {
+}

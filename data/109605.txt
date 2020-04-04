@@ -1,0 +1,102 @@
+package com.google.inject;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
+import com.google.inject.binder.AnnotatedBindingBuilder;
+import com.google.inject.binder.AnnotatedConstantBindingBuilder;
+import com.google.inject.binder.LinkedBindingBuilder;
+import com.google.inject.matcher.Matcher;
+import com.google.inject.spi.Message;
+import com.google.inject.spi.ProvisionListener;
+import com.google.inject.spi.TypeConverter;
+import com.google.inject.spi.TypeListener;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Method;
+public abstract class AbstractModule implements Module {
+Binder binder;
+@Override
+public final synchronized void configure(Binder builder) {
+checkState(this.binder == null, "Re-entry is not allowed.");
+this.binder = checkNotNull(builder, "builder");
+try {
+configure();
+} finally {
+this.binder = null;
+}
+}
+protected void configure() {}
+protected Binder binder() {
+checkState(binder != null, "The binder can only be used inside configure()");
+return binder;
+}
+protected void bindScope(Class<? extends Annotation> scopeAnnotation, Scope scope) {
+binder().bindScope(scopeAnnotation, scope);
+}
+protected <T> LinkedBindingBuilder<T> bind(Key<T> key) {
+return binder().bind(key);
+}
+protected <T> AnnotatedBindingBuilder<T> bind(TypeLiteral<T> typeLiteral) {
+return binder().bind(typeLiteral);
+}
+protected <T> AnnotatedBindingBuilder<T> bind(Class<T> clazz) {
+return binder().bind(clazz);
+}
+protected AnnotatedConstantBindingBuilder bindConstant() {
+return binder().bindConstant();
+}
+protected void install(Module module) {
+binder().install(module);
+}
+protected void addError(String message, Object... arguments) {
+binder().addError(message, arguments);
+}
+protected void addError(Throwable t) {
+binder().addError(t);
+}
+protected void addError(Message message) {
+binder().addError(message);
+}
+protected void requestInjection(Object instance) {
+binder().requestInjection(instance);
+}
+protected void requestStaticInjection(Class<?>... types) {
+binder().requestStaticInjection(types);
+}
+protected void bindInterceptor(
+Matcher<? super Class<?>> classMatcher,
+Matcher<? super Method> methodMatcher,
+org.aopalliance.intercept.MethodInterceptor... interceptors) {
+binder().bindInterceptor(classMatcher, methodMatcher, interceptors);
+}
+protected void requireBinding(Key<?> key) {
+binder().getProvider(key);
+}
+protected void requireBinding(Class<?> type) {
+binder().getProvider(type);
+}
+protected <T> Provider<T> getProvider(Key<T> key) {
+return binder().getProvider(key);
+}
+protected <T> Provider<T> getProvider(Class<T> type) {
+return binder().getProvider(type);
+}
+protected void convertToTypes(
+Matcher<? super TypeLiteral<?>> typeMatcher, TypeConverter converter) {
+binder().convertToTypes(typeMatcher, converter);
+}
+protected Stage currentStage() {
+return binder().currentStage();
+}
+protected <T> MembersInjector<T> getMembersInjector(Class<T> type) {
+return binder().getMembersInjector(type);
+}
+protected <T> MembersInjector<T> getMembersInjector(TypeLiteral<T> type) {
+return binder().getMembersInjector(type);
+}
+protected void bindListener(Matcher<? super TypeLiteral<?>> typeMatcher, TypeListener listener) {
+binder().bindListener(typeMatcher, listener);
+}
+protected void bindListener(
+Matcher<? super Binding<?>> bindingMatcher, ProvisionListener... listener) {
+binder().bindListener(bindingMatcher, listener);
+}
+}

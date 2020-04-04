@@ -1,0 +1,26 @@
+package com.netflix.astyanax;
+import java.nio.ByteBuffer;
+import java.util.Set;
+public interface SerializerPackage {
+Serializer<?> getKeySerializer();
+@Deprecated
+Serializer<?> getColumnSerializer();
+Serializer<?> getColumnNameSerializer();
+@Deprecated
+Serializer<?> getValueSerializer();
+Serializer<?> getDefaultValueSerializer();
+@Deprecated
+Serializer<?> getValueSerializer(ByteBuffer columnName);
+Serializer<?> getColumnSerializer(ByteBuffer columnName);
+@Deprecated
+Serializer<?> getValueSerializer(String columnName);
+Serializer<?> getColumnSerializer(String columnName);
+Set<ByteBuffer> getColumnNames();
+String keyAsString(ByteBuffer key);
+String columnAsString(ByteBuffer column);
+String valueAsString(ByteBuffer column, ByteBuffer value);
+ByteBuffer keyAsByteBuffer(String key);
+ByteBuffer columnAsByteBuffer(String column);
+ByteBuffer valueAsByteBuffer(ByteBuffer column, String value);
+ByteBuffer valueAsByteBuffer(String column, String value);
+}

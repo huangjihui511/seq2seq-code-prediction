@@ -1,0 +1,99 @@
+package io.grpc;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
+import java.lang.Thread.UncaughtExceptionHandler;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
+import javax.annotation.concurrent.ThreadSafe;
+@ThreadSafe
+@ExperimentalApi("https:
+public final class SynchronizationContext implements Executor {
+private final UncaughtExceptionHandler uncaughtExceptionHandler;
+private final Queue<Runnable> queue = new ConcurrentLinkedQueue<>();
+private final AtomicReference<Thread> drainingThread = new AtomicReference<>();
+public SynchronizationContext(UncaughtExceptionHandler uncaughtExceptionHandler) {
+this.uncaughtExceptionHandler =
+checkNotNull(uncaughtExceptionHandler, "uncaughtExceptionHandler");
+}
+public final void drain() {
+do {
+if (!drainingThread.compareAndSet(null, Thread.currentThread())) {
+return;
+}
+try {
+Runnable runnable;
+while ((runnable = queue.poll()) != null) {
+try {
+runnable.run();
+} catch (Throwable t) {
+uncaughtExceptionHandler.uncaughtException(Thread.currentThread(), t);
+}
+}
+} finally {
+drainingThread.set(null);
+}
+} while (!queue.isEmpty());
+}
+public final void executeLater(Runnable runnable) {
+queue.add(checkNotNull(runnable, "runnable is null"));
+}
+@Override
+public final void execute(Runnable task) {
+executeLater(task);
+drain();
+}
+public void throwIfNotInThisSynchronizationContext() {
+checkState(Thread.currentThread() == drainingThread.get(),
+"Not called from the SynchronizationContext");
+}
+public final ScheduledHandle schedule(
+final Runnable task, long delay, TimeUnit unit, ScheduledExecutorService timerService) {
+final ManagedRunnable runnable = new ManagedRunnable(task);
+ScheduledFuture<?> future = timerService.schedule(new Runnable() {
+@Override
+public void run() {
+execute(runnable);
+}
+@Override
+public String toString() {
+return task.toString() + "(scheduled in SynchronizationContext)";
+}
+}, delay, unit);
+return new ScheduledHandle(runnable, future);
+}
+private static class ManagedRunnable implements Runnable {
+final Runnable task;
+boolean isCancelled;
+boolean hasStarted;
+ManagedRunnable(Runnable task) {
+this.task = checkNotNull(task, "task");
+}
+@Override
+public void run() {
+if (!isCancelled) {
+hasStarted = true;
+task.run();
+}
+}
+}
+public static final class ScheduledHandle {
+private final ManagedRunnable runnable;
+private final ScheduledFuture<?> future;
+private ScheduledHandle(ManagedRunnable runnable, ScheduledFuture<?> future) {
+this.runnable = checkNotNull(runnable, "runnable");
+this.future = checkNotNull(future, "future");
+}
+public void cancel() {
+runnable.isCancelled = true;
+future.cancel(false);
+}
+public boolean isPending() {
+return !(runnable.hasStarted || runnable.isCancelled);
+}
+}
+}

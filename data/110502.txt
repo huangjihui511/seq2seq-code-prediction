@@ -1,0 +1,6 @@
+package com.baomidou.mybatisplus.core.enums;
+public enum SqlLike {
+LEFT,
+RIGHT,
+DEFAULT
+}

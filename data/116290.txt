@@ -1,0 +1,15 @@
+package org.spongepowered.api.util;
+import org.spongepowered.api.CatalogType;
+import org.spongepowered.api.plugin.PluginContainer;
+import org.spongepowered.api.text.translation.Translation;
+public interface CatalogBuilder<C extends CatalogType, B extends ResettableBuilder<C, B>> extends ResettableBuilder<C, B> {
+B id(String id);
+B name(String name);
+B name(Translation translation);
+C build() throws IllegalStateException;
+@Deprecated
+@Override
+default B from(C value) {
+throw new UnsupportedOperationException("Duplicating catalog types isn't allowed.");
+}
+}

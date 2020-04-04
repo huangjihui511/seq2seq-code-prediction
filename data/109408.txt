@@ -1,0 +1,65 @@
+package com.facebook.presto.sql.planner;
+import com.facebook.presto.spi.relation.VariableReferenceExpression;
+import com.facebook.presto.sql.analyzer.FieldId;
+import com.facebook.presto.sql.analyzer.RelationId;
+import com.facebook.presto.sql.tree.ArithmeticBinaryExpression;
+import com.facebook.presto.sql.tree.ArrayConstructor;
+import com.facebook.presto.sql.tree.Expression;
+import com.facebook.presto.sql.tree.GenericLiteral;
+import com.facebook.presto.sql.tree.GroupingOperation;
+import com.facebook.presto.sql.tree.LongLiteral;
+import com.facebook.presto.sql.tree.NodeRef;
+import com.facebook.presto.sql.tree.SubscriptExpression;
+import com.facebook.presto.sql.tree.SymbolReference;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import static com.facebook.presto.sql.tree.ArithmeticBinaryExpression.Operator.ADD;
+import static com.google.common.base.Preconditions.checkState;
+import static com.google.common.collect.ImmutableList.toImmutableList;
+import static java.util.Objects.requireNonNull;
+public final class GroupingOperationRewriter
+{
+private GroupingOperationRewriter() {}
+public static Expression rewriteGroupingOperation(GroupingOperation expression, List<Set<Integer>> groupingSets, Map<NodeRef<Expression>, FieldId> columnReferenceFields, Optional<VariableReferenceExpression> groupIdVariable)
+{
+requireNonNull(groupIdVariable, "groupIdVariable is null");
+if (groupingSets.size() == 1) {
+return new LongLiteral("0");
+}
+else {
+checkState(groupIdVariable.isPresent(), "groupId symbol is missing");
+RelationId relationId = columnReferenceFields.get(NodeRef.of(expression.getGroupingColumns().get(0))).getRelationId();
+List<Integer> columns = expression.getGroupingColumns().stream()
+.map(NodeRef::of)
+.peek(groupingColumn -> checkState(columnReferenceFields.containsKey(groupingColumn), "the grouping column is not in the columnReferencesField map"))
+.map(columnReferenceFields::get)
+.map(fieldId -> translateFieldToInteger(fieldId, relationId))
+.collect(toImmutableList());
+List<Expression> groupingResults = groupingSets.stream()
+.map(groupingSet -> String.valueOf(calculateGrouping(groupingSet, columns)))
+.map(LongLiteral::new)
+.collect(toImmutableList());
+return new SubscriptExpression(
+new ArrayConstructor(groupingResults),
+new ArithmeticBinaryExpression(ADD, new SymbolReference(groupIdVariable.get().getName()), new GenericLiteral("BIGINT", "1")));
+}
+}
+private static int translateFieldToInteger(FieldId fieldId, RelationId requiredOriginRelationId)
+{
+checkState(fieldId.getRelationId().equals(requiredOriginRelationId), "grouping arguments must all come from the same relation");
+return fieldId.getFieldIndex();
+}
+static long calculateGrouping(Set<Integer> groupingSet, List<Integer> columns)
+{
+long grouping = (1L << columns.size()) - 1;
+for (int index = 0; index < columns.size(); index++) {
+int column = columns.get(index);
+if (groupingSet.contains(column)) {
+grouping = grouping & ~(1L << (columns.size() - 1 - index));
+}
+}
+return grouping;
+}
+}

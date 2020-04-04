@@ -1,0 +1,6 @@
+package com.JUtils.word;
+import java.util.Vector;
+public class WordExportUtils {
+Vector[] vector = new Vector[10];
+String[] strings = new String[10];
+}

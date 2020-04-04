@@ -1,0 +1,32 @@
+package com.baomidou.mybatisplus.dts.sender;
+import com.baomidou.mybatisplus.core.toolkit.ExceptionUtils;
+import com.baomidou.mybatisplus.dts.DtsConstants;
+import com.baomidou.mybatisplus.dts.DtsMeta;
+import com.baomidou.mybatisplus.dts.parser.IDtsParser;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.amqp.AmqpException;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+@Slf4j
+@Component
+public class RabbitRmtSender implements IRmtSender {
+@Autowired
+private IDtsParser rmtParser;
+@Autowired
+private RabbitTemplate rabbitTemplate;
+@Override
+public void send(DtsMeta dtsMeta) {
+String object = null;
+try {
+object = rmtParser.toJSONString(dtsMeta);
+rabbitTemplate.convertAndSend(DtsConstants.RABBIT_EXCHANGE,
+DtsConstants.RABBIT_ROUTINGKEY, object);
+} catch (AmqpException e) {
+ExceptionUtils.mpe("rabbit send error, dtsMeta: %s", e, object);
+} catch (Exception e) {
+ExceptionUtils.mpe("rmt parser error, dtsMeta.event: %s", e, dtsMeta.getEvent());
+}
+}
+}

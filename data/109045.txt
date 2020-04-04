@@ -1,0 +1,49 @@
+package io.vertx.core;
+import io.vertx.codegen.annotations.Fluent;
+import io.vertx.codegen.annotations.GenIgnore;
+import io.vertx.codegen.annotations.Nullable;
+import io.vertx.codegen.annotations.VertxGen;
+import io.vertx.core.impl.VertxThread;
+import io.vertx.core.json.JsonObject;
+import java.util.List;
+@VertxGen
+public interface Context {
+static boolean isOnWorkerThread() {
+Thread t = Thread.currentThread();
+return t instanceof VertxThread && ((VertxThread) t).isWorker();
+}
+static boolean isOnEventLoopThread() {
+Thread t = Thread.currentThread();
+return t instanceof VertxThread && !((VertxThread) t).isWorker();
+}
+static boolean isOnVertxThread() {
+return Thread.currentThread() instanceof VertxThread;
+}
+void runOnContext(Handler<Void> action);
+<T> void executeBlocking(Handler<Promise<T>> blockingCodeHandler, boolean ordered, Handler<AsyncResult<@Nullable T>> resultHandler);
+<T> void executeBlocking(Handler<Promise<T>> blockingCodeHandler, Handler<AsyncResult<@Nullable T>> resultHandler);
+<T> Future<@Nullable T> executeBlocking(Handler<Promise<T>> blockingCodeHandler, boolean ordered);
+<T> Future<T> executeBlocking(Handler<Promise<T>> blockingCodeHandler);
+String deploymentID();
+@Nullable JsonObject config();
+List<String> processArgs();
+boolean isEventLoopContext();
+boolean isWorkerContext();
+<T> T get(String key);
+void put(String key, Object value);
+boolean remove(String key);
+<T> T getLocal(String key);
+void putLocal(String key, Object value);
+boolean removeLocal(String key);
+Vertx owner();
+int getInstanceCount();
+@Fluent
+Context exceptionHandler(@Nullable Handler<Throwable> handler);
+@GenIgnore
+@Nullable
+Handler<Throwable> exceptionHandler();
+@GenIgnore(GenIgnore.PERMITTED_TYPE)
+void addCloseHook(Closeable hook);
+@GenIgnore(GenIgnore.PERMITTED_TYPE)
+boolean removeCloseHook(Closeable hook);
+}

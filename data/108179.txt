@@ -1,0 +1,31 @@
+package org.antlr.v4.test.runtime;
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
+import java.nio.file.Path;
+public abstract class TestOutputReading {
+public static void append(BufferedReader in, StringBuilder buf) throws IOException {
+String line = in.readLine();
+while (line!=null) {
+buf.append(line);
+buf.append('\n');
+line = in.readLine();
+}
+}
+public static String read(Path path) throws IOException {
+StringBuilder buf = new StringBuilder();
+try (BufferedReader in = Files.newBufferedReader(path, StandardCharsets.UTF_8)) {
+append(in, buf);
+} catch (FileNotFoundException | NoSuchFileException e) {
+return null;
+}
+if (buf.length() > 0) {
+return buf.toString();
+} else {
+return null;
+}
+}
+}

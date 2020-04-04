@@ -1,0 +1,7 @@
+package com.newlandframework.rpc.listener;
+import com.newlandframework.rpc.core.ModuleProvider;
+import com.newlandframework.rpc.model.MessageRequest;
+public interface ModuleListener {
+void exported(ModuleProvider<?> provider, MessageRequest request);
+void unExported(ModuleProvider<?> provider, MessageRequest request);
+}

@@ -1,0 +1,23 @@
+package org.fusesource.mqtt.client;
+import junit.framework.TestCase;
+import org.fusesource.hawtbuf.Buffer;
+import static org.fusesource.hawtbuf.Buffer.ascii;
+import static org.fusesource.hawtbuf.Buffer.utf8;
+public class FutureApiTest extends BrokerTestSupport {
+public void testInterface() throws Exception {
+final Promise<Buffer> result = new Promise<Buffer>();
+MQTT mqtt = new MQTT();
+mqtt.setHost("localhost", port);
+FutureConnection connection = mqtt.futureConnection();
+Future<Void> f1 = connection.connect();
+f1.await();
+Future<byte[]> f2 = connection.subscribe(new Topic[]{new Topic(utf8("foo"), QoS.AT_LEAST_ONCE)});
+byte[] qoses = f2.await();
+Future<Message> receive = connection.receive();
+connection.publish("foo", "Hello".getBytes(), QoS.AT_LEAST_ONCE, false);
+Message message = receive.await();
+assertEquals("Hello", new String(message.getPayload()));
+message.ack();
+connection.disconnect().await();
+}
+}

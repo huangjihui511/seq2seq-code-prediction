@@ -1,0 +1,68 @@
+package com.oath.cyclops.react.collectors.lazy;
+import com.oath.cyclops.internal.react.async.future.FastFuture;
+import com.oath.cyclops.types.futurestream.BlockingStream;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.experimental.Builder;
+import lombok.experimental.Wither;
+@Wither
+@AllArgsConstructor
+@Builder
+public class BatchingCollector<T> implements LazyResultConsumer<T> {
+private final Collection<FastFuture<T>> results;
+private final List<FastFuture<T>> active = new ArrayList<>();
+@Getter
+private final MaxActive maxActive;
+@Getter
+private final BlockingStream<T> blocking;
+public BatchingCollector(final MaxActive maxActive, final BlockingStream<T> blocking) {
+this.maxActive = maxActive;
+this.results = null;
+this.blocking = blocking;
+}
+@Override
+public void accept(final FastFuture<T> t) {
+active.add(t);
+if (active.size() > maxActive.getMaxActive()) {
+while (active.size() > maxActive.getReduceTo()) {
+final List<FastFuture<T>> toRemove = active.stream()
+.filter(cf -> cf.isDone())
+.collect(Collectors.toList());
+active.removeAll(toRemove);
+results.addAll(toRemove);
+if (active.size() > maxActive.getReduceTo()) {
+final CompletableFuture promise = new CompletableFuture();
+FastFuture.xOf(active.size() - maxActive.getReduceTo(), () -> {
+promise.complete(true);
+} , active.toArray(new FastFuture[0]));
+promise.join();
+}
+}
+}
+}
+@Override
+public void block(final Function<FastFuture<T>, T> safeJoin) {
+if (active.size() == 0)
+return;
+active.stream()
+.peek(f -> safeJoin.apply(f))
+.forEach(a -> {
+});
+}
+@Override
+public Collection<FastFuture<T>> getResults() {
+return results;
+}
+@Override
+public Collection<FastFuture<T>> getAllResults() {
+results.addAll(active);
+active.clear();
+return results;
+}
+}

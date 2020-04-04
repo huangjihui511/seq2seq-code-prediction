@@ -1,0 +1,42 @@
+package org.apache.zookeeper.server.jersey.jaxb;
+import java.util.ArrayList;
+import java.util.List;
+import javax.xml.bind.annotation.XmlRootElement;
+@XmlRootElement(name="child")
+public class ZChildrenJSON {
+public String path;
+public String uri;
+public String child_uri_template;
+public List<String> children;
+public ZChildrenJSON() {
+children = new ArrayList<String>();
+}
+public ZChildrenJSON(String path, String uri, String child_uri_template,
+List<String> children)
+{
+this.path = path;
+this.uri = uri;
+this.child_uri_template = child_uri_template;
+if (children != null) {
+this.children = children;
+} else {
+this.children = new ArrayList<String>();
+}
+}
+@Override
+public int hashCode() {
+return path.hashCode();
+}
+@Override
+public boolean equals(Object obj) {
+if (!(obj instanceof ZChildrenJSON)) {
+return false;
+}
+ZChildrenJSON o = (ZChildrenJSON) obj;
+return path.equals(o.path) && children.equals(o.children);
+}
+@Override
+public String toString() {
+return "ZChildrenJSON(" + path + "," + children + ")";
+}
+}

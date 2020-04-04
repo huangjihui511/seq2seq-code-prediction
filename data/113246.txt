@@ -1,0 +1,27 @@
+package org.pf4j;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.pf4j.plugin.FailTestExtension;
+import org.pf4j.plugin.TestExtension;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+public class DefaultExtensionFactoryTest {
+private ExtensionFactory extensionFactory;
+@BeforeEach
+public void setUp() {
+extensionFactory = new DefaultExtensionFactory();
+}
+@AfterEach
+public void tearDown() {
+extensionFactory = null;
+}
+@Test
+public void testCreate() {
+assertNotNull(extensionFactory.create(TestExtension.class));
+}
+@Test
+public void testCreateFailConstructor() {
+assertThrows(PluginRuntimeException.class, () -> extensionFactory.create(FailTestExtension.class));
+}
+}

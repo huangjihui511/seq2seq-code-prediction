@@ -1,0 +1,11 @@
+package org.deeplearning4j.arbiter.optimize.generator.genetic;
+import lombok.Data;
+@Data
+public class Chromosome {
+protected final double fitness;
+protected final double[] genes;
+public Chromosome(double[] genes, double fitness) {
+this.genes = genes;
+this.fitness = fitness;
+}
+}

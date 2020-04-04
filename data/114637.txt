@@ -1,0 +1,69 @@
+package com.twelvemonkeys.image;
+import javax.imageio.ImageIO;
+import javax.swing.*;
+import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.awt.image.Kernel;
+import java.io.File;
+import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+public class ConvolveTester {
+final static int ITERATIONS = 1000;
+public static void main(String[] pArgs) throws IOException {
+File input = new File(pArgs[0]);
+BufferedImage image = ImageIO.read(input);
+BufferedImage result = null;
+System.out.println("image: " + image);
+if (pArgs.length > 1) {
+float ammount = Float.parseFloat(pArgs[1]);
+int edgeOp = pArgs.length > 2 ? Integer.parseInt(pArgs[2]) : ImageUtil.EDGE_REFLECT;
+long start = System.currentTimeMillis();
+for (int i = 0; i < ITERATIONS; i++) {
+result = sharpen(image, ammount, edgeOp);
+}
+long end = System.currentTimeMillis();
+System.out.println("Time: " + ((end - start) / (double) ITERATIONS) + "ms");
+showIt(result, "Sharpened " + ammount + " " + input.getName());
+}
+else {
+showIt(image, "Original " + input.getName());
+}
+}
+public static void showIt(final BufferedImage pImage, final String pTitle) {
+try {
+SwingUtilities.invokeAndWait(new Runnable() {
+public void run() {
+JFrame frame = new JFrame(pTitle);
+frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+frame.setLocationByPlatform(true);
+JPanel pane = new JPanel(new BorderLayout());
+GraphicsConfiguration gc = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().getDefaultConfiguration();
+BufferedImageIcon icon = new BufferedImageIcon(ImageUtil.accelerate(pImage, gc));
+JScrollPane scroll = new JScrollPane(new JLabel(icon));
+scroll.setBorder(null);
+pane.add(scroll);
+frame.setContentPane(pane);
+frame.pack();
+frame.setVisible(true);
+}
+});
+}
+catch (InterruptedException e) {
+Thread.currentThread().interrupt();
+}
+catch (InvocationTargetException e) {
+throw new RuntimeException(e);
+}
+}
+static BufferedImage sharpen(BufferedImage pOriginal, final float pAmmount, int pEdgeOp) {
+if (pAmmount == 0f) {
+return pOriginal;
+}
+float[] data = new float[]{
+0.0f, -pAmmount, 0.0f,
+-pAmmount, 4f * pAmmount + 1f, -pAmmount,
+0.0f, -pAmmount, 0.0f
+};
+return ImageUtil.convolve(pOriginal, new Kernel(3, 3, data), pEdgeOp);
+}
+}

@@ -1,0 +1,21 @@
+package it.unimi.dsi.fastutil;
+import java.util.Collection;
+import java.util.List;
+public interface BigList<K> extends Collection<K>, Size64 {
+K get(long index);
+K remove(long index);
+K set(long index, K element);
+void add(long index, K element);
+void size(long size);
+boolean addAll(long index, Collection<? extends K> c);
+long indexOf(Object o);
+long lastIndexOf(Object o);
+BigListIterator<K> listIterator();
+BigListIterator<K> listIterator(long index);
+BigList<K> subList(long from, long to);
+@Override
+@Deprecated
+default int size() {
+return Size64.super.size();
+}
+}

@@ -1,0 +1,36 @@
+package com.twelvemonkeys.servlet.jsp.droplet.taglib;
+import com.twelvemonkeys.servlet.jsp.droplet.Param;
+import com.twelvemonkeys.servlet.jsp.taglib.ExTagSupport;
+import javax.servlet.jsp.JspException;
+public class ParamTag extends ExTagSupport {
+private String parameterName;
+private Object parameterValue;
+public void setName(String pName) {
+parameterName = pName;
+}
+public void setValue(String pValue) {
+parameterValue = new Param(pValue);
+}
+public int doStartTag() throws JspException {
+addParameter();
+return SKIP_BODY;
+}
+protected void checkEnclosedInIncludeTag() throws JspException {
+Tag parentTag = getParent();
+if ((parentTag != null) && (parentTag instanceof IncludeTag)) {
+return;
+}
+String msg = "A class that extends EnclosedIncludeBodyReaderTag " +
+"is not enclosed within an IncludeTag.";
+log(msg);
+throw new JspException(msg);
+}
+private void addParameter() {
+IncludeTag includeTag = (IncludeTag) getParent();
+includeTag.addParameter(parameterName, parameterValue);
+}
+protected void clearServiceState() {
+parameterName = null;
+parameterValue = null;
+}
+}

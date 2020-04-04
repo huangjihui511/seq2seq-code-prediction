@@ -1,0 +1,44 @@
+package org.gnucash.android.importer;
+import android.util.Log;
+import org.gnucash.android.db.adapter.TransactionsDbAdapter;
+import org.gnucash.android.util.PreferencesHelper;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
+import org.xml.sax.XMLReader;
+import java.io.BufferedInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.PushbackInputStream;
+import java.util.zip.GZIPInputStream;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.parsers.SAXParser;
+import javax.xml.parsers.SAXParserFactory;
+public class GncXmlImporter {
+public static String parse(InputStream gncXmlInputStream) throws ParserConfigurationException, SAXException, IOException {
+SAXParserFactory spf = SAXParserFactory.newInstance();
+SAXParser sp = spf.newSAXParser();
+XMLReader xr = sp.getXMLReader();
+BufferedInputStream bos;
+PushbackInputStream pb = new PushbackInputStream( gncXmlInputStream, 2 ); 
+byte [] signature = new byte[2];
+pb.read( signature ); 
+pb.unread( signature ); 
+if( signature[ 0 ] == (byte) 0x1f && signature[ 1 ] == (byte) 0x8b ) 
+bos = new BufferedInputStream(new GZIPInputStream(pb));
+else
+bos = new BufferedInputStream(pb);
+Log.d(GncXmlImporter.class.getSimpleName(), "Start import");
+GncXmlHandler handler = new GncXmlHandler();
+xr.setContentHandler(handler);
+long startTime = System.nanoTime();
+xr.parse(new InputSource(bos));
+long endTime = System.nanoTime();
+Log.d(GncXmlImporter.class.getSimpleName(), String.format("%d ns spent on importing the file", endTime-startTime));
+String bookUID = handler.getBookUID();
+PreferencesHelper.setLastExportTime(
+TransactionsDbAdapter.getInstance().getTimestampOfLastModification(),
+bookUID
+);
+return bookUID;
+}
+}

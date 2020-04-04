@@ -1,0 +1,11 @@
+package net.pms.formats.subtitle;
+public class WebVTT extends SubtitleBase {
+@Override
+public Identifier getIdentifier() {
+return Identifier.WEBVTT;
+}
+@Override
+public String[] getSupportedExtensions() {
+return new String[] { "vtt" };
+}
+}

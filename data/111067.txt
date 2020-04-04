@@ -1,0 +1,21 @@
+package org.apereo.cas.authentication;
+import org.apereo.cas.authentication.bypass.MultifactorAuthenticationProviderBypassEvaluator;
+import org.apereo.cas.services.RegisteredService;
+import org.apereo.cas.services.RegisteredServiceMultifactorPolicyFailureModes;
+import org.springframework.core.Ordered;
+import java.io.Serializable;
+public interface MultifactorAuthenticationProvider extends Serializable, Ordered {
+boolean isAvailable(RegisteredService service) throws AuthenticationException;
+MultifactorAuthenticationProviderBypassEvaluator getBypassEvaluator();
+MultifactorAuthenticationFailureModeEvaluator getFailureModeEvaluator();
+String getId();
+String getFriendlyName();
+boolean matches(String identifier);
+RegisteredServiceMultifactorPolicyFailureModes getFailureMode();
+default String createUniqueId() {
+return getId().concat(String.valueOf(hashCode()));
+}
+default boolean validateId(final String id) {
+return id != null && createUniqueId().equals(id);
+}
+}

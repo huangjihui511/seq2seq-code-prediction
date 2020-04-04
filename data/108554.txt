@@ -1,0 +1,9 @@
+package org.deeplearning4j.arbiter.optimize.api.saving;
+import org.deeplearning4j.arbiter.optimize.api.OptimizationResult;
+import org.nd4j.shade.jackson.annotation.JsonTypeInfo;
+import java.io.IOException;
+@JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY, property = "@class")
+public interface ResultReference {
+OptimizationResult getResult() throws IOException;
+Object getResultModel() throws IOException;
+}

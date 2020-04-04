@@ -1,0 +1,357 @@
+package com.google.api.client.xml;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import com.google.api.client.util.ArrayMap;
+import com.google.api.client.util.Key;
+import java.io.ByteArrayOutputStream;
+import java.io.StringReader;
+import java.util.ArrayList;
+import java.util.Collection;
+import org.junit.Test;
+import org.xmlpull.v1.XmlPullParser;
+import org.xmlpull.v1.XmlSerializer;
+public class GenericXmlListTest {
+private static final String MULTI_TYPE_WITH_CLASS_TYPE =
+"<?xml version=\"1.0\"?><any "
++ "xmlns=\"http:
++ "rep11</rep><value>value1</value></rep><rep><elem>content2</elem><rep>rep20</rep><rep>rep21"
++ "</rep><value>value2</value></rep><rep><elem>content3</elem><rep>rep30</rep><rep>rep31"
++ "</rep><value>value3</value></rep></any>";
+private static final String MULTIPLE_STRING_ELEMENT =
+"<?xml version=\"1.0\"?><any xmlns"
++ "=\"http:
+private static final String MULTIPLE_INTEGER_ELEMENT =
+"<?xml version=\"1.0\"?><any xmlns"
++ "=\"http:
+private static final String ARRAY_TYPE_WITH_PRIMITIVE_ADDED_NESTED =
+"<?xml version=\"1.0"
++ "\"?><any xmlns=\"http:
++ "><rep>2</rep></any>";
+private static final String MULTIPLE_ENUM_ELEMENT =
+"<?xml version=\"1.0\"?><any xmlns"
++ "=\"http:
+private static final String COLLECTION_OF_ARRAY =
+"<?xml version=\"1.0\"?><any xmlns"
++ "=\"http:
+@SuppressWarnings("unchecked")
+@Test
+public void testParseArrayTypeWithClassType() throws Exception {
+ArrayWithClassTypeGeneric xml = new ArrayWithClassTypeGeneric();
+XmlPullParser parser = Xml.createParser();
+parser.setInput(new StringReader(MULTI_TYPE_WITH_CLASS_TYPE));
+XmlNamespaceDictionary namespaceDictionary = new XmlNamespaceDictionary();
+Xml.parseElement(parser, xml, namespaceDictionary, null);
+assertNotNull(xml.rep);
+XmlTest.AnyType[] rep = xml.rep;
+assertNotNull(rep);
+assertEquals(3, rep.length);
+ArrayList<ArrayMap<String, String>> elem0 = (ArrayList<ArrayMap<String, String>>) rep[0].elem;
+assertEquals(1, elem0.size());
+assertEquals("content1", elem0.get(0).get("text()"));
+ArrayList<ArrayMap<String, String>> elem1 = (ArrayList<ArrayMap<String, String>>) rep[1].elem;
+assertEquals(1, elem1.size());
+assertEquals("content2", elem1.get(0).get("text()"));
+ArrayList<ArrayMap<String, String>> elem2 = (ArrayList<ArrayMap<String, String>>) rep[2].elem;
+assertEquals(1, elem2.size());
+assertEquals("content3", elem2.get(0).get("text()"));
+XmlSerializer serializer = Xml.createSerializer();
+ByteArrayOutputStream out = new ByteArrayOutputStream();
+serializer.setOutput(out, "UTF-8");
+namespaceDictionary.serialize(serializer, "any", xml);
+assertEquals(MULTI_TYPE_WITH_CLASS_TYPE, out.toString());
+}
+@Test
+public void testParseCollectionWithClassType() throws Exception {
+CollectionWithClassTypeGeneric xml = new CollectionWithClassTypeGeneric();
+XmlPullParser parser = Xml.createParser();
+parser.setInput(new StringReader(MULTI_TYPE_WITH_CLASS_TYPE));
+XmlNamespaceDictionary namespaceDictionary = new XmlNamespaceDictionary();
+Xml.parseElement(parser, xml, namespaceDictionary, null);
+assertNotNull(xml.rep);
+Collection<XmlTest.AnyType> rep = xml.rep;
+assertNotNull(rep);
+assertEquals(3, rep.size());
+XmlSerializer serializer = Xml.createSerializer();
+ByteArrayOutputStream out = new ByteArrayOutputStream();
+serializer.setOutput(out, "UTF-8");
+namespaceDictionary.serialize(serializer, "any", xml);
+assertEquals(MULTI_TYPE_WITH_CLASS_TYPE, out.toString());
+}
+@SuppressWarnings("unchecked")
+@Test
+public void testParseMultiGenericWithClassType() throws Exception {
+MultiGenericWithClassType xml = new MultiGenericWithClassType();
+XmlPullParser parser = Xml.createParser();
+parser.setInput(new StringReader(MULTI_TYPE_WITH_CLASS_TYPE));
+XmlNamespaceDictionary namespaceDictionary = new XmlNamespaceDictionary();
+Xml.parseElement(parser, xml, namespaceDictionary, null);
+GenericXml[] rep = xml.rep;
+assertNotNull(rep);
+assertEquals(3, rep.length);
+assertEquals(
+"text()",
+((ArrayMap<String, String>) (rep[0].values().toArray(new ArrayList[] {})[0].get(0)))
+.getKey(0));
+assertEquals(
+"content1",
+((ArrayMap<String, String>) (rep[0].values().toArray(new ArrayList[] {})[0].get(0)))
+.getValue(0));
+assertEquals(
+"text()",
+((ArrayMap<String, String>) (rep[1].values().toArray(new ArrayList[] {})[0].get(0)))
+.getKey(0));
+assertEquals(
+"content2",
+((ArrayMap<String, String>) (rep[1].values().toArray(new ArrayList[] {})[0].get(0)))
+.getValue(0));
+assertEquals(
+"text()",
+((ArrayMap<String, String>) (rep[2].values().toArray(new ArrayList[] {})[0].get(0)))
+.getKey(0));
+assertEquals(
+"content3",
+((ArrayMap<String, String>) (rep[2].values().toArray(new ArrayList[] {})[0].get(0)))
+.getValue(0));
+XmlSerializer serializer = Xml.createSerializer();
+ByteArrayOutputStream out = new ByteArrayOutputStream();
+serializer.setOutput(out, "UTF-8");
+namespaceDictionary.serialize(serializer, "any", xml);
+assertEquals(MULTI_TYPE_WITH_CLASS_TYPE, out.toString());
+}
+@SuppressWarnings("unchecked")
+@Test
+public void testParseMultiGenericWithClassTypeGeneric() throws Exception {
+MultiGenericWithClassTypeGeneric xml = new MultiGenericWithClassTypeGeneric();
+XmlPullParser parser = Xml.createParser();
+parser.setInput(new StringReader(MULTI_TYPE_WITH_CLASS_TYPE));
+XmlNamespaceDictionary namespaceDictionary = new XmlNamespaceDictionary();
+Xml.parseElement(parser, xml, namespaceDictionary, null);
+GenericXml[] rep = xml.rep;
+assertNotNull(rep);
+assertEquals(3, rep.length);
+assertEquals(
+"text()",
+((ArrayMap<String, String>) (rep[0].values().toArray(new ArrayList[] {})[0].get(0)))
+.getKey(0));
+assertEquals(
+"content1",
+((ArrayMap<String, String>) (rep[0].values().toArray(new ArrayList[] {})[0].get(0)))
+.getValue(0));
+assertEquals(
+"text()",
+((ArrayMap<String, String>) (rep[1].values().toArray(new ArrayList[] {})[0].get(0)))
+.getKey(0));
+assertEquals(
+"content2",
+((ArrayMap<String, String>) (rep[1].values().toArray(new ArrayList[] {})[0].get(0)))
+.getValue(0));
+assertEquals(
+"text()",
+((ArrayMap<String, String>) (rep[2].values().toArray(new ArrayList[] {})[0].get(0)))
+.getKey(0));
+assertEquals(
+"content3",
+((ArrayMap<String, String>) (rep[2].values().toArray(new ArrayList[] {})[0].get(0)))
+.getValue(0));
+XmlSerializer serializer = Xml.createSerializer();
+ByteArrayOutputStream out = new ByteArrayOutputStream();
+serializer.setOutput(out, "UTF-8");
+namespaceDictionary.serialize(serializer, "any", xml);
+assertEquals(MULTI_TYPE_WITH_CLASS_TYPE, out.toString());
+}
+@Test
+public void testParseCollectionTypeString() throws Exception {
+CollectionTypeStringGeneric xml = new CollectionTypeStringGeneric();
+XmlPullParser parser = Xml.createParser();
+parser.setInput(new StringReader(MULTIPLE_STRING_ELEMENT));
+XmlNamespaceDictionary namespaceDictionary = new XmlNamespaceDictionary();
+Xml.parseElement(parser, xml, namespaceDictionary, null);
+assertEquals(2, xml.rep.size());
+assertEquals("rep1", xml.rep.toArray(new String[] {})[0]);
+assertEquals("rep2", xml.rep.toArray(new String[] {})[1]);
+XmlSerializer serializer = Xml.createSerializer();
+ByteArrayOutputStream out = new ByteArrayOutputStream();
+serializer.setOutput(out, "UTF-8");
+namespaceDictionary.serialize(serializer, "any", xml);
+assertEquals(MULTIPLE_STRING_ELEMENT, out.toString());
+}
+@Test
+public void testParseArrayTypeString() throws Exception {
+ArrayTypeStringGeneric xml = new ArrayTypeStringGeneric();
+XmlPullParser parser = Xml.createParser();
+parser.setInput(new StringReader(MULTIPLE_STRING_ELEMENT));
+XmlNamespaceDictionary namespaceDictionary = new XmlNamespaceDictionary();
+Xml.parseElement(parser, xml, namespaceDictionary, null);
+assertEquals(2, xml.rep.length);
+assertEquals("rep1", xml.rep[0]);
+assertEquals("rep2", xml.rep[1]);
+XmlSerializer serializer = Xml.createSerializer();
+ByteArrayOutputStream out = new ByteArrayOutputStream();
+serializer.setOutput(out, "UTF-8");
+namespaceDictionary.serialize(serializer, "any", xml);
+assertEquals(MULTIPLE_STRING_ELEMENT, out.toString());
+}
+@Test
+public void testParseCollectionTypeInteger() throws Exception {
+CollectionTypeIntegerGeneric xml = new CollectionTypeIntegerGeneric();
+XmlPullParser parser = Xml.createParser();
+parser.setInput(new StringReader(MULTIPLE_INTEGER_ELEMENT));
+XmlNamespaceDictionary namespaceDictionary = new XmlNamespaceDictionary();
+Xml.parseElement(parser, xml, namespaceDictionary, null);
+assertEquals(2, xml.rep.size());
+assertEquals(1, xml.rep.toArray(new Integer[] {})[0].intValue());
+assertEquals(2, xml.rep.toArray(new Integer[] {})[1].intValue());
+XmlSerializer serializer = Xml.createSerializer();
+ByteArrayOutputStream out = new ByteArrayOutputStream();
+serializer.setOutput(out, "UTF-8");
+namespaceDictionary.serialize(serializer, "any", xml);
+assertEquals(MULTIPLE_INTEGER_ELEMENT, out.toString());
+}
+@Test
+public void testParseArrayTypeInteger() throws Exception {
+ArrayTypeIntegerGeneric xml = new ArrayTypeIntegerGeneric();
+XmlPullParser parser = Xml.createParser();
+parser.setInput(new StringReader(MULTIPLE_INTEGER_ELEMENT));
+XmlNamespaceDictionary namespaceDictionary = new XmlNamespaceDictionary();
+Xml.parseElement(parser, xml, namespaceDictionary, null);
+assertEquals(2, xml.rep.length);
+assertEquals(1, xml.rep[0].intValue());
+assertEquals(2, xml.rep[1].intValue());
+XmlSerializer serializer = Xml.createSerializer();
+ByteArrayOutputStream out = new ByteArrayOutputStream();
+serializer.setOutput(out, "UTF-8");
+namespaceDictionary.serialize(serializer, "any", xml);
+assertEquals(MULTIPLE_INTEGER_ELEMENT, out.toString());
+}
+@Test
+public void testParseArrayTypeInt() throws Exception {
+ArrayTypeIntGeneric xml = new ArrayTypeIntGeneric();
+XmlPullParser parser = Xml.createParser();
+parser.setInput(new StringReader(MULTIPLE_INTEGER_ELEMENT));
+XmlNamespaceDictionary namespaceDictionary = new XmlNamespaceDictionary();
+Xml.parseElement(parser, xml, namespaceDictionary, null);
+assertEquals(2, xml.rep.length);
+assertEquals(1, xml.rep[0]);
+assertEquals(2, xml.rep[1]);
+XmlSerializer serializer = Xml.createSerializer();
+ByteArrayOutputStream out = new ByteArrayOutputStream();
+serializer.setOutput(out, "UTF-8");
+namespaceDictionary.serialize(serializer, "any", xml);
+assertEquals(MULTIPLE_INTEGER_ELEMENT, out.toString());
+}
+@Test
+public void testParseCollectionTypeWithEnum() throws Exception {
+CollectionTypeEnumGeneric xml = new CollectionTypeEnumGeneric();
+XmlPullParser parser = Xml.createParser();
+parser.setInput(new StringReader(MULTIPLE_ENUM_ELEMENT));
+XmlNamespaceDictionary namespaceDictionary = new XmlNamespaceDictionary();
+Xml.parseElement(parser, xml, namespaceDictionary, null);
+assertEquals(2, xml.rep.size());
+assertEquals(XmlEnumTest.AnyEnum.ENUM_1, xml.rep.toArray(new XmlEnumTest.AnyEnum[] {})[0]);
+assertEquals(XmlEnumTest.AnyEnum.ENUM_2, xml.rep.toArray(new XmlEnumTest.AnyEnum[] {})[1]);
+XmlSerializer serializer = Xml.createSerializer();
+ByteArrayOutputStream out = new ByteArrayOutputStream();
+serializer.setOutput(out, "UTF-8");
+namespaceDictionary.serialize(serializer, "any", xml);
+assertEquals(MULTIPLE_ENUM_ELEMENT, out.toString());
+}
+@Test
+public void testParseArrayTypeWithEnum() throws Exception {
+ArrayTypeEnumGeneric xml = new ArrayTypeEnumGeneric();
+XmlPullParser parser = Xml.createParser();
+parser.setInput(new StringReader(MULTIPLE_ENUM_ELEMENT));
+XmlNamespaceDictionary namespaceDictionary = new XmlNamespaceDictionary();
+Xml.parseElement(parser, xml, namespaceDictionary, null);
+assertEquals(2, xml.rep.length);
+assertEquals(XmlEnumTest.AnyEnum.ENUM_1, xml.rep[0]);
+assertEquals(XmlEnumTest.AnyEnum.ENUM_2, xml.rep[1]);
+XmlSerializer serializer = Xml.createSerializer();
+ByteArrayOutputStream out = new ByteArrayOutputStream();
+serializer.setOutput(out, "UTF-8");
+namespaceDictionary.serialize(serializer, "any", xml);
+assertEquals(MULTIPLE_ENUM_ELEMENT, out.toString());
+}
+@Test
+public void testParseToArrayOfArrayMaps() throws Exception {
+ArrayOfArrayMapsTypeGeneric xml = new ArrayOfArrayMapsTypeGeneric();
+XmlPullParser parser = Xml.createParser();
+parser.setInput(new StringReader(COLLECTION_OF_ARRAY));
+XmlNamespaceDictionary namespaceDictionary = new XmlNamespaceDictionary();
+Xml.parseElement(parser, xml, namespaceDictionary, null);
+assertEquals(2, xml.rep.length);
+assertEquals("a", xml.rep[0].getValue(0));
+assertEquals("a", xml.rep[0].getKey(0));
+assertEquals("b", xml.rep[0].getValue(1));
+assertEquals("b", xml.rep[0].getKey(1));
+assertEquals("c", xml.rep[1].getValue(0));
+assertEquals("c", xml.rep[1].getKey(0));
+assertEquals("d", xml.rep[1].getValue(1));
+assertEquals("d", xml.rep[1].getKey(1));
+XmlSerializer serializer = Xml.createSerializer();
+ByteArrayOutputStream out = new ByteArrayOutputStream();
+serializer.setOutput(out, "UTF-8");
+namespaceDictionary.serialize(serializer, "any", xml);
+assertEquals(COLLECTION_OF_ARRAY, out.toString());
+}
+@Test
+public void testParseToCollectionOfArrayMaps() throws Exception {
+CollectionOfArrayMapsTypeGeneric xml = new CollectionOfArrayMapsTypeGeneric();
+XmlPullParser parser = Xml.createParser();
+parser.setInput(new StringReader(COLLECTION_OF_ARRAY));
+XmlNamespaceDictionary namespaceDictionary = new XmlNamespaceDictionary();
+Xml.parseElement(parser, xml, namespaceDictionary, null);
+assertEquals(2, xml.rep.size());
+assertEquals("a", xml.rep.toArray(new ArrayMap[] {})[0].getValue(0));
+assertEquals("a", xml.rep.toArray(new ArrayMap[] {})[0].getKey(0));
+assertEquals("b", xml.rep.toArray(new ArrayMap[] {})[0].getValue(1));
+assertEquals("b", xml.rep.toArray(new ArrayMap[] {})[0].getKey(1));
+assertEquals("c", xml.rep.toArray(new ArrayMap[] {})[1].getValue(0));
+assertEquals("c", xml.rep.toArray(new ArrayMap[] {})[1].getKey(0));
+assertEquals("d", xml.rep.toArray(new ArrayMap[] {})[1].getValue(1));
+assertEquals("d", xml.rep.toArray(new ArrayMap[] {})[1].getKey(1));
+XmlSerializer serializer = Xml.createSerializer();
+ByteArrayOutputStream out = new ByteArrayOutputStream();
+serializer.setOutput(out, "UTF-8");
+namespaceDictionary.serialize(serializer, "any", xml);
+assertEquals(COLLECTION_OF_ARRAY, out.toString());
+}
+private static class CollectionOfArrayMapsTypeGeneric extends GenericXml {
+@Key public Collection<ArrayMap<String, String>> rep;
+}
+private static class ArrayOfArrayMapsTypeGeneric extends GenericXml {
+@Key public ArrayMap<String, String>[] rep;
+}
+private static class ArrayWithClassTypeGeneric extends GenericXml {
+@Key public XmlTest.AnyType[] rep;
+}
+private static class CollectionWithClassTypeGeneric extends GenericXml {
+@Key public Collection<XmlTest.AnyType> rep;
+}
+private static class MultiGenericWithClassType {
+@Key public GenericXml[] rep;
+}
+private static class MultiGenericWithClassTypeGeneric extends GenericXml {
+@Key public GenericXml[] rep;
+}
+private static class CollectionTypeStringGeneric extends GenericXml {
+@Key public Collection<String> rep;
+}
+private static class ArrayTypeStringGeneric extends GenericXml {
+@Key public String[] rep;
+}
+private static class CollectionTypeIntegerGeneric extends GenericXml {
+@Key public Collection<Integer> rep;
+}
+private static class ArrayTypeIntegerGeneric extends GenericXml {
+@Key public Integer[] rep;
+}
+private static class ArrayTypeIntGeneric extends GenericXml {
+@Key public int[] rep;
+}
+private static class CollectionTypeEnumGeneric extends GenericXml {
+@Key public Collection<XmlEnumTest.AnyEnum> rep;
+}
+private static class ArrayTypeEnumGeneric extends GenericXml {
+@Key public XmlEnumTest.AnyEnum[] rep;
+}
+}

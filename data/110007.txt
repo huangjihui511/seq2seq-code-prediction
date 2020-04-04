@@ -1,0 +1,11 @@
+package com.google.cloud.tools.jib.plugins.common;
+public class InvalidAppRootException extends Exception {
+private final String invalidAppRoot;
+public InvalidAppRootException(String message, String invalidAppRoot, Throwable ex) {
+super(message, ex);
+this.invalidAppRoot = invalidAppRoot;
+}
+public String getInvalidPathValue() {
+return invalidAppRoot;
+}
+}

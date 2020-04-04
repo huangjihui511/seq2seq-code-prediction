@@ -1,0 +1,9 @@
+package org.springframework.data.mongodb.core;
+import lombok.Data;
+import java.util.UUID;
+@Data
+public class PersonWithIdPropertyOfTypeUUID {
+private UUID id;
+private String firstName;
+private int age;
+}

@@ -1,0 +1,100 @@
+package com.twelvemonkeys.util;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.Collection;
+import java.util.Set;
+import java.io.Serializable;
+public class TypedMap<K extends TypedMap.Key, V> implements Map<K, V>, Serializable {
+protected Map<K, V> entries;
+public TypedMap() {
+entries = new HashMap<K, V>();
+}
+public TypedMap(Map<? extends K, ? extends V> pMap) {
+this();
+if (pMap != null) {
+putAll(pMap);
+}
+}
+public TypedMap(Map<? extends K, ? extends V> pBacking, boolean pUseElements) {
+if (pBacking == null) {
+throw new IllegalArgumentException("backing == null");
+}
+entries = (Map<K, V>) pBacking;
+if (pUseElements) {
+putAll(pBacking);
+}
+else if (entries.size() > 0) {
+entries.clear();
+}
+}
+public int size() {
+return entries.size();
+}
+public boolean isEmpty() {
+return entries.isEmpty();
+}
+public boolean containsKey(Object pKey) {
+return entries.containsKey(pKey);
+}
+public boolean containsValue(Object pValue) {
+return entries.containsValue(pValue);
+}
+public V get(Object pKey) {
+return entries.get(pKey);
+}
+public V put(K pKey, V pValue) {
+if (!pKey.isCompatibleValue(pValue)) {
+throw new IllegalArgumentException("incompatible value for key");
+}
+return entries.put(pKey, pValue);
+}
+public V remove(Object pKey) {
+return entries.remove(pKey);
+}
+public void putAll(Map<? extends K, ? extends V> pMap) {
+for (final Entry<? extends K, ? extends V> e : pMap.entrySet()) {
+put(e.getKey(), e.getValue());
+}
+}
+public void clear() {
+entries.clear();
+}
+public Collection<V> values() {
+return entries.values();
+}
+public Set<Entry<K, V>> entrySet() {
+return entries.entrySet();
+}
+public Set<K> keySet() {
+return entries.keySet();
+}
+public static interface Key {
+boolean isCompatibleValue(Object pValue);
+}
+public static abstract class AbstractKey implements Key, Serializable {
+private final String mStringRep;
+public AbstractKey(String pName) {
+if (pName == null) {
+throw new IllegalArgumentException("name == null");
+}
+mStringRep = getClass().getName() + '[' + pName + ']';
+}
+public AbstractKey() {
+this("null");
+}
+@Override
+public String toString() {
+return mStringRep;
+}
+@Override
+public boolean equals(Object obj) {
+return obj == this ||
+(obj != null && obj.getClass() == getClass() &&
+mStringRep.equals(((AbstractKey) obj).mStringRep));
+}
+@Override
+public int hashCode() {
+return mStringRep.hashCode();
+}
+}
+}

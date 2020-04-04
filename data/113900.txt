@@ -1,0 +1,66 @@
+package psiprobe.controllers.datasources;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.servlet.ModelAndView;
+import psiprobe.controllers.AbstractTomcatContainerController;
+import psiprobe.model.ApplicationResource;
+import psiprobe.model.DataSourceInfo;
+import psiprobe.model.DataSourceInfoGroup;
+@Controller
+public class ListAllJdbcResourceGroupsController extends AbstractTomcatContainerController {
+@RequestMapping(path = "/datasourcegroups.htm")
+@Override
+public ModelAndView handleRequest(HttpServletRequest request, HttpServletResponse response)
+throws Exception {
+return super.handleRequest(request, response);
+}
+@Override
+protected ModelAndView handleRequestInternal(HttpServletRequest request,
+HttpServletResponse response) throws Exception {
+List<DataSourceInfoGroup> dataSourceGroups = new ArrayList<>();
+List<DataSourceInfo> dataSources = new ArrayList<>();
+List<ApplicationResource> privateResources = getContainerWrapper().getPrivateDataSources();
+List<ApplicationResource> globalResources = getContainerWrapper().getGlobalDataSources();
+filterValidDataSources(privateResources, dataSources);
+filterValidDataSources(globalResources, dataSources);
+Collections.sort(dataSources, new Comparator<DataSourceInfo>() {
+@Override
+public int compare(DataSourceInfo ds1, DataSourceInfo ds2) {
+String jdbcUrl1 = ds1.getJdbcUrl();
+String jdbcUrl2 = ds2.getJdbcUrl();
+return jdbcUrl1.compareToIgnoreCase(jdbcUrl2);
+}
+});
+DataSourceInfoGroup dsGroup = null;
+for (DataSourceInfo ds : dataSources) {
+if (dsGroup == null || !dsGroup.getJdbcUrl().equalsIgnoreCase(ds.getJdbcUrl())) {
+dsGroup = new DataSourceInfoGroup().builder(ds);
+dataSourceGroups.add(dsGroup);
+} else {
+dsGroup.addDataSourceInfo(ds);
+}
+}
+return new ModelAndView(getViewName(), "dataSourceGroups", dataSourceGroups);
+}
+protected void filterValidDataSources(List<ApplicationResource> resources,
+List<DataSourceInfo> dataSources) {
+for (ApplicationResource res : resources) {
+if (res.isLookedUp() && res.getDataSourceInfo() != null
+&& res.getDataSourceInfo().getJdbcUrl() != null) {
+dataSources.add(res.getDataSourceInfo());
+}
+}
+}
+@Value("datasourcegroup")
+@Override
+public void setViewName(String viewName) {
+super.setViewName(viewName);
+}
+}

@@ -1,0 +1,42 @@
+package com.izforge.izpack.panels.xinfo;
+import java.util.Properties;
+import com.izforge.izpack.api.data.InstallData;
+import com.izforge.izpack.api.resource.Resources;
+import com.izforge.izpack.installer.console.AbstractConsolePanel;
+import com.izforge.izpack.installer.console.ConsolePanel;
+import com.izforge.izpack.installer.panel.PanelView;
+import com.izforge.izpack.util.Console;
+public class XInfoConsolePanel extends AbstractConsolePanel
+{
+private final Resources resources;
+private String info;
+public XInfoConsolePanel(Resources resources, PanelView<ConsolePanel> panel)
+{
+super(panel);
+this.resources = resources;
+}
+public boolean run(InstallData installData, Properties properties)
+{
+return true;
+}
+@Override
+public boolean run(InstallData installData, Console console)
+{
+display(installData, console);
+return promptEndPanel(installData, console);
+}
+private void loadInfo()
+{
+info = resources.getString("XInfoPanel.info", null, "Error : could not load the info text !");
+}
+private void parseText(InstallData installData)
+{
+info = installData.getVariables().replace(info);
+}
+protected void display(InstallData installData, Console console)
+{
+loadInfo();
+parseText(installData);
+console.println(info);
+}
+}

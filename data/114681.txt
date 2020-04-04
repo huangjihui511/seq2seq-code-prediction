@@ -1,0 +1,14 @@
+package com.twelvemonkeys.util;
+import java.awt.*;
+import java.io.Serializable;
+public class PaintKey extends TypedMap.AbstractKey implements Serializable {
+public PaintKey() {
+super();
+}
+public PaintKey(String pName) {
+super(pName);
+}
+public boolean isCompatibleValue(Object pValue) {
+return pValue instanceof Paint;
+}
+}

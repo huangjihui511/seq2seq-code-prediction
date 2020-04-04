@@ -1,0 +1,12 @@
+package com.alibaba.cloud.examples.fallback;
+import com.alibaba.cloud.examples.service.EchoService;
+public class EchoServiceFallback implements EchoService {
+private Throwable throwable;
+EchoServiceFallback(Throwable throwable) {
+this.throwable = throwable;
+}
+@Override
+public String echo(String str) {
+return "consumer-fallback-default-str" + throwable.getMessage();
+}
+}

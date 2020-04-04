@@ -1,0 +1,16 @@
+package com.baomidou.mybatisplus.extension.handlers;
+import org.junit.jupiter.api.Test;
+import java.util.Collections;
+import static org.assertj.core.api.Assertions.assertThat;
+class MybatisMapWrapperTest {
+private final MybatisMapWrapper mapWrapper = new MybatisMapWrapper(null, Collections.emptyMap());
+@Test
+void findProperty() {
+assertThat(mapWrapper.findProperty("xxx", true)).isEqualTo("xxx");
+assertThat(mapWrapper.findProperty("xxx_sss", true)).isEqualTo("xxxSss");
+assertThat(mapWrapper.findProperty("xxx_sss_eee", true)).isEqualTo("xxxSssEee");
+assertThat(mapWrapper.findProperty("XXX_SSS_EEE", true)).isEqualTo("xxxSssEee");
+assertThat(mapWrapper.findProperty("xxxSss", true)).isEqualTo("xxxSss");
+assertThat(mapWrapper.findProperty("SxxSss", true)).isEqualTo("sxxsss");
+}
+}

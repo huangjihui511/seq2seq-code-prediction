@@ -1,0 +1,6 @@
+package org.pf4j;
+import java.util.Comparator;
+public interface VersionManager {
+boolean checkVersionConstraint(String version, String constraint);
+int compareVersions(String v1, String v2);
+}

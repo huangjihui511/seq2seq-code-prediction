@@ -1,0 +1,6 @@
+package org.apereo.cas.pm;
+import org.apereo.cas.authentication.credential.UsernamePasswordCredential;
+@FunctionalInterface
+public interface PasswordValidationService {
+boolean isValid(UsernamePasswordCredential c, PasswordChangeRequest bean);
+}

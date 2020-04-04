@@ -1,0 +1,14 @@
+package org.menacheri.jetclient.event;
+import java.util.List;
+import org.menacheri.jetclient.app.Session;
+public interface EventDispatcher
+{
+void addHandler(EventHandler eventHandler);
+List<EventHandler> getHandlers(int eventType);
+void removeHandler(EventHandler eventHandler);
+void removeHandlersForEvent(int eventType);
+boolean removeHandlersForSession(Session session);
+void clear();
+void fireEvent(Event event);
+void close();
+}

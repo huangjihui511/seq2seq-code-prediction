@@ -1,0 +1,13 @@
+package com.example.storage;
+import com.google.cloud.storage.Bucket;
+import com.google.cloud.storage.BucketInfo;
+import com.google.cloud.storage.Storage;
+import com.google.cloud.storage.StorageOptions;
+public class QuickstartSample {
+public static void main(String... args) throws Exception {
+Storage storage = StorageOptions.getDefaultInstance().getService();
+String bucketName = args[0];  
+Bucket bucket = storage.create(BucketInfo.of(bucketName));
+System.out.printf("Bucket %s created.%n", bucket.getName());
+}
+}

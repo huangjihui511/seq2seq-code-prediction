@@ -1,0 +1,32 @@
+package org.apache.zookeeper.server.jersey.jaxb;
+import javax.xml.bind.annotation.XmlRootElement;
+@XmlRootElement(name="path")
+public class ZPath {
+public String path;
+public String uri;
+public ZPath(){
+}
+public ZPath(String path) {
+this(path, null);
+}
+public ZPath(String path, String uri) {
+this.path = path;
+this.uri = uri;
+}
+@Override
+public int hashCode() {
+return path.hashCode();
+}
+@Override
+public boolean equals(Object obj) {
+if (!(obj instanceof ZPath)) {
+return false;
+}
+ZPath o = (ZPath) obj;
+return path.equals(o.path);
+}
+@Override
+public String toString() {
+return "ZPath(" + path + ")";
+}
+}

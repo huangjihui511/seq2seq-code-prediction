@@ -1,0 +1,33 @@
+package mobi.hsz.idea.gitignore.util;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
+import java.util.concurrent.ConcurrentMap;
+public class CachedConcurrentMap<K, V> {
+@NotNull
+private final ConcurrentMap<K, V> map;
+@NotNull
+private final DataFetcher<K, V> fetcher;
+private CachedConcurrentMap(@NotNull DataFetcher<K, V> fetcher) {
+this.map = ContainerUtil.createConcurrentWeakMap();
+this.fetcher = fetcher;
+}
+@NotNull
+public static <K, V> CachedConcurrentMap<K, V> create(@NotNull DataFetcher<K, V> fetcher) {
+return new CachedConcurrentMap<>(fetcher);
+}
+public V get(@NotNull K key) {
+if (!map.containsKey(key)) {
+map.put(key, fetcher.fetch(key));
+}
+return map.get(key);
+}
+public void remove(@NotNull K key) {
+this.map.remove(key);
+}
+public void clear() {
+this.map.clear();
+}
+public interface DataFetcher<K, V> {
+V fetch(@NotNull K key);
+}
+}

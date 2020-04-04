@@ -1,0 +1,7 @@
+package io.dropwizard.auth.principal;
+import io.dropwizard.auth.PrincipalImpl;
+public class NullPrincipal extends PrincipalImpl {
+public NullPrincipal() {
+super("null");
+}
+}

@@ -1,0 +1,50 @@
+package com.opensymphony.xwork2.conversion.impl;
+import com.opensymphony.xwork2.XWorkTestCase;
+import java.util.ArrayList;
+public class XWorkListTest extends XWorkTestCase {
+public void testAddAllIndex() {
+XWorkList xworkList = new XWorkList(String.class);
+xworkList.add(new String[]{"a"});
+xworkList.add("b");
+ArrayList<String[]> addList = new ArrayList<>();
+addList.add(new String[]{"1"});
+addList.add(new String[]{"2"});
+addList.add(new String[]{"3"});
+xworkList.addAll(3, addList);
+assertEquals(6, xworkList.size());
+assertEquals("a", xworkList.get(0));
+assertEquals("b", xworkList.get(1));
+assertEquals("", xworkList.get(2));
+assertEquals("1", xworkList.get(3));
+assertEquals("2", xworkList.get(4));
+assertEquals("3", xworkList.get(5));
+xworkList = new XWorkList(String.class);
+xworkList.add(new String[]{"a"});
+xworkList.add("b");
+addList = new ArrayList<>();
+addList.add(new String[]{"1"});
+addList.add(new String[]{"2"});
+addList.add(new String[]{"3"});
+xworkList.addAll(2, addList);
+assertEquals(5, xworkList.size());
+assertEquals("a", xworkList.get(0));
+assertEquals("b", xworkList.get(1));
+assertEquals("1", xworkList.get(2));
+assertEquals("2", xworkList.get(3));
+assertEquals("3", xworkList.get(4));
+xworkList = new XWorkList(String.class);
+xworkList.add(new String[]{"a"});
+xworkList.add("b");
+addList = new ArrayList<>();
+addList.add(new String[]{"1"});
+addList.add(new String[]{"2"});
+addList.add(new String[]{"3"});
+xworkList.addAll(1, addList);
+assertEquals(5, xworkList.size());
+assertEquals("a", xworkList.get(0));
+assertEquals("1", xworkList.get(1));
+assertEquals("2", xworkList.get(2));
+assertEquals("3", xworkList.get(3));
+assertEquals("b", xworkList.get(4));
+}
+}

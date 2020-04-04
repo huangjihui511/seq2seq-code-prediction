@@ -1,0 +1,6 @@
+package tests;
+import com.google.auto.factory.AutoFactory;
+@AutoFactory
+final class OnlyPrimitives {
+OnlyPrimitives(int i, long l) {}
+}

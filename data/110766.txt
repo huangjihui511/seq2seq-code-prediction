@@ -1,0 +1,4 @@
+package org.apache.zookeeper.inspector.manager;
+public interface ZooInspectorNodeManager extends ZooInspectorReadOnlyManager {
+public boolean setData(String nodePath, String data);
+}

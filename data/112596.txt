@@ -1,0 +1,36 @@
+package org.jb2011.lnf.beautyeye.ch14_combox;
+import org.jb2011.lnf.beautyeye.utils.NinePatchHelper;
+import org.jb2011.lnf.beautyeye.utils.RawCache;
+import org.jb2011.ninepatch4j.NinePatch;
+public class __Icon9Factory__ extends RawCache<NinePatch>
+{
+public final static String IMGS_ROOT="imgs/np";
+private static __Icon9Factory__ instance = null;
+public static __Icon9Factory__ getInstance()
+{
+if(instance==null)
+instance = new __Icon9Factory__();
+return instance;
+}
+@Override
+protected NinePatch getResource(String relativePath, Class baseClass)
+{
+return NinePatchHelper.createNinePatch(baseClass.getResource(relativePath), false);
+}
+public NinePatch getRaw(String relativePath)
+{
+return  getRaw(relativePath,this.getClass());
+}
+public NinePatch getButtonArrow_normal()
+{
+return getRaw(IMGS_ROOT+"/button_arrow.9.png");
+}
+public NinePatch getButtonArrow_pressed()
+{
+return getRaw(IMGS_ROOT+"/button_arrow_pressed.9.png");
+}
+public NinePatch getButtonArrow_disable()
+{
+return getRaw(IMGS_ROOT+"/button_arrow_disable.9.png");
+}
+}

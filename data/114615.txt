@@ -1,0 +1,6 @@
+package com.newlandframework.rpc.filter;
+import java.lang.reflect.Method;
+public interface Filter {
+boolean before(Method method, Object processor, Object[] requestObjects);
+void after(Method method, Object processor, Object[] requestObjects);
+}

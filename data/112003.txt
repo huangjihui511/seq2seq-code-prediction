@@ -1,0 +1,30 @@
+package io.hawt.web.kubernetes;
+import io.hawt.web.proxy.ProxyAddress;
+public class DefaultProxyAddress implements ProxyAddress {
+private final String fullProxyUrl;
+private final String userName;
+private final String password;
+public DefaultProxyAddress(String fullProxyUrl, String userName, String password) {
+this.fullProxyUrl = fullProxyUrl;
+this.userName = userName;
+this.password = password;
+}
+@Override
+public String toString() {
+return String.format(
+"DefaultProxyAddress{fullProxyUrl='%s', userName='%s'}",
+fullProxyUrl, userName);
+}
+@Override
+public String getFullProxyUrl() {
+return fullProxyUrl;
+}
+@Override
+public String getUserName() {
+return userName;
+}
+@Override
+public String getPassword() {
+return password;
+}
+}

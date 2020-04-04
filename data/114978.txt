@@ -1,0 +1,3 @@
+package it.unimi.dsi.fastutil.ints;
+public class StripedInt2IntOpenHashMapTest {
+}

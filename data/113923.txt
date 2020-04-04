@@ -1,0 +1,5 @@
+package org.spongepowered.mod.asm.transformer.adapter;
+import org.objectweb.asm.MethodVisitor;
+public interface ISpongeAdviceAdapter {
+MethodVisitor createMethodAdviceAdapter(int api, String owner, int access, String name, String desc, MethodVisitor mv);
+}

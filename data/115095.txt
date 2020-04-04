@@ -1,0 +1,26 @@
+package io.ebeaninternal.api;
+import java.util.ArrayList;
+import java.util.List;
+public class BeanCacheResult<T> {
+private final List<Entry<T>> list = new ArrayList<>();
+public void add(T bean, Object key) {
+list.add(new Entry<>(bean, key));
+}
+public List<Entry<T>> hits() {
+return list;
+}
+static class Entry<T> {
+private final T bean;
+private final Object key;
+public Entry(T bean, Object key) {
+this.bean = bean;
+this.key = key;
+}
+public Object getKey() {
+return key;
+}
+public T getBean() {
+return bean;
+}
+}
+}

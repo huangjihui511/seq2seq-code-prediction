@@ -1,0 +1,9 @@
+package br.com.leonardoz.patterns.thread_safe.initialization;
+public class SafeInitializationHolder {
+private static class ResourceHolder {
+public static Object resource = new Object();
+}
+public static Object getResource() {
+return ResourceHolder.resource;
+}
+}

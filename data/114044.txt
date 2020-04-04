@@ -1,0 +1,51 @@
+package com.flipkart.android.proteus.toolbox;
+import android.view.View;
+import com.flipkart.android.proteus.DataContext;
+import com.flipkart.android.proteus.ProteusContext;
+import com.flipkart.android.proteus.ProteusView;
+import com.flipkart.android.proteus.value.Layout;
+import com.flipkart.android.proteus.value.ObjectValue;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+public class ManagerWrapper implements ProteusView.Manager {
+private final ProteusView.Manager base;
+public ManagerWrapper(ProteusView.Manager base) {
+this.base = base;
+}
+@Override
+public void update(@Nullable ObjectValue data) {
+base.update(data);
+}
+@Nullable
+@Override
+public View findViewById(@NonNull String id) {
+return base.findViewById(id);
+}
+@NonNull
+@Override
+public ProteusContext getContext() {
+return base.getContext();
+}
+@NonNull
+@Override
+public Layout getLayout() {
+return base.getLayout();
+}
+@NonNull
+@Override
+public DataContext getDataContext() {
+return base.getDataContext();
+}
+@Nullable
+@Override
+public Object getExtras() {
+return base.getExtras();
+}
+@Override
+public void setExtras(@Nullable Object extras) {
+base.setExtras(extras);
+}
+public ProteusView.Manager getBaseManager() {
+return base;
+}
+}

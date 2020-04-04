@@ -1,0 +1,46 @@
+package org.apache.zookeeper.graph.filterops;
+import org.apache.zookeeper.graph.LogEntry;
+import org.apache.zookeeper.graph.FilterOp;
+import org.apache.zookeeper.graph.FilterException;
+public class LessThanOp extends FilterOp {
+public boolean matches(LogEntry entry) throws FilterException {
+Arg first = args.get(0);
+if (first != null) {
+FilterOp.ArgType type = first.getType();
+if (type == FilterOp.ArgType.SYMBOL) {
+String key = (String)first.getValue();
+Object v = entry.getAttribute(key);
+if (v instanceof String) {
+type = FilterOp.ArgType.STRING;
+} else if (v instanceof Double || v instanceof Long || v instanceof Integer || v instanceof Short) {
+type = FilterOp.ArgType.NUMBER;
+} else {
+throw new FilterException("LessThanOp: Invalid argument, first argument resolves to neither a String nor a Number");
+}
+}
+Object last = null;
+for (Arg a : args) {
+Object v = a.getValue();
+if (a.getType() == FilterOp.ArgType.SYMBOL) {
+String key = (String)a.getValue();
+v = entry.getAttribute(key);
+}
+if (last != null) {
+if (type == FilterOp.ArgType.STRING) {
+if (((String)last).compareTo((String)v) >= 0) {
+return false;
+}
+} else if (type == FilterOp.ArgType.NUMBER) {
+if (((Number)last).doubleValue() >= ((Number)v).doubleValue()) {
+return false;
+}
+}
+}
+last = v;
+}
+return true;
+} else {
+return true;
+}
+}
+}

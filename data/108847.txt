@@ -1,0 +1,12 @@
+package cn.hutool.core.clone;
+public class CloneSupport<T> implements Cloneable<T>{
+@SuppressWarnings("unchecked")
+@Override
+public T clone() {
+try {
+return (T) super.clone();
+} catch (CloneNotSupportedException e) {
+throw new CloneRuntimeException(e);
+}
+}
+}

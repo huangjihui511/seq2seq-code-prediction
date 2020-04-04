@@ -1,0 +1,61 @@
+package com.pokegoapi.examples;
+import com.pokegoapi.api.PokemonGo;
+import com.pokegoapi.api.map.Point;
+import com.pokegoapi.api.map.fort.Pokestop;
+import com.pokegoapi.api.map.fort.PokestopLootResult;
+import com.pokegoapi.auth.PtcCredentialProvider;
+import com.pokegoapi.exceptions.request.RequestFailedException;
+import com.pokegoapi.util.Log;
+import com.pokegoapi.util.hash.HashProvider;
+import com.pokegoapi.util.path.Path;
+import okhttp3.OkHttpClient;
+import java.util.Set;
+public class TravelToPokestopExample {
+public static void main(String[] args) {
+OkHttpClient http = new OkHttpClient();
+PokemonGo api = new PokemonGo(http);
+try {
+HashProvider hasher = ExampleConstants.getHashProvider();
+api.login(new PtcCredentialProvider(http, ExampleConstants.LOGIN, ExampleConstants.PASSWORD), hasher);
+api.setLocation(ExampleConstants.LATITUDE, ExampleConstants.LONGITUDE, ExampleConstants.ALTITUDE);
+Set<Pokestop> pokestops = api.getMap().mapObjects.pokestops;
+System.out.println("Found " + pokestops.size() + " pokestops in the current area.");
+Pokestop destinationPokestop = null;
+for (Pokestop pokestop : pokestops) {
+if (!pokestop.inRange() && pokestop.canLoot(true)) {
+destinationPokestop = pokestop;
+break;
+}
+}
+if (destinationPokestop != null) {
+Point destination = new Point(destinationPokestop.getLatitude(), destinationPokestop.getLongitude());
+Path path = new Path(api.getPoint(), destination, 20.0);
+System.out.println("Traveling to " + destination + " at 20KMPH!");
+path.start(api);
+try {
+while (!path.complete) {
+Point point = path.calculateIntermediate(api);
+api.setLatitude(point.getLatitude());
+api.setLongitude(point.getLongitude());
+System.out.println("Time left: " + (int) (path.getTimeLeft(api) / 1000) + " seconds.");
+Thread.sleep(2000);
+}
+} catch (InterruptedException e) {
+return;
+}
+System.out.println("Finished traveling to pokestop!");
+if (destinationPokestop.inRange()) {
+System.out.println("Looting pokestop...");
+PokestopLootResult result = destinationPokestop.loot();
+System.out.println("Pokestop loot returned result: " + result.getResult());
+} else {
+System.out.println("Something went wrong! We're still not in range of the destination pokestop!");
+}
+} else {
+System.out.println("Couldn't find out of range pokestop to travel to!");
+}
+} catch (RequestFailedException e) {
+Log.e("Main", "Failed to login, captcha or server issue: ", e);
+}
+}
+}

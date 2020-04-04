@@ -1,0 +1,18 @@
+import net.pms.formats.AudioAsVideo;
+public class FLAC extends AudioBase {
+@Override
+public Identifier getIdentifier() {
+return Identifier.FLAC;
+}
+public FLAC() {
+type = AUDIO;
+secondaryFormat = new AudioAsVideo();
+}
+@Override
+public String[] getSupportedExtensions() {
+return new String[] {
+"fla",
+"flac",
+};
+}
+}

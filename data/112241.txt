@@ -1,0 +1,11 @@
+package org.whispersystems.libsignal.state;
+import org.whispersystems.libsignal.SignalProtocolAddress;
+import java.util.List;
+public interface SessionStore {
+public SessionRecord loadSession(SignalProtocolAddress address);
+public List<Integer> getSubDeviceSessions(String name);
+public void storeSession(SignalProtocolAddress address, SessionRecord record);
+public boolean containsSession(SignalProtocolAddress address);
+public void deleteSession(SignalProtocolAddress address);
+public void deleteAllSessions(String name);
+}

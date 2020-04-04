@@ -1,0 +1,11 @@
+package net.pms.formats.audio;
+public class ADTS extends AudioBase {
+@Override
+public Identifier getIdentifier() {
+return Identifier.ADTS;
+}
+@Override
+public String[] getSupportedExtensions() {
+return new String[] { "aac" };
+}
+}

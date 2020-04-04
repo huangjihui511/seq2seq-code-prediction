@@ -1,0 +1,24 @@
+package com.pokegoapi.api.settings;
+import lombok.Getter;
+public class FortSettings {
+@Getter
+public double interactionRangeInMeters;
+@Getter
+private int maxTotalDeployedPokemon;
+@Getter
+private int maxPlayerDeployedPokemon;
+@Getter
+private double deployStaminaMultiplier;
+@Getter
+private double deployAttackMultiplier;
+@Getter
+private double farInteractionRangeMeters;
+public void update(POGOProtos.Settings.FortSettingsOuterClass.FortSettings fortSettings) {
+interactionRangeInMeters = fortSettings.getInteractionRangeMeters();
+maxTotalDeployedPokemon = fortSettings.getMaxTotalDeployedPokemon();
+maxPlayerDeployedPokemon = fortSettings.getMaxPlayerDeployedPokemon();
+deployStaminaMultiplier = fortSettings.getDeployStaminaMultiplier();
+deployAttackMultiplier = fortSettings.getDeployAttackMultiplier();
+farInteractionRangeMeters = fortSettings.getFarInteractionRangeMeters();
+}
+}

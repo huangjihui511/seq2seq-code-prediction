@@ -1,0 +1,23 @@
+package org.mockito.internal.configuration;
+import org.mockito.configuration.IMockitoConfiguration;
+import org.mockito.exceptions.misusing.MockitoConfigurationException;
+import org.mockito.plugins.MockMaker;
+public class ClassPathLoader {
+public static final String MOCKITO_CONFIGURATION_CLASS_NAME = "org.mockito.configuration.MockitoConfiguration";
+@SuppressWarnings({"unchecked"})
+public IMockitoConfiguration loadConfiguration() {
+Class<?> configClass;
+try {
+configClass = Class.forName(MOCKITO_CONFIGURATION_CLASS_NAME);
+} catch (ClassNotFoundException e) {
+return null;
+}
+try {
+return (IMockitoConfiguration) configClass.newInstance();
+} catch (ClassCastException e) {
+throw new MockitoConfigurationException("MockitoConfiguration class must implement " + IMockitoConfiguration.class.getName() + " interface.", e);
+} catch (Exception e) {
+throw new MockitoConfigurationException("Unable to instantiate " + MOCKITO_CONFIGURATION_CLASS_NAME +" class. Does it have a safe, no-arg constructor?", e);
+}
+}
+}

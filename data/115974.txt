@@ -1,0 +1,10 @@
+package com.taobao.taokeeper.dao;
+import java.util.List;
+import java.util.Map;
+import com.taobao.taokeeper.model.TaoKeeperStat;
+import common.toolkit.java.exception.DaoException;
+public interface ReportDAO {
+public void addTaoKeeperStat( TaoKeeperStat taoKeeperStat ) throws DaoException;
+public List<TaoKeeperStat> queryTaoKeeperStatByClusterIdAndServerAndStatDate( int clusterId, String server, String statDate ) throws DaoException;
+public Map<String, List< TaoKeeperStat > > queryStatByClusterIdAndStatDate( int clusterId, String statDate ) throws DaoException;
+}

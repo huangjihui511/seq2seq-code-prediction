@@ -1,0 +1,18 @@
+package com.example.activity;
+import android.app.Activity;
+import android.os.Bundle;
+import com.example.R;
+import com.example.Utils;
+import javax.annotation.Nullable;
+public class ExampleActivity extends Activity {
+@Override
+public void onCreate(Bundle savedInstanceState) {
+super.onCreate(savedInstanceState);
+String str = getMyTitle();
+setTitle(Utils.capitalize(str));
+}
+@Nullable
+String getMyTitle() {
+return getString(R.string.app_name);
+}
+}

@@ -1,0 +1,35 @@
+package psiprobe.controllers;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.ServletRequestUtils;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.servlet.ModelAndView;
+import org.springframework.web.servlet.mvc.AbstractController;
+import psiprobe.jsp.Functions;
+@Controller
+public class RememberVisibilityController extends AbstractController {
+private final SimpleDateFormat sdf = new SimpleDateFormat("E, d-MMM-yyyy HH:mm:ss zz");
+@RequestMapping(path = "/remember.ajax")
+@Override
+public ModelAndView handleRequest(HttpServletRequest request, HttpServletResponse response)
+throws Exception {
+return super.handleRequest(request, response);
+}
+@Override
+protected ModelAndView handleRequestInternal(HttpServletRequest request,
+HttpServletResponse response) throws Exception {
+String cookieName = ServletRequestUtils.getStringParameter(request, "cn");
+String state = ServletRequestUtils.getStringParameter(request, "state");
+if (cookieName != null && state != null) {
+cookieName = Functions.safeCookieName(cookieName);
+response.addHeader("Set-Cookie",
+cookieName + "=" + state + "; Expires="
++ sdf.format(new Date(System.currentTimeMillis() + 315360000000L))
++ "; Secure=true; HttpOnly=true");
+}
+return null;
+}
+}

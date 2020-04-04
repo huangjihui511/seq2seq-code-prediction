@@ -1,0 +1,20 @@
+package org.jb2011.lnf.beautyeye.ch17_split;
+import javax.swing.JComponent;
+import javax.swing.plaf.ComponentUI;
+import javax.swing.plaf.basic.BasicSplitPaneDivider;
+import javax.swing.plaf.basic.BasicSplitPaneUI;
+public class BESplitPaneUI extends BasicSplitPaneUI
+{
+public BESplitPaneUI()
+{
+super();
+}
+public static ComponentUI createUI(JComponent x)
+{
+return new BESplitPaneUI();
+}
+public BasicSplitPaneDivider createDefaultDivider()
+{
+return new BESplitPaneDivider(this);
+}
+}

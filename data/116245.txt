@@ -1,0 +1,362 @@
+package org.apache.struts2.jasper.servlet;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.net.URL;
+import javax.servlet.Servlet;
+import javax.servlet.ServletConfig;
+import javax.servlet.ServletContext;
+import javax.servlet.ServletException;
+import javax.servlet.SingleThreadModel;
+import javax.servlet.UnavailableException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.jsp.tagext.TagInfo;
+import org.apache.struts2.jasper.JasperException;
+import org.apache.struts2.jasper.JspCompilationContext;
+import org.apache.struts2.jasper.Options;
+import org.apache.struts2.jasper.compiler.ErrorDispatcher;
+import org.apache.struts2.jasper.compiler.JavacErrorDetail;
+import org.apache.struts2.jasper.compiler.JspRuntimeContext;
+import org.apache.struts2.jasper.compiler.Localizer;
+import org.apache.struts2.jasper.runtime.JspSourceDependent;
+import org.apache.struts2.jasper.runtime.InstanceHelper;
+import org.apache.juli.logging.Log;
+import org.apache.juli.logging.LogFactory;
+import org.apache.tomcat.InstanceManager;
+public class JspServletWrapper {
+private Log log = LogFactory.getLog(JspServletWrapper.class);
+private Servlet theServlet;
+private String jspUri;
+private Class servletClass;
+private Class tagHandlerClass;
+private JspCompilationContext ctxt;
+private long available = 0L;
+private ServletConfig config;
+private Options options;
+private boolean firstTime = true;
+private boolean reload = true;
+private boolean isTagFile;
+private int tripCount;
+private JasperException compileException;
+private long servletClassLastModifiedTime;
+private long lastModificationTest = 0L;
+public JspServletWrapper(ServletConfig config, Options options, String jspUri,
+boolean isErrorPage, JspRuntimeContext rctxt)
+throws JasperException {
+this.isTagFile = false;
+this.config = config;
+this.options = options;
+this.jspUri = jspUri;
+ctxt = new JspCompilationContext(jspUri, isErrorPage, options,
+config.getServletContext(),
+this, rctxt, null);
+}
+public JspServletWrapper(ServletContext servletContext,
+Options options,
+String tagFilePath,
+TagInfo tagInfo,
+JspRuntimeContext rctxt,
+URL tagFileJarUrl)
+throws JasperException {
+this.isTagFile = true;
+this.config = null;	
+this.options = options;
+this.jspUri = tagFilePath;
+this.tripCount = 0;
+ctxt = new JspCompilationContext(jspUri, tagInfo, options,
+servletContext, this, rctxt,
+tagFileJarUrl);
+}
+public JspCompilationContext getJspEngineContext() {
+return ctxt;
+}
+public void setReload(boolean reload) {
+this.reload = reload;
+}
+public Servlet getServlet()
+throws ServletException, IOException, FileNotFoundException
+{
+if (reload) {
+synchronized (this) {
+if (reload) {
+destroy();
+Servlet servlet = null;
+try {
+servletClass = ctxt.load();
+servlet = (Servlet) servletClass.newInstance();
+final InstanceManager instanceManager = InstanceHelper.getServletInstanceManager(config);
+if (instanceManager != null) {
+InstanceHelper.postConstruct(instanceManager, servlet);
+}
+} catch (IllegalAccessException e) {
+throw new JasperException(e);
+} catch (InstantiationException e) {
+throw new JasperException(e);
+} catch (Exception e) {
+throw new JasperException(e);
+}
+servlet.init(config);
+if (!firstTime) {
+ctxt.getRuntimeContext().incrementJspReloadCount();
+}
+theServlet = servlet;
+reload = false;
+}
+}
+}
+return theServlet;
+}
+public ServletContext getServletContext() {
+return config.getServletContext();
+}
+public void setCompilationException(JasperException je) {
+this.compileException = je;
+}
+public void setServletClassLastModifiedTime(long lastModified) {
+if (this.servletClassLastModifiedTime < lastModified) {
+synchronized (this) {
+if (this.servletClassLastModifiedTime < lastModified) {
+this.servletClassLastModifiedTime = lastModified;
+reload = true;
+}
+}
+}
+}
+public Class loadTagFile() throws JasperException {
+try {
+if (ctxt.isRemoved()) {
+throw new FileNotFoundException(jspUri);
+}
+if (options.getDevelopment() || firstTime ) {
+synchronized (this) {
+firstTime = false;
+ctxt.compile();
+}
+} else {
+if (compileException != null) {
+throw compileException;
+}
+}
+if (reload) {
+tagHandlerClass = ctxt.load();
+reload = false;
+}
+} catch (FileNotFoundException ex) {
+throw new JasperException(ex);
+}
+return tagHandlerClass;
+}
+public Class loadTagFilePrototype() throws JasperException {
+ctxt.setPrototypeMode(true);
+try {
+return loadTagFile();
+} finally {
+ctxt.setPrototypeMode(false);
+}
+}
+public java.util.List getDependants() {
+try {
+Object target;
+if (isTagFile) {
+if (reload) {
+tagHandlerClass = ctxt.load();
+reload = false;
+}
+target = tagHandlerClass.newInstance();
+} else {
+target = getServlet();
+}
+if (target != null && target instanceof JspSourceDependent) {
+return ((java.util.List) ((JspSourceDependent) target).getDependants());
+}
+} catch (Throwable ex) {
+}
+return null;
+}
+public boolean isTagFile() {
+return this.isTagFile;
+}
+public int incTripCount() {
+return tripCount++;
+}
+public int decTripCount() {
+return tripCount--;
+}
+public void service(HttpServletRequest request,
+HttpServletResponse response,
+boolean precompile)
+throws ServletException, IOException, FileNotFoundException {
+try {
+if (ctxt.isRemoved()) {
+throw new FileNotFoundException(jspUri);
+}
+if ((available > 0L) && (available < Long.MAX_VALUE)) {
+if (available > System.currentTimeMillis()) {
+response.setDateHeader("Retry-After", available);
+response.sendError
+(HttpServletResponse.SC_SERVICE_UNAVAILABLE,
+Localizer.getMessage("jsp.error.unavailable"));
+return;
+} else {
+available = 0;
+}
+}
+if (options.getDevelopment() || firstTime ) {
+synchronized (this) {
+firstTime = false;
+ctxt.compile();
+}
+} else {
+if (compileException != null) {
+throw compileException;
+}
+}
+getServlet();
+if (precompile) {
+return;
+}
+} catch (ServletException ex) {
+if (options.getDevelopment()) {
+throw handleJspException(ex);
+} else {
+throw ex;
+}
+} catch (IOException ex) {
+if (options.getDevelopment()) {
+throw handleJspException(ex);
+} else {
+throw ex;
+}
+} catch (IllegalStateException ex) {
+if (options.getDevelopment()) {
+throw handleJspException(ex);
+} else {
+throw ex;
+}
+} catch (Exception ex) {
+if (options.getDevelopment()) {
+throw handleJspException(ex);
+} else {
+throw new JasperException(ex);
+}
+}
+try {
+if (theServlet instanceof SingleThreadModel) {
+synchronized (this) {
+theServlet.service(request, response);
+}
+} else {
+theServlet.service(request, response);
+}
+} catch (UnavailableException ex) {
+String includeRequestUri = (String)
+request.getAttribute("javax.servlet.include.request_uri");
+if (includeRequestUri != null) {
+throw ex;
+} else {
+int unavailableSeconds = ex.getUnavailableSeconds();
+if (unavailableSeconds <= 0) {
+unavailableSeconds = 60;        
+}
+available = System.currentTimeMillis() +
+(unavailableSeconds * 1000L);
+response.sendError
+(HttpServletResponse.SC_SERVICE_UNAVAILABLE,
+ex.getMessage());
+}
+} catch (ServletException ex) {
+if(options.getDevelopment()) {
+throw handleJspException(ex);
+} else {
+throw ex;
+}
+} catch (IOException ex) {
+if(options.getDevelopment()) {
+throw handleJspException(ex);
+} else {
+throw ex;
+}
+} catch (IllegalStateException ex) {
+if(options.getDevelopment()) {
+throw handleJspException(ex);
+} else {
+throw ex;
+}
+} catch (Exception ex) {
+if(options.getDevelopment()) {
+throw handleJspException(ex);
+} else {
+throw new JasperException(ex);
+}
+}
+}
+public void destroy() {
+if (theServlet != null) {
+theServlet.destroy();
+final InstanceManager instanceManager = InstanceHelper.getServletInstanceManager(config);
+if (instanceManager != null) {
+try {
+InstanceHelper.preDestroy(instanceManager, theServlet);
+} catch (Exception e) {
+log.error(Localizer.getMessage("jsp.error.file.not.found",
+e.getMessage()), e);
+}
+}
+}
+}
+public long getLastModificationTest() {
+return lastModificationTest;
+}
+public void setLastModificationTest(long lastModificationTest) {
+this.lastModificationTest = lastModificationTest;
+}
+protected JasperException handleJspException(Exception ex) {
+try {
+Throwable realException = ex;
+if (ex instanceof ServletException) {
+realException = ((ServletException) ex).getRootCause();
+}
+StackTraceElement[] frames = realException.getStackTrace();
+StackTraceElement jspFrame = null;
+for (int i=0; i<frames.length; ++i) {
+if ( frames[i].getClassName().equals(this.getServlet().getClass().getName()) ) {
+jspFrame = frames[i];
+break;
+}
+}
+if (jspFrame == null) {
+return new JasperException(ex);
+}
+else {
+int javaLineNumber = jspFrame.getLineNumber();
+JavacErrorDetail detail = ErrorDispatcher.createJavacError(
+jspFrame.getMethodName(),
+this.ctxt.getCompiler().getPageNodes(),
+null,
+javaLineNumber,
+ctxt);
+int jspLineNumber = detail.getJspBeginLineNumber();
+if (jspLineNumber < 1) {
+throw new JasperException(ex);
+}
+if (options.getDisplaySourceFragment()) {
+return new JasperException(Localizer.getMessage
+("jsp.exception", detail.getJspFileName(),
+"" + jspLineNumber) +
+"\n\n" + detail.getJspExtract() +
+"\n\nStacktrace:", ex);
+} else {
+return new JasperException(Localizer.getMessage
+("jsp.exception", detail.getJspFileName(),
+"" + jspLineNumber), ex);
+}
+}
+} catch (Exception je) {
+if (ex instanceof JasperException) {
+return (JasperException) ex;
+} else {
+return new JasperException(ex);
+}
+}
+}
+}

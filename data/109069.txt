@@ -1,0 +1,39 @@
+package io.vertx.core;
+import io.vertx.core.json.JsonObject;
+import java.util.List;
+public abstract class AbstractVerticle implements Verticle {
+protected Vertx vertx;
+protected Context context;
+@Override
+public Vertx getVertx() {
+return vertx;
+}
+@Override
+public void init(Vertx vertx, Context context) {
+this.vertx = vertx;
+this.context = context;
+}
+public String deploymentID() {
+return context.deploymentID();
+}
+public JsonObject config() {
+return context.config();
+}
+public List<String> processArgs() {
+return context.processArgs();
+}
+@Override
+public void start(Promise<Void> startPromise) throws Exception {
+start();
+startPromise.complete();
+}
+@Override
+public void stop(Promise<Void> stopPromise) throws Exception {
+stop();
+stopPromise.complete();
+}
+public void start() throws Exception {
+}
+public void stop() throws Exception {
+}
+}

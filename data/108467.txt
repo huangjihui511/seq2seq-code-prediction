@@ -1,0 +1,32 @@
+package com.oracle.svm.core.jdk;
+import com.oracle.svm.core.annotate.Alias;
+import com.oracle.svm.core.annotate.RecomputeFieldValue;
+import com.oracle.svm.core.annotate.Substitute;
+import com.oracle.svm.core.annotate.TargetClass;
+import com.oracle.svm.core.annotate.TargetElement;
+import com.oracle.svm.core.util.VMError;
+@TargetClass(className = "java.lang.Shutdown")
+public final class Target_java_lang_Shutdown {
+@Alias @RecomputeFieldValue(kind = RecomputeFieldValue.Kind.FromAlias)
+static Runnable[] hooks;
+static {
+hooks = new Runnable[Util_java_lang_Shutdown.MAX_SYSTEM_HOOKS];
+hooks[hooks.length - 1] = RuntimeSupport::executeShutdownHooks;
+}
+@Substitute
+@TargetElement(onlyWith = JDK8OrEarlier.class)
+static void runAllFinalizers() {
+throw VMError.unsupportedFeature("java.lang.Shudown.runAllFinalizers()");
+}
+@Substitute
+@TargetElement(onlyWith = JDK11OrLater.class)
+static void beforeHalt() {
+}
+@Alias
+static native void shutdown();
+@Alias
+public static native void add(int slot, boolean registerShutdownInProgress, Runnable hook);
+}
+final class Util_java_lang_Shutdown {
+static final int MAX_SYSTEM_HOOKS = 10;
+}

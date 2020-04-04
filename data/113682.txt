@@ -1,0 +1,15 @@
+package net.pms.formats.audio;
+public class MPC extends AudioBase {
+@Override
+public Identifier getIdentifier() {
+return Identifier.MPC;
+}
+@Override
+public String[] getSupportedExtensions() {
+return new String[] {
+"mpc",
+"mp+",
+"mpp",
+};
+}
+}

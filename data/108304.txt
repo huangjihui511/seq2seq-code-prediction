@@ -1,0 +1,71 @@
+package org.apache.flink.runtime.taskexecutor;
+import org.apache.flink.api.common.JobID;
+import org.apache.flink.runtime.clusterframework.types.ResourceID;
+import org.apache.flink.runtime.execution.librarycache.LibraryCacheManager;
+import org.apache.flink.runtime.io.network.partition.ResultPartitionConsumableNotifier;
+import org.apache.flink.runtime.jobmaster.JobMasterGateway;
+import org.apache.flink.runtime.jobmaster.JobMasterId;
+import org.apache.flink.runtime.taskmanager.CheckpointResponder;
+import org.apache.flink.runtime.taskmanager.TaskManagerActions;
+import org.apache.flink.util.Preconditions;
+public class JobManagerConnection {
+private final JobID jobID;
+private final ResourceID resourceID;
+private final JobMasterGateway jobMasterGateway;
+private final TaskManagerActions taskManagerActions;
+private final CheckpointResponder checkpointResponder;
+private final GlobalAggregateManager aggregateManager;
+private final LibraryCacheManager libraryCacheManager;
+private final ResultPartitionConsumableNotifier resultPartitionConsumableNotifier;
+private final PartitionProducerStateChecker partitionStateChecker;
+public JobManagerConnection(
+JobID jobID,
+ResourceID resourceID,
+JobMasterGateway jobMasterGateway,
+TaskManagerActions taskManagerActions,
+CheckpointResponder checkpointResponder,
+GlobalAggregateManager aggregateManager,
+LibraryCacheManager libraryCacheManager,
+ResultPartitionConsumableNotifier resultPartitionConsumableNotifier,
+PartitionProducerStateChecker partitionStateChecker) {
+this.jobID = Preconditions.checkNotNull(jobID);
+this.resourceID = Preconditions.checkNotNull(resourceID);
+this.jobMasterGateway = Preconditions.checkNotNull(jobMasterGateway);
+this.taskManagerActions = Preconditions.checkNotNull(taskManagerActions);
+this.checkpointResponder = Preconditions.checkNotNull(checkpointResponder);
+this.aggregateManager = Preconditions.checkNotNull(aggregateManager);
+this.libraryCacheManager = Preconditions.checkNotNull(libraryCacheManager);
+this.resultPartitionConsumableNotifier = Preconditions.checkNotNull(resultPartitionConsumableNotifier);
+this.partitionStateChecker = Preconditions.checkNotNull(partitionStateChecker);
+}
+public JobID getJobID() {
+return jobID;
+}
+public ResourceID getResourceID() {
+return resourceID;
+}
+public JobMasterId getJobMasterId() {
+return jobMasterGateway.getFencingToken();
+}
+public JobMasterGateway getJobManagerGateway() {
+return jobMasterGateway;
+}
+public TaskManagerActions getTaskManagerActions() {
+return taskManagerActions;
+}
+public CheckpointResponder getCheckpointResponder() {
+return checkpointResponder;
+}
+public GlobalAggregateManager getGlobalAggregateManager() {
+return aggregateManager;
+}
+public LibraryCacheManager getLibraryCacheManager() {
+return libraryCacheManager;
+}
+public ResultPartitionConsumableNotifier getResultPartitionConsumableNotifier() {
+return resultPartitionConsumableNotifier;
+}
+public PartitionProducerStateChecker getPartitionStateChecker() {
+return partitionStateChecker;
+}
+}

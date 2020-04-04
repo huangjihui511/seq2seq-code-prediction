@@ -1,0 +1,80 @@
+package com.pokegoapi.main;
+import com.pokegoapi.api.PokemonGo;
+import com.pokegoapi.api.listener.HeartbeatListener;
+import com.pokegoapi.api.map.Map;
+import com.pokegoapi.api.settings.MapSettings;
+import lombok.Getter;
+import java.util.List;
+public class Heartbeat {
+@Getter
+private PokemonGo api;
+private long nextMapUpdate = Long.MIN_VALUE;
+private long minMapRefresh;
+private long maxMapRefresh;
+private boolean updatingMap;
+private boolean active;
+private final Object lock = new Object();
+public Heartbeat(PokemonGo api) {
+this.api = api;
+}
+public void start() {
+if (!active) {
+active = true;
+beat();
+Thread heartbeatThread = new Thread(new Runnable() {
+@Override
+public void run() {
+while (active) {
+try {
+Thread.sleep(10);
+} catch (InterruptedException e) {
+break;
+}
+beat();
+}
+}
+});
+heartbeatThread.setDaemon(true);
+heartbeatThread.setName("Heartbeat thread");
+heartbeatThread.start();
+}
+}
+public void beat() {
+MapSettings mapSettings = api.settings.mapSettings;
+minMapRefresh = (long) mapSettings.minRefresh;
+maxMapRefresh = (long) mapSettings.maxRefresh;
+List<HeartbeatListener> listeners = api.getListeners(HeartbeatListener.class);
+long time = api.currentTimeMillis();
+boolean updatingMap;
+synchronized (lock) {
+updatingMap = this.updatingMap;
+}
+if (time >= nextMapUpdate && !updatingMap) {
+synchronized (lock) {
+this.updatingMap = true;
+}
+Map map = api.getMap();
+try {
+if (map.update()) {
+nextMapUpdate = time + minMapRefresh;
+}
+for (HeartbeatListener listener : listeners) {
+listener.onMapUpdate(api, map.mapObjects);
+}
+} catch (Exception exception) {
+for (HeartbeatListener listener : listeners) {
+listener.onMapUpdateException(api, exception);
+}
+}
+synchronized (lock) {
+this.updatingMap = false;
+}
+}
+}
+public boolean active() {
+return active;
+}
+public void exit() {
+active = false;
+}
+}

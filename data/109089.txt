@@ -1,0 +1,70 @@
+package io.vertx.core.cli;
+import io.vertx.core.cli.converters.Converter;
+public class TypedArgument<T> extends Argument {
+protected Class<T> type;
+protected Converter<T> converter;
+public TypedArgument(TypedArgument<T> arg) {
+super(arg);
+this.type = arg.getType();
+this.converter = arg.getConverter();
+}
+public TypedArgument() {
+super();
+}
+public Class<T> getType() {
+return type;
+}
+public TypedArgument<T> setType(Class<T> type) {
+this.type = type;
+return this;
+}
+public Converter<T> getConverter() {
+return converter;
+}
+public TypedArgument<T> setConverter(Converter<T> converter) {
+this.converter = converter;
+return this;
+}
+@Override
+public void ensureValidity() {
+super.ensureValidity();
+if (type == null) {
+throw new IllegalArgumentException("Type must not be null");
+}
+}
+@Override
+public TypedArgument<T> setArgName(String argName) {
+super.setArgName(argName);
+return this;
+}
+@Override
+public TypedArgument<T> setDefaultValue(String defaultValue) {
+super.setDefaultValue(defaultValue);
+return this;
+}
+@Override
+public TypedArgument<T> setDescription(String description) {
+super.setDescription(description);
+return this;
+}
+@Override
+public TypedArgument<T> setHidden(boolean hidden) {
+super.setHidden(hidden);
+return this;
+}
+@Override
+public TypedArgument<T> setIndex(int index) {
+super.setIndex(index);
+return this;
+}
+@Override
+public TypedArgument<T> setRequired(boolean required) {
+super.setRequired(required);
+return this;
+}
+@Override
+public TypedArgument<T> setMultiValued(boolean multiValued) {
+super.setMultiValued(multiValued);
+return this;
+}
+}

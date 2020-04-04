@@ -1,0 +1,10 @@
+package com.oreilly.springdata.gemfire.core;
+import java.util.List;
+import org.springframework.data.repository.Repository;
+public interface CustomerRepository extends Repository<Customer, Long> {
+List<Customer> findAll();
+Customer save(Customer customer);
+void delete(Customer customer);
+List<Customer> findByLastname(String lastname);
+Customer findByEmailAddress(EmailAddress emailAddress);
+}

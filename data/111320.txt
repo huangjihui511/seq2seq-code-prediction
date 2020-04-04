@@ -1,0 +1,59 @@
+package com.googlecode.d2j.smali;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.ByteBuffer;
+import java.nio.file.Path;
+import com.googlecode.d2j.reader.DexFileReader;
+import com.googlecode.d2j.reader.zip.ZipUtil;
+public class Baksmali {
+private Baksmali() {
+}
+public static Baksmali from(byte[] in) throws IOException {
+return from(new DexFileReader(in));
+}
+public static Baksmali from(ByteBuffer in) throws IOException {
+return from(new DexFileReader(in));
+}
+public static Baksmali from(DexFileReader reader) {
+return new Baksmali(reader);
+}
+public static Baksmali from(File in) throws IOException {
+return from(ZipUtil.readDex(in));
+}
+public static Baksmali from(Path in) throws IOException {
+return from(ZipUtil.readDex(in));
+}
+public static Baksmali from(InputStream in) throws IOException {
+return from(ZipUtil.readDex(in));
+}
+public static Baksmali from(String in) throws IOException {
+return from(new File(in));
+}
+boolean noDebug = false;
+boolean parameterRegisters = true;
+DexFileReader reader;
+boolean useLocals = false;
+private Baksmali(DexFileReader reader) {
+this.reader = reader;
+}
+public Baksmali noDebug() {
+this.noDebug = true;
+return this;
+}
+public Baksmali noParameterRegisters() {
+this.parameterRegisters = false;
+return this;
+}
+public void to(final File dir) {
+to(dir.toPath());
+}
+public void to(final Path base) {
+final BaksmaliDumper bs = new BaksmaliDumper(parameterRegisters, useLocals);
+reader.accept(new BaksmaliDexFileVisitor(base, bs), this.noDebug ? DexFileReader.SKIP_CODE : 0);
+}
+public Baksmali useLocals() {
+this.useLocals = true;
+return this;
+}
+}

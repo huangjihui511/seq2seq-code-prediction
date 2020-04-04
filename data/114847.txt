@@ -1,0 +1,33 @@
+package com.google.api.client.http.xml;
+import com.google.api.client.http.HttpMediaType;
+import com.google.api.client.util.Beta;
+import com.google.api.client.util.Preconditions;
+import com.google.api.client.xml.XmlNamespaceDictionary;
+import java.io.IOException;
+import org.xmlpull.v1.XmlSerializer;
+@Beta
+public class XmlHttpContent extends AbstractXmlHttpContent {
+public XmlHttpContent(
+XmlNamespaceDictionary namespaceDictionary, String elementName, Object data) {
+super(namespaceDictionary);
+this.elementName = Preconditions.checkNotNull(elementName);
+this.data = Preconditions.checkNotNull(data);
+}
+private final String elementName;
+private final Object data;
+@Override
+public final void writeTo(XmlSerializer serializer) throws IOException {
+getNamespaceDictionary().serialize(serializer, elementName, data);
+}
+@Override
+public XmlHttpContent setMediaType(HttpMediaType mediaType) {
+super.setMediaType(mediaType);
+return this;
+}
+public final String getElementName() {
+return elementName;
+}
+public final Object getData() {
+return data;
+}
+}

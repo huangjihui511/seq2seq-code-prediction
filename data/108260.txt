@@ -1,0 +1,16 @@
+package org.apache.flink.streaming.api.functions.co;
+import org.apache.flink.annotation.PublicEvolving;
+import org.apache.flink.api.common.functions.AbstractRichFunction;
+import org.apache.flink.util.Collector;
+import org.apache.flink.util.OutputTag;
+@PublicEvolving
+public abstract class ProcessJoinFunction<IN1, IN2, OUT> extends AbstractRichFunction {
+private static final long serialVersionUID = -2444626938039012398L;
+public abstract void processElement(IN1 left, IN2 right, Context ctx, Collector<OUT> out) throws Exception;
+public abstract class Context {
+public abstract long getLeftTimestamp();
+public abstract long getRightTimestamp();
+public abstract long getTimestamp();
+public abstract <X> void output(OutputTag<X> outputTag, X value);
+}
+}

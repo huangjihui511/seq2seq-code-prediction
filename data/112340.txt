@@ -1,0 +1,70 @@
+package io.jooby;
+import io.jooby.internal.NoByteRange;
+import io.jooby.internal.NotSatisfiableByteRange;
+import io.jooby.internal.SingleByteRange;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import java.io.IOException;
+import java.io.InputStream;
+public interface ByteRange {
+String BYTES_RANGE = "bytes=";
+static @Nonnull ByteRange parse(@Nullable String value, long contentLength) {
+if (contentLength <= 0 || value == null) {
+return new NoByteRange(contentLength);
+}
+if (!value.startsWith(SingleByteRange.BYTES_RANGE)) {
+return new NotSatisfiableByteRange(value, contentLength);
+}
+try {
+long[] range = {-1, -1};
+int r = 0;
+int len = value.length();
+int i = SingleByteRange.BYTES_RANGE.length();
+int offset = i;
+char ch;
+while (i < len && (ch = value.charAt(i)) != ',') {
+if (ch == '-') {
+if (offset < i) {
+range[r] = Long.parseLong(value.substring(offset, i).trim());
+}
+offset = i + 1;
+r += 1;
+}
+i += 1;
+}
+if (offset < i) {
+if (r == 0) {
+return new NotSatisfiableByteRange(value, contentLength);
+}
+range[r++] = Long.parseLong(value.substring(offset, i).trim());
+}
+if (r == 0 || (range[0] == -1 && range[1] == -1)) {
+return new NotSatisfiableByteRange(value, contentLength);
+}
+long start = range[0];
+long end = range[1];
+if (start == -1) {
+start = contentLength - end;
+end = contentLength - 1;
+}
+if (end == -1 || end > contentLength - 1) {
+end = contentLength - 1;
+}
+if (start > end) {
+return new NotSatisfiableByteRange(value, contentLength);
+}
+long limit = (end - start + 1);
+return new SingleByteRange(value, start, limit, limit,
+"bytes " + start + "-" + end + "/" + contentLength);
+} catch (NumberFormatException expected) {
+return new NotSatisfiableByteRange(value, contentLength);
+}
+}
+long getStart();
+long getEnd();
+long getContentLength();
+@Nonnull String getContentRange();
+@Nonnull StatusCode getStatusCode();
+@Nonnull ByteRange apply(@Nonnull Context ctx);
+@Nonnull InputStream apply(@Nonnull InputStream input) throws IOException;
+}

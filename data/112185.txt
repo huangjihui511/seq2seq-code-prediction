@@ -1,0 +1,28 @@
+package org.menacheri.jetserver.concurrent;
+import org.jetlang.channels.Channel;
+import org.jetlang.channels.MemoryChannel;
+import org.jetlang.core.Callback;
+import org.jetlang.fibers.Fiber;
+public class Agent
+{
+final Channel<Runnable> channel;
+final Fiber fiber;
+final Callback<Runnable> callback = new Callback<Runnable>()
+{
+@Override
+public void onMessage(Runnable message)
+{
+message.run();
+}
+};
+public Agent()
+{
+this.channel = new MemoryChannel<Runnable>();
+this.fiber = Fibers.pooledFiber();
+channel.subscribe(fiber, callback);
+}
+public void send(Runnable code)
+{
+channel.publish(code);
+}
+}

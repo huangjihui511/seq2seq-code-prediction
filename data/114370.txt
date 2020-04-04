@@ -1,0 +1,21 @@
+package mobi.hsz.idea.gitignore.lang.kind;
+import mobi.hsz.idea.gitignore.file.type.IgnoreFileType;
+import mobi.hsz.idea.gitignore.file.type.kind.JetpackFileType;
+import mobi.hsz.idea.gitignore.lang.IgnoreLanguage;
+import mobi.hsz.idea.gitignore.util.Icons;
+import org.jetbrains.annotations.NotNull;
+public class JetpackLanguage extends IgnoreLanguage {
+public static final JetpackLanguage INSTANCE = new JetpackLanguage();
+private JetpackLanguage() {
+super("Jetpack", "jpmignore", null, Icons.JETPACK);
+}
+@NotNull
+@Override
+public IgnoreFileType getFileType() {
+return JetpackFileType.INSTANCE;
+}
+@Override
+public boolean isVCS() {
+return false;
+}
+}

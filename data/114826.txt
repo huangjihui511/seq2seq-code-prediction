@@ -1,0 +1,8 @@
+package com.google.api.client.extensions.appengine.datastore;
+import com.google.api.client.util.store.DataStoreFactory;
+public class AppEngineNoMemcacheDataStoreFactoryTest extends AppEngineDataStoreFactoryTest {
+@Override
+protected DataStoreFactory newDataStoreFactory() {
+return new AppEngineDataStoreFactory.Builder().setDisableMemcache(true).build();
+}
+}

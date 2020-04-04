@@ -1,0 +1,5 @@
+package com.datumbox.framework.core.common.interfaces;
+public interface Savable extends AutoCloseable {
+public void save(String storageName);
+public void delete();
+}

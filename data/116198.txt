@@ -1,0 +1,6 @@
+package org.apache.struts2.action;
+import org.apache.struts2.interceptor.CookieInterceptor;
+import java.util.Map;
+public interface CookiesAware {
+void withCookies(Map<String, String> cookies);
+}

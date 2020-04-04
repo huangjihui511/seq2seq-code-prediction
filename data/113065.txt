@@ -1,0 +1,17 @@
+package br.com.leonardoz.patterns.thread_safe.compound_actions;
+import br.com.leonardoz.patterns.GuardedBy;
+import br.com.leonardoz.patterns.ThreadSafe;
+@ThreadSafe
+public class AtomicCompoundActions {
+@GuardedBy("this")
+private Object value;
+public synchronized void checkThenAct() {
+if (value != null) { 
+dependentAction(); 
+}
+}
+public void dependentAction() {
+}
+public synchronized void getValue() {
+}
+}

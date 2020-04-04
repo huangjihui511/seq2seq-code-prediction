@@ -1,0 +1,41 @@
+package org.apache.parquet.avro;
+import com.google.common.io.Resources;
+import java.io.IOException;
+import org.apache.avro.generic.GenericRecord;
+import org.apache.avro.util.Utf8;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.Path;
+import org.junit.Assert;
+import org.junit.Test;
+import org.apache.parquet.hadoop.ParquetReader;
+public class TestBackwardCompatibility {
+@Test
+public void testCompatStringCompatibility() throws IOException {
+Path testFile = new Path(Resources.getResource("strings-2.parquet").getFile());
+Configuration conf = new Configuration();
+ParquetReader<GenericRecord> reader = AvroParquetReader
+.builder(new AvroReadSupport<GenericRecord>(), testFile)
+.withConf(conf)
+.build();
+GenericRecord r;
+while ((r = reader.read()) != null) {
+Assert.assertTrue("Should read value into a String",
+r.get("text") instanceof String);
+}
+}
+@Test
+public void testStringCompatibility() throws IOException {
+Path testFile = new Path(Resources.getResource("strings-2.parquet").getFile());
+Configuration conf = new Configuration();
+conf.setBoolean(AvroReadSupport.AVRO_COMPATIBILITY, false);
+ParquetReader<GenericRecord> reader = AvroParquetReader
+.builder(new AvroReadSupport<GenericRecord>(), testFile)
+.withConf(conf)
+.build();
+GenericRecord r;
+while ((r = reader.read()) != null) {
+Assert.assertTrue("Should read value into a String",
+r.get("text") instanceof Utf8);
+}
+}
+}

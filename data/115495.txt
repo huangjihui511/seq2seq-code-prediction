@@ -1,0 +1,4 @@
+package org.gnucash.android.ui.account;
+public interface OnAccountClickedListener {
+public void accountSelected(String accountUID);
+}

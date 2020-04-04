@@ -1,0 +1,46 @@
+package com.pokegoapi.api.map.fort;
+import POGOProtos.Inventory.Item.ItemIdOuterClass;
+import POGOProtos.Map.Fort.FortDataOuterClass;
+import POGOProtos.Map.Fort.FortModifierOuterClass;
+import com.pokegoapi.api.PokemonGo;
+import com.pokegoapi.exceptions.request.RequestFailedException;
+import java.util.List;
+public class Pokestop extends Fort {
+public Pokestop(PokemonGo api, FortDataOuterClass.FortData fortData) {
+super(api, fortData);
+}
+@Deprecated
+public boolean hasLurePokemon() {
+return fortData.hasLureInfo() && fortData.getLureInfo().getLureExpiresTimestampMs() > api.startTime;
+}*/
+public boolean inRangeForLuredPokemon() {
+return getDistance() <= api.settings.mapSettings.pokemonVisibilityRange;
+}
+public boolean hasLure() {
+try {
+return hasLure(false);
+} catch (RequestFailedException e) {
+return false;
+}
+}
+public boolean hasLure(boolean updateFortDetails) throws RequestFailedException {
+if (updateFortDetails) {
+List<FortModifierOuterClass.FortModifier> modifiers = getDetails().getModifier();
+for (FortModifierOuterClass.FortModifier modifier : modifiers) {
+if (modifier.getItemId() == ItemIdOuterClass.ItemId.ITEM_TROY_DISK) {
+return true;
+}
+}
+return false;
+}
+return fortData.getActiveFortModifierList().contains(ItemIdOuterClass.ItemId.ITEM_TROY_DISK);
+}
+@Override
+public int hashCode() {
+return getId().hashCode();
+}
+@Override
+public boolean equals(Object obj) {
+return obj instanceof Pokestop && ((Pokestop) obj).getId().equals(getId());
+}
+}

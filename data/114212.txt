@@ -1,0 +1,46 @@
+package com.datumbox.framework.common.concurrency;
+import java.util.AbstractMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Spliterator;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
+public class StreamMethods {
+public static <T> Stream<T> stream(Spliterator<T> spliterator, boolean parallel) {
+return StreamSupport.<T>stream(spliterator, parallel);
+}
+public static <T> Stream<T> stream(Iterable<T> iterable, boolean parallel) {
+return StreamSupport.<T>stream(iterable.spliterator(), parallel);
+}
+public static <T> Stream<T> stream(Stream<T> stream, boolean parallel) {
+if(parallel) {
+return stream.parallel();
+}
+else {
+return stream.sequential();
+}
+}
+public static <T> Stream<T> stream(Iterator<T> iterator, boolean parallel) {
+Iterable<T> iterable = () -> iterator;
+return StreamSupport.<T>stream(iterable.spliterator(), parallel);
+}
+public static <T> Stream<Map.Entry<Integer, T>> enumerate(Stream<T> stream) {
+Iterator<Map.Entry<Integer, T>> iterator = new Iterator<Map.Entry<Integer, T>>() {
+private int counter = 0;
+private final Iterator<T> internalIterator = stream.iterator();
+@Override
+public boolean hasNext() {
+return internalIterator.hasNext();
+}
+@Override
+public Map.Entry<Integer, T> next() {
+return new AbstractMap.SimpleImmutableEntry<>(counter++, internalIterator.next());
+}
+@Override
+public void remove() {
+throw new UnsupportedOperationException("This is a read-only iterator, remove operation is not supported.");
+}
+};
+return stream(iterator, stream.isParallel());
+}
+}

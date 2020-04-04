@@ -1,0 +1,16 @@
+package com.github.jknack.handlebars.internal;
+import java.util.ArrayList;
+import com.github.jknack.handlebars.PathExpression;
+@SuppressWarnings("serial")
+public class PathExpressionList extends ArrayList<PathExpression> {
+private static final int SIZE = 3;
+private final String path;
+public PathExpressionList(final String path) {
+super(SIZE);
+this.path = path;
+}
+@Override
+public String toString() {
+return path;
+}
+}

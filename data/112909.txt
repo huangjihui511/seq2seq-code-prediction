@@ -1,0 +1,2904 @@
+package io.kubernetes.client.proto;
+public final class V1alpha1Admission {
+private V1alpha1Admission() {}
+public static void registerAllExtensions(
+com.google.protobuf.ExtensionRegistryLite registry) {
+}
+public static void registerAllExtensions(
+com.google.protobuf.ExtensionRegistry registry) {
+registerAllExtensions(
+(com.google.protobuf.ExtensionRegistryLite) registry);
+}
+public interface AdmissionReviewOrBuilder extends
+com.google.protobuf.MessageOrBuilder {
+boolean hasSpec();
+io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewSpec getSpec();
+io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewSpecOrBuilder getSpecOrBuilder();
+boolean hasStatus();
+io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewStatus getStatus();
+io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewStatusOrBuilder getStatusOrBuilder();
+}
+public static final class AdmissionReview extends
+com.google.protobuf.GeneratedMessageV3 implements
+AdmissionReviewOrBuilder {
+private static final long serialVersionUID = 0L;
+private AdmissionReview(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+super(builder);
+}
+private AdmissionReview() {
+}
+@java.lang.Override
+public final com.google.protobuf.UnknownFieldSet
+getUnknownFields() {
+return this.unknownFields;
+}
+private AdmissionReview(
+com.google.protobuf.CodedInputStream input,
+com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+throws com.google.protobuf.InvalidProtocolBufferException {
+this();
+int mutable_bitField0_ = 0;
+com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+com.google.protobuf.UnknownFieldSet.newBuilder();
+try {
+boolean done = false;
+while (!done) {
+int tag = input.readTag();
+switch (tag) {
+case 0:
+done = true;
+break;
+default: {
+if (!parseUnknownField(
+input, unknownFields, extensionRegistry, tag)) {
+done = true;
+}
+break;
+}
+case 10: {
+io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewSpec.Builder subBuilder = null;
+if (((bitField0_ & 0x00000001) == 0x00000001)) {
+subBuilder = spec_.toBuilder();
+}
+spec_ = input.readMessage(io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewSpec.PARSER, extensionRegistry);
+if (subBuilder != null) {
+subBuilder.mergeFrom(spec_);
+spec_ = subBuilder.buildPartial();
+}
+bitField0_ |= 0x00000001;
+break;
+}
+case 18: {
+io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewStatus.Builder subBuilder = null;
+if (((bitField0_ & 0x00000002) == 0x00000002)) {
+subBuilder = status_.toBuilder();
+}
+status_ = input.readMessage(io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewStatus.PARSER, extensionRegistry);
+if (subBuilder != null) {
+subBuilder.mergeFrom(status_);
+status_ = subBuilder.buildPartial();
+}
+bitField0_ |= 0x00000002;
+break;
+}
+}
+}
+} catch (com.google.protobuf.InvalidProtocolBufferException e) {
+throw e.setUnfinishedMessage(this);
+} catch (java.io.IOException e) {
+throw new com.google.protobuf.InvalidProtocolBufferException(
+e).setUnfinishedMessage(this);
+} finally {
+this.unknownFields = unknownFields.build();
+makeExtensionsImmutable();
+}
+}
+public static final com.google.protobuf.Descriptors.Descriptor
+getDescriptor() {
+return io.kubernetes.client.proto.V1alpha1Admission.internal_static_k8s_io_api_admission_v1alpha1_AdmissionReview_descriptor;
+}
+protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+internalGetFieldAccessorTable() {
+return io.kubernetes.client.proto.V1alpha1Admission.internal_static_k8s_io_api_admission_v1alpha1_AdmissionReview_fieldAccessorTable
+.ensureFieldAccessorsInitialized(
+io.kubernetes.client.proto.V1alpha1Admission.AdmissionReview.class, io.kubernetes.client.proto.V1alpha1Admission.AdmissionReview.Builder.class);
+}
+private int bitField0_;
+public static final int SPEC_FIELD_NUMBER = 1;
+private io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewSpec spec_;
+public boolean hasSpec() {
+return ((bitField0_ & 0x00000001) == 0x00000001);
+}
+public io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewSpec getSpec() {
+return spec_ == null ? io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewSpec.getDefaultInstance() : spec_;
+}
+public io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewSpecOrBuilder getSpecOrBuilder() {
+return spec_ == null ? io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewSpec.getDefaultInstance() : spec_;
+}
+public static final int STATUS_FIELD_NUMBER = 2;
+private io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewStatus status_;
+public boolean hasStatus() {
+return ((bitField0_ & 0x00000002) == 0x00000002);
+}
+public io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewStatus getStatus() {
+return status_ == null ? io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewStatus.getDefaultInstance() : status_;
+}
+public io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewStatusOrBuilder getStatusOrBuilder() {
+return status_ == null ? io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewStatus.getDefaultInstance() : status_;
+}
+private byte memoizedIsInitialized = -1;
+public final boolean isInitialized() {
+byte isInitialized = memoizedIsInitialized;
+if (isInitialized == 1) return true;
+if (isInitialized == 0) return false;
+memoizedIsInitialized = 1;
+return true;
+}
+public void writeTo(com.google.protobuf.CodedOutputStream output)
+throws java.io.IOException {
+if (((bitField0_ & 0x00000001) == 0x00000001)) {
+output.writeMessage(1, getSpec());
+}
+if (((bitField0_ & 0x00000002) == 0x00000002)) {
+output.writeMessage(2, getStatus());
+}
+unknownFields.writeTo(output);
+}
+public int getSerializedSize() {
+int size = memoizedSize;
+if (size != -1) return size;
+size = 0;
+if (((bitField0_ & 0x00000001) == 0x00000001)) {
+size += com.google.protobuf.CodedOutputStream
+.computeMessageSize(1, getSpec());
+}
+if (((bitField0_ & 0x00000002) == 0x00000002)) {
+size += com.google.protobuf.CodedOutputStream
+.computeMessageSize(2, getStatus());
+}
+size += unknownFields.getSerializedSize();
+memoizedSize = size;
+return size;
+}
+@java.lang.Override
+public boolean equals(final java.lang.Object obj) {
+if (obj == this) {
+return true;
+}
+if (!(obj instanceof io.kubernetes.client.proto.V1alpha1Admission.AdmissionReview)) {
+return super.equals(obj);
+}
+io.kubernetes.client.proto.V1alpha1Admission.AdmissionReview other = (io.kubernetes.client.proto.V1alpha1Admission.AdmissionReview) obj;
+boolean result = true;
+result = result && (hasSpec() == other.hasSpec());
+if (hasSpec()) {
+result = result && getSpec()
+.equals(other.getSpec());
+}
+result = result && (hasStatus() == other.hasStatus());
+if (hasStatus()) {
+result = result && getStatus()
+.equals(other.getStatus());
+}
+result = result && unknownFields.equals(other.unknownFields);
+return result;
+}
+@java.lang.Override
+public int hashCode() {
+if (memoizedHashCode != 0) {
+return memoizedHashCode;
+}
+int hash = 41;
+hash = (19 * hash) + getDescriptor().hashCode();
+if (hasSpec()) {
+hash = (37 * hash) + SPEC_FIELD_NUMBER;
+hash = (53 * hash) + getSpec().hashCode();
+}
+if (hasStatus()) {
+hash = (37 * hash) + STATUS_FIELD_NUMBER;
+hash = (53 * hash) + getStatus().hashCode();
+}
+hash = (29 * hash) + unknownFields.hashCode();
+memoizedHashCode = hash;
+return hash;
+}
+public static io.kubernetes.client.proto.V1alpha1Admission.AdmissionReview parseFrom(
+java.nio.ByteBuffer data)
+throws com.google.protobuf.InvalidProtocolBufferException {
+return PARSER.parseFrom(data);
+}
+public static io.kubernetes.client.proto.V1alpha1Admission.AdmissionReview parseFrom(
+java.nio.ByteBuffer data,
+com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+throws com.google.protobuf.InvalidProtocolBufferException {
+return PARSER.parseFrom(data, extensionRegistry);
+}
+public static io.kubernetes.client.proto.V1alpha1Admission.AdmissionReview parseFrom(
+com.google.protobuf.ByteString data)
+throws com.google.protobuf.InvalidProtocolBufferException {
+return PARSER.parseFrom(data);
+}
+public static io.kubernetes.client.proto.V1alpha1Admission.AdmissionReview parseFrom(
+com.google.protobuf.ByteString data,
+com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+throws com.google.protobuf.InvalidProtocolBufferException {
+return PARSER.parseFrom(data, extensionRegistry);
+}
+public static io.kubernetes.client.proto.V1alpha1Admission.AdmissionReview parseFrom(byte[] data)
+throws com.google.protobuf.InvalidProtocolBufferException {
+return PARSER.parseFrom(data);
+}
+public static io.kubernetes.client.proto.V1alpha1Admission.AdmissionReview parseFrom(
+byte[] data,
+com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+throws com.google.protobuf.InvalidProtocolBufferException {
+return PARSER.parseFrom(data, extensionRegistry);
+}
+public static io.kubernetes.client.proto.V1alpha1Admission.AdmissionReview parseFrom(java.io.InputStream input)
+throws java.io.IOException {
+return com.google.protobuf.GeneratedMessageV3
+.parseWithIOException(PARSER, input);
+}
+public static io.kubernetes.client.proto.V1alpha1Admission.AdmissionReview parseFrom(
+java.io.InputStream input,
+com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+throws java.io.IOException {
+return com.google.protobuf.GeneratedMessageV3
+.parseWithIOException(PARSER, input, extensionRegistry);
+}
+public static io.kubernetes.client.proto.V1alpha1Admission.AdmissionReview parseDelimitedFrom(java.io.InputStream input)
+throws java.io.IOException {
+return com.google.protobuf.GeneratedMessageV3
+.parseDelimitedWithIOException(PARSER, input);
+}
+public static io.kubernetes.client.proto.V1alpha1Admission.AdmissionReview parseDelimitedFrom(
+java.io.InputStream input,
+com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+throws java.io.IOException {
+return com.google.protobuf.GeneratedMessageV3
+.parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+}
+public static io.kubernetes.client.proto.V1alpha1Admission.AdmissionReview parseFrom(
+com.google.protobuf.CodedInputStream input)
+throws java.io.IOException {
+return com.google.protobuf.GeneratedMessageV3
+.parseWithIOException(PARSER, input);
+}
+public static io.kubernetes.client.proto.V1alpha1Admission.AdmissionReview parseFrom(
+com.google.protobuf.CodedInputStream input,
+com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+throws java.io.IOException {
+return com.google.protobuf.GeneratedMessageV3
+.parseWithIOException(PARSER, input, extensionRegistry);
+}
+public Builder newBuilderForType() { return newBuilder(); }
+public static Builder newBuilder() {
+return DEFAULT_INSTANCE.toBuilder();
+}
+public static Builder newBuilder(io.kubernetes.client.proto.V1alpha1Admission.AdmissionReview prototype) {
+return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+}
+public Builder toBuilder() {
+return this == DEFAULT_INSTANCE
+? new Builder() : new Builder().mergeFrom(this);
+}
+@java.lang.Override
+protected Builder newBuilderForType(
+com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+Builder builder = new Builder(parent);
+return builder;
+}
+public static final class Builder extends
+com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewOrBuilder {
+public static final com.google.protobuf.Descriptors.Descriptor
+getDescriptor() {
+return io.kubernetes.client.proto.V1alpha1Admission.internal_static_k8s_io_api_admission_v1alpha1_AdmissionReview_descriptor;
+}
+protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+internalGetFieldAccessorTable() {
+return io.kubernetes.client.proto.V1alpha1Admission.internal_static_k8s_io_api_admission_v1alpha1_AdmissionReview_fieldAccessorTable
+.ensureFieldAccessorsInitialized(
+io.kubernetes.client.proto.V1alpha1Admission.AdmissionReview.class, io.kubernetes.client.proto.V1alpha1Admission.AdmissionReview.Builder.class);
+}
+private Builder() {
+maybeForceBuilderInitialization();
+}
+private Builder(
+com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+super(parent);
+maybeForceBuilderInitialization();
+}
+private void maybeForceBuilderInitialization() {
+if (com.google.protobuf.GeneratedMessageV3
+.alwaysUseFieldBuilders) {
+getSpecFieldBuilder();
+getStatusFieldBuilder();
+}
+}
+public Builder clear() {
+super.clear();
+if (specBuilder_ == null) {
+spec_ = null;
+} else {
+specBuilder_.clear();
+}
+bitField0_ = (bitField0_ & ~0x00000001);
+if (statusBuilder_ == null) {
+status_ = null;
+} else {
+statusBuilder_.clear();
+}
+bitField0_ = (bitField0_ & ~0x00000002);
+return this;
+}
+public com.google.protobuf.Descriptors.Descriptor
+getDescriptorForType() {
+return io.kubernetes.client.proto.V1alpha1Admission.internal_static_k8s_io_api_admission_v1alpha1_AdmissionReview_descriptor;
+}
+public io.kubernetes.client.proto.V1alpha1Admission.AdmissionReview getDefaultInstanceForType() {
+return io.kubernetes.client.proto.V1alpha1Admission.AdmissionReview.getDefaultInstance();
+}
+public io.kubernetes.client.proto.V1alpha1Admission.AdmissionReview build() {
+io.kubernetes.client.proto.V1alpha1Admission.AdmissionReview result = buildPartial();
+if (!result.isInitialized()) {
+throw newUninitializedMessageException(result);
+}
+return result;
+}
+public io.kubernetes.client.proto.V1alpha1Admission.AdmissionReview buildPartial() {
+io.kubernetes.client.proto.V1alpha1Admission.AdmissionReview result = new io.kubernetes.client.proto.V1alpha1Admission.AdmissionReview(this);
+int from_bitField0_ = bitField0_;
+int to_bitField0_ = 0;
+if (((from_bitField0_ & 0x00000001) == 0x00000001)) {
+to_bitField0_ |= 0x00000001;
+}
+if (specBuilder_ == null) {
+result.spec_ = spec_;
+} else {
+result.spec_ = specBuilder_.build();
+}
+if (((from_bitField0_ & 0x00000002) == 0x00000002)) {
+to_bitField0_ |= 0x00000002;
+}
+if (statusBuilder_ == null) {
+result.status_ = status_;
+} else {
+result.status_ = statusBuilder_.build();
+}
+result.bitField0_ = to_bitField0_;
+onBuilt();
+return result;
+}
+public Builder clone() {
+return (Builder) super.clone();
+}
+public Builder setField(
+com.google.protobuf.Descriptors.FieldDescriptor field,
+java.lang.Object value) {
+return (Builder) super.setField(field, value);
+}
+public Builder clearField(
+com.google.protobuf.Descriptors.FieldDescriptor field) {
+return (Builder) super.clearField(field);
+}
+public Builder clearOneof(
+com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+return (Builder) super.clearOneof(oneof);
+}
+public Builder setRepeatedField(
+com.google.protobuf.Descriptors.FieldDescriptor field,
+int index, java.lang.Object value) {
+return (Builder) super.setRepeatedField(field, index, value);
+}
+public Builder addRepeatedField(
+com.google.protobuf.Descriptors.FieldDescriptor field,
+java.lang.Object value) {
+return (Builder) super.addRepeatedField(field, value);
+}
+public Builder mergeFrom(com.google.protobuf.Message other) {
+if (other instanceof io.kubernetes.client.proto.V1alpha1Admission.AdmissionReview) {
+return mergeFrom((io.kubernetes.client.proto.V1alpha1Admission.AdmissionReview)other);
+} else {
+super.mergeFrom(other);
+return this;
+}
+}
+public Builder mergeFrom(io.kubernetes.client.proto.V1alpha1Admission.AdmissionReview other) {
+if (other == io.kubernetes.client.proto.V1alpha1Admission.AdmissionReview.getDefaultInstance()) return this;
+if (other.hasSpec()) {
+mergeSpec(other.getSpec());
+}
+if (other.hasStatus()) {
+mergeStatus(other.getStatus());
+}
+this.mergeUnknownFields(other.unknownFields);
+onChanged();
+return this;
+}
+public final boolean isInitialized() {
+return true;
+}
+public Builder mergeFrom(
+com.google.protobuf.CodedInputStream input,
+com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+throws java.io.IOException {
+io.kubernetes.client.proto.V1alpha1Admission.AdmissionReview parsedMessage = null;
+try {
+parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
+} catch (com.google.protobuf.InvalidProtocolBufferException e) {
+parsedMessage = (io.kubernetes.client.proto.V1alpha1Admission.AdmissionReview) e.getUnfinishedMessage();
+throw e.unwrapIOException();
+} finally {
+if (parsedMessage != null) {
+mergeFrom(parsedMessage);
+}
+}
+return this;
+}
+private int bitField0_;
+private io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewSpec spec_ = null;
+private com.google.protobuf.SingleFieldBuilderV3<
+io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewSpec, io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewSpec.Builder, io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewSpecOrBuilder> specBuilder_;
+public boolean hasSpec() {
+return ((bitField0_ & 0x00000001) == 0x00000001);
+}
+public io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewSpec getSpec() {
+if (specBuilder_ == null) {
+return spec_ == null ? io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewSpec.getDefaultInstance() : spec_;
+} else {
+return specBuilder_.getMessage();
+}
+}
+public Builder setSpec(io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewSpec value) {
+if (specBuilder_ == null) {
+if (value == null) {
+throw new NullPointerException();
+}
+spec_ = value;
+onChanged();
+} else {
+specBuilder_.setMessage(value);
+}
+bitField0_ |= 0x00000001;
+return this;
+}
+public Builder setSpec(
+io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewSpec.Builder builderForValue) {
+if (specBuilder_ == null) {
+spec_ = builderForValue.build();
+onChanged();
+} else {
+specBuilder_.setMessage(builderForValue.build());
+}
+bitField0_ |= 0x00000001;
+return this;
+}
+public Builder mergeSpec(io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewSpec value) {
+if (specBuilder_ == null) {
+if (((bitField0_ & 0x00000001) == 0x00000001) &&
+spec_ != null &&
+spec_ != io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewSpec.getDefaultInstance()) {
+spec_ =
+io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewSpec.newBuilder(spec_).mergeFrom(value).buildPartial();
+} else {
+spec_ = value;
+}
+onChanged();
+} else {
+specBuilder_.mergeFrom(value);
+}
+bitField0_ |= 0x00000001;
+return this;
+}
+public Builder clearSpec() {
+if (specBuilder_ == null) {
+spec_ = null;
+onChanged();
+} else {
+specBuilder_.clear();
+}
+bitField0_ = (bitField0_ & ~0x00000001);
+return this;
+}
+public io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewSpec.Builder getSpecBuilder() {
+bitField0_ |= 0x00000001;
+onChanged();
+return getSpecFieldBuilder().getBuilder();
+}
+public io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewSpecOrBuilder getSpecOrBuilder() {
+if (specBuilder_ != null) {
+return specBuilder_.getMessageOrBuilder();
+} else {
+return spec_ == null ?
+io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewSpec.getDefaultInstance() : spec_;
+}
+}
+private com.google.protobuf.SingleFieldBuilderV3<
+io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewSpec, io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewSpec.Builder, io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewSpecOrBuilder>
+getSpecFieldBuilder() {
+if (specBuilder_ == null) {
+specBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
+io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewSpec, io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewSpec.Builder, io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewSpecOrBuilder>(
+getSpec(),
+getParentForChildren(),
+isClean());
+spec_ = null;
+}
+return specBuilder_;
+}
+private io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewStatus status_ = null;
+private com.google.protobuf.SingleFieldBuilderV3<
+io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewStatus, io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewStatus.Builder, io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewStatusOrBuilder> statusBuilder_;
+public boolean hasStatus() {
+return ((bitField0_ & 0x00000002) == 0x00000002);
+}
+public io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewStatus getStatus() {
+if (statusBuilder_ == null) {
+return status_ == null ? io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewStatus.getDefaultInstance() : status_;
+} else {
+return statusBuilder_.getMessage();
+}
+}
+public Builder setStatus(io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewStatus value) {
+if (statusBuilder_ == null) {
+if (value == null) {
+throw new NullPointerException();
+}
+status_ = value;
+onChanged();
+} else {
+statusBuilder_.setMessage(value);
+}
+bitField0_ |= 0x00000002;
+return this;
+}
+public Builder setStatus(
+io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewStatus.Builder builderForValue) {
+if (statusBuilder_ == null) {
+status_ = builderForValue.build();
+onChanged();
+} else {
+statusBuilder_.setMessage(builderForValue.build());
+}
+bitField0_ |= 0x00000002;
+return this;
+}
+public Builder mergeStatus(io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewStatus value) {
+if (statusBuilder_ == null) {
+if (((bitField0_ & 0x00000002) == 0x00000002) &&
+status_ != null &&
+status_ != io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewStatus.getDefaultInstance()) {
+status_ =
+io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewStatus.newBuilder(status_).mergeFrom(value).buildPartial();
+} else {
+status_ = value;
+}
+onChanged();
+} else {
+statusBuilder_.mergeFrom(value);
+}
+bitField0_ |= 0x00000002;
+return this;
+}
+public Builder clearStatus() {
+if (statusBuilder_ == null) {
+status_ = null;
+onChanged();
+} else {
+statusBuilder_.clear();
+}
+bitField0_ = (bitField0_ & ~0x00000002);
+return this;
+}
+public io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewStatus.Builder getStatusBuilder() {
+bitField0_ |= 0x00000002;
+onChanged();
+return getStatusFieldBuilder().getBuilder();
+}
+public io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewStatusOrBuilder getStatusOrBuilder() {
+if (statusBuilder_ != null) {
+return statusBuilder_.getMessageOrBuilder();
+} else {
+return status_ == null ?
+io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewStatus.getDefaultInstance() : status_;
+}
+}
+private com.google.protobuf.SingleFieldBuilderV3<
+io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewStatus, io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewStatus.Builder, io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewStatusOrBuilder>
+getStatusFieldBuilder() {
+if (statusBuilder_ == null) {
+statusBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
+io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewStatus, io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewStatus.Builder, io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewStatusOrBuilder>(
+getStatus(),
+getParentForChildren(),
+isClean());
+status_ = null;
+}
+return statusBuilder_;
+}
+public final Builder setUnknownFields(
+final com.google.protobuf.UnknownFieldSet unknownFields) {
+return super.setUnknownFields(unknownFields);
+}
+public final Builder mergeUnknownFields(
+final com.google.protobuf.UnknownFieldSet unknownFields) {
+return super.mergeUnknownFields(unknownFields);
+}
+}
+private static final io.kubernetes.client.proto.V1alpha1Admission.AdmissionReview DEFAULT_INSTANCE;
+static {
+DEFAULT_INSTANCE = new io.kubernetes.client.proto.V1alpha1Admission.AdmissionReview();
+}
+public static io.kubernetes.client.proto.V1alpha1Admission.AdmissionReview getDefaultInstance() {
+return DEFAULT_INSTANCE;
+}
+@java.lang.Deprecated public static final com.google.protobuf.Parser<AdmissionReview>
+PARSER = new com.google.protobuf.AbstractParser<AdmissionReview>() {
+public AdmissionReview parsePartialFrom(
+com.google.protobuf.CodedInputStream input,
+com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+throws com.google.protobuf.InvalidProtocolBufferException {
+return new AdmissionReview(input, extensionRegistry);
+}
+};
+public static com.google.protobuf.Parser<AdmissionReview> parser() {
+return PARSER;
+}
+@java.lang.Override
+public com.google.protobuf.Parser<AdmissionReview> getParserForType() {
+return PARSER;
+}
+public io.kubernetes.client.proto.V1alpha1Admission.AdmissionReview getDefaultInstanceForType() {
+return DEFAULT_INSTANCE;
+}
+}
+public interface AdmissionReviewSpecOrBuilder extends
+com.google.protobuf.MessageOrBuilder {
+boolean hasKind();
+io.kubernetes.client.proto.Meta.GroupVersionKind getKind();
+io.kubernetes.client.proto.Meta.GroupVersionKindOrBuilder getKindOrBuilder();
+boolean hasObject();
+io.kubernetes.client.proto.Runtime.RawExtension getObject();
+io.kubernetes.client.proto.Runtime.RawExtensionOrBuilder getObjectOrBuilder();
+boolean hasOldObject();
+io.kubernetes.client.proto.Runtime.RawExtension getOldObject();
+io.kubernetes.client.proto.Runtime.RawExtensionOrBuilder getOldObjectOrBuilder();
+boolean hasOperation();
+java.lang.String getOperation();
+com.google.protobuf.ByteString
+getOperationBytes();
+boolean hasName();
+java.lang.String getName();
+com.google.protobuf.ByteString
+getNameBytes();
+boolean hasNamespace();
+java.lang.String getNamespace();
+com.google.protobuf.ByteString
+getNamespaceBytes();
+boolean hasResource();
+io.kubernetes.client.proto.Meta.GroupVersionResource getResource();
+io.kubernetes.client.proto.Meta.GroupVersionResourceOrBuilder getResourceOrBuilder();
+boolean hasSubResource();
+java.lang.String getSubResource();
+com.google.protobuf.ByteString
+getSubResourceBytes();
+boolean hasUserInfo();
+io.kubernetes.client.proto.V1Authentication.UserInfo getUserInfo();
+io.kubernetes.client.proto.V1Authentication.UserInfoOrBuilder getUserInfoOrBuilder();
+}
+public static final class AdmissionReviewSpec extends
+com.google.protobuf.GeneratedMessageV3 implements
+AdmissionReviewSpecOrBuilder {
+private static final long serialVersionUID = 0L;
+private AdmissionReviewSpec(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+super(builder);
+}
+private AdmissionReviewSpec() {
+operation_ = "";
+name_ = "";
+namespace_ = "";
+subResource_ = "";
+}
+@java.lang.Override
+public final com.google.protobuf.UnknownFieldSet
+getUnknownFields() {
+return this.unknownFields;
+}
+private AdmissionReviewSpec(
+com.google.protobuf.CodedInputStream input,
+com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+throws com.google.protobuf.InvalidProtocolBufferException {
+this();
+int mutable_bitField0_ = 0;
+com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+com.google.protobuf.UnknownFieldSet.newBuilder();
+try {
+boolean done = false;
+while (!done) {
+int tag = input.readTag();
+switch (tag) {
+case 0:
+done = true;
+break;
+default: {
+if (!parseUnknownField(
+input, unknownFields, extensionRegistry, tag)) {
+done = true;
+}
+break;
+}
+case 10: {
+io.kubernetes.client.proto.Meta.GroupVersionKind.Builder subBuilder = null;
+if (((bitField0_ & 0x00000001) == 0x00000001)) {
+subBuilder = kind_.toBuilder();
+}
+kind_ = input.readMessage(io.kubernetes.client.proto.Meta.GroupVersionKind.PARSER, extensionRegistry);
+if (subBuilder != null) {
+subBuilder.mergeFrom(kind_);
+kind_ = subBuilder.buildPartial();
+}
+bitField0_ |= 0x00000001;
+break;
+}
+case 18: {
+io.kubernetes.client.proto.Runtime.RawExtension.Builder subBuilder = null;
+if (((bitField0_ & 0x00000002) == 0x00000002)) {
+subBuilder = object_.toBuilder();
+}
+object_ = input.readMessage(io.kubernetes.client.proto.Runtime.RawExtension.PARSER, extensionRegistry);
+if (subBuilder != null) {
+subBuilder.mergeFrom(object_);
+object_ = subBuilder.buildPartial();
+}
+bitField0_ |= 0x00000002;
+break;
+}
+case 26: {
+io.kubernetes.client.proto.Runtime.RawExtension.Builder subBuilder = null;
+if (((bitField0_ & 0x00000004) == 0x00000004)) {
+subBuilder = oldObject_.toBuilder();
+}
+oldObject_ = input.readMessage(io.kubernetes.client.proto.Runtime.RawExtension.PARSER, extensionRegistry);
+if (subBuilder != null) {
+subBuilder.mergeFrom(oldObject_);
+oldObject_ = subBuilder.buildPartial();
+}
+bitField0_ |= 0x00000004;
+break;
+}
+case 34: {
+com.google.protobuf.ByteString bs = input.readBytes();
+bitField0_ |= 0x00000008;
+operation_ = bs;
+break;
+}
+case 42: {
+com.google.protobuf.ByteString bs = input.readBytes();
+bitField0_ |= 0x00000010;
+name_ = bs;
+break;
+}
+case 50: {
+com.google.protobuf.ByteString bs = input.readBytes();
+bitField0_ |= 0x00000020;
+namespace_ = bs;
+break;
+}
+case 58: {
+io.kubernetes.client.proto.Meta.GroupVersionResource.Builder subBuilder = null;
+if (((bitField0_ & 0x00000040) == 0x00000040)) {
+subBuilder = resource_.toBuilder();
+}
+resource_ = input.readMessage(io.kubernetes.client.proto.Meta.GroupVersionResource.PARSER, extensionRegistry);
+if (subBuilder != null) {
+subBuilder.mergeFrom(resource_);
+resource_ = subBuilder.buildPartial();
+}
+bitField0_ |= 0x00000040;
+break;
+}
+case 66: {
+com.google.protobuf.ByteString bs = input.readBytes();
+bitField0_ |= 0x00000080;
+subResource_ = bs;
+break;
+}
+case 74: {
+io.kubernetes.client.proto.V1Authentication.UserInfo.Builder subBuilder = null;
+if (((bitField0_ & 0x00000100) == 0x00000100)) {
+subBuilder = userInfo_.toBuilder();
+}
+userInfo_ = input.readMessage(io.kubernetes.client.proto.V1Authentication.UserInfo.PARSER, extensionRegistry);
+if (subBuilder != null) {
+subBuilder.mergeFrom(userInfo_);
+userInfo_ = subBuilder.buildPartial();
+}
+bitField0_ |= 0x00000100;
+break;
+}
+}
+}
+} catch (com.google.protobuf.InvalidProtocolBufferException e) {
+throw e.setUnfinishedMessage(this);
+} catch (java.io.IOException e) {
+throw new com.google.protobuf.InvalidProtocolBufferException(
+e).setUnfinishedMessage(this);
+} finally {
+this.unknownFields = unknownFields.build();
+makeExtensionsImmutable();
+}
+}
+public static final com.google.protobuf.Descriptors.Descriptor
+getDescriptor() {
+return io.kubernetes.client.proto.V1alpha1Admission.internal_static_k8s_io_api_admission_v1alpha1_AdmissionReviewSpec_descriptor;
+}
+protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+internalGetFieldAccessorTable() {
+return io.kubernetes.client.proto.V1alpha1Admission.internal_static_k8s_io_api_admission_v1alpha1_AdmissionReviewSpec_fieldAccessorTable
+.ensureFieldAccessorsInitialized(
+io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewSpec.class, io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewSpec.Builder.class);
+}
+private int bitField0_;
+public static final int KIND_FIELD_NUMBER = 1;
+private io.kubernetes.client.proto.Meta.GroupVersionKind kind_;
+public boolean hasKind() {
+return ((bitField0_ & 0x00000001) == 0x00000001);
+}
+public io.kubernetes.client.proto.Meta.GroupVersionKind getKind() {
+return kind_ == null ? io.kubernetes.client.proto.Meta.GroupVersionKind.getDefaultInstance() : kind_;
+}
+public io.kubernetes.client.proto.Meta.GroupVersionKindOrBuilder getKindOrBuilder() {
+return kind_ == null ? io.kubernetes.client.proto.Meta.GroupVersionKind.getDefaultInstance() : kind_;
+}
+public static final int OBJECT_FIELD_NUMBER = 2;
+private io.kubernetes.client.proto.Runtime.RawExtension object_;
+public boolean hasObject() {
+return ((bitField0_ & 0x00000002) == 0x00000002);
+}
+public io.kubernetes.client.proto.Runtime.RawExtension getObject() {
+return object_ == null ? io.kubernetes.client.proto.Runtime.RawExtension.getDefaultInstance() : object_;
+}
+public io.kubernetes.client.proto.Runtime.RawExtensionOrBuilder getObjectOrBuilder() {
+return object_ == null ? io.kubernetes.client.proto.Runtime.RawExtension.getDefaultInstance() : object_;
+}
+public static final int OLDOBJECT_FIELD_NUMBER = 3;
+private io.kubernetes.client.proto.Runtime.RawExtension oldObject_;
+public boolean hasOldObject() {
+return ((bitField0_ & 0x00000004) == 0x00000004);
+}
+public io.kubernetes.client.proto.Runtime.RawExtension getOldObject() {
+return oldObject_ == null ? io.kubernetes.client.proto.Runtime.RawExtension.getDefaultInstance() : oldObject_;
+}
+public io.kubernetes.client.proto.Runtime.RawExtensionOrBuilder getOldObjectOrBuilder() {
+return oldObject_ == null ? io.kubernetes.client.proto.Runtime.RawExtension.getDefaultInstance() : oldObject_;
+}
+public static final int OPERATION_FIELD_NUMBER = 4;
+private volatile java.lang.Object operation_;
+public boolean hasOperation() {
+return ((bitField0_ & 0x00000008) == 0x00000008);
+}
+public java.lang.String getOperation() {
+java.lang.Object ref = operation_;
+if (ref instanceof java.lang.String) {
+return (java.lang.String) ref;
+} else {
+com.google.protobuf.ByteString bs =
+(com.google.protobuf.ByteString) ref;
+java.lang.String s = bs.toStringUtf8();
+if (bs.isValidUtf8()) {
+operation_ = s;
+}
+return s;
+}
+}
+public com.google.protobuf.ByteString
+getOperationBytes() {
+java.lang.Object ref = operation_;
+if (ref instanceof java.lang.String) {
+com.google.protobuf.ByteString b =
+com.google.protobuf.ByteString.copyFromUtf8(
+(java.lang.String) ref);
+operation_ = b;
+return b;
+} else {
+return (com.google.protobuf.ByteString) ref;
+}
+}
+public static final int NAME_FIELD_NUMBER = 5;
+private volatile java.lang.Object name_;
+public boolean hasName() {
+return ((bitField0_ & 0x00000010) == 0x00000010);
+}
+public java.lang.String getName() {
+java.lang.Object ref = name_;
+if (ref instanceof java.lang.String) {
+return (java.lang.String) ref;
+} else {
+com.google.protobuf.ByteString bs =
+(com.google.protobuf.ByteString) ref;
+java.lang.String s = bs.toStringUtf8();
+if (bs.isValidUtf8()) {
+name_ = s;
+}
+return s;
+}
+}
+public com.google.protobuf.ByteString
+getNameBytes() {
+java.lang.Object ref = name_;
+if (ref instanceof java.lang.String) {
+com.google.protobuf.ByteString b =
+com.google.protobuf.ByteString.copyFromUtf8(
+(java.lang.String) ref);
+name_ = b;
+return b;
+} else {
+return (com.google.protobuf.ByteString) ref;
+}
+}
+public static final int NAMESPACE_FIELD_NUMBER = 6;
+private volatile java.lang.Object namespace_;
+public boolean hasNamespace() {
+return ((bitField0_ & 0x00000020) == 0x00000020);
+}
+public java.lang.String getNamespace() {
+java.lang.Object ref = namespace_;
+if (ref instanceof java.lang.String) {
+return (java.lang.String) ref;
+} else {
+com.google.protobuf.ByteString bs =
+(com.google.protobuf.ByteString) ref;
+java.lang.String s = bs.toStringUtf8();
+if (bs.isValidUtf8()) {
+namespace_ = s;
+}
+return s;
+}
+}
+public com.google.protobuf.ByteString
+getNamespaceBytes() {
+java.lang.Object ref = namespace_;
+if (ref instanceof java.lang.String) {
+com.google.protobuf.ByteString b =
+com.google.protobuf.ByteString.copyFromUtf8(
+(java.lang.String) ref);
+namespace_ = b;
+return b;
+} else {
+return (com.google.protobuf.ByteString) ref;
+}
+}
+public static final int RESOURCE_FIELD_NUMBER = 7;
+private io.kubernetes.client.proto.Meta.GroupVersionResource resource_;
+public boolean hasResource() {
+return ((bitField0_ & 0x00000040) == 0x00000040);
+}
+public io.kubernetes.client.proto.Meta.GroupVersionResource getResource() {
+return resource_ == null ? io.kubernetes.client.proto.Meta.GroupVersionResource.getDefaultInstance() : resource_;
+}
+public io.kubernetes.client.proto.Meta.GroupVersionResourceOrBuilder getResourceOrBuilder() {
+return resource_ == null ? io.kubernetes.client.proto.Meta.GroupVersionResource.getDefaultInstance() : resource_;
+}
+public static final int SUBRESOURCE_FIELD_NUMBER = 8;
+private volatile java.lang.Object subResource_;
+public boolean hasSubResource() {
+return ((bitField0_ & 0x00000080) == 0x00000080);
+}
+public java.lang.String getSubResource() {
+java.lang.Object ref = subResource_;
+if (ref instanceof java.lang.String) {
+return (java.lang.String) ref;
+} else {
+com.google.protobuf.ByteString bs =
+(com.google.protobuf.ByteString) ref;
+java.lang.String s = bs.toStringUtf8();
+if (bs.isValidUtf8()) {
+subResource_ = s;
+}
+return s;
+}
+}
+public com.google.protobuf.ByteString
+getSubResourceBytes() {
+java.lang.Object ref = subResource_;
+if (ref instanceof java.lang.String) {
+com.google.protobuf.ByteString b =
+com.google.protobuf.ByteString.copyFromUtf8(
+(java.lang.String) ref);
+subResource_ = b;
+return b;
+} else {
+return (com.google.protobuf.ByteString) ref;
+}
+}
+public static final int USERINFO_FIELD_NUMBER = 9;
+private io.kubernetes.client.proto.V1Authentication.UserInfo userInfo_;
+public boolean hasUserInfo() {
+return ((bitField0_ & 0x00000100) == 0x00000100);
+}
+public io.kubernetes.client.proto.V1Authentication.UserInfo getUserInfo() {
+return userInfo_ == null ? io.kubernetes.client.proto.V1Authentication.UserInfo.getDefaultInstance() : userInfo_;
+}
+public io.kubernetes.client.proto.V1Authentication.UserInfoOrBuilder getUserInfoOrBuilder() {
+return userInfo_ == null ? io.kubernetes.client.proto.V1Authentication.UserInfo.getDefaultInstance() : userInfo_;
+}
+private byte memoizedIsInitialized = -1;
+public final boolean isInitialized() {
+byte isInitialized = memoizedIsInitialized;
+if (isInitialized == 1) return true;
+if (isInitialized == 0) return false;
+memoizedIsInitialized = 1;
+return true;
+}
+public void writeTo(com.google.protobuf.CodedOutputStream output)
+throws java.io.IOException {
+if (((bitField0_ & 0x00000001) == 0x00000001)) {
+output.writeMessage(1, getKind());
+}
+if (((bitField0_ & 0x00000002) == 0x00000002)) {
+output.writeMessage(2, getObject());
+}
+if (((bitField0_ & 0x00000004) == 0x00000004)) {
+output.writeMessage(3, getOldObject());
+}
+if (((bitField0_ & 0x00000008) == 0x00000008)) {
+com.google.protobuf.GeneratedMessageV3.writeString(output, 4, operation_);
+}
+if (((bitField0_ & 0x00000010) == 0x00000010)) {
+com.google.protobuf.GeneratedMessageV3.writeString(output, 5, name_);
+}
+if (((bitField0_ & 0x00000020) == 0x00000020)) {
+com.google.protobuf.GeneratedMessageV3.writeString(output, 6, namespace_);
+}
+if (((bitField0_ & 0x00000040) == 0x00000040)) {
+output.writeMessage(7, getResource());
+}
+if (((bitField0_ & 0x00000080) == 0x00000080)) {
+com.google.protobuf.GeneratedMessageV3.writeString(output, 8, subResource_);
+}
+if (((bitField0_ & 0x00000100) == 0x00000100)) {
+output.writeMessage(9, getUserInfo());
+}
+unknownFields.writeTo(output);
+}
+public int getSerializedSize() {
+int size = memoizedSize;
+if (size != -1) return size;
+size = 0;
+if (((bitField0_ & 0x00000001) == 0x00000001)) {
+size += com.google.protobuf.CodedOutputStream
+.computeMessageSize(1, getKind());
+}
+if (((bitField0_ & 0x00000002) == 0x00000002)) {
+size += com.google.protobuf.CodedOutputStream
+.computeMessageSize(2, getObject());
+}
+if (((bitField0_ & 0x00000004) == 0x00000004)) {
+size += com.google.protobuf.CodedOutputStream
+.computeMessageSize(3, getOldObject());
+}
+if (((bitField0_ & 0x00000008) == 0x00000008)) {
+size += com.google.protobuf.GeneratedMessageV3.computeStringSize(4, operation_);
+}
+if (((bitField0_ & 0x00000010) == 0x00000010)) {
+size += com.google.protobuf.GeneratedMessageV3.computeStringSize(5, name_);
+}
+if (((bitField0_ & 0x00000020) == 0x00000020)) {
+size += com.google.protobuf.GeneratedMessageV3.computeStringSize(6, namespace_);
+}
+if (((bitField0_ & 0x00000040) == 0x00000040)) {
+size += com.google.protobuf.CodedOutputStream
+.computeMessageSize(7, getResource());
+}
+if (((bitField0_ & 0x00000080) == 0x00000080)) {
+size += com.google.protobuf.GeneratedMessageV3.computeStringSize(8, subResource_);
+}
+if (((bitField0_ & 0x00000100) == 0x00000100)) {
+size += com.google.protobuf.CodedOutputStream
+.computeMessageSize(9, getUserInfo());
+}
+size += unknownFields.getSerializedSize();
+memoizedSize = size;
+return size;
+}
+@java.lang.Override
+public boolean equals(final java.lang.Object obj) {
+if (obj == this) {
+return true;
+}
+if (!(obj instanceof io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewSpec)) {
+return super.equals(obj);
+}
+io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewSpec other = (io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewSpec) obj;
+boolean result = true;
+result = result && (hasKind() == other.hasKind());
+if (hasKind()) {
+result = result && getKind()
+.equals(other.getKind());
+}
+result = result && (hasObject() == other.hasObject());
+if (hasObject()) {
+result = result && getObject()
+.equals(other.getObject());
+}
+result = result && (hasOldObject() == other.hasOldObject());
+if (hasOldObject()) {
+result = result && getOldObject()
+.equals(other.getOldObject());
+}
+result = result && (hasOperation() == other.hasOperation());
+if (hasOperation()) {
+result = result && getOperation()
+.equals(other.getOperation());
+}
+result = result && (hasName() == other.hasName());
+if (hasName()) {
+result = result && getName()
+.equals(other.getName());
+}
+result = result && (hasNamespace() == other.hasNamespace());
+if (hasNamespace()) {
+result = result && getNamespace()
+.equals(other.getNamespace());
+}
+result = result && (hasResource() == other.hasResource());
+if (hasResource()) {
+result = result && getResource()
+.equals(other.getResource());
+}
+result = result && (hasSubResource() == other.hasSubResource());
+if (hasSubResource()) {
+result = result && getSubResource()
+.equals(other.getSubResource());
+}
+result = result && (hasUserInfo() == other.hasUserInfo());
+if (hasUserInfo()) {
+result = result && getUserInfo()
+.equals(other.getUserInfo());
+}
+result = result && unknownFields.equals(other.unknownFields);
+return result;
+}
+@java.lang.Override
+public int hashCode() {
+if (memoizedHashCode != 0) {
+return memoizedHashCode;
+}
+int hash = 41;
+hash = (19 * hash) + getDescriptor().hashCode();
+if (hasKind()) {
+hash = (37 * hash) + KIND_FIELD_NUMBER;
+hash = (53 * hash) + getKind().hashCode();
+}
+if (hasObject()) {
+hash = (37 * hash) + OBJECT_FIELD_NUMBER;
+hash = (53 * hash) + getObject().hashCode();
+}
+if (hasOldObject()) {
+hash = (37 * hash) + OLDOBJECT_FIELD_NUMBER;
+hash = (53 * hash) + getOldObject().hashCode();
+}
+if (hasOperation()) {
+hash = (37 * hash) + OPERATION_FIELD_NUMBER;
+hash = (53 * hash) + getOperation().hashCode();
+}
+if (hasName()) {
+hash = (37 * hash) + NAME_FIELD_NUMBER;
+hash = (53 * hash) + getName().hashCode();
+}
+if (hasNamespace()) {
+hash = (37 * hash) + NAMESPACE_FIELD_NUMBER;
+hash = (53 * hash) + getNamespace().hashCode();
+}
+if (hasResource()) {
+hash = (37 * hash) + RESOURCE_FIELD_NUMBER;
+hash = (53 * hash) + getResource().hashCode();
+}
+if (hasSubResource()) {
+hash = (37 * hash) + SUBRESOURCE_FIELD_NUMBER;
+hash = (53 * hash) + getSubResource().hashCode();
+}
+if (hasUserInfo()) {
+hash = (37 * hash) + USERINFO_FIELD_NUMBER;
+hash = (53 * hash) + getUserInfo().hashCode();
+}
+hash = (29 * hash) + unknownFields.hashCode();
+memoizedHashCode = hash;
+return hash;
+}
+public static io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewSpec parseFrom(
+java.nio.ByteBuffer data)
+throws com.google.protobuf.InvalidProtocolBufferException {
+return PARSER.parseFrom(data);
+}
+public static io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewSpec parseFrom(
+java.nio.ByteBuffer data,
+com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+throws com.google.protobuf.InvalidProtocolBufferException {
+return PARSER.parseFrom(data, extensionRegistry);
+}
+public static io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewSpec parseFrom(
+com.google.protobuf.ByteString data)
+throws com.google.protobuf.InvalidProtocolBufferException {
+return PARSER.parseFrom(data);
+}
+public static io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewSpec parseFrom(
+com.google.protobuf.ByteString data,
+com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+throws com.google.protobuf.InvalidProtocolBufferException {
+return PARSER.parseFrom(data, extensionRegistry);
+}
+public static io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewSpec parseFrom(byte[] data)
+throws com.google.protobuf.InvalidProtocolBufferException {
+return PARSER.parseFrom(data);
+}
+public static io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewSpec parseFrom(
+byte[] data,
+com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+throws com.google.protobuf.InvalidProtocolBufferException {
+return PARSER.parseFrom(data, extensionRegistry);
+}
+public static io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewSpec parseFrom(java.io.InputStream input)
+throws java.io.IOException {
+return com.google.protobuf.GeneratedMessageV3
+.parseWithIOException(PARSER, input);
+}
+public static io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewSpec parseFrom(
+java.io.InputStream input,
+com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+throws java.io.IOException {
+return com.google.protobuf.GeneratedMessageV3
+.parseWithIOException(PARSER, input, extensionRegistry);
+}
+public static io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewSpec parseDelimitedFrom(java.io.InputStream input)
+throws java.io.IOException {
+return com.google.protobuf.GeneratedMessageV3
+.parseDelimitedWithIOException(PARSER, input);
+}
+public static io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewSpec parseDelimitedFrom(
+java.io.InputStream input,
+com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+throws java.io.IOException {
+return com.google.protobuf.GeneratedMessageV3
+.parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+}
+public static io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewSpec parseFrom(
+com.google.protobuf.CodedInputStream input)
+throws java.io.IOException {
+return com.google.protobuf.GeneratedMessageV3
+.parseWithIOException(PARSER, input);
+}
+public static io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewSpec parseFrom(
+com.google.protobuf.CodedInputStream input,
+com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+throws java.io.IOException {
+return com.google.protobuf.GeneratedMessageV3
+.parseWithIOException(PARSER, input, extensionRegistry);
+}
+public Builder newBuilderForType() { return newBuilder(); }
+public static Builder newBuilder() {
+return DEFAULT_INSTANCE.toBuilder();
+}
+public static Builder newBuilder(io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewSpec prototype) {
+return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+}
+public Builder toBuilder() {
+return this == DEFAULT_INSTANCE
+? new Builder() : new Builder().mergeFrom(this);
+}
+@java.lang.Override
+protected Builder newBuilderForType(
+com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+Builder builder = new Builder(parent);
+return builder;
+}
+public static final class Builder extends
+com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewSpecOrBuilder {
+public static final com.google.protobuf.Descriptors.Descriptor
+getDescriptor() {
+return io.kubernetes.client.proto.V1alpha1Admission.internal_static_k8s_io_api_admission_v1alpha1_AdmissionReviewSpec_descriptor;
+}
+protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+internalGetFieldAccessorTable() {
+return io.kubernetes.client.proto.V1alpha1Admission.internal_static_k8s_io_api_admission_v1alpha1_AdmissionReviewSpec_fieldAccessorTable
+.ensureFieldAccessorsInitialized(
+io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewSpec.class, io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewSpec.Builder.class);
+}
+private Builder() {
+maybeForceBuilderInitialization();
+}
+private Builder(
+com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+super(parent);
+maybeForceBuilderInitialization();
+}
+private void maybeForceBuilderInitialization() {
+if (com.google.protobuf.GeneratedMessageV3
+.alwaysUseFieldBuilders) {
+getKindFieldBuilder();
+getObjectFieldBuilder();
+getOldObjectFieldBuilder();
+getResourceFieldBuilder();
+getUserInfoFieldBuilder();
+}
+}
+public Builder clear() {
+super.clear();
+if (kindBuilder_ == null) {
+kind_ = null;
+} else {
+kindBuilder_.clear();
+}
+bitField0_ = (bitField0_ & ~0x00000001);
+if (objectBuilder_ == null) {
+object_ = null;
+} else {
+objectBuilder_.clear();
+}
+bitField0_ = (bitField0_ & ~0x00000002);
+if (oldObjectBuilder_ == null) {
+oldObject_ = null;
+} else {
+oldObjectBuilder_.clear();
+}
+bitField0_ = (bitField0_ & ~0x00000004);
+operation_ = "";
+bitField0_ = (bitField0_ & ~0x00000008);
+name_ = "";
+bitField0_ = (bitField0_ & ~0x00000010);
+namespace_ = "";
+bitField0_ = (bitField0_ & ~0x00000020);
+if (resourceBuilder_ == null) {
+resource_ = null;
+} else {
+resourceBuilder_.clear();
+}
+bitField0_ = (bitField0_ & ~0x00000040);
+subResource_ = "";
+bitField0_ = (bitField0_ & ~0x00000080);
+if (userInfoBuilder_ == null) {
+userInfo_ = null;
+} else {
+userInfoBuilder_.clear();
+}
+bitField0_ = (bitField0_ & ~0x00000100);
+return this;
+}
+public com.google.protobuf.Descriptors.Descriptor
+getDescriptorForType() {
+return io.kubernetes.client.proto.V1alpha1Admission.internal_static_k8s_io_api_admission_v1alpha1_AdmissionReviewSpec_descriptor;
+}
+public io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewSpec getDefaultInstanceForType() {
+return io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewSpec.getDefaultInstance();
+}
+public io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewSpec build() {
+io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewSpec result = buildPartial();
+if (!result.isInitialized()) {
+throw newUninitializedMessageException(result);
+}
+return result;
+}
+public io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewSpec buildPartial() {
+io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewSpec result = new io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewSpec(this);
+int from_bitField0_ = bitField0_;
+int to_bitField0_ = 0;
+if (((from_bitField0_ & 0x00000001) == 0x00000001)) {
+to_bitField0_ |= 0x00000001;
+}
+if (kindBuilder_ == null) {
+result.kind_ = kind_;
+} else {
+result.kind_ = kindBuilder_.build();
+}
+if (((from_bitField0_ & 0x00000002) == 0x00000002)) {
+to_bitField0_ |= 0x00000002;
+}
+if (objectBuilder_ == null) {
+result.object_ = object_;
+} else {
+result.object_ = objectBuilder_.build();
+}
+if (((from_bitField0_ & 0x00000004) == 0x00000004)) {
+to_bitField0_ |= 0x00000004;
+}
+if (oldObjectBuilder_ == null) {
+result.oldObject_ = oldObject_;
+} else {
+result.oldObject_ = oldObjectBuilder_.build();
+}
+if (((from_bitField0_ & 0x00000008) == 0x00000008)) {
+to_bitField0_ |= 0x00000008;
+}
+result.operation_ = operation_;
+if (((from_bitField0_ & 0x00000010) == 0x00000010)) {
+to_bitField0_ |= 0x00000010;
+}
+result.name_ = name_;
+if (((from_bitField0_ & 0x00000020) == 0x00000020)) {
+to_bitField0_ |= 0x00000020;
+}
+result.namespace_ = namespace_;
+if (((from_bitField0_ & 0x00000040) == 0x00000040)) {
+to_bitField0_ |= 0x00000040;
+}
+if (resourceBuilder_ == null) {
+result.resource_ = resource_;
+} else {
+result.resource_ = resourceBuilder_.build();
+}
+if (((from_bitField0_ & 0x00000080) == 0x00000080)) {
+to_bitField0_ |= 0x00000080;
+}
+result.subResource_ = subResource_;
+if (((from_bitField0_ & 0x00000100) == 0x00000100)) {
+to_bitField0_ |= 0x00000100;
+}
+if (userInfoBuilder_ == null) {
+result.userInfo_ = userInfo_;
+} else {
+result.userInfo_ = userInfoBuilder_.build();
+}
+result.bitField0_ = to_bitField0_;
+onBuilt();
+return result;
+}
+public Builder clone() {
+return (Builder) super.clone();
+}
+public Builder setField(
+com.google.protobuf.Descriptors.FieldDescriptor field,
+java.lang.Object value) {
+return (Builder) super.setField(field, value);
+}
+public Builder clearField(
+com.google.protobuf.Descriptors.FieldDescriptor field) {
+return (Builder) super.clearField(field);
+}
+public Builder clearOneof(
+com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+return (Builder) super.clearOneof(oneof);
+}
+public Builder setRepeatedField(
+com.google.protobuf.Descriptors.FieldDescriptor field,
+int index, java.lang.Object value) {
+return (Builder) super.setRepeatedField(field, index, value);
+}
+public Builder addRepeatedField(
+com.google.protobuf.Descriptors.FieldDescriptor field,
+java.lang.Object value) {
+return (Builder) super.addRepeatedField(field, value);
+}
+public Builder mergeFrom(com.google.protobuf.Message other) {
+if (other instanceof io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewSpec) {
+return mergeFrom((io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewSpec)other);
+} else {
+super.mergeFrom(other);
+return this;
+}
+}
+public Builder mergeFrom(io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewSpec other) {
+if (other == io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewSpec.getDefaultInstance()) return this;
+if (other.hasKind()) {
+mergeKind(other.getKind());
+}
+if (other.hasObject()) {
+mergeObject(other.getObject());
+}
+if (other.hasOldObject()) {
+mergeOldObject(other.getOldObject());
+}
+if (other.hasOperation()) {
+bitField0_ |= 0x00000008;
+operation_ = other.operation_;
+onChanged();
+}
+if (other.hasName()) {
+bitField0_ |= 0x00000010;
+name_ = other.name_;
+onChanged();
+}
+if (other.hasNamespace()) {
+bitField0_ |= 0x00000020;
+namespace_ = other.namespace_;
+onChanged();
+}
+if (other.hasResource()) {
+mergeResource(other.getResource());
+}
+if (other.hasSubResource()) {
+bitField0_ |= 0x00000080;
+subResource_ = other.subResource_;
+onChanged();
+}
+if (other.hasUserInfo()) {
+mergeUserInfo(other.getUserInfo());
+}
+this.mergeUnknownFields(other.unknownFields);
+onChanged();
+return this;
+}
+public final boolean isInitialized() {
+return true;
+}
+public Builder mergeFrom(
+com.google.protobuf.CodedInputStream input,
+com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+throws java.io.IOException {
+io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewSpec parsedMessage = null;
+try {
+parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
+} catch (com.google.protobuf.InvalidProtocolBufferException e) {
+parsedMessage = (io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewSpec) e.getUnfinishedMessage();
+throw e.unwrapIOException();
+} finally {
+if (parsedMessage != null) {
+mergeFrom(parsedMessage);
+}
+}
+return this;
+}
+private int bitField0_;
+private io.kubernetes.client.proto.Meta.GroupVersionKind kind_ = null;
+private com.google.protobuf.SingleFieldBuilderV3<
+io.kubernetes.client.proto.Meta.GroupVersionKind, io.kubernetes.client.proto.Meta.GroupVersionKind.Builder, io.kubernetes.client.proto.Meta.GroupVersionKindOrBuilder> kindBuilder_;
+public boolean hasKind() {
+return ((bitField0_ & 0x00000001) == 0x00000001);
+}
+public io.kubernetes.client.proto.Meta.GroupVersionKind getKind() {
+if (kindBuilder_ == null) {
+return kind_ == null ? io.kubernetes.client.proto.Meta.GroupVersionKind.getDefaultInstance() : kind_;
+} else {
+return kindBuilder_.getMessage();
+}
+}
+public Builder setKind(io.kubernetes.client.proto.Meta.GroupVersionKind value) {
+if (kindBuilder_ == null) {
+if (value == null) {
+throw new NullPointerException();
+}
+kind_ = value;
+onChanged();
+} else {
+kindBuilder_.setMessage(value);
+}
+bitField0_ |= 0x00000001;
+return this;
+}
+public Builder setKind(
+io.kubernetes.client.proto.Meta.GroupVersionKind.Builder builderForValue) {
+if (kindBuilder_ == null) {
+kind_ = builderForValue.build();
+onChanged();
+} else {
+kindBuilder_.setMessage(builderForValue.build());
+}
+bitField0_ |= 0x00000001;
+return this;
+}
+public Builder mergeKind(io.kubernetes.client.proto.Meta.GroupVersionKind value) {
+if (kindBuilder_ == null) {
+if (((bitField0_ & 0x00000001) == 0x00000001) &&
+kind_ != null &&
+kind_ != io.kubernetes.client.proto.Meta.GroupVersionKind.getDefaultInstance()) {
+kind_ =
+io.kubernetes.client.proto.Meta.GroupVersionKind.newBuilder(kind_).mergeFrom(value).buildPartial();
+} else {
+kind_ = value;
+}
+onChanged();
+} else {
+kindBuilder_.mergeFrom(value);
+}
+bitField0_ |= 0x00000001;
+return this;
+}
+public Builder clearKind() {
+if (kindBuilder_ == null) {
+kind_ = null;
+onChanged();
+} else {
+kindBuilder_.clear();
+}
+bitField0_ = (bitField0_ & ~0x00000001);
+return this;
+}
+public io.kubernetes.client.proto.Meta.GroupVersionKind.Builder getKindBuilder() {
+bitField0_ |= 0x00000001;
+onChanged();
+return getKindFieldBuilder().getBuilder();
+}
+public io.kubernetes.client.proto.Meta.GroupVersionKindOrBuilder getKindOrBuilder() {
+if (kindBuilder_ != null) {
+return kindBuilder_.getMessageOrBuilder();
+} else {
+return kind_ == null ?
+io.kubernetes.client.proto.Meta.GroupVersionKind.getDefaultInstance() : kind_;
+}
+}
+private com.google.protobuf.SingleFieldBuilderV3<
+io.kubernetes.client.proto.Meta.GroupVersionKind, io.kubernetes.client.proto.Meta.GroupVersionKind.Builder, io.kubernetes.client.proto.Meta.GroupVersionKindOrBuilder>
+getKindFieldBuilder() {
+if (kindBuilder_ == null) {
+kindBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
+io.kubernetes.client.proto.Meta.GroupVersionKind, io.kubernetes.client.proto.Meta.GroupVersionKind.Builder, io.kubernetes.client.proto.Meta.GroupVersionKindOrBuilder>(
+getKind(),
+getParentForChildren(),
+isClean());
+kind_ = null;
+}
+return kindBuilder_;
+}
+private io.kubernetes.client.proto.Runtime.RawExtension object_ = null;
+private com.google.protobuf.SingleFieldBuilderV3<
+io.kubernetes.client.proto.Runtime.RawExtension, io.kubernetes.client.proto.Runtime.RawExtension.Builder, io.kubernetes.client.proto.Runtime.RawExtensionOrBuilder> objectBuilder_;
+public boolean hasObject() {
+return ((bitField0_ & 0x00000002) == 0x00000002);
+}
+public io.kubernetes.client.proto.Runtime.RawExtension getObject() {
+if (objectBuilder_ == null) {
+return object_ == null ? io.kubernetes.client.proto.Runtime.RawExtension.getDefaultInstance() : object_;
+} else {
+return objectBuilder_.getMessage();
+}
+}
+public Builder setObject(io.kubernetes.client.proto.Runtime.RawExtension value) {
+if (objectBuilder_ == null) {
+if (value == null) {
+throw new NullPointerException();
+}
+object_ = value;
+onChanged();
+} else {
+objectBuilder_.setMessage(value);
+}
+bitField0_ |= 0x00000002;
+return this;
+}
+public Builder setObject(
+io.kubernetes.client.proto.Runtime.RawExtension.Builder builderForValue) {
+if (objectBuilder_ == null) {
+object_ = builderForValue.build();
+onChanged();
+} else {
+objectBuilder_.setMessage(builderForValue.build());
+}
+bitField0_ |= 0x00000002;
+return this;
+}
+public Builder mergeObject(io.kubernetes.client.proto.Runtime.RawExtension value) {
+if (objectBuilder_ == null) {
+if (((bitField0_ & 0x00000002) == 0x00000002) &&
+object_ != null &&
+object_ != io.kubernetes.client.proto.Runtime.RawExtension.getDefaultInstance()) {
+object_ =
+io.kubernetes.client.proto.Runtime.RawExtension.newBuilder(object_).mergeFrom(value).buildPartial();
+} else {
+object_ = value;
+}
+onChanged();
+} else {
+objectBuilder_.mergeFrom(value);
+}
+bitField0_ |= 0x00000002;
+return this;
+}
+public Builder clearObject() {
+if (objectBuilder_ == null) {
+object_ = null;
+onChanged();
+} else {
+objectBuilder_.clear();
+}
+bitField0_ = (bitField0_ & ~0x00000002);
+return this;
+}
+public io.kubernetes.client.proto.Runtime.RawExtension.Builder getObjectBuilder() {
+bitField0_ |= 0x00000002;
+onChanged();
+return getObjectFieldBuilder().getBuilder();
+}
+public io.kubernetes.client.proto.Runtime.RawExtensionOrBuilder getObjectOrBuilder() {
+if (objectBuilder_ != null) {
+return objectBuilder_.getMessageOrBuilder();
+} else {
+return object_ == null ?
+io.kubernetes.client.proto.Runtime.RawExtension.getDefaultInstance() : object_;
+}
+}
+private com.google.protobuf.SingleFieldBuilderV3<
+io.kubernetes.client.proto.Runtime.RawExtension, io.kubernetes.client.proto.Runtime.RawExtension.Builder, io.kubernetes.client.proto.Runtime.RawExtensionOrBuilder>
+getObjectFieldBuilder() {
+if (objectBuilder_ == null) {
+objectBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
+io.kubernetes.client.proto.Runtime.RawExtension, io.kubernetes.client.proto.Runtime.RawExtension.Builder, io.kubernetes.client.proto.Runtime.RawExtensionOrBuilder>(
+getObject(),
+getParentForChildren(),
+isClean());
+object_ = null;
+}
+return objectBuilder_;
+}
+private io.kubernetes.client.proto.Runtime.RawExtension oldObject_ = null;
+private com.google.protobuf.SingleFieldBuilderV3<
+io.kubernetes.client.proto.Runtime.RawExtension, io.kubernetes.client.proto.Runtime.RawExtension.Builder, io.kubernetes.client.proto.Runtime.RawExtensionOrBuilder> oldObjectBuilder_;
+public boolean hasOldObject() {
+return ((bitField0_ & 0x00000004) == 0x00000004);
+}
+public io.kubernetes.client.proto.Runtime.RawExtension getOldObject() {
+if (oldObjectBuilder_ == null) {
+return oldObject_ == null ? io.kubernetes.client.proto.Runtime.RawExtension.getDefaultInstance() : oldObject_;
+} else {
+return oldObjectBuilder_.getMessage();
+}
+}
+public Builder setOldObject(io.kubernetes.client.proto.Runtime.RawExtension value) {
+if (oldObjectBuilder_ == null) {
+if (value == null) {
+throw new NullPointerException();
+}
+oldObject_ = value;
+onChanged();
+} else {
+oldObjectBuilder_.setMessage(value);
+}
+bitField0_ |= 0x00000004;
+return this;
+}
+public Builder setOldObject(
+io.kubernetes.client.proto.Runtime.RawExtension.Builder builderForValue) {
+if (oldObjectBuilder_ == null) {
+oldObject_ = builderForValue.build();
+onChanged();
+} else {
+oldObjectBuilder_.setMessage(builderForValue.build());
+}
+bitField0_ |= 0x00000004;
+return this;
+}
+public Builder mergeOldObject(io.kubernetes.client.proto.Runtime.RawExtension value) {
+if (oldObjectBuilder_ == null) {
+if (((bitField0_ & 0x00000004) == 0x00000004) &&
+oldObject_ != null &&
+oldObject_ != io.kubernetes.client.proto.Runtime.RawExtension.getDefaultInstance()) {
+oldObject_ =
+io.kubernetes.client.proto.Runtime.RawExtension.newBuilder(oldObject_).mergeFrom(value).buildPartial();
+} else {
+oldObject_ = value;
+}
+onChanged();
+} else {
+oldObjectBuilder_.mergeFrom(value);
+}
+bitField0_ |= 0x00000004;
+return this;
+}
+public Builder clearOldObject() {
+if (oldObjectBuilder_ == null) {
+oldObject_ = null;
+onChanged();
+} else {
+oldObjectBuilder_.clear();
+}
+bitField0_ = (bitField0_ & ~0x00000004);
+return this;
+}
+public io.kubernetes.client.proto.Runtime.RawExtension.Builder getOldObjectBuilder() {
+bitField0_ |= 0x00000004;
+onChanged();
+return getOldObjectFieldBuilder().getBuilder();
+}
+public io.kubernetes.client.proto.Runtime.RawExtensionOrBuilder getOldObjectOrBuilder() {
+if (oldObjectBuilder_ != null) {
+return oldObjectBuilder_.getMessageOrBuilder();
+} else {
+return oldObject_ == null ?
+io.kubernetes.client.proto.Runtime.RawExtension.getDefaultInstance() : oldObject_;
+}
+}
+private com.google.protobuf.SingleFieldBuilderV3<
+io.kubernetes.client.proto.Runtime.RawExtension, io.kubernetes.client.proto.Runtime.RawExtension.Builder, io.kubernetes.client.proto.Runtime.RawExtensionOrBuilder>
+getOldObjectFieldBuilder() {
+if (oldObjectBuilder_ == null) {
+oldObjectBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
+io.kubernetes.client.proto.Runtime.RawExtension, io.kubernetes.client.proto.Runtime.RawExtension.Builder, io.kubernetes.client.proto.Runtime.RawExtensionOrBuilder>(
+getOldObject(),
+getParentForChildren(),
+isClean());
+oldObject_ = null;
+}
+return oldObjectBuilder_;
+}
+private java.lang.Object operation_ = "";
+public boolean hasOperation() {
+return ((bitField0_ & 0x00000008) == 0x00000008);
+}
+public java.lang.String getOperation() {
+java.lang.Object ref = operation_;
+if (!(ref instanceof java.lang.String)) {
+com.google.protobuf.ByteString bs =
+(com.google.protobuf.ByteString) ref;
+java.lang.String s = bs.toStringUtf8();
+if (bs.isValidUtf8()) {
+operation_ = s;
+}
+return s;
+} else {
+return (java.lang.String) ref;
+}
+}
+public com.google.protobuf.ByteString
+getOperationBytes() {
+java.lang.Object ref = operation_;
+if (ref instanceof String) {
+com.google.protobuf.ByteString b =
+com.google.protobuf.ByteString.copyFromUtf8(
+(java.lang.String) ref);
+operation_ = b;
+return b;
+} else {
+return (com.google.protobuf.ByteString) ref;
+}
+}
+public Builder setOperation(
+java.lang.String value) {
+if (value == null) {
+throw new NullPointerException();
+}
+bitField0_ |= 0x00000008;
+operation_ = value;
+onChanged();
+return this;
+}
+public Builder clearOperation() {
+bitField0_ = (bitField0_ & ~0x00000008);
+operation_ = getDefaultInstance().getOperation();
+onChanged();
+return this;
+}
+public Builder setOperationBytes(
+com.google.protobuf.ByteString value) {
+if (value == null) {
+throw new NullPointerException();
+}
+bitField0_ |= 0x00000008;
+operation_ = value;
+onChanged();
+return this;
+}
+private java.lang.Object name_ = "";
+public boolean hasName() {
+return ((bitField0_ & 0x00000010) == 0x00000010);
+}
+public java.lang.String getName() {
+java.lang.Object ref = name_;
+if (!(ref instanceof java.lang.String)) {
+com.google.protobuf.ByteString bs =
+(com.google.protobuf.ByteString) ref;
+java.lang.String s = bs.toStringUtf8();
+if (bs.isValidUtf8()) {
+name_ = s;
+}
+return s;
+} else {
+return (java.lang.String) ref;
+}
+}
+public com.google.protobuf.ByteString
+getNameBytes() {
+java.lang.Object ref = name_;
+if (ref instanceof String) {
+com.google.protobuf.ByteString b =
+com.google.protobuf.ByteString.copyFromUtf8(
+(java.lang.String) ref);
+name_ = b;
+return b;
+} else {
+return (com.google.protobuf.ByteString) ref;
+}
+}
+public Builder setName(
+java.lang.String value) {
+if (value == null) {
+throw new NullPointerException();
+}
+bitField0_ |= 0x00000010;
+name_ = value;
+onChanged();
+return this;
+}
+public Builder clearName() {
+bitField0_ = (bitField0_ & ~0x00000010);
+name_ = getDefaultInstance().getName();
+onChanged();
+return this;
+}
+public Builder setNameBytes(
+com.google.protobuf.ByteString value) {
+if (value == null) {
+throw new NullPointerException();
+}
+bitField0_ |= 0x00000010;
+name_ = value;
+onChanged();
+return this;
+}
+private java.lang.Object namespace_ = "";
+public boolean hasNamespace() {
+return ((bitField0_ & 0x00000020) == 0x00000020);
+}
+public java.lang.String getNamespace() {
+java.lang.Object ref = namespace_;
+if (!(ref instanceof java.lang.String)) {
+com.google.protobuf.ByteString bs =
+(com.google.protobuf.ByteString) ref;
+java.lang.String s = bs.toStringUtf8();
+if (bs.isValidUtf8()) {
+namespace_ = s;
+}
+return s;
+} else {
+return (java.lang.String) ref;
+}
+}
+public com.google.protobuf.ByteString
+getNamespaceBytes() {
+java.lang.Object ref = namespace_;
+if (ref instanceof String) {
+com.google.protobuf.ByteString b =
+com.google.protobuf.ByteString.copyFromUtf8(
+(java.lang.String) ref);
+namespace_ = b;
+return b;
+} else {
+return (com.google.protobuf.ByteString) ref;
+}
+}
+public Builder setNamespace(
+java.lang.String value) {
+if (value == null) {
+throw new NullPointerException();
+}
+bitField0_ |= 0x00000020;
+namespace_ = value;
+onChanged();
+return this;
+}
+public Builder clearNamespace() {
+bitField0_ = (bitField0_ & ~0x00000020);
+namespace_ = getDefaultInstance().getNamespace();
+onChanged();
+return this;
+}
+public Builder setNamespaceBytes(
+com.google.protobuf.ByteString value) {
+if (value == null) {
+throw new NullPointerException();
+}
+bitField0_ |= 0x00000020;
+namespace_ = value;
+onChanged();
+return this;
+}
+private io.kubernetes.client.proto.Meta.GroupVersionResource resource_ = null;
+private com.google.protobuf.SingleFieldBuilderV3<
+io.kubernetes.client.proto.Meta.GroupVersionResource, io.kubernetes.client.proto.Meta.GroupVersionResource.Builder, io.kubernetes.client.proto.Meta.GroupVersionResourceOrBuilder> resourceBuilder_;
+public boolean hasResource() {
+return ((bitField0_ & 0x00000040) == 0x00000040);
+}
+public io.kubernetes.client.proto.Meta.GroupVersionResource getResource() {
+if (resourceBuilder_ == null) {
+return resource_ == null ? io.kubernetes.client.proto.Meta.GroupVersionResource.getDefaultInstance() : resource_;
+} else {
+return resourceBuilder_.getMessage();
+}
+}
+public Builder setResource(io.kubernetes.client.proto.Meta.GroupVersionResource value) {
+if (resourceBuilder_ == null) {
+if (value == null) {
+throw new NullPointerException();
+}
+resource_ = value;
+onChanged();
+} else {
+resourceBuilder_.setMessage(value);
+}
+bitField0_ |= 0x00000040;
+return this;
+}
+public Builder setResource(
+io.kubernetes.client.proto.Meta.GroupVersionResource.Builder builderForValue) {
+if (resourceBuilder_ == null) {
+resource_ = builderForValue.build();
+onChanged();
+} else {
+resourceBuilder_.setMessage(builderForValue.build());
+}
+bitField0_ |= 0x00000040;
+return this;
+}
+public Builder mergeResource(io.kubernetes.client.proto.Meta.GroupVersionResource value) {
+if (resourceBuilder_ == null) {
+if (((bitField0_ & 0x00000040) == 0x00000040) &&
+resource_ != null &&
+resource_ != io.kubernetes.client.proto.Meta.GroupVersionResource.getDefaultInstance()) {
+resource_ =
+io.kubernetes.client.proto.Meta.GroupVersionResource.newBuilder(resource_).mergeFrom(value).buildPartial();
+} else {
+resource_ = value;
+}
+onChanged();
+} else {
+resourceBuilder_.mergeFrom(value);
+}
+bitField0_ |= 0x00000040;
+return this;
+}
+public Builder clearResource() {
+if (resourceBuilder_ == null) {
+resource_ = null;
+onChanged();
+} else {
+resourceBuilder_.clear();
+}
+bitField0_ = (bitField0_ & ~0x00000040);
+return this;
+}
+public io.kubernetes.client.proto.Meta.GroupVersionResource.Builder getResourceBuilder() {
+bitField0_ |= 0x00000040;
+onChanged();
+return getResourceFieldBuilder().getBuilder();
+}
+public io.kubernetes.client.proto.Meta.GroupVersionResourceOrBuilder getResourceOrBuilder() {
+if (resourceBuilder_ != null) {
+return resourceBuilder_.getMessageOrBuilder();
+} else {
+return resource_ == null ?
+io.kubernetes.client.proto.Meta.GroupVersionResource.getDefaultInstance() : resource_;
+}
+}
+private com.google.protobuf.SingleFieldBuilderV3<
+io.kubernetes.client.proto.Meta.GroupVersionResource, io.kubernetes.client.proto.Meta.GroupVersionResource.Builder, io.kubernetes.client.proto.Meta.GroupVersionResourceOrBuilder>
+getResourceFieldBuilder() {
+if (resourceBuilder_ == null) {
+resourceBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
+io.kubernetes.client.proto.Meta.GroupVersionResource, io.kubernetes.client.proto.Meta.GroupVersionResource.Builder, io.kubernetes.client.proto.Meta.GroupVersionResourceOrBuilder>(
+getResource(),
+getParentForChildren(),
+isClean());
+resource_ = null;
+}
+return resourceBuilder_;
+}
+private java.lang.Object subResource_ = "";
+public boolean hasSubResource() {
+return ((bitField0_ & 0x00000080) == 0x00000080);
+}
+public java.lang.String getSubResource() {
+java.lang.Object ref = subResource_;
+if (!(ref instanceof java.lang.String)) {
+com.google.protobuf.ByteString bs =
+(com.google.protobuf.ByteString) ref;
+java.lang.String s = bs.toStringUtf8();
+if (bs.isValidUtf8()) {
+subResource_ = s;
+}
+return s;
+} else {
+return (java.lang.String) ref;
+}
+}
+public com.google.protobuf.ByteString
+getSubResourceBytes() {
+java.lang.Object ref = subResource_;
+if (ref instanceof String) {
+com.google.protobuf.ByteString b =
+com.google.protobuf.ByteString.copyFromUtf8(
+(java.lang.String) ref);
+subResource_ = b;
+return b;
+} else {
+return (com.google.protobuf.ByteString) ref;
+}
+}
+public Builder setSubResource(
+java.lang.String value) {
+if (value == null) {
+throw new NullPointerException();
+}
+bitField0_ |= 0x00000080;
+subResource_ = value;
+onChanged();
+return this;
+}
+public Builder clearSubResource() {
+bitField0_ = (bitField0_ & ~0x00000080);
+subResource_ = getDefaultInstance().getSubResource();
+onChanged();
+return this;
+}
+public Builder setSubResourceBytes(
+com.google.protobuf.ByteString value) {
+if (value == null) {
+throw new NullPointerException();
+}
+bitField0_ |= 0x00000080;
+subResource_ = value;
+onChanged();
+return this;
+}
+private io.kubernetes.client.proto.V1Authentication.UserInfo userInfo_ = null;
+private com.google.protobuf.SingleFieldBuilderV3<
+io.kubernetes.client.proto.V1Authentication.UserInfo, io.kubernetes.client.proto.V1Authentication.UserInfo.Builder, io.kubernetes.client.proto.V1Authentication.UserInfoOrBuilder> userInfoBuilder_;
+public boolean hasUserInfo() {
+return ((bitField0_ & 0x00000100) == 0x00000100);
+}
+public io.kubernetes.client.proto.V1Authentication.UserInfo getUserInfo() {
+if (userInfoBuilder_ == null) {
+return userInfo_ == null ? io.kubernetes.client.proto.V1Authentication.UserInfo.getDefaultInstance() : userInfo_;
+} else {
+return userInfoBuilder_.getMessage();
+}
+}
+public Builder setUserInfo(io.kubernetes.client.proto.V1Authentication.UserInfo value) {
+if (userInfoBuilder_ == null) {
+if (value == null) {
+throw new NullPointerException();
+}
+userInfo_ = value;
+onChanged();
+} else {
+userInfoBuilder_.setMessage(value);
+}
+bitField0_ |= 0x00000100;
+return this;
+}
+public Builder setUserInfo(
+io.kubernetes.client.proto.V1Authentication.UserInfo.Builder builderForValue) {
+if (userInfoBuilder_ == null) {
+userInfo_ = builderForValue.build();
+onChanged();
+} else {
+userInfoBuilder_.setMessage(builderForValue.build());
+}
+bitField0_ |= 0x00000100;
+return this;
+}
+public Builder mergeUserInfo(io.kubernetes.client.proto.V1Authentication.UserInfo value) {
+if (userInfoBuilder_ == null) {
+if (((bitField0_ & 0x00000100) == 0x00000100) &&
+userInfo_ != null &&
+userInfo_ != io.kubernetes.client.proto.V1Authentication.UserInfo.getDefaultInstance()) {
+userInfo_ =
+io.kubernetes.client.proto.V1Authentication.UserInfo.newBuilder(userInfo_).mergeFrom(value).buildPartial();
+} else {
+userInfo_ = value;
+}
+onChanged();
+} else {
+userInfoBuilder_.mergeFrom(value);
+}
+bitField0_ |= 0x00000100;
+return this;
+}
+public Builder clearUserInfo() {
+if (userInfoBuilder_ == null) {
+userInfo_ = null;
+onChanged();
+} else {
+userInfoBuilder_.clear();
+}
+bitField0_ = (bitField0_ & ~0x00000100);
+return this;
+}
+public io.kubernetes.client.proto.V1Authentication.UserInfo.Builder getUserInfoBuilder() {
+bitField0_ |= 0x00000100;
+onChanged();
+return getUserInfoFieldBuilder().getBuilder();
+}
+public io.kubernetes.client.proto.V1Authentication.UserInfoOrBuilder getUserInfoOrBuilder() {
+if (userInfoBuilder_ != null) {
+return userInfoBuilder_.getMessageOrBuilder();
+} else {
+return userInfo_ == null ?
+io.kubernetes.client.proto.V1Authentication.UserInfo.getDefaultInstance() : userInfo_;
+}
+}
+private com.google.protobuf.SingleFieldBuilderV3<
+io.kubernetes.client.proto.V1Authentication.UserInfo, io.kubernetes.client.proto.V1Authentication.UserInfo.Builder, io.kubernetes.client.proto.V1Authentication.UserInfoOrBuilder>
+getUserInfoFieldBuilder() {
+if (userInfoBuilder_ == null) {
+userInfoBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
+io.kubernetes.client.proto.V1Authentication.UserInfo, io.kubernetes.client.proto.V1Authentication.UserInfo.Builder, io.kubernetes.client.proto.V1Authentication.UserInfoOrBuilder>(
+getUserInfo(),
+getParentForChildren(),
+isClean());
+userInfo_ = null;
+}
+return userInfoBuilder_;
+}
+public final Builder setUnknownFields(
+final com.google.protobuf.UnknownFieldSet unknownFields) {
+return super.setUnknownFields(unknownFields);
+}
+public final Builder mergeUnknownFields(
+final com.google.protobuf.UnknownFieldSet unknownFields) {
+return super.mergeUnknownFields(unknownFields);
+}
+}
+private static final io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewSpec DEFAULT_INSTANCE;
+static {
+DEFAULT_INSTANCE = new io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewSpec();
+}
+public static io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewSpec getDefaultInstance() {
+return DEFAULT_INSTANCE;
+}
+@java.lang.Deprecated public static final com.google.protobuf.Parser<AdmissionReviewSpec>
+PARSER = new com.google.protobuf.AbstractParser<AdmissionReviewSpec>() {
+public AdmissionReviewSpec parsePartialFrom(
+com.google.protobuf.CodedInputStream input,
+com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+throws com.google.protobuf.InvalidProtocolBufferException {
+return new AdmissionReviewSpec(input, extensionRegistry);
+}
+};
+public static com.google.protobuf.Parser<AdmissionReviewSpec> parser() {
+return PARSER;
+}
+@java.lang.Override
+public com.google.protobuf.Parser<AdmissionReviewSpec> getParserForType() {
+return PARSER;
+}
+public io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewSpec getDefaultInstanceForType() {
+return DEFAULT_INSTANCE;
+}
+}
+public interface AdmissionReviewStatusOrBuilder extends
+com.google.protobuf.MessageOrBuilder {
+boolean hasAllowed();
+boolean getAllowed();
+boolean hasStatus();
+io.kubernetes.client.proto.Meta.Status getStatus();
+io.kubernetes.client.proto.Meta.StatusOrBuilder getStatusOrBuilder();
+}
+public static final class AdmissionReviewStatus extends
+com.google.protobuf.GeneratedMessageV3 implements
+AdmissionReviewStatusOrBuilder {
+private static final long serialVersionUID = 0L;
+private AdmissionReviewStatus(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+super(builder);
+}
+private AdmissionReviewStatus() {
+allowed_ = false;
+}
+@java.lang.Override
+public final com.google.protobuf.UnknownFieldSet
+getUnknownFields() {
+return this.unknownFields;
+}
+private AdmissionReviewStatus(
+com.google.protobuf.CodedInputStream input,
+com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+throws com.google.protobuf.InvalidProtocolBufferException {
+this();
+int mutable_bitField0_ = 0;
+com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+com.google.protobuf.UnknownFieldSet.newBuilder();
+try {
+boolean done = false;
+while (!done) {
+int tag = input.readTag();
+switch (tag) {
+case 0:
+done = true;
+break;
+default: {
+if (!parseUnknownField(
+input, unknownFields, extensionRegistry, tag)) {
+done = true;
+}
+break;
+}
+case 8: {
+bitField0_ |= 0x00000001;
+allowed_ = input.readBool();
+break;
+}
+case 18: {
+io.kubernetes.client.proto.Meta.Status.Builder subBuilder = null;
+if (((bitField0_ & 0x00000002) == 0x00000002)) {
+subBuilder = status_.toBuilder();
+}
+status_ = input.readMessage(io.kubernetes.client.proto.Meta.Status.PARSER, extensionRegistry);
+if (subBuilder != null) {
+subBuilder.mergeFrom(status_);
+status_ = subBuilder.buildPartial();
+}
+bitField0_ |= 0x00000002;
+break;
+}
+}
+}
+} catch (com.google.protobuf.InvalidProtocolBufferException e) {
+throw e.setUnfinishedMessage(this);
+} catch (java.io.IOException e) {
+throw new com.google.protobuf.InvalidProtocolBufferException(
+e).setUnfinishedMessage(this);
+} finally {
+this.unknownFields = unknownFields.build();
+makeExtensionsImmutable();
+}
+}
+public static final com.google.protobuf.Descriptors.Descriptor
+getDescriptor() {
+return io.kubernetes.client.proto.V1alpha1Admission.internal_static_k8s_io_api_admission_v1alpha1_AdmissionReviewStatus_descriptor;
+}
+protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+internalGetFieldAccessorTable() {
+return io.kubernetes.client.proto.V1alpha1Admission.internal_static_k8s_io_api_admission_v1alpha1_AdmissionReviewStatus_fieldAccessorTable
+.ensureFieldAccessorsInitialized(
+io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewStatus.class, io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewStatus.Builder.class);
+}
+private int bitField0_;
+public static final int ALLOWED_FIELD_NUMBER = 1;
+private boolean allowed_;
+public boolean hasAllowed() {
+return ((bitField0_ & 0x00000001) == 0x00000001);
+}
+public boolean getAllowed() {
+return allowed_;
+}
+public static final int STATUS_FIELD_NUMBER = 2;
+private io.kubernetes.client.proto.Meta.Status status_;
+public boolean hasStatus() {
+return ((bitField0_ & 0x00000002) == 0x00000002);
+}
+public io.kubernetes.client.proto.Meta.Status getStatus() {
+return status_ == null ? io.kubernetes.client.proto.Meta.Status.getDefaultInstance() : status_;
+}
+public io.kubernetes.client.proto.Meta.StatusOrBuilder getStatusOrBuilder() {
+return status_ == null ? io.kubernetes.client.proto.Meta.Status.getDefaultInstance() : status_;
+}
+private byte memoizedIsInitialized = -1;
+public final boolean isInitialized() {
+byte isInitialized = memoizedIsInitialized;
+if (isInitialized == 1) return true;
+if (isInitialized == 0) return false;
+memoizedIsInitialized = 1;
+return true;
+}
+public void writeTo(com.google.protobuf.CodedOutputStream output)
+throws java.io.IOException {
+if (((bitField0_ & 0x00000001) == 0x00000001)) {
+output.writeBool(1, allowed_);
+}
+if (((bitField0_ & 0x00000002) == 0x00000002)) {
+output.writeMessage(2, getStatus());
+}
+unknownFields.writeTo(output);
+}
+public int getSerializedSize() {
+int size = memoizedSize;
+if (size != -1) return size;
+size = 0;
+if (((bitField0_ & 0x00000001) == 0x00000001)) {
+size += com.google.protobuf.CodedOutputStream
+.computeBoolSize(1, allowed_);
+}
+if (((bitField0_ & 0x00000002) == 0x00000002)) {
+size += com.google.protobuf.CodedOutputStream
+.computeMessageSize(2, getStatus());
+}
+size += unknownFields.getSerializedSize();
+memoizedSize = size;
+return size;
+}
+@java.lang.Override
+public boolean equals(final java.lang.Object obj) {
+if (obj == this) {
+return true;
+}
+if (!(obj instanceof io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewStatus)) {
+return super.equals(obj);
+}
+io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewStatus other = (io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewStatus) obj;
+boolean result = true;
+result = result && (hasAllowed() == other.hasAllowed());
+if (hasAllowed()) {
+result = result && (getAllowed()
+== other.getAllowed());
+}
+result = result && (hasStatus() == other.hasStatus());
+if (hasStatus()) {
+result = result && getStatus()
+.equals(other.getStatus());
+}
+result = result && unknownFields.equals(other.unknownFields);
+return result;
+}
+@java.lang.Override
+public int hashCode() {
+if (memoizedHashCode != 0) {
+return memoizedHashCode;
+}
+int hash = 41;
+hash = (19 * hash) + getDescriptor().hashCode();
+if (hasAllowed()) {
+hash = (37 * hash) + ALLOWED_FIELD_NUMBER;
+hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
+getAllowed());
+}
+if (hasStatus()) {
+hash = (37 * hash) + STATUS_FIELD_NUMBER;
+hash = (53 * hash) + getStatus().hashCode();
+}
+hash = (29 * hash) + unknownFields.hashCode();
+memoizedHashCode = hash;
+return hash;
+}
+public static io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewStatus parseFrom(
+java.nio.ByteBuffer data)
+throws com.google.protobuf.InvalidProtocolBufferException {
+return PARSER.parseFrom(data);
+}
+public static io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewStatus parseFrom(
+java.nio.ByteBuffer data,
+com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+throws com.google.protobuf.InvalidProtocolBufferException {
+return PARSER.parseFrom(data, extensionRegistry);
+}
+public static io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewStatus parseFrom(
+com.google.protobuf.ByteString data)
+throws com.google.protobuf.InvalidProtocolBufferException {
+return PARSER.parseFrom(data);
+}
+public static io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewStatus parseFrom(
+com.google.protobuf.ByteString data,
+com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+throws com.google.protobuf.InvalidProtocolBufferException {
+return PARSER.parseFrom(data, extensionRegistry);
+}
+public static io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewStatus parseFrom(byte[] data)
+throws com.google.protobuf.InvalidProtocolBufferException {
+return PARSER.parseFrom(data);
+}
+public static io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewStatus parseFrom(
+byte[] data,
+com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+throws com.google.protobuf.InvalidProtocolBufferException {
+return PARSER.parseFrom(data, extensionRegistry);
+}
+public static io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewStatus parseFrom(java.io.InputStream input)
+throws java.io.IOException {
+return com.google.protobuf.GeneratedMessageV3
+.parseWithIOException(PARSER, input);
+}
+public static io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewStatus parseFrom(
+java.io.InputStream input,
+com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+throws java.io.IOException {
+return com.google.protobuf.GeneratedMessageV3
+.parseWithIOException(PARSER, input, extensionRegistry);
+}
+public static io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewStatus parseDelimitedFrom(java.io.InputStream input)
+throws java.io.IOException {
+return com.google.protobuf.GeneratedMessageV3
+.parseDelimitedWithIOException(PARSER, input);
+}
+public static io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewStatus parseDelimitedFrom(
+java.io.InputStream input,
+com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+throws java.io.IOException {
+return com.google.protobuf.GeneratedMessageV3
+.parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+}
+public static io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewStatus parseFrom(
+com.google.protobuf.CodedInputStream input)
+throws java.io.IOException {
+return com.google.protobuf.GeneratedMessageV3
+.parseWithIOException(PARSER, input);
+}
+public static io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewStatus parseFrom(
+com.google.protobuf.CodedInputStream input,
+com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+throws java.io.IOException {
+return com.google.protobuf.GeneratedMessageV3
+.parseWithIOException(PARSER, input, extensionRegistry);
+}
+public Builder newBuilderForType() { return newBuilder(); }
+public static Builder newBuilder() {
+return DEFAULT_INSTANCE.toBuilder();
+}
+public static Builder newBuilder(io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewStatus prototype) {
+return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+}
+public Builder toBuilder() {
+return this == DEFAULT_INSTANCE
+? new Builder() : new Builder().mergeFrom(this);
+}
+@java.lang.Override
+protected Builder newBuilderForType(
+com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+Builder builder = new Builder(parent);
+return builder;
+}
+public static final class Builder extends
+com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewStatusOrBuilder {
+public static final com.google.protobuf.Descriptors.Descriptor
+getDescriptor() {
+return io.kubernetes.client.proto.V1alpha1Admission.internal_static_k8s_io_api_admission_v1alpha1_AdmissionReviewStatus_descriptor;
+}
+protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+internalGetFieldAccessorTable() {
+return io.kubernetes.client.proto.V1alpha1Admission.internal_static_k8s_io_api_admission_v1alpha1_AdmissionReviewStatus_fieldAccessorTable
+.ensureFieldAccessorsInitialized(
+io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewStatus.class, io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewStatus.Builder.class);
+}
+private Builder() {
+maybeForceBuilderInitialization();
+}
+private Builder(
+com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+super(parent);
+maybeForceBuilderInitialization();
+}
+private void maybeForceBuilderInitialization() {
+if (com.google.protobuf.GeneratedMessageV3
+.alwaysUseFieldBuilders) {
+getStatusFieldBuilder();
+}
+}
+public Builder clear() {
+super.clear();
+allowed_ = false;
+bitField0_ = (bitField0_ & ~0x00000001);
+if (statusBuilder_ == null) {
+status_ = null;
+} else {
+statusBuilder_.clear();
+}
+bitField0_ = (bitField0_ & ~0x00000002);
+return this;
+}
+public com.google.protobuf.Descriptors.Descriptor
+getDescriptorForType() {
+return io.kubernetes.client.proto.V1alpha1Admission.internal_static_k8s_io_api_admission_v1alpha1_AdmissionReviewStatus_descriptor;
+}
+public io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewStatus getDefaultInstanceForType() {
+return io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewStatus.getDefaultInstance();
+}
+public io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewStatus build() {
+io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewStatus result = buildPartial();
+if (!result.isInitialized()) {
+throw newUninitializedMessageException(result);
+}
+return result;
+}
+public io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewStatus buildPartial() {
+io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewStatus result = new io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewStatus(this);
+int from_bitField0_ = bitField0_;
+int to_bitField0_ = 0;
+if (((from_bitField0_ & 0x00000001) == 0x00000001)) {
+to_bitField0_ |= 0x00000001;
+}
+result.allowed_ = allowed_;
+if (((from_bitField0_ & 0x00000002) == 0x00000002)) {
+to_bitField0_ |= 0x00000002;
+}
+if (statusBuilder_ == null) {
+result.status_ = status_;
+} else {
+result.status_ = statusBuilder_.build();
+}
+result.bitField0_ = to_bitField0_;
+onBuilt();
+return result;
+}
+public Builder clone() {
+return (Builder) super.clone();
+}
+public Builder setField(
+com.google.protobuf.Descriptors.FieldDescriptor field,
+java.lang.Object value) {
+return (Builder) super.setField(field, value);
+}
+public Builder clearField(
+com.google.protobuf.Descriptors.FieldDescriptor field) {
+return (Builder) super.clearField(field);
+}
+public Builder clearOneof(
+com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+return (Builder) super.clearOneof(oneof);
+}
+public Builder setRepeatedField(
+com.google.protobuf.Descriptors.FieldDescriptor field,
+int index, java.lang.Object value) {
+return (Builder) super.setRepeatedField(field, index, value);
+}
+public Builder addRepeatedField(
+com.google.protobuf.Descriptors.FieldDescriptor field,
+java.lang.Object value) {
+return (Builder) super.addRepeatedField(field, value);
+}
+public Builder mergeFrom(com.google.protobuf.Message other) {
+if (other instanceof io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewStatus) {
+return mergeFrom((io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewStatus)other);
+} else {
+super.mergeFrom(other);
+return this;
+}
+}
+public Builder mergeFrom(io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewStatus other) {
+if (other == io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewStatus.getDefaultInstance()) return this;
+if (other.hasAllowed()) {
+setAllowed(other.getAllowed());
+}
+if (other.hasStatus()) {
+mergeStatus(other.getStatus());
+}
+this.mergeUnknownFields(other.unknownFields);
+onChanged();
+return this;
+}
+public final boolean isInitialized() {
+return true;
+}
+public Builder mergeFrom(
+com.google.protobuf.CodedInputStream input,
+com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+throws java.io.IOException {
+io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewStatus parsedMessage = null;
+try {
+parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
+} catch (com.google.protobuf.InvalidProtocolBufferException e) {
+parsedMessage = (io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewStatus) e.getUnfinishedMessage();
+throw e.unwrapIOException();
+} finally {
+if (parsedMessage != null) {
+mergeFrom(parsedMessage);
+}
+}
+return this;
+}
+private int bitField0_;
+private boolean allowed_ ;
+public boolean hasAllowed() {
+return ((bitField0_ & 0x00000001) == 0x00000001);
+}
+public boolean getAllowed() {
+return allowed_;
+}
+public Builder setAllowed(boolean value) {
+bitField0_ |= 0x00000001;
+allowed_ = value;
+onChanged();
+return this;
+}
+public Builder clearAllowed() {
+bitField0_ = (bitField0_ & ~0x00000001);
+allowed_ = false;
+onChanged();
+return this;
+}
+private io.kubernetes.client.proto.Meta.Status status_ = null;
+private com.google.protobuf.SingleFieldBuilderV3<
+io.kubernetes.client.proto.Meta.Status, io.kubernetes.client.proto.Meta.Status.Builder, io.kubernetes.client.proto.Meta.StatusOrBuilder> statusBuilder_;
+public boolean hasStatus() {
+return ((bitField0_ & 0x00000002) == 0x00000002);
+}
+public io.kubernetes.client.proto.Meta.Status getStatus() {
+if (statusBuilder_ == null) {
+return status_ == null ? io.kubernetes.client.proto.Meta.Status.getDefaultInstance() : status_;
+} else {
+return statusBuilder_.getMessage();
+}
+}
+public Builder setStatus(io.kubernetes.client.proto.Meta.Status value) {
+if (statusBuilder_ == null) {
+if (value == null) {
+throw new NullPointerException();
+}
+status_ = value;
+onChanged();
+} else {
+statusBuilder_.setMessage(value);
+}
+bitField0_ |= 0x00000002;
+return this;
+}
+public Builder setStatus(
+io.kubernetes.client.proto.Meta.Status.Builder builderForValue) {
+if (statusBuilder_ == null) {
+status_ = builderForValue.build();
+onChanged();
+} else {
+statusBuilder_.setMessage(builderForValue.build());
+}
+bitField0_ |= 0x00000002;
+return this;
+}
+public Builder mergeStatus(io.kubernetes.client.proto.Meta.Status value) {
+if (statusBuilder_ == null) {
+if (((bitField0_ & 0x00000002) == 0x00000002) &&
+status_ != null &&
+status_ != io.kubernetes.client.proto.Meta.Status.getDefaultInstance()) {
+status_ =
+io.kubernetes.client.proto.Meta.Status.newBuilder(status_).mergeFrom(value).buildPartial();
+} else {
+status_ = value;
+}
+onChanged();
+} else {
+statusBuilder_.mergeFrom(value);
+}
+bitField0_ |= 0x00000002;
+return this;
+}
+public Builder clearStatus() {
+if (statusBuilder_ == null) {
+status_ = null;
+onChanged();
+} else {
+statusBuilder_.clear();
+}
+bitField0_ = (bitField0_ & ~0x00000002);
+return this;
+}
+public io.kubernetes.client.proto.Meta.Status.Builder getStatusBuilder() {
+bitField0_ |= 0x00000002;
+onChanged();
+return getStatusFieldBuilder().getBuilder();
+}
+public io.kubernetes.client.proto.Meta.StatusOrBuilder getStatusOrBuilder() {
+if (statusBuilder_ != null) {
+return statusBuilder_.getMessageOrBuilder();
+} else {
+return status_ == null ?
+io.kubernetes.client.proto.Meta.Status.getDefaultInstance() : status_;
+}
+}
+private com.google.protobuf.SingleFieldBuilderV3<
+io.kubernetes.client.proto.Meta.Status, io.kubernetes.client.proto.Meta.Status.Builder, io.kubernetes.client.proto.Meta.StatusOrBuilder>
+getStatusFieldBuilder() {
+if (statusBuilder_ == null) {
+statusBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
+io.kubernetes.client.proto.Meta.Status, io.kubernetes.client.proto.Meta.Status.Builder, io.kubernetes.client.proto.Meta.StatusOrBuilder>(
+getStatus(),
+getParentForChildren(),
+isClean());
+status_ = null;
+}
+return statusBuilder_;
+}
+public final Builder setUnknownFields(
+final com.google.protobuf.UnknownFieldSet unknownFields) {
+return super.setUnknownFields(unknownFields);
+}
+public final Builder mergeUnknownFields(
+final com.google.protobuf.UnknownFieldSet unknownFields) {
+return super.mergeUnknownFields(unknownFields);
+}
+}
+private static final io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewStatus DEFAULT_INSTANCE;
+static {
+DEFAULT_INSTANCE = new io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewStatus();
+}
+public static io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewStatus getDefaultInstance() {
+return DEFAULT_INSTANCE;
+}
+@java.lang.Deprecated public static final com.google.protobuf.Parser<AdmissionReviewStatus>
+PARSER = new com.google.protobuf.AbstractParser<AdmissionReviewStatus>() {
+public AdmissionReviewStatus parsePartialFrom(
+com.google.protobuf.CodedInputStream input,
+com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+throws com.google.protobuf.InvalidProtocolBufferException {
+return new AdmissionReviewStatus(input, extensionRegistry);
+}
+};
+public static com.google.protobuf.Parser<AdmissionReviewStatus> parser() {
+return PARSER;
+}
+@java.lang.Override
+public com.google.protobuf.Parser<AdmissionReviewStatus> getParserForType() {
+return PARSER;
+}
+public io.kubernetes.client.proto.V1alpha1Admission.AdmissionReviewStatus getDefaultInstanceForType() {
+return DEFAULT_INSTANCE;
+}
+}
+private static final com.google.protobuf.Descriptors.Descriptor
+internal_static_k8s_io_api_admission_v1alpha1_AdmissionReview_descriptor;
+private static final
+com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+internal_static_k8s_io_api_admission_v1alpha1_AdmissionReview_fieldAccessorTable;
+private static final com.google.protobuf.Descriptors.Descriptor
+internal_static_k8s_io_api_admission_v1alpha1_AdmissionReviewSpec_descriptor;
+private static final
+com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+internal_static_k8s_io_api_admission_v1alpha1_AdmissionReviewSpec_fieldAccessorTable;
+private static final com.google.protobuf.Descriptors.Descriptor
+internal_static_k8s_io_api_admission_v1alpha1_AdmissionReviewStatus_descriptor;
+private static final
+com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+internal_static_k8s_io_api_admission_v1alpha1_AdmissionReviewStatus_fieldAccessorTable;
+public static com.google.protobuf.Descriptors.FileDescriptor
+getDescriptor() {
+return descriptor;
+}
+private static com.google.protobuf.Descriptors.FileDescriptor
+descriptor;
+static {
+java.lang.String[] descriptorData = {
+"\n-k8s.io/api/admission/v1alpha1/generate" +
+"d.proto\022\035k8s.io.api.admission.v1alpha1\032," +
+"k8s.io/api/authentication/v1/generated.p" +
+"roto\0324k8s.io/apimachinery/pkg/apis/meta/" +
+"v1/generated.proto\032/k8s.io/apimachinery/" +
+"pkg/runtime/generated.proto\0326k8s.io/apim" +
+"achinery/pkg/runtime/schema/generated.pr" +
+"oto\0323k8s.io/apimachinery/pkg/util/intstr" +
+"/generated.proto\"\231\001\n\017AdmissionReview\022@\n\004" +
+"spec\030\001 \001(\01322.k8s.io.api.admission.v1alph",
+"a1.AdmissionReviewSpec\022D\n\006status\030\002 \001(\01324" +
+".k8s.io.api.admission.v1alpha1.Admission" +
+"ReviewStatus\"\255\003\n\023AdmissionReviewSpec\022D\n\004" +
+"kind\030\001 \001(\01326.k8s.io.apimachinery.pkg.api" +
+"s.meta.v1.GroupVersionKind\022=\n\006object\030\002 \001" +
+"(\0132-.k8s.io.apimachinery.pkg.runtime.Raw" +
+"Extension\022@\n\toldObject\030\003 \001(\0132-.k8s.io.ap" +
+"imachinery.pkg.runtime.RawExtension\022\021\n\to" +
+"peration\030\004 \001(\t\022\014\n\004name\030\005 \001(\t\022\021\n\tnamespac" +
+"e\030\006 \001(\t\022L\n\010resource\030\007 \001(\0132:.k8s.io.apima",
+"chinery.pkg.apis.meta.v1.GroupVersionRes" +
+"ource\022\023\n\013subResource\030\010 \001(\t\0228\n\010userInfo\030\t" +
+" \001(\0132&.k8s.io.api.authentication.v1.User" +
+"Info\"f\n\025AdmissionReviewStatus\022\017\n\007allowed" +
+"\030\001 \001(\010\022<\n\006status\030\002 \001(\0132,.k8s.io.apimachi" +
+"nery.pkg.apis.meta.v1.StatusB9\n\032io.kuber" +
+"netes.client.protoB\021V1alpha1AdmissionZ\010v" +
+"1alpha1"
+};
+com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
+new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
+public com.google.protobuf.ExtensionRegistry assignDescriptors(
+com.google.protobuf.Descriptors.FileDescriptor root) {
+descriptor = root;
+return null;
+}
+};
+com.google.protobuf.Descriptors.FileDescriptor
+.internalBuildGeneratedFileFrom(descriptorData,
+new com.google.protobuf.Descriptors.FileDescriptor[] {
+io.kubernetes.client.proto.V1Authentication.getDescriptor(),
+io.kubernetes.client.proto.Meta.getDescriptor(),
+io.kubernetes.client.proto.Runtime.getDescriptor(),
+io.kubernetes.client.proto.RuntimeSchema.getDescriptor(),
+io.kubernetes.client.proto.IntStr.getDescriptor(),
+}, assigner);
+internal_static_k8s_io_api_admission_v1alpha1_AdmissionReview_descriptor =
+getDescriptor().getMessageTypes().get(0);
+internal_static_k8s_io_api_admission_v1alpha1_AdmissionReview_fieldAccessorTable = new
+com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+internal_static_k8s_io_api_admission_v1alpha1_AdmissionReview_descriptor,
+new java.lang.String[] { "Spec", "Status", });
+internal_static_k8s_io_api_admission_v1alpha1_AdmissionReviewSpec_descriptor =
+getDescriptor().getMessageTypes().get(1);
+internal_static_k8s_io_api_admission_v1alpha1_AdmissionReviewSpec_fieldAccessorTable = new
+com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+internal_static_k8s_io_api_admission_v1alpha1_AdmissionReviewSpec_descriptor,
+new java.lang.String[] { "Kind", "Object", "OldObject", "Operation", "Name", "Namespace", "Resource", "SubResource", "UserInfo", });
+internal_static_k8s_io_api_admission_v1alpha1_AdmissionReviewStatus_descriptor =
+getDescriptor().getMessageTypes().get(2);
+internal_static_k8s_io_api_admission_v1alpha1_AdmissionReviewStatus_fieldAccessorTable = new
+com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+internal_static_k8s_io_api_admission_v1alpha1_AdmissionReviewStatus_descriptor,
+new java.lang.String[] { "Allowed", "Status", });
+io.kubernetes.client.proto.V1Authentication.getDescriptor();
+io.kubernetes.client.proto.Meta.getDescriptor();
+io.kubernetes.client.proto.Runtime.getDescriptor();
+io.kubernetes.client.proto.RuntimeSchema.getDescriptor();
+io.kubernetes.client.proto.IntStr.getDescriptor();
+}
+}

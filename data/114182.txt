@@ -1,0 +1,4 @@
+package com.jiang.android.rxjavaapp.common;
+public class SPKey {
+public static final String FIRST_ENTER = "first_enter";
+}

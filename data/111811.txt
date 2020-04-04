@@ -1,0 +1,11 @@
+package org.jupiter.common.concurrent.collection;
+public class NonBlockingMapTest {
+public static void main(String[] args) {
+NonBlockingHashMap<Integer, String> map = new NonBlockingHashMap<>();
+for (int i = 0; i < 100; i++) {
+map.put(i, "--" + i);
+}
+String val = map.get(3);
+System.out.println(val);
+}
+}

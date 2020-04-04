@@ -1,0 +1,34 @@
+package com.flipkart.android.proteus.toolbox;
+import com.flipkart.android.proteus.value.Null;
+import com.flipkart.android.proteus.value.Value;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import androidx.annotation.IntDef;
+import androidx.annotation.NonNull;
+public class Result {
+public static final int RESULT_SUCCESS = 0;
+public static final int RESULT_NO_SUCH_DATA_PATH_EXCEPTION = -1;
+public static final int RESULT_INVALID_DATA_PATH_EXCEPTION = -2;
+public static final int RESULT_NULL_EXCEPTION = -3;
+public static final Result NO_SUCH_DATA_PATH_EXCEPTION = new Result(Result.RESULT_NO_SUCH_DATA_PATH_EXCEPTION, Null.INSTANCE);
+public static final Result INVALID_DATA_PATH_EXCEPTION = new Result(Result.RESULT_INVALID_DATA_PATH_EXCEPTION, Null.INSTANCE);
+public static final Result NULL_EXCEPTION = new Result(Result.RESULT_NULL_EXCEPTION, Null.INSTANCE);
+@ResultCode
+public final int RESULT_CODE;
+@NonNull
+public final Value value;
+public Result(@ResultCode int RESULT_CODE, @NonNull Value value) {
+this.RESULT_CODE = RESULT_CODE;
+this.value = value;
+}
+public static Result success(Value value) {
+return new Result(RESULT_SUCCESS, value);
+}
+public boolean isSuccess() {
+return this.RESULT_CODE == RESULT_SUCCESS;
+}
+@IntDef({RESULT_INVALID_DATA_PATH_EXCEPTION, RESULT_NO_SUCH_DATA_PATH_EXCEPTION, RESULT_SUCCESS, RESULT_NULL_EXCEPTION})
+@Retention(RetentionPolicy.SOURCE)
+public @interface ResultCode {
+}
+}

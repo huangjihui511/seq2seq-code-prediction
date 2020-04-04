@@ -1,0 +1,48 @@
+package org.apache.flink.streaming.connectors.kinesis.util;
+import org.apache.flink.annotation.PublicEvolving;
+import org.apache.flink.api.common.functions.RuntimeContext;
+import org.apache.flink.streaming.api.operators.StreamingRuntimeContext;
+import java.io.Closeable;
+import java.io.Serializable;
+@PublicEvolving
+public abstract class WatermarkTracker implements Closeable, Serializable {
+public static final long DEFAULT_UPDATE_TIMEOUT_MILLIS = 60_000;
+private long updateTimeoutMillis = DEFAULT_UPDATE_TIMEOUT_MILLIS;
+private String subtaskId;
+protected static class WatermarkState {
+protected long watermark = Long.MIN_VALUE;
+protected long lastUpdated;
+public long getWatermark() {
+return watermark;
+}
+@Override
+public String toString() {
+return "WatermarkState{watermark=" + watermark + ", lastUpdated=" + lastUpdated + '}';
+}
+}
+protected String getSubtaskId() {
+return this.subtaskId;
+}
+protected long getUpdateTimeoutMillis() {
+return this.updateTimeoutMillis;
+}
+public abstract long getUpdateTimeoutCount();
+public void setUpdateTimeoutMillis(long updateTimeoutMillis) {
+this.updateTimeoutMillis = updateTimeoutMillis;
+}
+public abstract long updateWatermark(final long localWatermark);
+protected long getCurrentTime() {
+return System.currentTimeMillis();
+}
+public void open(RuntimeContext context) {
+if (context instanceof StreamingRuntimeContext) {
+this.subtaskId = ((StreamingRuntimeContext) context).getOperatorUniqueID()
++ "-" + context.getIndexOfThisSubtask();
+} else {
+this.subtaskId = context.getTaskNameWithSubtasks();
+}
+}
+@Override
+public void close() {
+}
+}

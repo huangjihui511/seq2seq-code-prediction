@@ -1,0 +1,43 @@
+package io.grpc;
+import java.util.concurrent.TimeUnit;
+import org.openjdk.jmh.annotations.Benchmark;
+import org.openjdk.jmh.annotations.BenchmarkMode;
+import org.openjdk.jmh.annotations.Mode;
+import org.openjdk.jmh.annotations.OutputTimeUnit;
+import org.openjdk.jmh.annotations.Param;
+import org.openjdk.jmh.annotations.Scope;
+import org.openjdk.jmh.annotations.Setup;
+import org.openjdk.jmh.annotations.State;
+@State(Scope.Benchmark)
+public class AttributesBenchmark {
+public Attributes base = Attributes.EMPTY;
+public Attributes.Key<Object>[] keys;
+public Attributes withValue = base;
+@Setup
+@SuppressWarnings({"unchecked", "rawtypes"})
+public void setUp() {
+keys = new Attributes.Key[iterations];
+for (int i = 0; i < iterations; i++) {
+keys[i] = Attributes.Key.create("any");
+withValue = withValue.toBuilder().set(keys[i], "yes").build();
+}
+}
+@Param({"1", "2", "10"})
+public int iterations;
+@Benchmark
+@BenchmarkMode(Mode.SampleTime)
+@OutputTimeUnit(TimeUnit.NANOSECONDS)
+public Attributes chain() {
+Attributes attr = base;
+for (int i = 0; i < iterations; i++) {
+attr = attr.toBuilder().set(keys[i], new Object()).build();
+}
+return attr;
+}
+@Benchmark
+@BenchmarkMode(Mode.SampleTime)
+@OutputTimeUnit(TimeUnit.NANOSECONDS)
+public Object lookup() {
+return withValue.get(keys[0]);
+}
+}

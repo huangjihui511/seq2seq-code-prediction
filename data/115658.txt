@@ -1,0 +1,5 @@
+package com.graphhopper.jsprit.core.algorithm;
+import com.graphhopper.jsprit.core.problem.VehicleRoutingProblem;
+public interface VehicleRoutingAlgorithmFactory {
+public VehicleRoutingAlgorithm createAlgorithm(VehicleRoutingProblem vrp);
+}

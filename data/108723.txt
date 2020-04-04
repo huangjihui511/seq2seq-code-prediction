@@ -1,0 +1,7 @@
+package com.xkcoding.rbac.security.payload;
+import lombok.Data;
+@Data
+public class PageCondition {
+private Integer currentPage;
+private Integer pageSize;
+}

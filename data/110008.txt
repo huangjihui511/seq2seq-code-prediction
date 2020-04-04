@@ -1,0 +1,11 @@
+package com.google.cloud.tools.jib.plugins.common;
+public class InvalidWorkingDirectoryException extends Exception {
+private final String invalidPath;
+public InvalidWorkingDirectoryException(String message, String invalidPath, Throwable ex) {
+super(message, ex);
+this.invalidPath = invalidPath;
+}
+public String getInvalidPathValue() {
+return invalidPath;
+}
+}

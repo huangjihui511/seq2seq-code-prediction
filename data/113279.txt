@@ -1,0 +1,11 @@
+package org.pf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+public class LoggingPluginStateListener implements PluginStateListener {
+private static final Logger log = LoggerFactory.getLogger(LoggingPluginStateListener.class);
+@Override
+public void pluginStateChanged(PluginStateEvent event) {
+log.debug("The state of plugin '{}' has changed from '{}' to '{}'", event.getPlugin().getPluginId(),
+event.getOldState(), event.getPluginState());
+}
+}

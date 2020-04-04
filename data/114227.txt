@@ -1,0 +1,83 @@
+package com.datumbox.framework.common.dataobjects;
+import java.util.Locale;
+public class TypeInference {
+public enum DataType {
+BOOLEAN(Boolean.class),
+ORDINAL(Short.class),
+NUMERICAL(Number.class),
+CATEGORICAL(Object.class);
+public static Object parse(String s, DataType dataType) {
+if(s==null || s.isEmpty() || "null".equalsIgnoreCase(s)) {
+return null;
+}
+if(dataType == DataType.BOOLEAN) {
+switch (s.toLowerCase(Locale.ENGLISH)) {
+case "1":
+case "true":
+case "yes":
+return Boolean.TRUE;
+case "0":
+case "false":
+case "no":
+return Boolean.FALSE;
+default:
+return null;
+}
+}
+else if (dataType == DataType.ORDINAL) {
+return Short.valueOf(s);
+}
+else if (dataType == DataType.NUMERICAL) {
+return Double.valueOf(s);
+}
+else if (dataType == DataType.CATEGORICAL) {
+return s;
+}
+else {
+throw new IllegalArgumentException("Unknown Datatype.");
+}
+}
+private final Class klass;
+private DataType(Class klass) {
+this.klass = klass;
+}
+private boolean isInstance(Object v) {
+return klass.isInstance(v);
+}
+}
+public static DataType getDataType(Object v) {
+if(DataType.BOOLEAN.isInstance(v)) {
+return DataType.BOOLEAN;
+}
+else if(DataType.ORDINAL.isInstance(v)) {
+return DataType.ORDINAL;
+}
+else if(DataType.NUMERICAL.isInstance(v)) {
+return DataType.NUMERICAL;
+}
+else if(DataType.CATEGORICAL.isInstance(v)) {
+return DataType.CATEGORICAL;
+}
+else {
+return null;
+}
+}
+public static Double toDouble(Object v) {
+if (v == null) {
+return null;
+}
+if (v instanceof Boolean) {
+return ((Boolean) v) ? 1.0 : 0.0;
+}
+return ((Number) v).doubleValue();
+}
+public static Integer toInteger(Object v) {
+if (v == null) {
+return null;
+}
+if (v instanceof Boolean) {
+return ((Boolean) v) ? 1 : 0;
+}
+return ((Number) v).intValue();
+}
+}

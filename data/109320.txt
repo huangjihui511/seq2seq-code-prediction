@@ -1,0 +1,9 @@
+package org.mockito.exceptions.misusing;
+import org.mockito.Mockito;
+import org.mockito.exceptions.base.MockitoException;
+import org.mockito.quality.Strictness;
+public class PotentialStubbingProblem extends MockitoException {
+public PotentialStubbingProblem(String message) {
+super(message);
+}
+}

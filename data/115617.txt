@@ -1,0 +1,9 @@
+package com.netflix.astyanax.model;
+import java.util.Collection;
+public interface Rows<K, C> extends Iterable<Row<K, C>> {
+Collection<K> getKeys();
+Row<K, C> getRow(K key);
+Row<K, C> getRowByIndex(int i);
+int size();
+boolean isEmpty();
+}

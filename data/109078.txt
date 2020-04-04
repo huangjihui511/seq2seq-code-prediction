@@ -1,0 +1,183 @@
+package io.vertx.core.buffer;
+import io.netty.buffer.ByteBuf;
+import io.vertx.codegen.annotations.Fluent;
+import io.vertx.codegen.annotations.GenIgnore;
+import io.vertx.codegen.annotations.VertxGen;
+import io.vertx.core.buffer.impl.BufferImpl;
+import io.vertx.core.json.Json;
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
+import io.vertx.core.shareddata.Shareable;
+import io.vertx.core.shareddata.impl.ClusterSerializable;
+import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
+@VertxGen
+public interface Buffer extends ClusterSerializable, Shareable {
+static Buffer buffer() {
+return BufferImpl.buffer();
+}
+static Buffer buffer(int initialSizeHint) {
+return BufferImpl.buffer(initialSizeHint);
+}
+static Buffer buffer(String string) {
+return BufferImpl.buffer(string);
+}
+static Buffer buffer(String string, String enc) {
+return BufferImpl.buffer(string, enc);
+}
+@GenIgnore(GenIgnore.PERMITTED_TYPE)
+static Buffer buffer(byte[] bytes) {
+return BufferImpl.buffer(bytes);
+}
+@GenIgnore(GenIgnore.PERMITTED_TYPE)
+static Buffer buffer(ByteBuf byteBuf) {
+return BufferImpl.buffer(byteBuf);
+}
+String toString();
+String toString(String enc);
+@GenIgnore(GenIgnore.PERMITTED_TYPE)
+String toString(Charset enc);
+JsonObject toJsonObject();
+JsonArray toJsonArray();
+default Object toJson() {
+return Json.CODEC.fromBuffer(this, Object.class);
+}
+byte getByte(int pos);
+short getUnsignedByte(int pos);
+int getInt(int pos);
+int getIntLE(int pos);
+long getUnsignedInt(int pos);
+long getUnsignedIntLE(int pos);
+long getLong(int pos);
+long getLongLE(int pos);
+double getDouble(int pos);
+float getFloat(int pos);
+short getShort(int pos);
+short getShortLE(int pos);
+int getUnsignedShort(int pos);
+int getUnsignedShortLE(int pos);
+int getMedium(int pos);
+int getMediumLE(int pos);
+int getUnsignedMedium(int pos);
+int getUnsignedMediumLE(int pos);
+@GenIgnore(GenIgnore.PERMITTED_TYPE)
+byte[] getBytes();
+@GenIgnore(GenIgnore.PERMITTED_TYPE)
+byte[] getBytes(int start, int end);
+@GenIgnore(GenIgnore.PERMITTED_TYPE)
+@Fluent
+Buffer getBytes(byte[] dst);
+@GenIgnore(GenIgnore.PERMITTED_TYPE)
+@Fluent
+Buffer getBytes(byte[] dst, int dstIndex);
+@GenIgnore(GenIgnore.PERMITTED_TYPE)
+@Fluent
+Buffer getBytes(int start, int end, byte[] dst);
+@GenIgnore(GenIgnore.PERMITTED_TYPE)
+@Fluent
+Buffer getBytes(int start, int end, byte[] dst, int dstIndex);
+Buffer getBuffer(int start, int end);
+String getString(int start, int end, String enc);
+String getString(int start, int end);
+@Fluent
+Buffer appendBuffer(Buffer buff);
+@Fluent
+Buffer appendBuffer(Buffer buff, int offset, int len);
+@GenIgnore(GenIgnore.PERMITTED_TYPE)
+@Fluent
+Buffer appendBytes(byte[] bytes);
+@GenIgnore(GenIgnore.PERMITTED_TYPE)
+@Fluent
+Buffer appendBytes(byte[] bytes, int offset, int len);
+@Fluent
+Buffer appendByte(byte b);
+@Fluent
+Buffer appendUnsignedByte(short b);
+@Fluent
+Buffer appendInt(int i);
+@Fluent
+Buffer appendIntLE(int i);
+@Fluent
+Buffer appendUnsignedInt(long i);
+@Fluent
+Buffer appendUnsignedIntLE(long i);
+@Fluent
+Buffer appendMedium(int i);
+@Fluent
+Buffer appendMediumLE(int i);
+@Fluent
+Buffer appendLong(long l);
+@Fluent
+Buffer appendLongLE(long l);
+@Fluent
+Buffer appendShort(short s);
+@Fluent
+Buffer appendShortLE(short s);
+@Fluent
+Buffer appendUnsignedShort(int s);
+@Fluent
+Buffer appendUnsignedShortLE(int s);
+@Fluent
+Buffer appendFloat(float f);
+@Fluent
+Buffer appendDouble(double d);
+@Fluent
+Buffer appendString(String str, String enc);
+@Fluent
+Buffer appendString(String str);
+@Fluent
+Buffer setByte(int pos, byte b);
+@Fluent
+Buffer setUnsignedByte(int pos, short b);
+@Fluent
+Buffer setInt(int pos, int i);
+@Fluent
+Buffer setIntLE(int pos, int i);
+@Fluent
+Buffer setUnsignedInt(int pos, long i);
+@Fluent
+Buffer setUnsignedIntLE(int pos, long i);
+@Fluent
+Buffer setMedium(int pos, int i);
+@Fluent
+Buffer setMediumLE(int pos, int i);
+@Fluent
+Buffer setLong(int pos, long l);
+@Fluent
+Buffer setLongLE(int pos, long l);
+@Fluent
+Buffer setDouble(int pos, double d);
+@Fluent
+Buffer setFloat(int pos, float f);
+@Fluent
+Buffer setShort(int pos, short s);
+@Fluent
+Buffer setShortLE(int pos, short s);
+@Fluent
+Buffer setUnsignedShort(int pos, int s);
+@Fluent
+Buffer setUnsignedShortLE(int pos, int s);
+@Fluent
+Buffer setBuffer(int pos, Buffer b);
+@Fluent
+Buffer setBuffer(int pos, Buffer b, int offset, int len);
+@GenIgnore(GenIgnore.PERMITTED_TYPE)
+@Fluent
+Buffer setBytes(int pos, ByteBuffer b);
+@GenIgnore(GenIgnore.PERMITTED_TYPE)
+@Fluent
+Buffer setBytes(int pos, byte[] b);
+@GenIgnore(GenIgnore.PERMITTED_TYPE)
+@Fluent
+Buffer setBytes(int pos, byte[] b, int offset, int len);
+@Fluent
+Buffer setString(int pos, String str);
+@Fluent
+Buffer setString(int pos, String str, String enc);
+int length();
+Buffer copy();
+Buffer slice();
+Buffer slice(int start, int end);
+@GenIgnore(GenIgnore.PERMITTED_TYPE)
+ByteBuf getByteBuf();
+}

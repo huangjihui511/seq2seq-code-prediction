@@ -1,0 +1,94 @@
+package io.realm.internal.android;
+import android.support.test.runner.AndroidJUnit4;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import java.text.ParseException;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.GregorianCalendar;
+import java.util.TimeZone;
+import io.realm.exceptions.RealmException;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+@RunWith(AndroidJUnit4.class)
+public class JsonUtilsTest {
+@Test
+public void parseNullAndEmptyDateIsNull() {
+Date output = JsonUtils.stringToDate(null);
+assertNull("Null input should output a null date object", output);
+output = JsonUtils.stringToDate("");
+assertNull("Empty string input should output a null date object", output);
+}
+@Test
+public void parseMillisToDate() {
+Date originalDate = Calendar.getInstance().getTime();
+long dateTimeInMillis = originalDate.getTime();
+Date output = JsonUtils.stringToDate(String.valueOf(dateTimeInMillis));
+assertTrue("Dates should match", output.equals(originalDate));
+}
+@Test
+public void parseJsonDateToDate() {
+String jsonDate = "/Date(1198908717056)/"; 
+Date output = JsonUtils.stringToDate(jsonDate);
+assertEquals(1198908717056L, output.getTime());
+}
+@Test
+public void negativeLongDate() {
+long timeInMillis = -631152000L; 
+Date output = JsonUtils.stringToDate(String.valueOf(timeInMillis));
+assertEquals("Should be Jan 1, 1950 in millis", timeInMillis, output.getTime());
+}
+@Test
+public void parseInvalidDateShouldThrowRealmException() {
+String invalidLongDate = "123abc";
+try {
+Date d = JsonUtils.stringToDate(invalidLongDate);
+fail("Should fail with a RealmException.");
+} catch (RealmException e) {
+assertNotNull(e);
+assertTrue(e.getCause() instanceof ParseException);
+}
+}
+@Test
+public void parseInvalidNumericDateShouldThrowRealmException() {
+String invalidLongDate = "2342347289374398342759873495743"; 
+try {
+Date d = JsonUtils.stringToDate(invalidLongDate);
+fail("Should fail with a RealmException.");
+} catch (RealmException e) {
+assertNotNull(e);
+assertTrue(e.getCause() instanceof NumberFormatException);
+}
+}
+@Test
+public void parseISO8601Dates() throws ParseException {
+Calendar cal = new GregorianCalendar(2007, 8 - 1, 13, 19, 51, 23);
+cal.setTimeZone(TimeZone.getTimeZone("GMT"));
+cal.set(Calendar.MILLISECOND, 789);
+Date date = cal.getTime();
+cal.set(Calendar.MILLISECOND, 0);
+Date dateZeroMillis = cal.getTime();
+cal.set(Calendar.SECOND, 0);
+Date d = JsonUtils.stringToDate("2007-08-13T195123.789Z");
+assertEquals(date, d);
+d = JsonUtils.stringToDate("2007-08-13T195123Z");
+assertEquals(dateZeroMillis, d);
+d = JsonUtils.stringToDate("2007-08-13T215123.789+02:00");
+assertEquals(date, d);
+cal = new GregorianCalendar(2007, 8 - 1, 13, 0, 0, 0);
+cal.set(Calendar.MILLISECOND, 0);
+cal.setTimeZone(TimeZone.getTimeZone("GMT"));
+Date dateWithoutTime = cal.getTime();
+d = JsonUtils.stringToDate("2007-08-13Z");
+assertEquals(dateWithoutTime, d);
+d = JsonUtils.stringToDate("20070813Z");
+assertEquals(dateWithoutTime, d);
+d = JsonUtils.stringToDate("2007-08-13+00:00");
+assertEquals(dateWithoutTime, d);
+d = JsonUtils.stringToDate("20070813+00:00");
+assertEquals(dateWithoutTime, d);
+}
+}

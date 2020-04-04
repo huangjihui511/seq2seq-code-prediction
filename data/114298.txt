@@ -1,0 +1,101 @@
+package mobi.hsz.idea.gitignore.settings;
+import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.vcs.VcsConfigurableProvider;
+import mobi.hsz.idea.gitignore.IgnoreBundle;
+import mobi.hsz.idea.gitignore.ui.IgnoreSettingsPanel;
+import mobi.hsz.idea.gitignore.util.Utils;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import javax.swing.*;
+public class IgnoreSettingsConfigurable implements SearchableConfigurable, VcsConfigurableProvider {
+private final IgnoreSettings settings;
+private IgnoreSettingsPanel settingsPanel;
+public IgnoreSettingsConfigurable() {
+settings = IgnoreSettings.getInstance();
+}
+@Override
+public String getDisplayName() {
+return IgnoreBundle.message("settings.displayName");
+}
+@NotNull
+@Override
+public String getHelpTopic() {
+return getDisplayName();
+}
+@Nullable
+@Override
+public JComponent createComponent() {
+if (settingsPanel == null) {
+settingsPanel = new IgnoreSettingsPanel();
+}
+reset();
+return settingsPanel.panel;
+}
+@Override
+public boolean isModified() {
+return settingsPanel == null
+|| !Comparing.equal(settings.isMissingGitignore(), settingsPanel.isMissingGitignore())
+|| !Utils.equalLists(settings.getUserTemplates(), settingsPanel.getUserTemplates())
+|| !Comparing.equal(settings.isIgnoredFileStatus(), settingsPanel.isIgnoredFileStatus())
+|| !Comparing.equal(settings.isOuterIgnoreRules(), settingsPanel.isOuterIgnoreRules())
+|| !Comparing.equal(settings.isInsertAtCursor(), settingsPanel.isInsertAtCursor())
+|| !Comparing.equal(settings.isAddUnversionedFiles(), settingsPanel.isAddUnversionedFiles())
+|| !Comparing.equal(settings.isUnignoreActions(), settingsPanel.isUnignoreActions())
+|| !Comparing.equal(settings.isNotifyIgnoredEditing(), settingsPanel.isNotifyIgnoredEditing())
+|| !settingsPanel.getLanguagesSettings().equalSettings(settings.getLanguagesSettings());
+}
+@Override
+public void apply() {
+if (settingsPanel == null) {
+return;
+}
+settings.setMissingGitignore(settingsPanel.isMissingGitignore());
+settings.setUserTemplates(settingsPanel.getUserTemplates());
+settings.setIgnoredFileStatus(settingsPanel.isIgnoredFileStatus());
+settings.setOuterIgnoreRules(settingsPanel.isOuterIgnoreRules());
+settings.setInsertAtCursor(settingsPanel.isInsertAtCursor());
+settings.setAddUnversionedFiles(settingsPanel.isAddUnversionedFiles());
+settings.setLanguagesSettings(settingsPanel.getLanguagesSettings().getSettings());
+settings.setUnignoreActions(settingsPanel.isUnignoreActions());
+settings.setNotifyIgnoredEditing(settingsPanel.isNotifyIgnoredEditing());
+}
+@Override
+public void reset() {
+if (settingsPanel == null) {
+return;
+}
+settingsPanel.setMissingGitignore(settings.isMissingGitignore());
+settingsPanel.setUserTemplates(settings.getUserTemplates());
+settingsPanel.setIgnoredFileStatus(settings.isIgnoredFileStatus());
+settingsPanel.setOuterIgnoreRules(settings.isOuterIgnoreRules());
+settingsPanel.setInsertAtCursor(settings.isInsertAtCursor());
+settingsPanel.setAddUnversionedFiles(settings.isAddUnversionedFiles());
+settingsPanel.setUnignoreActions(settings.isUnignoreActions());
+settingsPanel.setNotifyIgnoredEditing(settings.isNotifyIgnoredEditing());
+IgnoreSettingsPanel.LanguagesTableModel model = settingsPanel.getLanguagesSettings();
+model.update(settings.getLanguagesSettings().clone());
+}
+@Override
+public void disposeUIResources() {
+settingsPanel.dispose();
+settingsPanel = null;
+}
+@Nullable
+@Override
+public Configurable getConfigurable(Project project) {
+return this;
+}
+@NotNull
+@Override
+public String getId() {
+return getHelpTopic();
+}
+@Nullable
+@Override
+public Runnable enableSearch(String option) {
+return null;
+}
+}

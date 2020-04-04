@@ -1,0 +1,26 @@
+package com.flipkart.android.proteus;
+import android.view.View;
+import com.flipkart.android.proteus.value.Layout;
+import com.flipkart.android.proteus.value.ObjectValue;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+public interface ProteusView {
+Manager getViewManager();
+void setViewManager(@NonNull Manager manager);
+@NonNull
+View getAsView();
+interface Manager {
+void update(@Nullable ObjectValue data);
+@Nullable
+View findViewById(@NonNull String id);
+@NonNull
+ProteusContext getContext();
+@NonNull
+Layout getLayout();
+@NonNull
+DataContext getDataContext();
+@Nullable
+Object getExtras();
+void setExtras(@Nullable Object extras);
+}
+}

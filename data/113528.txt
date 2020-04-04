@@ -1,0 +1,63 @@
+package com.pokegoapi.api.inventory;
+import POGOProtos.Enums.PokemonFamilyIdOuterClass.PokemonFamilyId;
+import com.pokegoapi.api.PokemonGo;
+import lombok.ToString;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+@ToString
+public class CandyJar {
+private final PokemonGo api;
+private final Map<PokemonFamilyId, Integer> candies =
+Collections.synchronizedMap(new HashMap<PokemonFamilyId, Integer>());
+private final Object lock = new Object();
+public CandyJar(PokemonGo api) {
+this.api = api;
+}
+public void reset() {
+synchronized (this.lock) {
+candies.clear();
+}
+}
+public void setCandy(PokemonFamilyId family, int candies) {
+synchronized (this.lock) {
+this.candies.put(family, candies);
+}
+}
+public void addCandy(PokemonFamilyId family, int amount) {
+synchronized (this.lock) {
+if (candies.containsKey(family)) {
+candies.put(family, candies.get(family) + amount);
+} else {
+candies.put(family, amount);
+}
+}
+}
+public void removeCandy(PokemonFamilyId family, int amount) {
+synchronized (this.lock) {
+if (candies.containsKey(family)) {
+if (candies.get(family) - amount < 0) {
+candies.put(family, 0);
+} else {
+candies.put(family, candies.get(family) - amount);
+}
+} else {
+candies.put(family, 0);
+}
+}
+}
+public int getCandies(PokemonFamilyId family) {
+synchronized (this.lock) {
+if (candies.containsKey(family)) {
+return this.candies.get(family);
+} else {
+return 0;
+}
+}
+}
+public Map<PokemonFamilyId, Integer> getCandies() {
+synchronized (lock) {
+return candies;
+}
+}
+}

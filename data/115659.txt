@@ -1,0 +1,21 @@
+package com.graphhopper.jsprit.core.algorithm.acceptor;
+import com.graphhopper.jsprit.core.problem.solution.VehicleRoutingProblemSolution;
+import java.util.Collection;
+public class AcceptNewRemoveFirst implements SolutionAcceptor {
+private final int solutionMemory;
+public AcceptNewRemoveFirst(int solutionMemory) {
+this.solutionMemory = solutionMemory;
+}
+@Override
+public boolean acceptSolution(Collection<VehicleRoutingProblemSolution> solutions, VehicleRoutingProblemSolution newSolution) {
+if (solutions.size() >= solutionMemory) {
+solutions.remove(solutions.iterator().next());
+}
+solutions.add(newSolution);
+return true;
+}
+@Override
+public String toString() {
+return "[name=acceptNewRemoveFirst]";
+}
+}

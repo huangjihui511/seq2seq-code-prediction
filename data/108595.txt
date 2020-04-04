@@ -1,0 +1,35 @@
+package com.alibaba.csp.sentinel.cluster.client.init;
+import com.alibaba.csp.sentinel.cluster.client.ClientConstants;
+import com.alibaba.csp.sentinel.cluster.client.codec.data.FlowRequestDataWriter;
+import com.alibaba.csp.sentinel.cluster.client.codec.data.FlowResponseDataDecoder;
+import com.alibaba.csp.sentinel.cluster.client.codec.data.ParamFlowRequestDataWriter;
+import com.alibaba.csp.sentinel.cluster.client.codec.data.PingRequestDataWriter;
+import com.alibaba.csp.sentinel.cluster.client.codec.data.PingResponseDataDecoder;
+import com.alibaba.csp.sentinel.cluster.client.codec.registry.RequestDataWriterRegistry;
+import com.alibaba.csp.sentinel.cluster.client.codec.registry.ResponseDataDecodeRegistry;
+import com.alibaba.csp.sentinel.cluster.client.config.ClusterClientStartUpConfig;
+import com.alibaba.csp.sentinel.init.InitFunc;
+import com.alibaba.csp.sentinel.init.InitOrder;
+@InitOrder(0)
+public class DefaultClusterClientInitFunc implements InitFunc {
+@Override
+public void init() throws Exception {
+initDefaultEntityWriters();
+initDefaultEntityDecoders();
+}
+private void initDefaultEntityWriters() {
+RequestDataWriterRegistry.addWriter(ClientConstants.TYPE_PING, new PingRequestDataWriter());
+RequestDataWriterRegistry.addWriter(ClientConstants.TYPE_FLOW, new FlowRequestDataWriter());
+Integer maxParamByteSize = ClusterClientStartUpConfig.getMaxParamByteSize();
+if (maxParamByteSize == null) {
+RequestDataWriterRegistry.addWriter(ClientConstants.TYPE_PARAM_FLOW, new ParamFlowRequestDataWriter());
+} else {
+RequestDataWriterRegistry.addWriter(ClientConstants.TYPE_PARAM_FLOW, new ParamFlowRequestDataWriter(maxParamByteSize));
+}
+}
+private void initDefaultEntityDecoders() {
+ResponseDataDecodeRegistry.addDecoder(ClientConstants.TYPE_PING, new PingResponseDataDecoder());
+ResponseDataDecodeRegistry.addDecoder(ClientConstants.TYPE_FLOW, new FlowResponseDataDecoder());
+ResponseDataDecodeRegistry.addDecoder(ClientConstants.TYPE_PARAM_FLOW, new FlowResponseDataDecoder());
+}
+}

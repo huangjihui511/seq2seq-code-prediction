@@ -1,0 +1,7 @@
+package com.graphhopper.jsprit.core.algorithm.listener;
+import com.graphhopper.jsprit.core.problem.VehicleRoutingProblem;
+import com.graphhopper.jsprit.core.problem.solution.VehicleRoutingProblemSolution;
+import java.util.Collection;
+public interface IterationStartsListener extends VehicleRoutingAlgorithmListener {
+public void informIterationStarts(int i, VehicleRoutingProblem problem, Collection<VehicleRoutingProblemSolution> solutions);
+}

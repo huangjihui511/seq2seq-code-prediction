@@ -1,0 +1,20 @@
+package spark.embeddedserver;
+import java.util.Map;
+import java.util.Optional;
+import spark.embeddedserver.jetty.websocket.WebSocketHandlerWrapper;
+import spark.ssl.SslStores;
+public interface EmbeddedServer {
+int ignite(String host,
+int port,
+SslStores sslStores,
+int maxThreads,
+int minThreads,
+int threadIdleTimeoutMillis) throws Exception;
+default void configureWebSockets(Map<String, WebSocketHandlerWrapper> webSocketHandlers,
+Optional<Integer> webSocketIdleTimeoutMillis) {
+NotSupportedException.raise(getClass().getSimpleName(), "Web Sockets");
+}
+void join() throws InterruptedException;
+void extinguish();
+int activeThreadCount();
+}

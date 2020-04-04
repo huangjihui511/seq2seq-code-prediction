@@ -1,0 +1,70 @@
+package org.dstadler.jgit.porcelain;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.util.Collections;
+import java.util.Map;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
+import org.apache.commons.io.FileUtils;
+import org.dstadler.jgit.helper.CookbookHelper;
+import org.eclipse.jgit.api.ArchiveCommand;
+import org.eclipse.jgit.api.ArchiveCommand.Format;
+import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.lib.FileMode;
+import org.eclipse.jgit.lib.ObjectId;
+import org.eclipse.jgit.lib.ObjectLoader;
+import org.eclipse.jgit.lib.Repository;
+import org.eclipse.jgit.revwalk.RevCommit;
+public class CreateCustomFormatArchive {
+private static final class ZipArchiveFormat implements Format<ZipOutputStream> {
+@Override
+public ZipOutputStream createArchiveOutputStream(OutputStream s) {
+return new ZipOutputStream(s);
+}
+@Override
+public void putEntry(ZipOutputStream out, ObjectId tree, String path, FileMode mode, ObjectLoader loader) throws IOException {
+if (loader != null) {
+ZipEntry entry = new ZipEntry(path);
+if (tree instanceof RevCommit) {
+long t = ((RevCommit) tree).getCommitTime() * 1000L;
+entry.setTime(t);
+}
+out.putNextEntry(entry);
+out.write(loader.getBytes());
+out.closeEntry();
+}
+}
+@Override
+public Iterable<String> suffixes() {
+return Collections.singleton(".mzip");
+}
+@Override
+public ZipOutputStream createArchiveOutputStream(OutputStream s, Map<String, Object> o) {
+return new ZipOutputStream(s);
+}
+}
+public static void main(String[] args) throws IOException, GitAPIException {
+File file = File.createTempFile("test", ".mzip");
+try (Repository repository = CookbookHelper.openJGitCookbookRepository()) {
+ArchiveCommand.registerFormat("myzip", new ZipArchiveFormat());
+try {
+try (OutputStream out = new FileOutputStream(file)) {
+try (Git git = new Git(repository)) {
+git.archive()
+.setTree(repository.resolve("master"))
+.setFormat("myzip")
+.setOutputStream(out)
+.call();
+}
+}
+} finally {
+ArchiveCommand.unregisterFormat("myzip");
+}
+System.out.println("Wrote " + file.length() + " bytes to " + file);
+}
+FileUtils.forceDelete(file);
+}
+}

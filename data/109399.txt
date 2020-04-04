@@ -1,0 +1,62 @@
+package com.facebook.presto.cost;
+import com.facebook.presto.Session;
+import com.facebook.presto.matching.Pattern;
+import com.facebook.presto.spi.relation.VariableReferenceExpression;
+import com.facebook.presto.sql.planner.TypeProvider;
+import com.facebook.presto.sql.planner.iterative.Lookup;
+import com.facebook.presto.sql.planner.plan.Patterns;
+import com.facebook.presto.sql.planner.plan.RowNumberNode;
+import java.util.Optional;
+import static com.facebook.presto.spi.type.BigintType.BIGINT;
+import static java.lang.Double.isNaN;
+import static java.lang.Math.min;
+public class RowNumberStatsRule
+extends SimpleStatsRule<RowNumberNode>
+{
+private static final Pattern<RowNumberNode> PATTERN = Patterns.rowNumber();
+public RowNumberStatsRule(StatsNormalizer normalizer)
+{
+super(normalizer);
+}
+@Override
+public Pattern<RowNumberNode> getPattern()
+{
+return PATTERN;
+}
+@Override
+public Optional<PlanNodeStatsEstimate> doCalculate(RowNumberNode node, StatsProvider statsProvider, Lookup lookup, Session session, TypeProvider types)
+{
+PlanNodeStatsEstimate sourceStats = statsProvider.getStats(node.getSource());
+if (sourceStats.isOutputRowCountUnknown()) {
+return Optional.empty();
+}
+double sourceRowsCount = sourceStats.getOutputRowCount();
+double partitionCount = 1;
+for (VariableReferenceExpression groupByVariable : node.getPartitionBy()) {
+VariableStatsEstimate variableStatistics = sourceStats.getVariableStatistics(groupByVariable);
+int nullRow = (variableStatistics.getNullsFraction() == 0.0) ? 0 : 1;
+partitionCount *= variableStatistics.getDistinctValuesCount() + nullRow;
+}
+partitionCount = min(sourceRowsCount, partitionCount);
+if (isNaN(partitionCount)) {
+return Optional.empty();
+}
+double rowsPerPartition = sourceRowsCount / partitionCount;
+if (node.getMaxRowCountPerPartition().isPresent()) {
+rowsPerPartition = min(rowsPerPartition, node.getMaxRowCountPerPartition().get());
+}
+double outputRowsCount = sourceRowsCount;
+if (node.getMaxRowCountPerPartition().isPresent()) {
+outputRowsCount = partitionCount * rowsPerPartition;
+}
+return Optional.of(PlanNodeStatsEstimate.buildFrom(sourceStats)
+.setOutputRowCount(outputRowsCount)
+.addVariableStatistics(node.getRowNumberVariable(), VariableStatsEstimate.builder()
+.setLowValue(1)
+.setDistinctValuesCount(rowsPerPartition)
+.setNullsFraction(0.0)
+.setAverageRowSize(BIGINT.getFixedSize())
+.build())
+.build());
+}
+}

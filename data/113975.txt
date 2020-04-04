@@ -1,0 +1,5 @@
+package org.spongepowered.mod.bridge.item;
+import net.minecraftforge.common.capabilities.CapabilityDispatcher;
+public interface ItemStackBridge_Forge {
+CapabilityDispatcher forgeBridge$getCapabilities();
+}

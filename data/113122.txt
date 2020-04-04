@@ -1,0 +1,16 @@
+package org.msgpack.core.buffer;
+import java.io.Closeable;
+import java.io.IOException;
+import java.io.Flushable;
+public interface MessageBufferOutput
+extends Closeable, Flushable
+{
+MessageBuffer next(int minimumSize)
+throws IOException;
+void writeBuffer(int length)
+throws IOException;
+void write(byte[] buffer, int offset, int length)
+throws IOException;
+void add(byte[] buffer, int offset, int length)
+throws IOException;
+}

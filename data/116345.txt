@@ -1,0 +1,77 @@
+package org.spongepowered.api.data.manipulator.mutable.common;
+import static com.google.common.base.Preconditions.checkNotNull;
+import org.spongepowered.api.data.DataContainer;
+import org.spongepowered.api.data.key.Key;
+import org.spongepowered.api.data.manipulator.DataManipulator;
+import org.spongepowered.api.data.manipulator.ImmutableDataManipulator;
+import org.spongepowered.api.data.value.BaseValue;
+import org.spongepowered.api.data.value.mutable.Value;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
+@SuppressWarnings("unchecked")
+public abstract class AbstractSingleData<T, M extends DataManipulator<M, I>, I extends ImmutableDataManipulator<I, M>>
+extends AbstractData<M, I> {
+protected final Key<? extends BaseValue<T>> usedKey;
+protected final T defaultValue;
+protected T value;
+@Deprecated
+protected AbstractSingleData(T value, Key<? extends BaseValue<T>> usedKey) {
+this((Key<? extends Value<T>>) usedKey, value, value);
+}
+protected AbstractSingleData(Key<? extends Value<T>> usedKey, T value) {
+this(usedKey, value, value);
+}
+protected AbstractSingleData(Key<? extends Value<T>> usedKey, T value, T defaultValue) {
+this.usedKey = checkNotNull(usedKey, "usedKey");
+this.value = checkNotNull(value, "value");
+this.defaultValue = checkNotNull(defaultValue, "defaultValue");
+registerGettersAndSetters();
+}
+@Override
+protected final void registerGettersAndSetters() {
+registerFieldGetter(this.usedKey, AbstractSingleData.this::getValue);
+registerFieldSetter(this.usedKey, this::setValue);
+registerKeyValue(this.usedKey, AbstractSingleData.this::getValueGetter);
+}
+protected abstract Value<?> getValueGetter();
+@Override
+public <E> Optional<E> get(Key<? extends BaseValue<E>> key) {
+return key == this.usedKey ? Optional.of((E) this.value) : super.get(key);
+}
+@Override
+public boolean supports(Key<?> key) {
+return checkNotNull(key) == this.usedKey;
+}
+@Override
+public abstract I asImmutable();
+protected T getValue() {
+return this.value;
+}
+protected M setValue(T value) {
+this.value = checkNotNull(value);
+return (M) this;
+}
+@Override
+protected DataContainer fillContainer(DataContainer dataContainer) {
+return dataContainer.set(this.usedKey.getQuery(), getValue());
+}
+@Override
+public int hashCode() {
+int hash = super.hashCode();
+hash = 31 * hash + Objects.hashCode(this.value);
+hash = 31 * hash + Objects.hashCode(this.defaultValue);
+return hash;
+}
+@SuppressWarnings("rawtypes")
+@Override
+public boolean equals(Object obj) {
+if (!super.equals(obj)) {
+return false;
+}
+final AbstractSingleData other = (AbstractSingleData) obj;
+return Objects.equals(this.value, other.value) &&
+Objects.equals(this.defaultValue, other.defaultValue);
+}
+}

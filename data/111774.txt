@@ -1,0 +1,5 @@
+package org.jupiter.common.util;
+public interface Function<F, T> {
+T apply(F input);
+boolean equals(Object obj);
+}

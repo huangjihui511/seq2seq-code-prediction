@@ -1,0 +1,84 @@
+package com.taobao.zookeeper.presstest.watcher;
+import java.io.IOException;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.KeeperException.Code;
+import org.apache.zookeeper.WatchedEvent;
+import org.apache.zookeeper.Watcher;
+import org.apache.zookeeper.ZooKeeper;
+import org.apache.zookeeper.data.Stat;
+import common.toolkit.java.util.StatisticsUtil;
+import common.toolkit.java.util.ThreadUtil;
+public class Subscriber implements Watcher {
+private static Log log = LogFactory.getLog( Subscriber.class );
+ZooKeeper zk = null;
+private String path;
+private String serverList;
+private int sessionTimeout;
+public Subscriber( String serverList, int sessionTimeout, String path ){
+this.serverList = serverList;
+this.sessionTimeout = sessionTimeout;
+this.path = path;
+this.createZk();
+}
+private boolean createZk(){
+if( null != this.zk ){
+try {
+this.zk.close();
+} catch ( InterruptedException e ) {
+}
+this.zk = null;
+}
+try {
+this.zk = new ZooKeeper( this.serverList, this.sessionTimeout, this );
+return true;
+} catch ( IOException e ) {
+return false;
+}
+}
+public void start() {
+if( null == this.zk )
+return;
+ThreadUtil.startThread( new Runnable() {
+@Override
+public void run() {
+try {
+zk.exists( path, true );
+}catch(KeeperException keeperException ){
+keeperException.code().equals( Code.SESSIONEXPIRED );
+if( createZk() ) {
+PressWatcher.reConnectSuccessTimes.incrementAndGet();
+}else{
+PressWatcher.reConnectFailTimes.incrementAndGet();
+}
+}catch ( Exception e ) {
+PressWatcher.failTimes.incrementAndGet();
+log.error( "zk.exists: ");
+e.printStackTrace();
+}
+}
+} );
+}
+@Override
+public void process( WatchedEvent event ) {
+try {
+if( null == this.zk ){
+createZk();
+}
+zk.getData( path, true, new Stat() );
+StatisticsUtil.totalTransactions.incrementAndGet();
+}catch(KeeperException keeperException ){
+keeperException.code().equals( Code.SESSIONEXPIRED );
+if( createZk() ) {
+PressWatcher.reConnectSuccessTimes.incrementAndGet();
+}else{
+PressWatcher.reConnectFailTimes.incrementAndGet();
+}
+}catch ( Exception e ) {
+PressWatcher.failTimes.incrementAndGet();
+log.error( "Fail get data: " );
+e.printStackTrace();
+}
+}
+}

@@ -1,0 +1,31 @@
+package org.apache.fontbox.encoding;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+public abstract class Encoding
+{
+protected Map<Integer,String> codeToName = new HashMap<>(250);
+protected Map<String,Integer> nameToCode = new HashMap<>(250);
+protected void addCharacterEncoding( int code, String name )
+{
+codeToName.put( code, name );
+nameToCode.put( name, code );
+}
+public Integer getCode( String name )
+{
+return nameToCode.get( name );
+}
+public String getName( int code )
+{
+String name = codeToName.get( code );
+if (name != null)
+{
+return name;
+}
+return ".notdef";
+}
+public Map<Integer, String> getCodeToNameMap()
+{
+return Collections.unmodifiableMap(codeToName);
+}
+}

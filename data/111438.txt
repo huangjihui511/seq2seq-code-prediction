@@ -1,0 +1,6 @@
+package io.grpc.netty;
+import io.perfmark.Tag;
+interface StreamIdHolder {
+int id();
+Tag tag();
+}

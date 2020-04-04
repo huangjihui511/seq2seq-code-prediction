@@ -1,0 +1,91 @@
+import com.google.api.client.http.InputStreamContent;
+import com.google.api.services.storage.Storage;
+import com.google.api.services.storage.model.Bucket;
+import com.google.api.services.storage.model.ObjectAccessControl;
+import com.google.api.services.storage.model.Objects;
+import com.google.api.services.storage.model.StorageObject;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.security.GeneralSecurityException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+public class StorageSample {
+private static final String TEST_FILENAME = "json-test.txt";
+public static List<StorageObject> listBucket(String bucketName)
+throws IOException, GeneralSecurityException {
+Storage client = StorageFactory.getService();
+Storage.Objects.List listRequest = client.objects().list(bucketName);
+List<StorageObject> results = new ArrayList<StorageObject>();
+Objects objects;
+do {
+objects = listRequest.execute();
+results.addAll(objects.getItems());
+listRequest.setPageToken(objects.getNextPageToken());
+} while (null != objects.getNextPageToken());
+return results;
+}
+public static Bucket getBucket(String bucketName) throws IOException, GeneralSecurityException {
+Storage client = StorageFactory.getService();
+Storage.Buckets.Get bucketRequest = client.buckets().get(bucketName);
+bucketRequest.setProjection("full");
+return bucketRequest.execute();
+}
+public static void uploadFile(
+String name, String contentType, File file, String bucketName)
+throws IOException, GeneralSecurityException {
+InputStreamContent contentStream = new InputStreamContent(
+contentType, new FileInputStream(file));
+contentStream.setLength(file.length());
+StorageObject objectMetadata = new StorageObject()
+.setName(name)
+.setAcl(Arrays.asList(
+new ObjectAccessControl().setEntity("allUsers").setRole("READER")));
+Storage client = StorageFactory.getService();
+Storage.Objects.Insert insertRequest = client.objects().insert(
+bucketName, objectMetadata, contentStream);
+insertRequest.execute();
+}
+public static void deleteObject(String path, String bucketName)
+throws IOException, GeneralSecurityException {
+Storage client = StorageFactory.getService();
+client.objects().delete(bucketName, path).execute();
+}
+public static void main(String[] args) {
+if (args.length < 1) {
+System.out.println("Usage: StorageSample <bucket-name>");
+System.exit(1);
+}
+String bucketName = args[0];
+try {
+Bucket bucket = getBucket(bucketName);
+System.out.println("name: " + bucketName);
+System.out.println("location: " + bucket.getLocation());
+System.out.println("timeCreated: " + bucket.getTimeCreated());
+System.out.println("owner: " + bucket.getOwner());
+List<StorageObject> bucketContents = listBucket(bucketName);
+if (null == bucketContents) {
+System.out.println(
+"There were no objects in the given bucket; try adding some and re-running.");
+}
+for (StorageObject object : bucketContents) {
+System.out.println(object.getName() + " (" + object.getSize() + " bytes)");
+}
+Path tempPath = Files.createTempFile("StorageSample", "txt");
+Files.write(tempPath, "Sample file".getBytes());
+File tempFile = tempPath.toFile();
+tempFile.deleteOnExit();
+uploadFile(TEST_FILENAME, "text/plain", tempFile, bucketName);
+deleteObject(TEST_FILENAME, bucketName);
+} catch (IOException e) {
+System.err.println(e.getMessage());
+System.exit(1);
+} catch (Throwable t) {
+t.printStackTrace();
+System.exit(1);
+}
+}
+}

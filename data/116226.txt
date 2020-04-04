@@ -1,0 +1,5 @@
+package org.apache.struts2.portlet.action;
+import javax.portlet.PortletContext;
+public interface PortletContextAware {
+void withPortletContext(PortletContext portletContext);
+}

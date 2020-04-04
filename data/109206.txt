@@ -1,0 +1,13 @@
+package io.realm.examples.newsreader.model.network;
+import java.util.List;
+import io.reactivex.Observable;
+import io.realm.examples.newsreader.model.entity.NYTimesStory;
+import retrofit2.http.GET;
+import retrofit2.http.Path;
+import retrofit2.http.Query;
+public interface NYTimesService {
+@GET("svc/topstories/v1/{section}.json")
+Observable<NYTimesResponse<List<NYTimesStory>>> topStories(
+@Path("section") String section,
+@Query(value = "api-key", encoded = true) String apiKey);
+}

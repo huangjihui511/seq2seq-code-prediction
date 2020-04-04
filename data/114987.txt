@@ -1,0 +1,21 @@
+package com.example.appengine.mail;
+import java.util.logging.Logger;
+import java.util.regex.Matcher;
+import javax.mail.internet.MimeMessage;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+public class HandleDiscussionEmail extends MailHandlerBase {
+private static final Logger log = Logger.getLogger(HandleDiscussionEmail.class.getName());
+public HandleDiscussionEmail() {
+super("discuss-(.*)@(.*)");
+}
+@Override
+protected boolean processMessage(HttpServletRequest req, HttpServletResponse res)
+throws ServletException {
+log.info("Received e-mail sent to discuss list.");
+MimeMessage msg = getMessageFromRequest(req);
+Matcher match = getMatcherFromRequest(req);
+return true;
+}
+}

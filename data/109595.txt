@@ -1,0 +1,59 @@
+package org.wltea.analyzer.lucene;
+import org.apache.lucene.analysis.Tokenizer;
+import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
+import org.apache.lucene.analysis.tokenattributes.OffsetAttribute;
+import org.apache.lucene.analysis.tokenattributes.TypeAttribute;
+import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.env.Environment;
+import org.wltea.analyzer.cfg.Configuration;
+import org.wltea.analyzer.core.IKSegmenter;
+import org.wltea.analyzer.core.Lexeme;
+import java.io.IOException;
+import java.io.Reader;
+import org.apache.lucene.analysis.tokenattributes.PositionIncrementAttribute;
+public final class IKTokenizer extends Tokenizer {
+private IKSegmenter _IKImplement;
+private final CharTermAttribute termAtt;
+private final OffsetAttribute offsetAtt;
+private final TypeAttribute typeAtt;
+private int endPosition;
+private int skippedPositions;
+private PositionIncrementAttribute posIncrAtt;
+public IKTokenizer(Configuration configuration){
+super();
+offsetAtt = addAttribute(OffsetAttribute.class);
+termAtt = addAttribute(CharTermAttribute.class);
+typeAtt = addAttribute(TypeAttribute.class);
+posIncrAtt = addAttribute(PositionIncrementAttribute.class);
+_IKImplement = new IKSegmenter(input,configuration);
+}
+@Override
+public boolean incrementToken() throws IOException {
+clearAttributes();
+skippedPositions = 0;
+Lexeme nextLexeme = _IKImplement.next();
+if(nextLexeme != null){
+posIncrAtt.setPositionIncrement(skippedPositions +1 );
+termAtt.append(nextLexeme.getLexemeText());
+termAtt.setLength(nextLexeme.getLength());
+offsetAtt.setOffset(correctOffset(nextLexeme.getBeginPosition()), correctOffset(nextLexeme.getEndPosition()));
+endPosition = nextLexeme.getEndPosition();
+typeAtt.setType(nextLexeme.getLexemeTypeString());
+return true;
+}
+return false;
+}
+@Override
+public void reset() throws IOException {
+super.reset();
+_IKImplement.reset(input);
+skippedPositions = 0;
+}
+@Override
+public final void end() throws IOException {
+super.end();
+int finalOffset = correctOffset(this.endPosition);
+offsetAtt.setOffset(finalOffset, finalOffset);
+posIncrAtt.setPositionIncrement(posIncrAtt.getPositionIncrement() + skippedPositions);
+}
+}

@@ -1,0 +1,74 @@
+package com.datumbox.framework.core.machinelearning.common.abstracts;
+import com.datumbox.framework.common.Configuration;
+import com.datumbox.framework.core.common.dataobjects.Dataframe;
+import com.datumbox.framework.core.machinelearning.common.interfaces.Trainable;
+import com.datumbox.framework.common.storage.abstracts.BigMapHolder;
+import com.datumbox.framework.common.storage.interfaces.StorageEngine;
+import com.datumbox.framework.common.utilities.RandomGenerator;
+import com.datumbox.framework.core.machinelearning.common.dataobjects.KnowledgeBase;
+import com.datumbox.framework.core.machinelearning.common.interfaces.ModelParameters;
+import com.datumbox.framework.core.machinelearning.common.interfaces.TrainingParameters;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+public abstract class AbstractTrainer<MP extends AbstractTrainer.AbstractModelParameters, TP extends AbstractTrainer.AbstractTrainingParameters> implements Trainable<MP, TP> {
+public static abstract class AbstractModelParameters extends BigMapHolder implements ModelParameters {
+protected AbstractModelParameters(StorageEngine storageEngine) {
+super(storageEngine);
+}
+}
+public static abstract class AbstractTrainingParameters implements TrainingParameters {
+}
+protected final Logger logger = LoggerFactory.getLogger(getClass());
+protected final KnowledgeBase<MP, TP> knowledgeBase;
+private boolean stored;
+protected AbstractTrainer(TP trainingParameters, Configuration configuration) {
+String knowledgeBaseName = createKnowledgeBaseName("kb" + RandomGenerator.getThreadLocalRandomUnseeded().nextLong(), configuration.getStorageConfiguration().getStorageNameSeparator());
+knowledgeBase = new KnowledgeBase<>(knowledgeBaseName, configuration, trainingParameters);
+stored = false;
+}
+protected AbstractTrainer(String storageName, Configuration configuration) {
+String knowledgeBaseName = createKnowledgeBaseName(storageName, configuration.getStorageConfiguration().getStorageNameSeparator());
+knowledgeBase = new KnowledgeBase<>(knowledgeBaseName, configuration);
+stored = true;
+}
+@Override
+public MP getModelParameters() {
+return knowledgeBase.getModelParameters();
+}
+@Override
+public TP getTrainingParameters() {
+return knowledgeBase.getTrainingParameters();
+}
+@Override
+public void fit(Dataframe trainingData) {
+logger.info("fit()");
+knowledgeBase.clear();
+_fit(trainingData);
+}
+@Override
+public void save(String storageName) {
+logger.info("save()");
+String knowledgeBaseName = createKnowledgeBaseName(storageName, knowledgeBase.getConfiguration().getStorageConfiguration().getStorageNameSeparator());
+knowledgeBase.save(knowledgeBaseName);
+stored = true;
+}
+@Override
+public void delete() {
+logger.info("delete()");
+knowledgeBase.delete();
+}
+@Override
+public void close() {
+logger.info("close()");
+if(stored) {
+knowledgeBase.close();
+}
+else {
+knowledgeBase.delete();
+}
+}
+protected abstract void _fit(Dataframe trainingData);
+protected final String createKnowledgeBaseName(String storageName, String separator) {
+return storageName + separator + getClass().getSimpleName();
+}
+}

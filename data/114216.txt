@@ -1,0 +1,41 @@
+package com.datumbox.framework.common.dataobjects;
+import java.util.Collection;
+import java.util.Iterator;
+Object.
+public abstract class AbstractDataStructureCollection<T extends Collection<?>> extends AbstractDataStructure<T> {
+public AbstractDataStructureCollection(T data) {
+super(data);
+}
+public final int size() {
+return internalData.size();
+}
+public final void clear() {
+internalData.clear();
+}
+public final boolean isEmpty() {
+return internalData.isEmpty();
+}
+public final Object[] toArray() {
+return internalData.toArray();
+}
+public final boolean contains(Object o) {
+return internalData.contains(o);
+}
+public final Iterator<Double> iteratorDouble() {
+return new Iterator<Double>() {
+private final Iterator<Object> objectIterator = (Iterator<Object>) internalData.iterator();
+@Override
+public boolean hasNext() {
+return objectIterator.hasNext();
+}
+@Override
+public Double next() {
+return TypeInference.toDouble(objectIterator.next());
+}
+@Override
+public void remove() {
+objectIterator.remove();
+}
+};
+}
+}

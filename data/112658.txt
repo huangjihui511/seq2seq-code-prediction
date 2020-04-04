@@ -1,0 +1,35 @@
+package com.kalessil.phpStorm.phpInspectionsEA.utils.hierarhy;
+import com.jetbrains.php.lang.psi.elements.PhpClass;
+import com.kalessil.phpStorm.phpInspectionsEA.utils.OpenapiResolveUtil;
+import org.jetbrains.annotations.NotNull;
+import java.util.HashSet;
+import java.util.Set;
+final public class InterfacesExtractUtil {
+@NotNull
+public static HashSet<PhpClass> getCrawlInheritanceTree(@NotNull PhpClass clazz, boolean withClasses) {
+final HashSet<PhpClass> processed = new HashSet<>();
+if (clazz.isInterface()) {
+processInterface(clazz, processed);
+} else {
+processClass(clazz, processed, withClasses);
+}
+return processed;
+}
+private static void processClass(@NotNull PhpClass clazz, @NotNull Set<PhpClass> processedItems, boolean withClasses) {
+if (!clazz.isInterface()) {
+if (withClasses && !processedItems.add(clazz)) {
+return;
+}
+OpenapiResolveUtil.resolveImplementedInterfaces(clazz).forEach(i -> processInterface(i, processedItems));
+final PhpClass parent = OpenapiResolveUtil.resolveSuperClass(clazz);
+if (parent != null && clazz != parent) {
+processClass(parent, processedItems, withClasses);
+}
+}
+}
+private static void processInterface(@NotNull PhpClass clazz, @NotNull Set<PhpClass> processedItems) {
+if (clazz.isInterface() && processedItems.add(clazz)) {
+OpenapiResolveUtil.resolveImplementedInterfaces(clazz).forEach(i -> processInterface(i, processedItems));
+}
+}
+}

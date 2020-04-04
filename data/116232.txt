@@ -1,0 +1,7 @@
+package org.apache.struts2.portlet.interceptor;
+import javax.portlet.PortletPreferences;
+@Deprecated
+public interface PortletPreferencesAware {
+@Deprecated
+void setPortletPreferences(PortletPreferences prefs);
+}

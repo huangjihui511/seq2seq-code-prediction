@@ -1,0 +1,58 @@
+package org.jb2011.lnf.beautyeye.ch14_combox;
+import java.awt.Component;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Insets;
+import javax.swing.BorderFactory;
+import javax.swing.JList;
+import javax.swing.plaf.basic.BasicComboBoxRenderer;
+import org.jb2011.lnf.beautyeye.utils.BEUtils;
+public class BEComboBoxRenderer extends BasicComboBoxRenderer
+{
+private boolean selected = false;
+private BEComboBoxUI ui = null;
+public BEComboBoxRenderer(BEComboBoxUI ui)
+{
+super();
+this.ui = ui;
+setOpaque(false);
+}
+public Component getListCellRendererComponent(JList list,
+Object value,
+int index,
+boolean isSelected,
+boolean cellHasFocus)
+{
+Component c = super.getListCellRendererComponent(list
+, value, index, isSelected, cellHasFocus);
+this.selected = isSelected;
+return c;
+}
+public void paintComponent(Graphics g)
+{
+if (ui.isPopupVisible(null) && selected)
+{
+org.jb2011.lnf.beautyeye.ch9_menu.__Icon9Factory__.getInstance().getBgIcon_ItemSelected()
+.draw((Graphics2D)g, 0, 0, this.getWidth(), this.getHeight());
+}
+else
+{
+if(!ui.isPopupVisible(null)
+)
+{
+g.setColor(this.getBackground());
+BEUtils.fillTextureRoundRec((Graphics2D)g, this.getBackground(), is.left, is.top
+, this.getWidth()-is.left-is.right
+, this.getHeight()-is.top-is.bottom,20,20);
+}
+}
+super.paintComponent(g);
+}
+public static class UIResource extends BEComboBoxRenderer implements javax.swing.plaf.UIResource
+{
+public UIResource(BEComboBoxUI ui)
+{
+super(ui);
+}
+}
+}

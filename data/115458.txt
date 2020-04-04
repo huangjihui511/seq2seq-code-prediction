@@ -1,0 +1,63 @@
+package org.gnucash.android.export.csv;
+import android.database.sqlite.SQLiteDatabase;
+import com.crashlytics.android.Crashlytics;
+import org.gnucash.android.R;
+import org.gnucash.android.export.ExportParams;
+import org.gnucash.android.export.Exporter;
+import org.gnucash.android.model.Account;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
+public class CsvAccountExporter extends Exporter{
+private char mCsvSeparator;
+public CsvAccountExporter(ExportParams params) {
+super(params, null);
+mCsvSeparator = params.getCsvSeparator();
+LOG_TAG = "GncXmlExporter";
+}
+public CsvAccountExporter(ExportParams params, SQLiteDatabase db) {
+super(params, db);
+mCsvSeparator = params.getCsvSeparator();
+LOG_TAG = "GncXmlExporter";
+}
+@Override
+public List<String> generateExport() throws ExporterException {
+String outputFile = getExportCacheFilePath();
+try (CsvWriter writer = new CsvWriter(new FileWriter(outputFile), mCsvSeparator + "")) {
+generateExport(writer);
+} catch (IOException ex){
+Crashlytics.log("Error exporting CSV");
+Crashlytics.logException(ex);
+throw new ExporterException(mExportParams, ex);
+}
+return Arrays.asList(outputFile);
+}
+public void generateExport(final CsvWriter csvWriter) throws ExporterException {
+try {
+List<String> names = Arrays.asList(mContext.getResources().getStringArray(R.array.csv_account_headers));
+List<Account> accounts = mAccountsDbAdapter.getAllRecords();
+for(int i = 0; i < names.size(); i++) {
+csvWriter.writeToken(names.get(i));
+}
+csvWriter.newLine();
+for (Account account : accounts) {
+csvWriter.writeToken(account.getAccountType().toString());
+csvWriter.writeToken(account.getFullName());
+csvWriter.writeToken(account.getName());
+csvWriter.writeToken(null); 
+csvWriter.writeToken(account.getDescription());
+csvWriter.writeToken(account.getColorHexString());
+csvWriter.writeToken(null); 
+csvWriter.writeToken(account.getCommodity().getCurrencyCode());
+csvWriter.writeToken("CURRENCY");
+csvWriter.writeToken(account.isHidden() ? "T" : "F");
+csvWriter.writeToken("F"); 
+csvWriter.writeEndToken(account.isPlaceholderAccount() ? "T": "F");
+}
+} catch (IOException e) {
+Crashlytics.logException(e);
+throw new ExporterException(mExportParams, e);
+}
+}
+}

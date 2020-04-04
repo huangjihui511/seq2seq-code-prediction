@@ -1,0 +1,79 @@
+package com.twelvemonkeys.servlet.jsp.droplet.taglib;
+import com.twelvemonkeys.servlet.jsp.taglib.ExTagSupport;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.jsp.JspException;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+public class IncludeTag extends ExTagSupport {
+private ArrayList<String> parameterNames = null;
+private HashMap<String, Object> oldParameters = null;
+private String page;
+public final static String PAGE_CONTEXT = "com.twelvemonkeys.servlet.jsp.PageContext";
+public void setPage(String pPage) {
+page = pPage;
+}
+public void addParameter(String pName, Object pValue) {
+if (!parameterNames.contains(pName)) {
+parameterNames.add(pName);
+Object obj = getRequest().getAttribute(pName);
+if (obj != null) {
+oldParameters.put(pName, obj);
+}
+}
+getRequest().setAttribute(pName, pValue);
+}
+public int doStartTag() throws JspException {
+oldParameters = new HashMap<String, Object>();
+parameterNames = new ArrayList<String>();
+return EVAL_BODY_INCLUDE;
+}
+public int doEndTag() throws JspException {
+String msg;
+try {
+Iterator<String> iterator;
+String parameterName;
+addParameter(PAGE_CONTEXT, pageContext); 
+pageContext.include(page);
+iterator = parameterNames.iterator();
+while (iterator.hasNext()) {
+parameterName = iterator.next();
+getRequest().removeAttribute(parameterName);
+}
+iterator = oldParameters.keySet().iterator();
+while (iterator.hasNext()) {
+parameterName = iterator.next();
+getRequest().setAttribute(parameterName, oldParameters.get(parameterName));
+}
+return super.doEndTag();
+}
+catch (IOException ioe) {
+msg = "Caught an IOException while including " + page
++ "\n" + ioe.toString();
+log(msg, ioe);
+throw new JspException(msg);
+}
+catch (ServletException se) {
+msg = "Caught a ServletException while including " + page
++ "\n" + se.toString();
+log(msg, se);
+throw new JspException(msg);
+}
+}
+protected void clearServiceState() {
+oldParameters = null;
+parameterNames = null;
+}
+private RequestDispatcher getDispatcher() {
+return getRequest().getRequestDispatcher(page);
+}
+private HttpServletRequest getRequest() {
+return (HttpServletRequest) pageContext.getRequest();
+}
+private HttpServletResponse getResponse() {
+return (HttpServletResponse) pageContext.getResponse();
+}
+}

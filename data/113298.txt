@@ -1,0 +1,6 @@
+package org.ocpsoft.prettytime;
+import java.util.Locale;
+public interface LocaleAware<TYPE>
+{
+public TYPE setLocale(Locale locale);
+}

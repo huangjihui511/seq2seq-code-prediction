@@ -1,0 +1,68 @@
+package com.github.jknack.handlebars.io;
+import static org.apache.commons.lang3.Validate.isTrue;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.nio.charset.Charset;
+import java.util.Arrays;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+public class CompositeTemplateLoader implements TemplateLoader {
+private static final Logger logger = LoggerFactory.getLogger(CompositeTemplateLoader.class);
+private final TemplateLoader[] delegates;
+public CompositeTemplateLoader(final TemplateLoader... loaders) {
+isTrue(loaders.length > 1, "At least two loaders are required.");
+this.delegates = loaders;
+}
+@Override
+public TemplateSource sourceAt(final String location) throws IOException {
+for (TemplateLoader delegate : delegates) {
+try {
+return delegate.sourceAt(location);
+} catch (IOException ex) {
+logger.trace("Unable to resolve: {}, trying next loader in the chain.", location);
+}
+}
+throw new FileNotFoundException(location);
+}
+@Override
+public String resolve(final String location) {
+for (TemplateLoader delegate : delegates) {
+try {
+delegate.sourceAt(location);
+return delegate.resolve(location);
+} catch (IOException ex) {
+logger.trace("Unable to resolve: {}, trying next loader in the chain.", location);
+}
+}
+throw new IllegalStateException("Can't resolve: '" + location + "'");
+}
+@Override
+public String getPrefix() {
+throw new UnsupportedOperationException();
+}
+@Override
+public String getSuffix() {
+throw new UnsupportedOperationException();
+}
+@Override
+public void setPrefix(final String prefix) {
+throw new UnsupportedOperationException();
+}
+@Override
+public void setSuffix(final String suffix) {
+throw new UnsupportedOperationException();
+}
+@Override
+public void setCharset(final Charset charset) {
+for (TemplateLoader delegate : delegates) {
+delegate.setCharset(charset);
+}
+}
+@Override
+public Charset getCharset() {
+throw new UnsupportedOperationException();
+}
+public Iterable<TemplateLoader> getDelegates() {
+return Arrays.asList(delegates);
+}
+}

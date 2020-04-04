@@ -1,0 +1,37 @@
+package io.realm.examples.librarymodules;
+import android.content.Context;
+import io.realm.Realm;
+import io.realm.RealmConfiguration;
+import io.realm.examples.librarymodules.model.Cat;
+import io.realm.examples.librarymodules.modules.AllAnimalsModule;
+public class Zoo {
+private final RealmConfiguration realmConfig;
+private Realm realm;
+public Zoo() {
+realmConfig = new RealmConfiguration.Builder()     
+.name("library.zoo.realm")                 
+.modules(new AllAnimalsModule())           
+.build();
+Realm.deleteRealm(realmConfig);
+}
+public void open() {
+realm = Realm.getInstance(realmConfig);
+}
+public long getNoOfAnimals() {
+return realm.where(Cat.class).count();
+}
+public void addAnimals(final int count) {
+realm.executeTransaction(new Realm.Transaction() {
+@Override
+public void execute(Realm realm) {
+for (int i = 0; i < count; i++) {
+Cat cat = realm.createObject(Cat.class);
+cat.setName("Cat " + i);
+}
+}
+});
+}
+public void close() {
+realm.close();
+}
+}

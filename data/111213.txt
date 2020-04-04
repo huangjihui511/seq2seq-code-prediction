@@ -1,0 +1,23 @@
+package com.github.benmanes.caffeine.cache.impl;
+import com.github.benmanes.caffeine.cache.BasicCache;
+import systems.comodal.collision.cache.CollisionCache;
+public final class Collision<K, V> implements BasicCache<K, V> {
+private final CollisionCache<K, V> cache;
+public Collision(int maximumSize) {
+cache = CollisionCache.<V>withCapacity(maximumSize)
+.setStrictCapacity(true)
+.buildSparse();
+}
+@Override
+public V get(K key) {
+return cache.getIfPresent(key);
+}
+@Override
+public void put(K key, V value) {
+cache.putReplace(key, value);
+}
+@Override
+public void clear() {
+cache.clear();
+}
+}

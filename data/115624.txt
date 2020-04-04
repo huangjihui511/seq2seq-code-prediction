@@ -1,0 +1,31 @@
+package com.netflix.astyanax.query;
+import java.math.BigInteger;
+import java.nio.ByteBuffer;
+import java.util.Collection;
+import com.netflix.astyanax.ExceptionCallback;
+import com.netflix.astyanax.Execution;
+import com.netflix.astyanax.RowCallback;
+import com.netflix.astyanax.connectionpool.exceptions.ConnectionException;
+import com.netflix.astyanax.model.ByteBufferRange;
+import com.netflix.astyanax.model.ColumnSlice;
+import com.netflix.astyanax.model.Rows;
+public interface AllRowsQuery<K, C> extends Execution<Rows<K, C>> {
+AllRowsQuery<K, C> setBlockSize(int blockSize);
+AllRowsQuery<K, C> setRowLimit(int rowLimit);
+AllRowsQuery<K, C> setExceptionCallback(ExceptionCallback cb);
+AllRowsQuery<K, C> setCheckpointManager(CheckpointManager manager);
+AllRowsQuery<K, C> setRepeatLastToken(boolean repeatLastToken);
+AllRowsQuery<K, C> setIncludeEmptyRows(boolean flag);
+AllRowsQuery<K, C> withColumnSlice(C... columns);
+AllRowsQuery<K, C> withColumnSlice(Collection<C> columns);
+AllRowsQuery<K, C> withColumnSlice(ColumnSlice<C> columns);
+AllRowsQuery<K, C> withColumnRange(C startColumn, C endColumn, boolean reversed, int count);
+AllRowsQuery<K, C> withColumnRange(ByteBuffer startColumn, ByteBuffer endColumn, boolean reversed, int count);
+AllRowsQuery<K, C> withColumnRange(ByteBufferRange range);
+AllRowsQuery<K, C> setConcurrencyLevel(int numberOfThreads);
+@Deprecated
+AllRowsQuery<K, C> setThreadCount(int numberOfThreads);
+void executeWithCallback(RowCallback<K, C> callback) throws ConnectionException;
+AllRowsQuery<K, C> forTokenRange(BigInteger startToken, BigInteger endToken);
+AllRowsQuery<K, C> forTokenRange(String startToken, String endToken);
+}

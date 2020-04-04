@@ -1,0 +1,12 @@
+package tests;
+import com.google.auto.factory.AutoFactory;
+import com.google.auto.factory.Provided;
+@AutoFactory
+@SuppressWarnings("unused")
+final class ClassUsingQualifierWithArgs {
+private final String providedDepA;
+ClassUsingQualifierWithArgs(
+@Provided @QualifierWithArgs(name = "Fred", count = 3) String providedDepA) {
+this.providedDepA = providedDepA;
+}
+}

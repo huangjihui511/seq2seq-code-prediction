@@ -1,0 +1,26 @@
+package de.codecentric.boot.admin.client.config;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import javax.annotation.Nullable;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+@lombok.Data
+@ConfigurationProperties(prefix = "spring.boot.admin.client.instance")
+public class InstanceProperties {
+@Nullable
+private String managementUrl;
+@Nullable
+private String managementBaseUrl;
+@Nullable
+private String serviceUrl;
+@Nullable
+private String serviceBaseUrl;
+@Nullable
+private String servicePath;
+@Nullable
+private String healthUrl;
+@Value("${spring.application.name:spring-boot-application}")
+private String name = "spring-boot-application";
+private boolean preferIp = false;
+private Map<String, String> metadata = new LinkedHashMap<>();
+}

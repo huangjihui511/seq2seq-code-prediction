@@ -1,0 +1,12 @@
+package com.google.inject.internal;
+import com.google.inject.spi.ModuleAnnotatedMethodScannerBinding;
+final class ModuleAnnotatedMethodScannerProcessor extends AbstractProcessor {
+ModuleAnnotatedMethodScannerProcessor(Errors errors) {
+super(errors);
+}
+@Override
+public Boolean visit(ModuleAnnotatedMethodScannerBinding command) {
+injector.state.addScanner(command);
+return true;
+}
+}

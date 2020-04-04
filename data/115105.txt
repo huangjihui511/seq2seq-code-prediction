@@ -1,0 +1,35 @@
+package io.ebeaninternal.server.deploy.meta;
+import io.ebeaninternal.server.deploy.BeanDescriptorMap;
+import io.ebeaninternal.server.deploy.BeanProperty;
+import io.ebeaninternal.server.deploy.BeanPropertyAssocOne;
+public class DeployBeanTable {
+private final Class<?> beanType;
+private String baseTable;
+private DeployBeanProperty idProperty;
+DeployBeanTable(Class<?> beanType) {
+this.beanType = beanType;
+}
+public String getBaseTable() {
+return baseTable;
+}
+public void setBaseTable(String baseTable) {
+this.baseTable = baseTable;
+}
+public BeanProperty createIdProperty(BeanDescriptorMap owner) {
+return idProperty == null ? null : createProperty(owner, idProperty);
+}
+@SuppressWarnings({"unchecked"})
+private BeanProperty createProperty(BeanDescriptorMap owner, DeployBeanProperty prop) {
+if (prop instanceof DeployBeanPropertyAssocOne<?>) {
+return new BeanPropertyAssocOne(owner, (DeployBeanPropertyAssocOne<?>) prop);
+} else {
+return new BeanProperty(prop);
+}
+}
+public void setIdProperty(DeployBeanProperty idProperty) {
+this.idProperty = idProperty;
+}
+public Class<?> getBeanType() {
+return beanType;
+}
+}

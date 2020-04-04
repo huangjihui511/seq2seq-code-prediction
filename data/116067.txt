@@ -1,0 +1,49 @@
+package org.apache.dubbo.spring.starter.autoconfigure;
+import org.apache.dubbo.common.utils.Assert;
+import org.springframework.core.env.PropertyResolver;
+import org.springframework.lang.Nullable;
+class DelegatingPropertyResolver implements PropertyResolver {
+private final PropertyResolver delegate;
+DelegatingPropertyResolver(PropertyResolver delegate) {
+Assert.notNull(delegate, "The delegate of PropertyResolver must not be null");
+this.delegate = delegate;
+}
+@Override
+public boolean containsProperty(String key) {
+return delegate.containsProperty(key);
+}
+@Override
+@Nullable
+public String getProperty(String key) {
+return delegate.getProperty(key);
+}
+@Override
+public String getProperty(String key, String defaultValue) {
+return delegate.getProperty(key, defaultValue);
+}
+@Override
+@Nullable
+public <T> T getProperty(String key, Class<T> targetType) {
+return delegate.getProperty(key, targetType);
+}
+@Override
+public <T> T getProperty(String key, Class<T> targetType, T defaultValue) {
+return delegate.getProperty(key, targetType, defaultValue);
+}
+@Override
+public String getRequiredProperty(String key) throws IllegalStateException {
+return delegate.getRequiredProperty(key);
+}
+@Override
+public <T> T getRequiredProperty(String key, Class<T> targetType) throws IllegalStateException {
+return delegate.getRequiredProperty(key, targetType);
+}
+@Override
+public String resolvePlaceholders(String text) {
+return delegate.resolvePlaceholders(text);
+}
+@Override
+public String resolveRequiredPlaceholders(String text) throws IllegalArgumentException {
+return delegate.resolveRequiredPlaceholders(text);
+}
+}

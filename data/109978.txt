@@ -1,0 +1,9 @@
+package com.google.cloud.tools.jib.plugins.common;
+public class MainClassInferenceException extends Exception {
+MainClassInferenceException(String message) {
+super(message);
+}
+MainClassInferenceException(String message, Throwable cause) {
+super(message, cause);
+}
+}

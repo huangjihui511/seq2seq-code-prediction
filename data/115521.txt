@@ -1,0 +1,149 @@
+package com.JUtils.base;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+public class MoneyUtils {
+private static final String CN_FULL = "";
+private static final int MONEY_PRECISION = 2;
+public static String number2CNMontray(String numberOfMoney) {
+return number2CNMontray(new BigDecimal(numberOfMoney));
+}
+public static String number2CNMontray(BigDecimal numberOfMoney) {
+StringBuffer sb = new StringBuffer();
+int signum = numberOfMoney.signum();
+if (signum == 0) {
+return CN_ZEOR_FULL;
+}
+long number = numberOfMoney.movePointRight(MONEY_PRECISION).setScale(0, 4).abs().longValue();
+long scale = number % 100;
+int numUnit = 0;
+int numIndex = 0;
+boolean getZero = false;
+if (!(scale > 0)) {
+numIndex = 2;
+number = number / 100;
+getZero = true;
+}
+if ((scale > 0) && (!(scale % 10 > 0))) {
+numIndex = 1;
+number = number / 10;
+getZero = true;
+}
+int zeroSize = 0;
+while (true) {
+if (number <= 0) {
+break;
+}
+numUnit = (int) (number % 10);
+if (numUnit > 0) {
+if ((numIndex == 9) && (zeroSize >= 3)) {
+sb.insert(0, CN_UPPER_MONETRAY_UNIT[6]);
+}
+if ((numIndex == 13) && (zeroSize >= 3)) {
+sb.insert(0, CN_UPPER_MONETRAY_UNIT[10]);
+}
+sb.insert(0, CN_UPPER_MONETRAY_UNIT[numIndex]);
+sb.insert(0, CN_UPPER_NUMBER[numUnit]);
+getZero = false;
+zeroSize = 0;
+} else {
+++zeroSize;
+if (!(getZero)) {
+sb.insert(0, CN_UPPER_NUMBER[numUnit]);
+}
+if (numIndex == 2) {
+if (number > 0) {
+sb.insert(0, CN_UPPER_MONETRAY_UNIT[numIndex]);
+}
+} else if (((numIndex - 2) % 4 == 0) && (number % 1000 > 0)) {
+sb.insert(0, CN_UPPER_MONETRAY_UNIT[numIndex]);
+}
+getZero = true;
+}
+number = number / 10;
+++numIndex;
+}
+if (signum == -1) {
+sb.insert(0, CN_NEGATIVE);
+}
+if (!(scale > 0)) {
+sb.append(CN_FULL);
+}
+return sb.toString();
+}
+public static String accountantMoney(BigDecimal money){
+return accountantMoney(money, 2, 1);
+}
+public static String getFormatMoney(BigDecimal money,int scale,double divisor){
+return formatMoney(money, scale, divisor) + getCellFormat(divisor);
+}
+public static String getAccountantMoney(BigDecimal money, int scale, double divisor){
+return accountantMoney(money, scale, divisor) + getCellFormat(divisor);
+}
+private static String accountantMoney(BigDecimal money,int scale,double divisor){
+String disposeMoneyStr = formatMoney(money, scale, divisor);
+int dotPosition = disposeMoneyStr.indexOf(".");
+if(dotPosition > 0){
+exceptDotMoeny = disposeMoneyStr.substring(0,dotPosition);
+dotMeony = disposeMoneyStr.substring(dotPosition);
+}else{
+exceptDotMoeny = disposeMoneyStr;
+}
+int negativePosition = exceptDotMoeny.indexOf("-");
+if(negativePosition == 0){
+exceptDotMoeny = exceptDotMoeny.substring(1);
+}
+StringBuffer reverseExceptDotMoney = new StringBuffer(exceptDotMoeny);
+char[] moneyChar = reverseExceptDotMoney.toString().toCharArray();
+for(int i = 0; i < moneyChar.length; i++){
+if(i != 0 && i % 3 == 0){
+}
+returnMeony.append(moneyChar[i]);
+}
+if(dotPosition > 0){
+returnMeony.append(dotMeony);
+}
+if(negativePosition == 0){
+return "-" + returnMeony.toString();
+}else{
+return returnMeony.toString();
+}
+}
+private static String formatMoney(BigDecimal money,int scale,double divisor){
+if (divisor == 0) {
+return "0.00";
+}
+if (scale < 0) {
+return "0.00";
+}
+BigDecimal divisorBD = new BigDecimal(divisor);
+return money.divide(divisorBD, scale, RoundingMode.HALF_UP).toString();
+}
+private static String getCellFormat(double divisor){
+String str = String.valueOf(divisor);
+int len = str.substring(0,str.indexOf(".")).length();
+String cell = "";
+switch(len){
+case 1:
+break;
+case 2:
+break;
+case 3:
+break;
+case 4:
+break;
+case 5:
+break;
+case 6:
+break;
+case 7:
+break;
+case 8:
+break;
+case 9:
+break;
+case 10:
+break;
+}
+return cell;
+}
+}

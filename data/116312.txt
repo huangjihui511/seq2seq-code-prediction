@@ -1,0 +1,6 @@
+package org.spongepowered.api.item.recipe;
+import org.spongepowered.api.CatalogType;
+import org.spongepowered.api.item.inventory.ItemStackSnapshot;
+public interface Recipe extends CatalogType {
+ItemStackSnapshot getExemplaryResult();
+}

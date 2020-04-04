@@ -1,0 +1,25 @@
+package com.netflix.astyanax;
+import java.nio.ByteBuffer;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import com.netflix.astyanax.serializers.ComparatorType;
+public interface Serializer<T> {
+ByteBuffer toByteBuffer(T obj);
+byte[] toBytes(T obj);
+T fromBytes(byte[] bytes);
+T fromByteBuffer(ByteBuffer byteBuffer);
+Set<ByteBuffer> toBytesSet(List<T> list);
+List<T> fromBytesSet(Set<ByteBuffer> list);
+<V> Map<ByteBuffer, V> toBytesMap(Map<T, V> map);
+<V> Map<T, V> fromBytesMap(Map<ByteBuffer, V> map);
+List<ByteBuffer> toBytesList(List<T> list);
+List<ByteBuffer> toBytesList(Collection<T> list);
+List<ByteBuffer> toBytesList(Iterable<T> list);
+List<T> fromBytesList(List<ByteBuffer> list);
+ComparatorType getComparatorType();
+ByteBuffer getNext(ByteBuffer byteBuffer);
+ByteBuffer fromString(String string);
+String getString(ByteBuffer byteBuffer);
+}

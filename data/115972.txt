@@ -1,0 +1,54 @@
+package com.taobao.taokeeper.common.util;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import com.taobao.taokeeper.common.type.NodePathCheckRule;
+import common.toolkit.java.util.StringUtil;
+import common.toolkit.java.util.collection.ListUtil;
+public class AlarmSettingUtil {
+public static NodePathCheckRule parseNodePathCheckRuleFromString( String str ) throws Exception{
+if( StringUtil.isBlank( str ) ){
+return null;
+}
+String[] temp = str.split( "\\^" );
+if( 0 == temp.length ){
+return null;
+}
+try {
+String strPathOnlyCanBeExist = StringUtil.replaceAll( temp[0], "", "\\|" );
+String strPathCanNotBeExist = StringUtil.replaceAll( temp[1], "", "\\|" );
+Map<String,List<String>> pathOnlyCanBeExist = new HashMap<String, List<String>>();
+Map<String,List<String>> pathCanNotBeExist = new HashMap<String, List<String>>();
+if( !StringUtil.isBlank( strPathOnlyCanBeExist ) ){
+String[] ruleArray = strPathOnlyCanBeExist.split( ";" );
+for( String rule : ruleArray ){
+if( StringUtil.isBlank( rule ) ){
+continue;
+}
+String[] pathArray = StringUtil.trimToEmpty( rule ).split( ":" );
+String nodeName = StringUtil.trimToEmpty( pathArray[0] );
+List<String> pathList = ListUtil.parseList( pathArray[1] );
+pathOnlyCanBeExist.put( nodeName, pathList );
+}
+}
+if( !StringUtil.isBlank( strPathCanNotBeExist ) ){
+String[] ruleArray = strPathCanNotBeExist.split( ";" );
+for( String rule : ruleArray ){
+if( StringUtil.isBlank( rule ) ){
+continue;
+}
+String[] pathArray = StringUtil.trimToEmpty( rule ).split( ":" );
+String nodeName = pathArray[0];
+List<String> pathList = ListUtil.parseList( pathArray[1] );
+pathCanNotBeExist.put( nodeName, pathList );
+}
+}
+NodePathCheckRule nodePathCheckRule = new NodePathCheckRule();
+nodePathCheckRule.setPathCanNotBeExist( pathCanNotBeExist );
+nodePathCheckRule.setPathOnlyCanBeExist( pathOnlyCanBeExist );
+return nodePathCheckRule;
+} catch ( Exception e ) {
+throw new Exception( "Error when parseNodePathCheckRuleFromString, String: " + str + ", Error: " + e.getMessage(), e );
+}
+}
+}

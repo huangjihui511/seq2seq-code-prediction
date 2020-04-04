@@ -1,0 +1,100 @@
+package org.msgpack.core.buffer;
+import java.util.List;
+import java.util.ArrayList;
+public class ArrayBufferOutput
+implements MessageBufferOutput
+{
+private final List<MessageBuffer> list;
+private final int bufferSize;
+private MessageBuffer lastBuffer;
+public ArrayBufferOutput()
+{
+this(8192);
+}
+public ArrayBufferOutput(int bufferSize)
+{
+this.bufferSize = bufferSize;
+this.list = new ArrayList<MessageBuffer>();
+}
+public int getSize()
+{
+int size = 0;
+for (MessageBuffer buffer : list) {
+size += buffer.size();
+}
+return size;
+}
+public byte[] toByteArray()
+{
+byte[] data = new byte[getSize()];
+int off = 0;
+for (MessageBuffer buffer : list) {
+buffer.getBytes(0, data, off, buffer.size());
+off += buffer.size();
+}
+return data;
+}
+public MessageBuffer toMessageBuffer()
+{
+if (list.size() == 1) {
+return list.get(0);
+}
+else if (list.isEmpty()) {
+return MessageBuffer.allocate(0);
+}
+else {
+return MessageBuffer.wrap(toByteArray());
+}
+}
+public List<MessageBuffer> toBufferList()
+{
+return new ArrayList<MessageBuffer>(list);
+}
+public void clear()
+{
+list.clear();
+}
+@Override
+public MessageBuffer next(int minimumSize)
+{
+if (lastBuffer != null && lastBuffer.size() > minimumSize) {
+return lastBuffer;
+}
+else {
+int size = Math.max(bufferSize, minimumSize);
+MessageBuffer buffer = MessageBuffer.allocate(size);
+lastBuffer = buffer;
+return buffer;
+}
+}
+@Override
+public void writeBuffer(int length)
+{
+list.add(lastBuffer.slice(0, length));
+if (lastBuffer.size() - length > bufferSize / 4) {
+lastBuffer = lastBuffer.slice(length, lastBuffer.size() - length);
+}
+else {
+lastBuffer = null;
+}
+}
+@Override
+public void write(byte[] buffer, int offset, int length)
+{
+MessageBuffer copy = MessageBuffer.allocate(length);
+copy.putBytes(0, buffer, offset, length);
+list.add(copy);
+}
+@Override
+public void add(byte[] buffer, int offset, int length)
+{
+MessageBuffer wrapped = MessageBuffer.wrap(buffer, offset, length);
+list.add(wrapped);
+}
+@Override
+public void close()
+{ }
+@Override
+public void flush()
+{ }
+}

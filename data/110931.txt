@@ -1,0 +1,13 @@
+package io.dropwizard.configuration;
+import javax.annotation.Nullable;
+import javax.validation.Validator;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+public class YamlConfigurationFactory<T> extends BaseConfigurationFactory<T> {
+public YamlConfigurationFactory(Class<T> klass,
+@Nullable Validator validator,
+ObjectMapper objectMapper,
+String propertyPrefix) {
+super(new YAMLFactory(), YAMLFactory.FORMAT_NAME_YAML, klass, validator, objectMapper, propertyPrefix);
+}
+}

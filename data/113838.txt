@@ -1,0 +1,21 @@
+package psiprobe;
+import java.util.List;
+import javax.inject.Inject;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.test.context.web.AnnotationConfigWebContextLoader;
+import org.springframework.test.context.web.WebAppConfiguration;
+@ContextConfiguration(classes = ProbeConfig.class, loader=AnnotationConfigWebContextLoader.class)
+@WebAppConfiguration("file:src/test/webapp")
+@ExtendWith(SpringExtension.class)
+public class ProbeConfigTest {
+@Inject
+private List<String> datasourceMappers;
+@Test
+public void checkListenerTest() {
+Assertions.assertNotNull(datasourceMappers);
+}
+}

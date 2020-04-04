@@ -1,0 +1,4 @@
+package com.datumbox.framework.common.interfaces;
+public interface Copyable<T extends Copyable> {
+public T copy();
+}

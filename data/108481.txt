@@ -1,0 +1,27 @@
+package com.oracle.graal.pointsto.infrastructure;
+import org.graalvm.compiler.api.replacements.SnippetReflectionProvider;
+import com.oracle.graal.pointsto.api.HostVM;
+import jdk.vm.ci.meta.ConstantPool;
+import jdk.vm.ci.meta.JavaConstant;
+import jdk.vm.ci.meta.JavaField;
+import jdk.vm.ci.meta.JavaMethod;
+import jdk.vm.ci.meta.JavaType;
+import jdk.vm.ci.meta.ResolvedJavaField;
+import jdk.vm.ci.meta.ResolvedJavaMethod;
+import jdk.vm.ci.meta.ResolvedJavaType;
+import jdk.vm.ci.meta.Signature;
+public interface Universe {
+HostVM hostVM();
+SnippetReflectionProvider getSnippetReflection();
+ResolvedJavaType lookup(JavaType type);
+JavaType lookupAllowUnresolved(JavaType type);
+ResolvedJavaField lookup(JavaField field);
+JavaField lookupAllowUnresolved(JavaField field);
+ResolvedJavaMethod lookup(JavaMethod method);
+JavaMethod lookupAllowUnresolved(JavaMethod method);
+WrappedSignature lookup(Signature signature, WrappedJavaType defaultAccessingClass);
+WrappedConstantPool lookup(ConstantPool constantPool, WrappedJavaType defaultAccessingClass);
+JavaConstant lookup(JavaConstant constant);
+ResolvedJavaMethod resolveSubstitution(ResolvedJavaMethod method);
+ResolvedJavaType objectType();
+}

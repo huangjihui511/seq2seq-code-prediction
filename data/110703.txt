@@ -1,0 +1,21 @@
+package org.apache.zookeeper.graph.filterops;
+import org.apache.zookeeper.graph.LogEntry;
+import org.apache.zookeeper.graph.FilterOp;
+import org.apache.zookeeper.graph.FilterException;
+public class XorOp extends FilterOp {
+public boolean matches(LogEntry entry) throws FilterException {
+int count = 0;
+for (FilterOp f : subOps) {
+if (f.matches(entry)) {
+count++;
+if (count > 1) {
+return false;
+}
+}
+}
+if (count == 1) {
+return true;
+}
+return false;
+}
+}

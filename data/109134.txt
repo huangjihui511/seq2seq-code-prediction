@@ -1,0 +1,32 @@
+package io.realm;
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import java.io.IOException;
+public class IsolatedIntegrationTests extends BaseIntegrationTest {
+@Before
+public void setupTest() throws IOException {
+startSyncServer();
+SyncTestUtils.prepareEnvironmentForTest();
+}
+@After
+public void teardownTest() throws IOException {
+if (!looperThread.isRuleUsed() || looperThread.isTestComplete()) {
+SyncTestUtils.restoreEnvironmentAfterTest();
+stopSyncServer();
+} else {
+looperThread.runAfterTest(new Runnable() {
+@Override
+public void run() {
+try {
+SyncTestUtils.restoreEnvironmentAfterTest();
+} catch (IOException e) {
+throw new RuntimeException(e);
+}
+stopSyncServer();
+}
+});
+}
+}
+}

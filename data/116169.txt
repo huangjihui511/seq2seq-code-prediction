@@ -1,0 +1,47 @@
+package net.i2p.router.networkdb.kademlia;
+import net.i2p.data.Hash;
+import net.i2p.data.i2np.DatabaseSearchReplyMessage;
+import net.i2p.data.i2np.DatabaseStoreMessage;
+import net.i2p.data.i2np.I2NPMessage;
+import net.i2p.router.MessageSelector;
+import net.i2p.router.RouterContext;
+import net.i2p.util.Log;
+class IterativeLookupSelector implements MessageSelector {
+private final RouterContext _context;
+private final IterativeSearchJob _search;
+private boolean _matchFound;
+private final Log _log;
+public IterativeLookupSelector(RouterContext ctx, IterativeSearchJob search) {
+_context = ctx;
+_search = search;
+_log = ctx.logManager().getLog(getClass());
+}
+public boolean continueMatching() {
+return (!_matchFound) && _context.clock().now() < getExpiration();
+}
+public long getExpiration() { return (_matchFound ? -1 : _search.getExpiration()); }
+public boolean isMatch(I2NPMessage message) {
+if (message == null) return false;
+int type = message.getType();
+if (type == DatabaseStoreMessage.MESSAGE_TYPE) {
+DatabaseStoreMessage dsm = (DatabaseStoreMessage)message;
+if (_search.getKey().equals(dsm.getKey())) {
+_matchFound = true;
+return true;
+}
+} else if (type == DatabaseSearchReplyMessage.MESSAGE_TYPE) {
+DatabaseSearchReplyMessage dsrm = (DatabaseSearchReplyMessage)message;
+if (_search.getKey().equals(dsrm.getSearchKey())) {
+if (_log.shouldLog(Log.INFO)) {
+Hash from = dsrm.getFromHash();
+_log.info(_search.getJobId() + ": Processing DSRM via IterativeLookupJob, apparently from " + from);
+}
+_context.jobQueue().addJob(new IterativeLookupJob(_context, dsrm, _search));
+}
+}
+return false;
+}
+public String toString() {
+return "IL Selector for " + _search.getKey();
+}
+}

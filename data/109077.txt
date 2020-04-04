@@ -1,0 +1,361 @@
+package io.vertx.core;
+import io.vertx.codegen.annotations.DataObject;
+import io.vertx.core.dns.AddressResolverOptions;
+import io.vertx.core.eventbus.EventBusOptions;
+import io.vertx.core.file.FileSystemOptions;
+import io.vertx.core.impl.cpu.CpuCoreSensor;
+import io.vertx.core.json.JsonObject;
+import io.vertx.core.metrics.MetricsOptions;
+import io.vertx.core.spi.cluster.ClusterManager;
+import io.vertx.core.tracing.TracingOptions;
+import java.util.Objects;
+import java.util.concurrent.TimeUnit;
+import static io.vertx.core.file.FileSystemOptions.DEFAULT_FILE_CACHING_ENABLED;
+@DataObject(generateConverter = true, publicConverter = false)
+public class VertxOptions {
+public static final int DEFAULT_EVENT_LOOP_POOL_SIZE = 2 * CpuCoreSensor.availableProcessors();
+public static final int DEFAULT_WORKER_POOL_SIZE = 20;
+public static final int DEFAULT_INTERNAL_BLOCKING_POOL_SIZE = 20;
+@Deprecated
+public static final boolean DEFAULT_CLUSTERED = false;
+@Deprecated
+public static final String DEFAULT_CLUSTER_HOST = "localhost";
+@Deprecated
+public static final int DEFAULT_CLUSTER_PORT = 0;
+@Deprecated
+public static final String DEFAULT_CLUSTER_PUBLIC_HOST = null;
+@Deprecated
+public static final int DEFAULT_CLUSTER_PUBLIC_PORT = -1;
+@Deprecated
+public static final long DEFAULT_CLUSTER_PING_INTERVAL = TimeUnit.SECONDS.toMillis(20);
+@Deprecated
+public static final long DEFAULT_CLUSTER_PING_REPLY_INTERVAL = TimeUnit.SECONDS.toMillis(20);
+public static final long DEFAULT_BLOCKED_THREAD_CHECK_INTERVAL = TimeUnit.SECONDS.toMillis(1);;
+public static final TimeUnit DEFAULT_BLOCKED_THREAD_CHECK_INTERVAL_UNIT = TimeUnit.MILLISECONDS;
+public static final long DEFAULT_MAX_EVENT_LOOP_EXECUTE_TIME = TimeUnit.SECONDS.toNanos(2);
+public static final TimeUnit DEFAULT_MAX_EVENT_LOOP_EXECUTE_TIME_UNIT = TimeUnit.NANOSECONDS;
+public static final long DEFAULT_MAX_WORKER_EXECUTE_TIME = TimeUnit.SECONDS.toNanos(60);
+public static final TimeUnit DEFAULT_MAX_WORKER_EXECUTE_TIME_UNIT = TimeUnit.NANOSECONDS;
+public static final int DEFAULT_QUORUM_SIZE = 1;
+public static final String DEFAULT_HA_GROUP = "__DEFAULT__";
+public static final boolean DEFAULT_HA_ENABLED = false;
+public static final boolean DEFAULT_PREFER_NATIVE_TRANSPORT = false;
+private static final long DEFAULT_WARNING_EXCEPTION_TIME = TimeUnit.SECONDS.toNanos(5);
+public static final TimeUnit DEFAULT_WARNING_EXCEPTION_TIME_UNIT = TimeUnit.NANOSECONDS;
+private int eventLoopPoolSize = DEFAULT_EVENT_LOOP_POOL_SIZE;
+private int workerPoolSize = DEFAULT_WORKER_POOL_SIZE;
+private int internalBlockingPoolSize = DEFAULT_INTERNAL_BLOCKING_POOL_SIZE;
+private long blockedThreadCheckInterval = DEFAULT_BLOCKED_THREAD_CHECK_INTERVAL;
+private long maxEventLoopExecuteTime = DEFAULT_MAX_EVENT_LOOP_EXECUTE_TIME;
+private long maxWorkerExecuteTime = DEFAULT_MAX_WORKER_EXECUTE_TIME;
+private ClusterManager clusterManager;
+private boolean haEnabled = DEFAULT_HA_ENABLED;
+private int quorumSize = DEFAULT_QUORUM_SIZE;
+private String haGroup = DEFAULT_HA_GROUP;
+private MetricsOptions metricsOptions = new MetricsOptions();
+private TracingOptions tracingOptions = new TracingOptions();
+private FileSystemOptions fileSystemOptions = new FileSystemOptions();
+private long warningExceptionTime = DEFAULT_WARNING_EXCEPTION_TIME;
+private EventBusOptions eventBusOptions = new EventBusOptions();
+private AddressResolverOptions addressResolverOptions = new AddressResolverOptions();
+private boolean preferNativeTransport = DEFAULT_PREFER_NATIVE_TRANSPORT;
+private TimeUnit maxEventLoopExecuteTimeUnit = DEFAULT_MAX_EVENT_LOOP_EXECUTE_TIME_UNIT;
+private TimeUnit maxWorkerExecuteTimeUnit = DEFAULT_MAX_WORKER_EXECUTE_TIME_UNIT;
+private TimeUnit warningExceptionTimeUnit = DEFAULT_WARNING_EXCEPTION_TIME_UNIT;
+private TimeUnit blockedThreadCheckIntervalUnit = DEFAULT_BLOCKED_THREAD_CHECK_INTERVAL_UNIT;
+public VertxOptions() {
+}
+public VertxOptions(VertxOptions other) {
+this.eventLoopPoolSize = other.getEventLoopPoolSize();
+this.workerPoolSize = other.getWorkerPoolSize();
+this.blockedThreadCheckInterval = other.getBlockedThreadCheckInterval();
+this.maxEventLoopExecuteTime = other.getMaxEventLoopExecuteTime();
+this.maxWorkerExecuteTime = other.getMaxWorkerExecuteTime();
+this.internalBlockingPoolSize = other.getInternalBlockingPoolSize();
+this.clusterManager = other.getClusterManager();
+this.haEnabled = other.isHAEnabled();
+this.quorumSize = other.getQuorumSize();
+this.haGroup = other.getHAGroup();
+this.metricsOptions = other.getMetricsOptions() != null ? new MetricsOptions(other.getMetricsOptions()) : null;
+this.fileSystemOptions = other.getFileSystemOptions() != null ? new FileSystemOptions(other.getFileSystemOptions()) : null;
+this.warningExceptionTime = other.warningExceptionTime;
+this.eventBusOptions = new EventBusOptions(other.eventBusOptions);
+this.addressResolverOptions = other.addressResolverOptions != null ? new AddressResolverOptions() : null;
+this.maxEventLoopExecuteTimeUnit = other.maxEventLoopExecuteTimeUnit;
+this.maxWorkerExecuteTimeUnit = other.maxWorkerExecuteTimeUnit;
+this.warningExceptionTimeUnit = other.warningExceptionTimeUnit;
+this.blockedThreadCheckIntervalUnit = other.blockedThreadCheckIntervalUnit;
+this.tracingOptions = other.tracingOptions != null ? other.tracingOptions.copy() : null;
+}
+public VertxOptions(JsonObject json) {
+this();
+VertxOptionsConverter.fromJson(json, this);
+}
+public int getEventLoopPoolSize() {
+return eventLoopPoolSize;
+}
+public VertxOptions setEventLoopPoolSize(int eventLoopPoolSize) {
+if (eventLoopPoolSize < 1) {
+throw new IllegalArgumentException("eventLoopPoolSize must be > 0");
+}
+this.eventLoopPoolSize = eventLoopPoolSize;
+return this;
+}
+public int getWorkerPoolSize() {
+return workerPoolSize;
+}
+public VertxOptions setWorkerPoolSize(int workerPoolSize) {
+if (workerPoolSize < 1) {
+throw new IllegalArgumentException("workerPoolSize must be > 0");
+}
+this.workerPoolSize = workerPoolSize;
+return this;
+}
+@Deprecated
+public boolean isClustered() {
+return eventBusOptions.isClustered();
+}
+@Deprecated
+public VertxOptions setClustered(boolean clustered) {
+eventBusOptions.setClustered(clustered);
+return this;
+}
+@Deprecated
+public String getClusterHost() {
+return eventBusOptions.getHost();
+}
+@Deprecated
+public VertxOptions setClusterHost(String clusterHost) {
+this.eventBusOptions.setHost(clusterHost);
+return this;
+}
+@Deprecated
+public String getClusterPublicHost() {
+return getEventBusOptions().getClusterPublicHost();
+}
+@Deprecated
+public VertxOptions setClusterPublicHost(String clusterPublicHost) {
+getEventBusOptions().setClusterPublicHost(clusterPublicHost);
+return this;
+}
+@Deprecated
+public int getClusterPort() {
+return eventBusOptions.getPort();
+}
+@Deprecated
+public VertxOptions setClusterPort(int clusterPort) {
+eventBusOptions.setPort(clusterPort);
+return this;
+}
+@Deprecated
+public int getClusterPublicPort() {
+return eventBusOptions.getClusterPublicPort();
+}
+@Deprecated
+public VertxOptions setClusterPublicPort(int clusterPublicPort) {
+getEventBusOptions().setClusterPublicPort(clusterPublicPort);
+return this;
+}
+@Deprecated
+public long getClusterPingInterval() {
+return getEventBusOptions().getClusterPingInterval();
+}
+@Deprecated
+public VertxOptions setClusterPingInterval(long clusterPingInterval) {
+eventBusOptions.setClusterPingInterval(clusterPingInterval);
+return this;
+}
+@Deprecated
+public long getClusterPingReplyInterval() {
+return eventBusOptions.getClusterPingReplyInterval();
+}
+@Deprecated
+public VertxOptions setClusterPingReplyInterval(long clusterPingReplyInterval) {
+eventBusOptions.setClusterPingReplyInterval(clusterPingReplyInterval);
+return this;
+}
+public long getBlockedThreadCheckInterval() {
+return blockedThreadCheckInterval;
+}
+public VertxOptions setBlockedThreadCheckInterval(long blockedThreadCheckInterval) {
+if (blockedThreadCheckInterval < 1) {
+throw new IllegalArgumentException("blockedThreadCheckInterval must be > 0");
+}
+this.blockedThreadCheckInterval = blockedThreadCheckInterval;
+return this;
+}
+public long getMaxEventLoopExecuteTime() {
+return maxEventLoopExecuteTime;
+}
+public VertxOptions setMaxEventLoopExecuteTime(long maxEventLoopExecuteTime) {
+if (maxEventLoopExecuteTime < 1) {
+throw new IllegalArgumentException("maxEventLoopExecuteTime must be > 0");
+}
+this.maxEventLoopExecuteTime = maxEventLoopExecuteTime;
+return this;
+}
+public long getMaxWorkerExecuteTime() {
+return maxWorkerExecuteTime;
+}
+public VertxOptions setMaxWorkerExecuteTime(long maxWorkerExecuteTime) {
+if (maxWorkerExecuteTime < 1) {
+throw new IllegalArgumentException("maxWorkerpExecuteTime must be > 0");
+}
+this.maxWorkerExecuteTime = maxWorkerExecuteTime;
+return this;
+}
+public ClusterManager getClusterManager() {
+return clusterManager;
+}
+public VertxOptions setClusterManager(ClusterManager clusterManager) {
+this.clusterManager = clusterManager;
+return this;
+}
+public int getInternalBlockingPoolSize() {
+return internalBlockingPoolSize;
+}
+public VertxOptions setInternalBlockingPoolSize(int internalBlockingPoolSize) {
+if (internalBlockingPoolSize < 1) {
+throw new IllegalArgumentException("internalBlockingPoolSize must be > 0");
+}
+this.internalBlockingPoolSize = internalBlockingPoolSize;
+return this;
+}
+public boolean isHAEnabled() {
+return haEnabled;
+}
+public VertxOptions setHAEnabled(boolean haEnabled) {
+this.haEnabled = haEnabled;
+return this;
+}
+public int getQuorumSize() {
+return quorumSize;
+}
+public VertxOptions setQuorumSize(int quorumSize) {
+if (quorumSize < 1) {
+throw new IllegalArgumentException("quorumSize should be >= 1");
+}
+this.quorumSize = quorumSize;
+return this;
+}
+public String getHAGroup() {
+return haGroup;
+}
+public VertxOptions setHAGroup(String haGroup) {
+Objects.requireNonNull(haGroup, "ha group cannot be null");
+this.haGroup = haGroup;
+return this;
+}
+public MetricsOptions getMetricsOptions() {
+return metricsOptions;
+}
+public FileSystemOptions getFileSystemOptions() {
+return fileSystemOptions;
+}
+public VertxOptions setMetricsOptions(MetricsOptions metrics) {
+this.metricsOptions = metrics;
+return this;
+}
+public VertxOptions setFileSystemOptions(FileSystemOptions fileSystemOptions) {
+this.fileSystemOptions = fileSystemOptions;
+return this;
+}
+public long getWarningExceptionTime() {
+return warningExceptionTime;
+}
+public VertxOptions setWarningExceptionTime(long warningExceptionTime) {
+if (warningExceptionTime < 1) {
+throw new IllegalArgumentException("warningExceptionTime must be > 0");
+}
+this.warningExceptionTime = warningExceptionTime;
+return this;
+}
+public EventBusOptions getEventBusOptions() {
+return eventBusOptions;
+}
+public VertxOptions setEventBusOptions(EventBusOptions options) {
+Objects.requireNonNull(options);
+this.eventBusOptions = options;
+return this;
+}
+public AddressResolverOptions getAddressResolverOptions() {
+return addressResolverOptions;
+}
+public VertxOptions setAddressResolverOptions(AddressResolverOptions addressResolverOptions) {
+this.addressResolverOptions = addressResolverOptions;
+return this;
+}
+public boolean getPreferNativeTransport() {
+return preferNativeTransport;
+}
+public VertxOptions setPreferNativeTransport(boolean preferNativeTransport) {
+this.preferNativeTransport = preferNativeTransport;
+return this;
+}
+public TimeUnit getMaxEventLoopExecuteTimeUnit() {
+return maxEventLoopExecuteTimeUnit;
+}
+public VertxOptions setMaxEventLoopExecuteTimeUnit(TimeUnit maxEventLoopExecuteTimeUnit) {
+this.maxEventLoopExecuteTimeUnit = maxEventLoopExecuteTimeUnit;
+return this;
+}
+public TimeUnit getMaxWorkerExecuteTimeUnit() {
+return maxWorkerExecuteTimeUnit;
+}
+public VertxOptions setMaxWorkerExecuteTimeUnit(TimeUnit maxWorkerExecuteTimeUnit) {
+this.maxWorkerExecuteTimeUnit = maxWorkerExecuteTimeUnit;
+return this;
+}
+public TimeUnit getWarningExceptionTimeUnit() {
+return warningExceptionTimeUnit;
+}
+public VertxOptions setWarningExceptionTimeUnit(TimeUnit warningExceptionTimeUnit) {
+this.warningExceptionTimeUnit = warningExceptionTimeUnit;
+return this;
+}
+public TimeUnit getBlockedThreadCheckIntervalUnit() {
+return blockedThreadCheckIntervalUnit;
+}
+public VertxOptions setBlockedThreadCheckIntervalUnit(TimeUnit blockedThreadCheckIntervalUnit) {
+this.blockedThreadCheckIntervalUnit = blockedThreadCheckIntervalUnit;
+return this;
+}
+public TracingOptions getTracingOptions() {
+return tracingOptions;
+}
+public VertxOptions setTracingOptions(TracingOptions tracingOptions) {
+this.tracingOptions = tracingOptions;
+return this;
+}
+public JsonObject toJson() {
+JsonObject json = new JsonObject();
+VertxOptionsConverter.toJson(this, json);
+return json;
+}
+@Override
+public String toString() {
+return "VertxOptions{" +
+"eventLoopPoolSize=" + eventLoopPoolSize +
+", workerPoolSize=" + workerPoolSize +
+", internalBlockingPoolSize=" + internalBlockingPoolSize +
+", blockedThreadCheckIntervalUnit=" + blockedThreadCheckIntervalUnit +
+", blockedThreadCheckInterval=" + blockedThreadCheckInterval +
+", maxEventLoopExecuteTimeUnit=" + maxEventLoopExecuteTimeUnit +
+", maxEventLoopExecuteTime=" + maxEventLoopExecuteTime +
+", maxWorkerExecuteTimeUnit=" + maxWorkerExecuteTimeUnit +
+", maxWorkerExecuteTime=" + maxWorkerExecuteTime +
+", clusterManager=" + clusterManager +
+", haEnabled=" + haEnabled +
+", preferNativeTransport=" + preferNativeTransport +
+", quorumSize=" + quorumSize +
+", haGroup='" + haGroup + '\'' +
+", metrics=" + metricsOptions +
+", fileSystemOptions=" + fileSystemOptions +
+", addressResolver=" + addressResolverOptions.toJson() +
+", addressResolver=" + addressResolverOptions.toJson() +
+", eventbus=" + eventBusOptions.toJson() +
+", warningExceptionTimeUnit=" + warningExceptionTimeUnit +
+", warningExceptionTime=" + warningExceptionTime +
+'}';
+}
+}

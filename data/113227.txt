@@ -1,0 +1,26 @@
+package org.pf4j;
+import java.nio.file.Path;
+public class JarPluginManager extends DefaultPluginManager {
+public JarPluginManager() {
+super();
+}
+public JarPluginManager(Path pluginsRoot) {
+super(pluginsRoot);
+}
+@Override
+protected PluginDescriptorFinder createPluginDescriptorFinder() {
+return new ManifestPluginDescriptorFinder();
+}
+@Override
+protected PluginLoader createPluginLoader() {
+return new CompoundPluginLoader()
+.add(new DevelopmentPluginLoader(this), this::isDevelopment)
+.add(new JarPluginLoader(this), this::isNotDevelopment);
+}
+@Override
+protected PluginRepository createPluginRepository() {
+return new CompoundPluginRepository()
+.add(new DevelopmentPluginRepository(getPluginsRoot()), this::isDevelopment)
+.add(new JarPluginRepository(getPluginsRoot()), this::isNotDevelopment);
+}
+}

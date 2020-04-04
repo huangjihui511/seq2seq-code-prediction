@@ -1,0 +1,117 @@
+package com.twelvemonkeys.net;
+import com.twelvemonkeys.lang.Validate;
+import java.net.Authenticator;
+import java.net.InetAddress;
+import java.net.PasswordAuthentication;
+import java.net.URL;
+import java.util.HashMap;
+import java.util.Map;
+public class SimpleAuthenticator extends Authenticator {
+private static SimpleAuthenticator sInstance = null;
+private static boolean sInitialized = false;
+private final static String MAGIC = "magic";
+private final static int FOURTYTWO = 42;
+public final static String BASIC = "Basic";
+protected Map<AuthKey, PasswordAuthentication> passwordAuthentications = null;
+protected Map<PasswordAuthenticator, AuthenticatorFilter> authenticators = null;
+private SimpleAuthenticator() {
+passwordAuthentications = new HashMap<AuthKey, PasswordAuthentication>();
+authenticators = new HashMap<PasswordAuthenticator, AuthenticatorFilter>();
+}
+public static synchronized SimpleAuthenticator getInstance() {
+if (!sInitialized) {
+sInstance = new SimpleAuthenticator();
+Authenticator.setDefault(sInstance);
+PasswordAuthentication pa = Authenticator.requestPasswordAuthentication(null, FOURTYTWO, null, null, MAGIC);
+if (pa == null || !MAGIC.equals(pa.getUserName()) || !("" + FOURTYTWO).equals(new String(pa.getPassword()))) {
+sInstance = null;
+}
+sInitialized = true;
+}
+return sInstance;
+}
+protected PasswordAuthentication getPasswordAuthentication() {
+if (!sInitialized && MAGIC.equals(getRequestingScheme()) && getRequestingPort() == FOURTYTWO) {
+return new PasswordAuthentication(MAGIC, ("" + FOURTYTWO).toCharArray());
+}
+System.err.println("getPasswordAuthentication");
+System.err.println(getRequestingSite());
+System.err.println(getRequestingPort());
+System.err.println(getRequestingProtocol());
+System.err.println(getRequestingPrompt());
+System.err.println(getRequestingScheme());
+return passwordAuthentications.get(new AuthKey(getRequestingSite(),
+getRequestingPort(),
+getRequestingProtocol(),
+getRequestingPrompt(),
+getRequestingScheme()));
+}
+public PasswordAuthentication registerPasswordAuthentication(URL pURL, PasswordAuthentication pPA) {
+return registerPasswordAuthentication(NetUtil.createInetAddressFromURL(pURL),
+pURL.getPort(),
+pURL.getProtocol(),
+null, 
+BASIC,
+pPA);
+}
+public PasswordAuthentication registerPasswordAuthentication(InetAddress pAddress, int pPort, String pProtocol, String pPrompt, String pScheme, PasswordAuthentication pPA) {
+System.err.println("registerPasswordAuthentication");
+System.err.println(pAddress);
+System.err.println(pPort);
+System.err.println(pProtocol);
+System.err.println(pPrompt);
+System.err.println(pScheme);
+return passwordAuthentications.put(new AuthKey(pAddress, pPort, pProtocol, pPrompt, pScheme), pPA);
+}
+public PasswordAuthentication unregisterPasswordAuthentication(URL pURL) {
+return unregisterPasswordAuthentication(NetUtil.createInetAddressFromURL(pURL), pURL.getPort(), pURL.getProtocol(), null, BASIC);
+}
+public PasswordAuthentication unregisterPasswordAuthentication(InetAddress pAddress, int pPort, String pProtocol, String pPrompt, String pScheme) {
+return passwordAuthentications.remove(new AuthKey(pAddress, pPort, pProtocol, pPrompt, pScheme));
+}
+public void registerPasswordAuthenticator(PasswordAuthenticator pPA, AuthenticatorFilter pFilter) {
+authenticators.put(pPA, pFilter);
+}
+public void unregisterPasswordAuthenticator(PasswordAuthenticator pPA) {
+authenticators.remove(pPA);
+}
+}
+class AuthKey {
+InetAddress address = null;
+int port = -1;
+String protocol = null;
+String prompt = null;
+String scheme = null;
+AuthKey(InetAddress pAddress, int pPort, String pProtocol, String pPrompt, String pScheme) {
+Validate.notNull(pAddress, "address");
+address = pAddress;
+port = pPort;
+protocol = pProtocol;
+prompt = pPrompt;
+scheme = pScheme;
+}
+public String toString() {
+return "AuthKey[" + address + ":" + port + "/" + protocol + " \"" + prompt + "\" (" + scheme + ")]";
+}
+public boolean equals(Object pObj) {
+return (pObj instanceof AuthKey && equals((AuthKey) pObj));
+}
+public boolean equals(AuthKey pKey) {
+return (address.equals(pKey.address)
+&& (port == -1
+|| pKey.port == -1
+|| port == pKey.port)
+&& (protocol == null
+|| pKey.protocol == null
+|| protocol.equals(pKey.protocol))
+&& (prompt == null
+|| pKey.prompt == null
+|| prompt.equals(pKey.prompt))
+&& (scheme == null
+|| pKey.scheme == null
+|| scheme.equalsIgnoreCase(pKey.scheme)));
+}
+public int hashCode() {
+return address.hashCode();
+}
+}

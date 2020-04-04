@@ -1,0 +1,6 @@
+package com.google.inject;
+public interface Scope {
+public <T> Provider<T> scope(Key<T> key, Provider<T> unscoped);
+@Override
+String toString();
+}

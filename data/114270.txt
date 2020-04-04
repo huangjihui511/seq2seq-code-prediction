@@ -1,0 +1,31 @@
+package com.datumbox.framework.core.machinelearning.classification;
+import com.datumbox.framework.common.Configuration;
+import com.datumbox.framework.core.common.dataobjects.Dataframe;
+import com.datumbox.framework.common.storage.interfaces.StorageEngine;
+import com.datumbox.framework.core.machinelearning.common.abstracts.AbstractTrainer;
+import com.datumbox.framework.core.machinelearning.common.abstracts.algorithms.AbstractNaiveBayes;
+public class BinarizedNaiveBayes extends AbstractNaiveBayes<BinarizedNaiveBayes.ModelParameters, BinarizedNaiveBayes.TrainingParameters> {
+public static class ModelParameters extends AbstractNaiveBayes.AbstractModelParameters {
+private static final long serialVersionUID = 1L;
+protected ModelParameters(StorageEngine storageEngine) {
+super(storageEngine);
+}
+}
+public static class TrainingParameters extends AbstractNaiveBayes.AbstractTrainingParameters {
+private static final long serialVersionUID = 1L;
+}
+protected BinarizedNaiveBayes(TrainingParameters trainingParameters, Configuration configuration) {
+super(trainingParameters, configuration);
+}
+protected BinarizedNaiveBayes(String storageName, Configuration configuration) {
+super(storageName, configuration);
+}
+protected boolean isBinarized() {
+return true;
+}
+@Override
+protected void _fit(Dataframe trainingData) {
+knowledgeBase.getTrainingParameters().setMultiProbabilityWeighted(false);
+super._fit(trainingData);
+}
+}

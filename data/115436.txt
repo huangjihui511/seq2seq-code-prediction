@@ -1,0 +1,214 @@
+package org.gnucash.android.app;
+import android.app.AlarmManager;
+import android.app.Application;
+import android.app.PendingIntent;
+import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.database.SQLException;
+import android.database.sqlite.SQLiteDatabase;
+import android.graphics.Color;
+import android.os.Build;
+import android.os.SystemClock;
+import android.support.annotation.NonNull;
+import android.support.multidex.MultiDexApplication;
+import android.support.v7.preference.PreferenceManager;
+import android.util.Log;
+import com.crashlytics.android.Crashlytics;
+import com.crashlytics.android.core.CrashlyticsCore;
+import com.uservoice.uservoicesdk.Config;
+import com.uservoice.uservoicesdk.UserVoice;
+import org.gnucash.android.BuildConfig;
+import org.gnucash.android.R;
+import org.gnucash.android.db.BookDbHelper;
+import org.gnucash.android.db.DatabaseHelper;
+import org.gnucash.android.db.adapter.AccountsDbAdapter;
+import org.gnucash.android.db.adapter.BooksDbAdapter;
+import org.gnucash.android.db.adapter.BudgetAmountsDbAdapter;
+import org.gnucash.android.db.adapter.BudgetsDbAdapter;
+import org.gnucash.android.db.adapter.CommoditiesDbAdapter;
+import org.gnucash.android.db.adapter.PricesDbAdapter;
+import org.gnucash.android.db.adapter.RecurrenceDbAdapter;
+import org.gnucash.android.db.adapter.ScheduledActionDbAdapter;
+import org.gnucash.android.db.adapter.SplitsDbAdapter;
+import org.gnucash.android.db.adapter.TransactionsDbAdapter;
+import org.gnucash.android.model.Commodity;
+import org.gnucash.android.model.Money;
+import org.gnucash.android.receivers.PeriodicJobReceiver;
+import org.gnucash.android.service.ScheduledActionService;
+import org.gnucash.android.ui.settings.PreferenceActivity;
+import java.util.Currency;
+import java.util.Locale;
+import io.fabric.sdk.android.Fabric;
+public class GnuCashApplication extends MultiDexApplication {
+public static final String FILE_PROVIDER_AUTHORITY = BuildConfig.APPLICATION_ID + ".fileprovider";
+public static final long SESSION_TIMEOUT = 5 * 1000;
+public static long PASSCODE_SESSION_INIT_TIME = 0L;
+private static Context context;
+private static AccountsDbAdapter mAccountsDbAdapter;
+private static TransactionsDbAdapter mTransactionsDbAdapter;
+private static SplitsDbAdapter mSplitsDbAdapter;
+private static ScheduledActionDbAdapter mScheduledActionDbAdapter;
+private static CommoditiesDbAdapter mCommoditiesDbAdapter;
+private static PricesDbAdapter mPricesDbAdapter;
+private static BudgetsDbAdapter mBudgetsDbAdapter;
+private static BudgetAmountsDbAdapter mBudgetAmountsDbAdapter;
+private static RecurrenceDbAdapter mRecurrenceDbAdapter;
+private static BooksDbAdapter mBooksDbAdapter;
+private static DatabaseHelper mDbHelper;
+public static int darken(int color) {
+float[] hsv = new float[3];
+Color.colorToHSV(color, hsv);
+hsv[2] *= 0.8f; 
+return Color.HSVToColor(hsv);
+}
+@Override
+public void onCreate(){
+super.onCreate();
+GnuCashApplication.context = getApplicationContext();
+Fabric.with(this, new Crashlytics.Builder().core(
+new CrashlyticsCore.Builder().disabled(!isCrashlyticsEnabled()).build())
+.build());
+setUpUserVoice();
+BookDbHelper bookDbHelper = new BookDbHelper(getApplicationContext());
+mBooksDbAdapter = new BooksDbAdapter(bookDbHelper.getWritableDatabase());
+initializeDatabaseAdapters();
+setDefaultCurrencyCode(getDefaultCurrencyCode());
+StethoUtils.install(this);
+}
+public static void initializeDatabaseAdapters() {
+if (mDbHelper != null){ 
+mDbHelper.getReadableDatabase().close();
+}
+try {
+mDbHelper = new DatabaseHelper(getAppContext(),
+mBooksDbAdapter.getActiveBookUID());
+} catch (BooksDbAdapter.NoActiveBookFoundException e) {
+mBooksDbAdapter.fixBooksDatabase();
+mDbHelper = new DatabaseHelper(getAppContext(),
+mBooksDbAdapter.getActiveBookUID());
+}
+SQLiteDatabase mainDb;
+try {
+mainDb = mDbHelper.getWritableDatabase();
+} catch (SQLException e) {
+Crashlytics.logException(e);
+Log.e("GnuCashApplication", "Error getting database: " + e.getMessage());
+mainDb = mDbHelper.getReadableDatabase();
+}
+mSplitsDbAdapter            = new SplitsDbAdapter(mainDb);
+mTransactionsDbAdapter      = new TransactionsDbAdapter(mainDb, mSplitsDbAdapter);
+mAccountsDbAdapter          = new AccountsDbAdapter(mainDb, mTransactionsDbAdapter);
+mRecurrenceDbAdapter        = new RecurrenceDbAdapter(mainDb);
+mScheduledActionDbAdapter   = new ScheduledActionDbAdapter(mainDb, mRecurrenceDbAdapter);
+mPricesDbAdapter            = new PricesDbAdapter(mainDb);
+mCommoditiesDbAdapter       = new CommoditiesDbAdapter(mainDb);
+mBudgetAmountsDbAdapter     = new BudgetAmountsDbAdapter(mainDb);
+mBudgetsDbAdapter           = new BudgetsDbAdapter(mainDb, mBudgetAmountsDbAdapter, mRecurrenceDbAdapter);
+}
+public static AccountsDbAdapter getAccountsDbAdapter() {
+return mAccountsDbAdapter;
+}
+public static TransactionsDbAdapter getTransactionDbAdapter() {
+return mTransactionsDbAdapter;
+}
+public static SplitsDbAdapter getSplitsDbAdapter() {
+return mSplitsDbAdapter;
+}
+public static ScheduledActionDbAdapter getScheduledEventDbAdapter(){
+return mScheduledActionDbAdapter;
+}
+public static CommoditiesDbAdapter getCommoditiesDbAdapter(){
+return mCommoditiesDbAdapter;
+}
+public static PricesDbAdapter getPricesDbAdapter(){
+return mPricesDbAdapter;
+}
+public static BudgetsDbAdapter getBudgetDbAdapter() {
+return mBudgetsDbAdapter;
+}
+public static RecurrenceDbAdapter getRecurrenceDbAdapter() {
+return mRecurrenceDbAdapter;
+}
+public static BudgetAmountsDbAdapter getBudgetAmountsDbAdapter(){
+return mBudgetAmountsDbAdapter;
+}
+public static BooksDbAdapter getBooksDbAdapter(){
+return mBooksDbAdapter;
+}
+public static SQLiteDatabase getActiveDb(){
+return mDbHelper.getWritableDatabase();
+}
+public static Context getAppContext() {
+return GnuCashApplication.context;
+}
+public static boolean isCrashlyticsEnabled(){
+return PreferenceManager.getDefaultSharedPreferences(context).getBoolean(context.getString(R.string.key_enable_crashlytics), false);
+}
+public static boolean isDoubleEntryEnabled(){
+SharedPreferences sharedPrefs = PreferenceActivity.getActiveBookSharedPreferences();
+return sharedPrefs.getBoolean(context.getString(R.string.key_use_double_entry), true);
+}
+public static boolean shouldSaveOpeningBalances(boolean defaultValue){
+SharedPreferences sharedPrefs = PreferenceActivity.getActiveBookSharedPreferences();
+return sharedPrefs.getBoolean(context.getString(R.string.key_save_opening_balances), defaultValue);
+}
+public static String getDefaultCurrencyCode(){
+Locale locale = getDefaultLocale();
+String currencyCode = "USD"; 
+SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+try { 
+currencyCode = Currency.getInstance(locale).getCurrencyCode();
+} catch (Throwable e) {
+Crashlytics.logException(e);
+Log.e(context.getString(R.string.app_name), "" + e.getMessage());
+} finally {
+currencyCode = prefs.getString(context.getString(R.string.key_default_currency), currencyCode);
+}
+return currencyCode;
+}
+public static void setDefaultCurrencyCode(@NonNull String currencyCode){
+PreferenceManager.getDefaultSharedPreferences(context).edit()
+.putString(getAppContext().getString(R.string.key_default_currency), currencyCode)
+.apply();
+Money.DEFAULT_CURRENCY_CODE = currencyCode;
+Commodity.DEFAULT_COMMODITY = mCommoditiesDbAdapter.getCommodity(currencyCode);
+}
+public static Locale getDefaultLocale() {
+Locale locale = Locale.getDefault();
+if (locale.getCountry().equals("UK")) {
+locale = new Locale(locale.getLanguage(), "GB");
+}
+if (locale.getCountry().equals("LG")){
+locale = new Locale(locale.getLanguage(), "ES");
+}
+if (locale.getCountry().equals("en")){
+locale = Locale.US;
+}
+return locale;
+}
+public static void startScheduledActionExecutionService(Context context){
+Intent alarmIntent = new Intent(context, PeriodicJobReceiver.class);
+alarmIntent.setAction(PeriodicJobReceiver.ACTION_SCHEDULED_ACTIONS);
+PendingIntent pendingIntent = PendingIntent.getBroadcast(context,0, alarmIntent,
+PendingIntent.FLAG_NO_CREATE);
+if (pendingIntent != null) 
+return;
+else
+pendingIntent = PendingIntent.getBroadcast(context, 0, alarmIntent, 0);
+AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+alarmManager.setInexactRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP,
+SystemClock.elapsedRealtime() + AlarmManager.INTERVAL_FIFTEEN_MINUTES,
+AlarmManager.INTERVAL_HOUR, pendingIntent);
+ScheduledActionService.enqueueWork(context);
+}
+private void setUpUserVoice() {
+Config config = new Config("gnucash.uservoice.com");
+config.setTopicId(107400);
+config.setForumId(320493);
+config.putUserTrait("app_version_name", BuildConfig.VERSION_NAME);
+config.putUserTrait("app_version_code", BuildConfig.VERSION_CODE);
+config.putUserTrait("android_version", Build.VERSION.RELEASE);
+UserVoice.init(config, this);
+}
+}

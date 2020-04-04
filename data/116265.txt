@@ -1,0 +1,10 @@
+package org.apache.struts2.oval.interceptor;
+import net.sf.oval.configuration.Configurer;
+import java.util.List;
+import java.util.Map;
+import org.apache.struts2.oval.interceptor.DefaultOValValidationManager;
+class DummyDefaultOValValidationManager extends DefaultOValValidationManager {
+public Map<String, List<Configurer>> getCache() {
+return validatorCache;
+}
+}

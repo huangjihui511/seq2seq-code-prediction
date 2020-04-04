@@ -1,0 +1,9 @@
+package org.jd.gui.spi;
+import org.jd.gui.api.API;
+import org.jd.gui.api.model.Container;
+import java.io.File;
+public interface SourceLoader {
+String getSource(API api, Container.Entry entry);
+String loadSource(API api, Container.Entry entry);
+File loadSourceFile(API api, Container.Entry entry);
+}

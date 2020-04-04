@@ -1,0 +1,13 @@
+package org.cybergarage.upnp;
+import java.util.Vector;
+public class ServiceStateTable extends Vector<StateVariable>
+{
+public final static String ELEM_NAME = "serviceStateTable";
+public ServiceStateTable()
+{
+}
+public StateVariable getStateVariable(int n)
+{
+return get(n);
+}
+}

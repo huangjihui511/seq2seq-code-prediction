@@ -1,0 +1,13 @@
+package it.unimi.dsi.fastutil;
+import java.util.NoSuchElementException;
+public interface Stack<K> {
+void push(K o);
+K pop();
+boolean isEmpty();
+default K top()  {
+return peek(0);
+}
+default K peek(int i) {
+throw new UnsupportedOperationException();
+}
+}

@@ -1,0 +1,60 @@
+package com.springboot.demo.common.config.generatir;
+import com.baomidou.mybatisplus.annotation.DbType;
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.generator.AutoGenerator;
+import com.baomidou.mybatisplus.generator.config.DataSourceConfig;
+import com.baomidou.mybatisplus.generator.config.GlobalConfig;
+import com.baomidou.mybatisplus.generator.config.PackageConfig;
+import com.baomidou.mybatisplus.generator.config.StrategyConfig;
+import com.baomidou.mybatisplus.generator.config.rules.DateType;
+import com.baomidou.mybatisplus.generator.config.rules.NamingStrategy;
+public class GeneratorUtils {
+public static void generateCode() {
+String packageName = "com.springboot.demo";
+String moduleName = "sys";
+generateByTables(packageName, moduleName, "sys_user_role", "sys_role", "sys_menu", "sys_role_menu");
+}
+private static void generateByTables(String packageName, String moduleName, String... tableNames) {
+String dbUrl = "jdbc:mysql:
+DataSourceConfig dataSourceConfig = new DataSourceConfig()
+.setDbType(DbType.MYSQL)
+.setUrl(dbUrl)
+.setUsername("honey")
+.setPassword("Honey521.")
+.setDriverName("com.mysql.cj.jdbc.Driver") 
+@Override
+public PropertyInfo processTypeConvert(GlobalConfig globalConfig, String fieldType) {
+}
+})*/;
+String projectPath = System.getProperty("user.dir");
+GlobalConfig config = new GlobalConfig()
+.setAuthor("hjy")
+.setOutputDir(projectPath + "/src/main/java")
+.setFileOverride(true)
+.setBaseResultMap(true)
+.setXmlName("%sMapper")
+.setServiceName("%sService")
+.setServiceImplName("%sServiceImpl")
+.setControllerName("%sController")
+.setIdType(IdType.ID_WORKER)
+.setSwagger2(true) 
+;
+StrategyConfig strategyConfig = new StrategyConfig()
+.setColumnNaming(NamingStrategy.underline_to_camel)
+.setRestControllerStyle(true)
+;
+PackageConfig packageConfig = new PackageConfig()
+.setParent(packageName)
+.setModuleName(moduleName)
+.setController("controller")
+.setEntity("entity")
+.setMapper("mapper")
+.setXml("mapper");
+new AutoGenerator()
+.setGlobalConfig(config)
+.setDataSource(dataSourceConfig)
+.setStrategy(strategyConfig)
+.setPackageInfo(packageConfig)
+.execute();
+}
+}

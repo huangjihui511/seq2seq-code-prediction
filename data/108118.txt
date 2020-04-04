@@ -1,0 +1,23 @@
+package io.dropwizard.cli;
+import io.dropwizard.setup.Bootstrap;
+import net.sourceforge.argparse4j.inf.Namespace;
+import net.sourceforge.argparse4j.inf.Subparser;
+public abstract class Command {
+private final String name;
+private final String description;
+protected Command(String name, String description) {
+this.name = name;
+this.description = description;
+}
+public final String getName() {
+return name;
+}
+public final String getDescription() {
+return description;
+}
+public abstract void configure(Subparser subparser);
+public abstract void run(Bootstrap<?> bootstrap, Namespace namespace) throws Exception;
+public void onError(Cli cli, Namespace namespace, Throwable e) {
+e.printStackTrace(cli.getStdErr());
+}
+}

@@ -1,0 +1,29 @@
+package com.github.benmanes.caffeine.profiler;
+import java.util.Queue;
+import java.util.concurrent.atomic.AtomicBoolean;
+import com.github.benmanes.caffeine.QueueType;
+public final class SingleConsumerQueueProfiler extends ProfilerHook {
+final QueueType queueType = QueueType.SingleConsumerQueue_optimistic;
+final AtomicBoolean consumer = new AtomicBoolean();
+final Queue<Boolean> queue = queueType.create();
+SingleConsumerQueueProfiler() {
+ProfilerHook.NUM_THREADS = 8;
+}
+@Override
+protected void profile() {
+if (consumer.compareAndSet(false, true)) {
+for (;;) {
+queue.poll();
+}
+} else {
+for (;;) {
+queue.offer(Boolean.TRUE);
+calls.increment();
+}
+}
+}
+public static void main(String[] args) {
+ProfilerHook profile = new SingleConsumerQueueProfiler();
+profile.run();
+}
+}

@@ -1,0 +1,42 @@
+package org.menacheri.jetclient.communication;
+import java.nio.ByteBuffer;
+import org.jboss.netty.buffer.ChannelBuffer;
+import org.menacheri.convert.Transform;
+public interface MessageBuffer<T>
+{
+boolean isReadable();
+int readableBytes();
+int readByte();
+byte[] readBytes(int length);
+void readBytes(byte[] dst);
+void readBytes(byte[] dst, int dstIndex, int length);
+int readUnsignedByte();
+int readShort();
+int readUnsignedShort();
+int readMedium();
+int readUnsignedMedium();
+int readInt();
+long readUnsignedInt();
+long readLong();
+char readChar();
+float readFloat();
+double readDouble();
+String readString();
+String[] readStrings(int numOfStrings);
+<V> V readObject(Transform<T, V> converter);
+MessageBuffer<T> writeByte(byte b);
+MessageBuffer<T> writeBytes(byte[] src);
+MessageBuffer<T> writeShort(int value);
+MessageBuffer<T> writeMedium(int value);
+MessageBuffer<T> writeInt(int value);
+MessageBuffer<T> writeLong(long value);
+MessageBuffer<T> writeChar(int value);
+MessageBuffer<T> writeFloat(float value);
+MessageBuffer<T> writeDouble(double value);
+MessageBuffer<T> writeString(String message);
+MessageBuffer<T> writeStrings(String... message);
+<V> MessageBuffer<T> writeObject(Transform<V, T> converter, V object);
+T getNativeBuffer();
+byte[] array();
+void clear();
+}

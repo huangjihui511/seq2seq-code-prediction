@@ -1,0 +1,80 @@
+package org.gnucash.android.db.adapter;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteStatement;
+import android.support.annotation.NonNull;
+import org.gnucash.android.app.GnuCashApplication;
+import org.gnucash.android.model.BudgetAmount;
+import org.gnucash.android.model.Money;
+import java.util.ArrayList;
+import java.util.List;
+import static org.gnucash.android.db.DatabaseSchema.BudgetAmountEntry;
+public class BudgetAmountsDbAdapter extends DatabaseAdapter<BudgetAmount> {
+public BudgetAmountsDbAdapter(SQLiteDatabase db) {
+super(db, BudgetAmountEntry.TABLE_NAME, new String[] {
+BudgetAmountEntry.COLUMN_BUDGET_UID   ,
+BudgetAmountEntry.COLUMN_ACCOUNT_UID  ,
+BudgetAmountEntry.COLUMN_AMOUNT_NUM   ,
+BudgetAmountEntry.COLUMN_AMOUNT_DENOM ,
+BudgetAmountEntry.COLUMN_PERIOD_NUM
+});
+}
+public static BudgetAmountsDbAdapter getInstance(){
+return GnuCashApplication.getBudgetAmountsDbAdapter();
+}
+@Override
+public BudgetAmount buildModelInstance(@NonNull Cursor cursor) {
+String budgetUID = cursor.getString(cursor.getColumnIndexOrThrow(BudgetAmountEntry.COLUMN_BUDGET_UID));
+String accountUID = cursor.getString(cursor.getColumnIndexOrThrow(BudgetAmountEntry.COLUMN_ACCOUNT_UID));
+long amountNum  = cursor.getLong(cursor.getColumnIndexOrThrow(BudgetAmountEntry.COLUMN_AMOUNT_NUM));
+long amountDenom = cursor.getLong(cursor.getColumnIndexOrThrow(BudgetAmountEntry.COLUMN_AMOUNT_DENOM));
+long periodNum  = cursor.getLong(cursor.getColumnIndexOrThrow(BudgetAmountEntry.COLUMN_PERIOD_NUM));
+BudgetAmount budgetAmount = new BudgetAmount(budgetUID, accountUID);
+budgetAmount.setAmount(new Money(amountNum, amountDenom, getAccountCurrencyCode(accountUID)));
+budgetAmount.setPeriodNum(periodNum);
+populateBaseModelAttributes(cursor, budgetAmount);
+return budgetAmount;
+}
+@Override
+protected @NonNull SQLiteStatement setBindings(@NonNull SQLiteStatement stmt, @NonNull final BudgetAmount budgetAmount) {
+stmt.clearBindings();
+stmt.bindString(1, budgetAmount.getBudgetUID());
+stmt.bindString(2, budgetAmount.getAccountUID());
+stmt.bindLong(3, budgetAmount.getAmount().getNumerator());
+stmt.bindLong(4, budgetAmount.getAmount().getDenominator());
+stmt.bindLong(5, budgetAmount.getPeriodNum());
+stmt.bindString(6, budgetAmount.getUID());
+return stmt;
+}
+public List<BudgetAmount> getBudgetAmountsForBudget(String budgetUID){
+Cursor cursor = fetchAllRecords(BudgetAmountEntry.COLUMN_BUDGET_UID + "=?",
+new String[]{budgetUID}, null);
+List<BudgetAmount> budgetAmounts = new ArrayList<>();
+while (cursor.moveToNext()){
+budgetAmounts.add(buildModelInstance(cursor));
+}
+cursor.close();
+return budgetAmounts;
+}
+public int deleteBudgetAmountsForBudget(String budgetUID){
+return mDb.delete(mTableName, BudgetAmountEntry.COLUMN_BUDGET_UID + "=?",
+new String[]{budgetUID});
+}
+public List<BudgetAmount> getBudgetAmounts(String accountUID) {
+Cursor cursor = fetchAllRecords(BudgetAmountEntry.COLUMN_ACCOUNT_UID + " = ?", new String[]{accountUID}, null);
+List<BudgetAmount> budgetAmounts = new ArrayList<>();
+while(cursor.moveToNext()){
+budgetAmounts.add(buildModelInstance(cursor));
+}
+cursor.close();
+return budgetAmounts;
+}
+public Money getBudgetAmountSum(String accountUID){
+List<BudgetAmount> budgetAmounts = getBudgetAmounts(accountUID);
+Money sum = Money.createZeroInstance(getAccountCurrencyCode(accountUID));
+for (BudgetAmount budgetAmount : budgetAmounts) {
+sum = sum.add(budgetAmount.getAmount());
+}
+return sum;
+}
+}

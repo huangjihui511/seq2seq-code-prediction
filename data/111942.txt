@@ -1,0 +1,4 @@
+package io.hawt.util.introspect;
+public interface ClassLoaderProvider {
+ClassLoader getClassLoader();
+}

@@ -1,0 +1,3 @@
+package com.site.blog.my.core.config;
+public class Constants {
+}

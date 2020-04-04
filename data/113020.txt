@@ -1,0 +1,42 @@
+package org.apache.pdfbox.debugger.ui;
+import org.apache.pdfbox.cos.COSBase;
+import org.apache.pdfbox.cos.COSName;
+public class MapEntry
+{
+private COSName key;
+private COSBase value;
+private COSBase item;
+public COSName getKey()
+{
+return key;
+}
+public void setKey(COSName k)
+{
+key = k;
+}
+public COSBase getValue()
+{
+return value;
+}
+public COSBase getItem()
+{
+return item;
+}
+public void setValue(COSBase val)
+{
+this.value = val;
+}
+public void setItem(COSBase val)
+{
+this.item = val;
+}
+@Override
+public String toString()
+{
+if (key != null)
+{
+return key.getName();
+}
+return "(null)";
+}
+}

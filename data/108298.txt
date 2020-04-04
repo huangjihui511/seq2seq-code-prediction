@@ -1,0 +1,6 @@
+package org.apache.flink.table.sources;
+import org.apache.flink.annotation.PublicEvolving;
+@PublicEvolving
+public interface ProjectableTableSource<T> {
+TableSource<T> projectFields(int[] fields);
+}

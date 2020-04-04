@@ -1,0 +1,36 @@
+package com.graphhopper.jsprit.core.algorithm.recreate;
+import com.graphhopper.jsprit.core.algorithm.recreate.listener.InsertionStartsListener;
+import com.graphhopper.jsprit.core.algorithm.recreate.listener.JobInsertedListener;
+import com.graphhopper.jsprit.core.problem.constraint.SoftRouteConstraint;
+import com.graphhopper.jsprit.core.problem.job.Job;
+import com.graphhopper.jsprit.core.problem.misc.JobInsertionContext;
+import com.graphhopper.jsprit.core.problem.solution.route.VehicleRoute;
+import com.graphhopper.jsprit.core.problem.solution.route.state.RouteAndActivityStateGetter;
+import java.util.Collection;
+public class DellAmicoFixCostCalculator implements SoftRouteConstraint, InsertionStartsListener, JobInsertedListener {
+private int nuOfJobsToRecreate;
+private final IncreasingAbsoluteFixedCosts calculator;
+private final int nuOfJobs;
+public DellAmicoFixCostCalculator(final int nuOfJobs, final RouteAndActivityStateGetter stateGetter) {
+super();
+this.nuOfJobs = nuOfJobs;
+calculator = new IncreasingAbsoluteFixedCosts(nuOfJobs);
+}
+@Override
+public double getCosts(JobInsertionContext insertionContext) {
+return calculator.getCosts(insertionContext);
+}
+@Override
+public void informInsertionStarts(Collection<VehicleRoute> routes, Collection<Job> unassignedJobs) {
+this.nuOfJobsToRecreate = unassignedJobs.size();
+double completenessRatio = (1 - ((double) nuOfJobsToRecreate / (double) nuOfJobs));
+calculator.setSolutionCompletenessRatio(completenessRatio);
+}
+@Override
+public void informJobInserted(Job job2insert, VehicleRoute inRoute, double additionalCosts, double additionalTime) {
+nuOfJobsToRecreate--;
+double completenessRatio = (1 - ((double) nuOfJobsToRecreate / (double) nuOfJobs));
+calculator.setSolutionCompletenessRatio(completenessRatio);
+System.out.println(completenessRatio);
+}
+}

@@ -1,0 +1,7 @@
+package com.netflix.astyanax.query;
+import com.netflix.astyanax.Execution;
+import com.netflix.astyanax.model.CqlResult;
+public interface CqlQuery<K, C> extends Execution<CqlResult<K, C>> {
+CqlQuery<K, C> useCompression();
+PreparedCqlQuery<K,C> asPreparedStatement();
+}

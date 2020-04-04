@@ -1,0 +1,19 @@
+package io.jooby;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+public interface Sender {
+interface Callback {
+void onComplete(@Nonnull Context ctx, @Nullable Throwable cause);
+}
+@Nonnull default Sender write(@Nonnull String data, @Nonnull Callback callback) {
+return write(data, StandardCharsets.UTF_8, callback);
+}
+@Nonnull default Sender write(@Nonnull String data, @Nonnull Charset charset,
+@Nonnull Callback callback) {
+return write(data.getBytes(charset), callback);
+}
+@Nonnull Sender write(@Nonnull byte[] data, @Nonnull Callback callback);
+void close();
+}

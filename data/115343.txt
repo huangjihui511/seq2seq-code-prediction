@@ -1,0 +1,7 @@
+package io.flutter.perf;
+public interface PerfModel {
+void markAppIdle();
+void clear();
+void onFrame();
+boolean isAnimationActive();
+}

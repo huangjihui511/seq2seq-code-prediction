@@ -1,0 +1,7 @@
+package io.realm.examples.librarymodules.modules;
+import io.realm.annotations.RealmModule;
+import io.realm.examples.librarymodules.model.Cat;
+import io.realm.examples.librarymodules.model.Dog;
+@RealmModule(library = true, classes = {Cat.class, Dog.class})
+public class DomesticAnimalsModule {
+}

@@ -1,0 +1,9 @@
+package tests;
+import com.google.auto.factory.AutoFactory;
+import tests.FactoryExtendingAbstractClass.AbstractFactory;
+@AutoFactory(extending = AbstractFactory.class)
+final class FactoryExtendingAbstractClass {
+static abstract class AbstractFactory {
+abstract FactoryExtendingAbstractClass newInstance();
+}
+}

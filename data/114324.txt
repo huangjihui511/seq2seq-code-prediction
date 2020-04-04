@@ -1,0 +1,49 @@
+package mobi.hsz.idea.gitignore.codeInspection;
+import com.intellij.codeInspection.LocalQuickFixOnPsiElement;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import mobi.hsz.idea.gitignore.IgnoreBundle;
+import mobi.hsz.idea.gitignore.psi.IgnoreEntry;
+import org.jetbrains.annotations.NotNull;
+import java.net.URI;
+import java.net.URISyntaxException;
+public class IgnoreRelativeEntryFix extends LocalQuickFixOnPsiElement {
+public IgnoreRelativeEntryFix(@NotNull IgnoreEntry entry) {
+super(entry);
+}
+@NotNull
+@Override
+public String getText() {
+return IgnoreBundle.message("quick.fix.relative.entry");
+}
+@Override
+public void invoke(@NotNull Project project, @NotNull PsiFile psiFile, @NotNull PsiElement startElement,
+@NotNull PsiElement endElement) {
+if (startElement instanceof IgnoreEntry) {
+Document document = PsiDocumentManager.getInstance(project).getDocument(psiFile);
+if (document != null) {
+int start = startElement.getStartOffsetInParent();
+String text = startElement.getText();
+String fixed = getFixedPath(text);
+document.replaceString(start, start + text.length(), fixed);
+}
+}
+}
+private String getFixedPath(String path) {
+path = path.replaceAll("\\/", "/").replaceAll("\\\\\\.", ".");
+try {
+path = new URI(path).normalize().getPath();
+} catch (URISyntaxException e) {
+e.printStackTrace();
+}
+return path.replaceAll("/\\.{1,2}/", "/").replaceAll("^\\.{0,2}/", "");
+}
+@NotNull
+@Override
+public String getFamilyName() {
+return IgnoreBundle.message("codeInspection.group");
+}
+}

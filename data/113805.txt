@@ -1,0 +1,22 @@
+package shared.turboeditor.util;
+import android.os.Build;
+public class Device {
+public static boolean hasTargetApi(int api) {
+return Build.VERSION.SDK_INT >= api;
+}
+public static boolean hasLemonCakeApi() {
+return Build.VERSION.SDK_INT >= 20; 
+}
+public static boolean hasKitKatApi() {
+return Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT;
+}
+public static boolean isKitKatApi() {
+return Build.VERSION.SDK_INT == Build.VERSION_CODES.KITKAT;
+}
+public static boolean hasJellyBeanMR2Api() {
+return Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2;
+}
+public static boolean hasJellyBeanMR1Api() {
+return Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1;
+}
+}

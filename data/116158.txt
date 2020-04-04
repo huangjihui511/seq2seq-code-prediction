@@ -1,0 +1,13 @@
+package org.cybergarage.upnp;
+import java.util.Vector;
+public class IconList extends Vector<Icon>
+{
+public final static String ELEM_NAME = "iconList";
+public IconList()
+{
+}
+public Icon getIcon(int n)
+{
+return get(n);
+}
+}

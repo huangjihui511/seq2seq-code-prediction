@@ -1,0 +1,37 @@
+package com.pokegoapi.util;
+import com.pokegoapi.api.PokemonGo;
+import com.pokegoapi.api.map.Point;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.TreeMap;
+public class MapUtil<K extends MapPoint> {
+public static Point randomStep(Point point) {
+point.longitude = (point.getLongitude() + randomStep());
+point.latitude = (point.getLatitude() + randomStep());
+return point;
+}
+public static double randomStep() {
+Random random = new Random();
+return random.nextDouble() / 100000.0;
+}
+public static double distFrom(Point start, Point end) {
+return distFrom(start.getLatitude(), start.getLongitude(), end.getLatitude(), end.getLongitude());
+}
+public static double distFrom(double lat1, double lng1, double lat2, double lng2) {
+double earthRadius = 6371000;
+double lat = Math.toRadians(lat2 - lat1);
+double lng = Math.toRadians(lng2 - lng1);
+double haversine = Math.sin(lat / 2) * Math.sin(lat / 2)
++ Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2))
+return earthRadius * (2 * Math.atan2(Math.sqrt(haversine), Math.sqrt(1 - haversine)));
+}
+public Map<Double, K> sortItems(List<K> items, PokemonGo api) {
+Map<Double, K> result = new TreeMap<>();
+for (K point : items) {
+result.put(distFrom(api.latitude, api.longitude, point.getLatitude(), point.getLongitude()),
+point);
+}
+return result;
+}
+}

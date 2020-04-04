@@ -1,0 +1,26 @@
+package com.pokegoapi.auth;
+import com.squareup.moshi.Json;
+import lombok.Getter;
+import lombok.Setter;
+public class GoogleAuthJson {
+@Getter
+@Setter
+@Json(name = "device_code")
+String deviceCode;
+@Getter
+@Setter
+@Json(name = "user_code")
+String userCode;
+@Getter
+@Setter
+@Json(name = "verification_url")
+String verificationUrl;
+@Getter
+@Setter
+@Json(name = "expires_in")
+int expiresIn;
+@Getter
+@Setter
+@Json(name = "interval")
+int interval;
+}

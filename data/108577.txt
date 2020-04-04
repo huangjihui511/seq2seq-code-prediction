@@ -1,0 +1,3 @@
+package org.deeplearning4j.arbiter.optimize.generator.genetic.crossover.parentselection;
+public abstract class TwoParentSelection extends ParentSelection {
+}

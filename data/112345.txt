@@ -1,0 +1,52 @@
+package io.jooby;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import java.util.HashMap;
+import java.util.Map;
+public final class RequestScope {
+private static final ThreadLocal<Map<Object, Object>> CONTEXT_TL = new ThreadLocal<>();
+private RequestScope() {
+}
+public static boolean hasBind(@Nonnull Object key) {
+return get(key) != null;
+}
+public static @Nullable <T> T bind(@Nonnull Object key, @Nonnull T value) {
+return (T) threadMap(true).put(key, value);
+}
+public static @Nullable <T> T unbind(@Nonnull Object key) {
+final Map<Object, Object> sessionMap = threadMap();
+T existing = null;
+if (sessionMap != null) {
+existing = (T) sessionMap.remove(key);
+doCleanup();
+}
+return existing;
+}
+public static @Nullable <T> T get(@Nonnull Object key) {
+final Map<Object, Object> sessionMap = threadMap();
+if (sessionMap == null) {
+return null;
+} else {
+return (T) sessionMap.get(key);
+}
+}
+private static Map<Object, Object> threadMap() {
+return threadMap(false);
+}
+private static Map<Object, Object> threadMap(boolean createMap) {
+Map<Object, Object> sessionMap = CONTEXT_TL.get();
+if (sessionMap == null && createMap) {
+sessionMap = new HashMap<>();
+CONTEXT_TL.set(sessionMap);
+}
+return sessionMap;
+}
+private static void doCleanup() {
+final Map<Object, Object> ctx = threadMap(false);
+if (ctx != null) {
+if (ctx.isEmpty()) {
+CONTEXT_TL.remove();
+}
+}
+}
+}

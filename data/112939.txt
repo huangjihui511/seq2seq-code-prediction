@@ -1,0 +1,104 @@
+package io.kubernetes.client.extended.workqueue;
+import com.google.common.primitives.Longs;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.temporal.Temporal;
+import java.util.Map;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.DelayQueue;
+import java.util.concurrent.Delayed;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
+public class DefaultDelayingQueue<T> extends DefaultWorkQueue<T> implements DelayingQueue<T> {
+public static Duration heartBeatInterval = Duration.ofSeconds(10);
+private DelayQueue<WaitForEntry<T>> delayQueue;
+private ConcurrentMap<T, WaitForEntry<T>> waitingEntryByData;
+protected BlockingQueue<WaitForEntry<T>> waitingForAddQueue;
+public DefaultDelayingQueue(ExecutorService waitingWorker) {
+this.delayQueue = new DelayQueue<>();
+this.waitingEntryByData = new ConcurrentHashMap<>();
+this.waitingForAddQueue = new LinkedBlockingQueue<>(1000);
+waitingWorker.submit(this::waitingLoop);
+}
+public DefaultDelayingQueue() {
+this(Executors.newSingleThreadExecutor());
+}
+public void addAfter(T item, Duration duration) {
+if (super.isShuttingDown()) {
+return;
+}
+if (duration.isZero()) {
+super.add(item);
+return;
+}
+WaitForEntry<T> entry = new WaitForEntry<>(item, duration.addTo(Instant.now()));
+this.waitingForAddQueue.offer(entry);
+}
+private void waitingLoop() {
+try {
+while (true) {
+if (super.isShuttingDown()) {
+return;
+}
+WaitForEntry<T> entry = delayQueue.peek();
+Duration nextReadyAt = heartBeatInterval;
+if (entry != null) {
+Instant now = Instant.now();
+if (!Duration.between(entry.readyAtMillis, now).isNegative()) {
+delayQueue.remove(entry);
+super.add(entry.data);
+this.waitingEntryByData.remove(entry.data);
+continue;
+} else {
+nextReadyAt = Duration.between(now, entry.readyAtMillis);
+}
+}
+WaitForEntry<T> waitForEntry =
+waitingForAddQueue.poll(nextReadyAt.toMillis(), TimeUnit.MILLISECONDS);
+if (waitForEntry != null) {
+if (Duration.between(waitForEntry.readyAtMillis, Instant.now()).isNegative()) {
+insert(this.delayQueue, this.waitingEntryByData, waitForEntry);
+} else {
+super.add(waitForEntry.data);
+}
+}
+}
+} catch (InterruptedException e) {
+}
+}
+private void insert(
+DelayQueue<WaitForEntry<T>> q, Map<T, WaitForEntry<T>> knownEntries, WaitForEntry entry) {
+WaitForEntry existing = knownEntries.get((T) entry.data);
+if (existing != null) {
+if (Duration.between(existing.readyAtMillis, entry.readyAtMillis).isNegative()) {
+q.remove(existing);
+existing.readyAtMillis = entry.readyAtMillis;
+q.add(existing);
+}
+return;
+}
+q.offer(entry);
+knownEntries.put((T) entry.data, entry);
+}
+private class WaitForEntry<T> implements Delayed {
+private WaitForEntry(T data, Temporal readyAtMillis) {
+this.data = data;
+this.readyAtMillis = readyAtMillis;
+}
+private T data;
+private Temporal readyAtMillis;
+@Override
+public long getDelay(TimeUnit unit) {
+Duration duration = Duration.between(Instant.now(), readyAtMillis);
+return unit.convert(duration.toMillis(), TimeUnit.MILLISECONDS);
+}
+@Override
+public int compareTo(Delayed o) {
+return Longs.compare(getDelay(TimeUnit.MILLISECONDS), o.getDelay(TimeUnit.MILLISECONDS));
+}
+}
+}

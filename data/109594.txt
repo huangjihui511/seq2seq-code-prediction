@@ -1,0 +1,18 @@
+package org.wltea.analyzer.lucene;
+import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.Tokenizer;
+import org.wltea.analyzer.cfg.Configuration;
+public final class IKAnalyzer extends Analyzer{
+private Configuration configuration;
+public IKAnalyzer(){
+}
+public IKAnalyzer(Configuration configuration){
+super();
+this.configuration = configuration;
+}
+@Override
+protected TokenStreamComponents createComponents(String fieldName) {
+Tokenizer _IKTokenizer = new IKTokenizer(configuration);
+return new TokenStreamComponents(_IKTokenizer);
+}
+}

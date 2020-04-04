@@ -1,0 +1,17 @@
+package tests;
+import com.google.auto.factory.AutoFactory;
+import com.google.auto.factory.Provided;
+import javax.inject.Provider;
+class MultipleFactoriesConflictingParameterNames {
+@AutoFactory
+MultipleFactoriesConflictingParameterNames(
+@Provided String string,
+@Provided Object duplicatedKey_nameDoesntMatter,
+@Provided Provider<Object> duplicatedKeyProvider_nameDoesntMatter,
+Object unused) {}
+@AutoFactory
+MultipleFactoriesConflictingParameterNames(
+@Provided @AQualifier String string,
+@Provided @AQualifier Object qualifiedDuplicatedKey_nameDoesntMatter,
+@Provided @AQualifier Provider<Object> qualifiedDuplicatedKeyProvider_nameDoesntMatter) {}
+}

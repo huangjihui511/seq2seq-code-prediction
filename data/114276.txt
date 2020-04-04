@@ -1,0 +1,194 @@
+package com.datumbox.framework.core.machinelearning.clustering;
+import com.datumbox.framework.common.Configuration;
+import com.datumbox.framework.core.common.dataobjects.DataframeMatrix;
+import com.datumbox.framework.core.common.dataobjects.Record;
+import com.datumbox.framework.common.storage.interfaces.StorageEngine;
+import com.datumbox.framework.core.machinelearning.common.abstracts.AbstractTrainer;
+import com.datumbox.framework.core.machinelearning.common.abstracts.algorithms.AbstractDPMM;
+import com.datumbox.framework.core.machinelearning.common.abstracts.modelers.AbstractClusterer;
+import org.apache.commons.math3.linear.*;
+import java.util.Map;
+public class GaussianDPMM extends AbstractDPMM<GaussianDPMM.Cluster, GaussianDPMM.ModelParameters, GaussianDPMM.TrainingParameters> {
+public static class Cluster extends AbstractDPMM.AbstractCluster {
+private static final long serialVersionUID = 2L;
+private final int dimensions;
+private final int kappa0;
+private final int nu0;
+private final RealVector mu0;
+private final RealMatrix psi0;
+private RealVector mean;
+private RealMatrix covariance;
+private RealMatrix meanError;
+private int meanDf;
+private RealVector xi_sum;
+private RealMatrix xi_square_sum;
+private volatile Double cache_covariance_determinant;
+private volatile Array2DRowRealMatrix cache_covariance_inverse;
+protected Cluster(Integer clusterId, int dimensions, int kappa0, int nu0, RealVector mu0, RealMatrix psi0) {
+super(clusterId);
+if(nu0<dimensions) {
+nu0 = dimensions;
+}
+mean = new OpenMapRealVector(dimensions);
+covariance = new OpenMapRealMatrix(dimensions, dimensions);
+for(int i=0;i<dimensions;i++) {
+covariance.setEntry(i, i, 1.0);
+}
+meanError = calculateMeanError(psi0, kappa0, nu0);
+meanDf = nu0-dimensions+1;
+this.kappa0 = kappa0;
+this.nu0 = nu0;
+this.mu0 = new OpenMapRealVector(mu0);
+this.psi0 = new OpenMapRealMatrix(dimensions, dimensions).add(psi0);
+this.dimensions = dimensions;
+xi_sum = new OpenMapRealVector(dimensions);
+xi_square_sum = new OpenMapRealMatrix(dimensions,dimensions);
+cache_covariance_determinant = null;
+cache_covariance_inverse = null;
+}
+private void assertModifiable() {
+if(xi_sum == null || xi_square_sum == null) {
+throw new RuntimeException("The cluster parameters are already estimated.");
+}
+}
+@Override
+protected Map<Object, Integer> getFeatureIds() {
+return featureIds;
+}
+@Override
+protected void setFeatureIds(Map<Object, Integer> featureIds) {
+this.featureIds = featureIds;
+}
+protected RealMatrix getMeanError() {
+return meanError;
+}
+protected int getMeanDf() {
+return meanDf;
+}
+@Override
+protected double posteriorLogPdf(Record r) {
+RealVector x_mu = DataframeMatrix.parseRecord(r, featureIds);
+x_mu = x_mu.subtract(mean);
+if(cache_covariance_determinant==null || cache_covariance_inverse==null) {
+synchronized(this) {
+if(cache_covariance_determinant==null || cache_covariance_inverse==null) {
+LUDecomposition lud = new LUDecomposition(covariance);
+cache_covariance_determinant = lud.getDeterminant();
+cache_covariance_inverse = (Array2DRowRealMatrix) lud.getSolver().getInverse();
+}
+}
+}
+double x_muInvSx_muT = (cache_covariance_inverse.preMultiply(x_mu)).dotProduct(x_mu);
+double normConst = 1.0/( Math.pow(2*Math.PI, dimensions/2.0) * Math.pow(cache_covariance_determinant, 0.5) );
+double logPdf = -0.5 * x_muInvSx_muT + Math.log(normConst);
+return logPdf;
+}
+@Override
+protected void add(Record r) {
+assertModifiable();
+RealVector rv = DataframeMatrix.parseRecord(r, featureIds);
+xi_sum = xi_sum.add(rv);
+xi_square_sum = xi_square_sum.add(rv.outerProduct(rv));
+size++;
+updateClusterParameters();
+}
+@Override
+protected void remove(Record r) {
+assertModifiable();
+if(size == 0) {
+throw new IllegalArgumentException("The cluster is empty.");
+}
+size--;
+RealVector rv = DataframeMatrix.parseRecord(r, featureIds);
+xi_sum=xi_sum.subtract(rv);
+xi_square_sum=xi_square_sum.subtract(rv.outerProduct(rv));
+updateClusterParameters();
+}
+private RealMatrix calculateMeanError(RealMatrix Psi, int kappa, int nu) {
+return Psi.scalarMultiply(1.0/(kappa*(nu-dimensions+1.0)));
+}
+@Override
+protected void clear() {
+xi_sum = null;
+xi_square_sum = null;
+cache_covariance_determinant = null;
+cache_covariance_inverse = null;
+}
+@Override
+protected void updateClusterParameters() {
+assertModifiable();
+int kappa_n = kappa0 + size;
+int nu = nu0 + size;
+RealVector mu = xi_sum.mapDivide(size);
+RealVector mu_mu0 = mu.subtract(mu0);
+RealMatrix C = xi_square_sum.subtract( ( mu.outerProduct(mu) ).scalarMultiply(size) );
+RealMatrix psi = psi0.add( C.add( ( mu_mu0.outerProduct(mu_mu0) ).scalarMultiply(kappa0*size/(double)kappa_n) ));
+mean = ( mu0.mapMultiply(kappa0) ).add( mu.mapMultiply(size) ).mapDivide(kappa_n);
+synchronized(this) {
+covariance = psi.scalarMultiply(  (kappa_n+1.0)/(kappa_n*(nu - dimensions + 1.0))  );
+cache_covariance_determinant = null;
+cache_covariance_inverse = null;
+}
+meanError = calculateMeanError(psi, kappa_n, nu);
+meanDf = nu-dimensions+1;
+}
+}
+public static class ModelParameters extends AbstractDPMM.AbstractModelParameters<GaussianDPMM.Cluster> {
+private static final long serialVersionUID = 1L;
+protected ModelParameters(StorageEngine storageEngine) {
+super(storageEngine);
+}
+}
+public static class TrainingParameters extends AbstractDPMM.AbstractTrainingParameters {
+private static final long serialVersionUID = 2L;
+private int kappa0 = 0;
+private int nu0 = 1;
+private RealVector mu0;
+private RealMatrix psi0;
+public int getKappa0() {
+return kappa0;
+}
+public void setKappa0(int kappa0) {
+this.kappa0 = kappa0;
+}
+public int getNu0() {
+return nu0;
+}
+public void setNu0(int nu0) {
+this.nu0 = nu0;
+}
+public RealVector getMu0() {
+return mu0;
+}
+public void setMu0(RealVector mu0) {
+this.mu0 = mu0;
+}
+public RealMatrix getPsi0() {
+return psi0;
+}
+public void setPsi0(RealMatrix psi0) {
+this.psi0 = psi0;
+}
+}
+protected GaussianDPMM(TrainingParameters trainingParameters, Configuration configuration) {
+super(trainingParameters, configuration);
+}
+protected GaussianDPMM(String storageName, Configuration configuration) {
+super(storageName, configuration);
+}
+@Override
+protected Cluster createNewCluster(Integer clusterId) {
+ModelParameters modelParameters = knowledgeBase.getModelParameters();
+TrainingParameters trainingParameters = knowledgeBase.getTrainingParameters();
+Cluster c = new Cluster(
+clusterId,
+modelParameters.getD(),
+trainingParameters.getKappa0(),
+trainingParameters.getNu0(),
+trainingParameters.getMu0(),
+trainingParameters.getPsi0()
+);
+c.setFeatureIds(modelParameters.getFeatureIds());
+return c;
+}
+}

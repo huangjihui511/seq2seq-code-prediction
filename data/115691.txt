@@ -1,0 +1,4 @@
+package com.graphhopper.jsprit.core.algorithm.recreate;
+interface EventListener {
+void inform(Event event);
+}

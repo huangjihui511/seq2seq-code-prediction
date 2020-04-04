@@ -1,0 +1,23 @@
+package com.github.jknack.handlebars;
+public enum TagType {
+VAR,
+STAR_VAR,
+AMP_VAR,
+TRIPLE_VAR,
+SUB_EXPRESSION,
+SECTION {
+@Override
+public boolean inline() {
+return false;
+}
+},
+START_SECTION {
+@Override
+public boolean inline() {
+return false;
+}
+};
+public boolean inline() {
+return true;
+}
+}

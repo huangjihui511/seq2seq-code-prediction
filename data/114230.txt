@@ -1,0 +1,16 @@
+package com.datumbox.framework.common.storage.abstracts;
+import com.datumbox.framework.common.storage.interfaces.StorageConfiguration;
+import java.io.File;
+public abstract class AbstractFileStorageConfiguration implements StorageConfiguration {
+protected String directory = null;
+@Override
+public String getStorageNameSeparator() {
+return File.separator;
+}
+public String getDirectory() {
+return directory;
+}
+public void setDirectory(String directory) {
+this.directory = directory;
+}
+}

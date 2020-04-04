@@ -1,0 +1,7 @@
+package org.hongxi.whatsmars.spring.task;
+public class DemoTask implements Runnable {
+@Override
+public void run() {
+System.out.println("demo task...");
+}
+}

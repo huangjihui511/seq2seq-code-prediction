@@ -1,0 +1,29 @@
+package org.menacheri.jetserver.app;
+import java.util.Set;
+import org.jboss.netty.channel.Channel;
+import org.menacheri.jetserver.app.impl.DefaultPlayer;
+import org.menacheri.jetserver.event.Event;
+import org.menacheri.jetserver.event.NetworkEvent;
+import org.menacheri.jetserver.protocols.Protocol;
+import org.menacheri.jetserver.service.GameStateManagerService;
+public interface GameRoom
+{
+public PlayerSession createPlayerSession(Player player);
+public void onLogin(PlayerSession playerSession);
+public abstract boolean connectSession(PlayerSession playerSession);
+public void afterSessionConnect(PlayerSession playerSession);
+public abstract boolean disconnectSession(PlayerSession session);
+public abstract Set<PlayerSession> getSessions();
+public abstract String getGameRoomName();
+public abstract void setGameRoomName(String gameRoomName);
+public abstract Game getParentGame();
+public abstract void setParentGame(Game parentGame);
+public abstract GameStateManagerService getStateManager();
+public abstract void setStateManager(GameStateManagerService stateManager);
+public abstract Protocol getProtocol();
+public abstract void setProtocol(Protocol protocol);
+public abstract void setSessions(Set<PlayerSession> sessions);
+public abstract void send(Event event);
+public abstract void sendBroadcast(NetworkEvent networkEvent);
+public abstract void close();
+}

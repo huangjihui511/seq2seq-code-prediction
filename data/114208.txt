@@ -1,0 +1,41 @@
+package com.datumbox.framework.common;
+import com.datumbox.framework.common.concurrency.ConcurrencyConfiguration;
+import com.datumbox.framework.common.interfaces.Configurable;
+import com.datumbox.framework.common.storage.interfaces.StorageConfiguration;
+import java.util.Properties;
+public class Configuration implements Configurable {
+private StorageConfiguration storageConfiguration;
+private ConcurrencyConfiguration concurrencyConfiguration;
+protected Configuration() {
+}
+public Configuration(StorageConfiguration storageConfiguration, ConcurrencyConfiguration concurrencyConfiguration) {
+this.storageConfiguration = storageConfiguration;
+this.concurrencyConfiguration = concurrencyConfiguration;
+}
+public StorageConfiguration getStorageConfiguration() {
+return storageConfiguration;
+}
+public void setStorageConfiguration(StorageConfiguration storageConfiguration) {
+this.storageConfiguration = storageConfiguration;
+}
+public ConcurrencyConfiguration getConcurrencyConfiguration() {
+return concurrencyConfiguration;
+}
+public void setConcurrencyConfiguration(ConcurrencyConfiguration concurrencyConfiguration) {
+this.concurrencyConfiguration = concurrencyConfiguration;
+}
+@Override
+public void load(Properties properties) {
+String storageConfigurationClassName = properties.getProperty("configuration.storageConfiguration");
+try {
+storageConfiguration = ConfigurableFactory.getConfiguration((Class<StorageConfiguration>) Class.forName(storageConfigurationClassName));
+}
+catch (ClassNotFoundException ex) {
+throw new RuntimeException(ex);
+}
+concurrencyConfiguration = ConfigurableFactory.getConfiguration(ConcurrencyConfiguration.class);
+}
+public static Configuration getConfiguration() {
+return ConfigurableFactory.getConfiguration(Configuration.class);
+}
+}

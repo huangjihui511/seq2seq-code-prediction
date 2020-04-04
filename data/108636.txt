@@ -1,0 +1,16 @@
+package com.alibaba.csp.sentinel.slots.statistic.base;
+public class UnaryLeapArray extends LeapArray<LongAdder> {
+public UnaryLeapArray(int sampleCount, int intervalInMs) {
+super(sampleCount, intervalInMs);
+}
+@Override
+public LongAdder newEmptyBucket(long time) {
+return new LongAdder();
+}
+@Override
+protected WindowWrap<LongAdder> resetWindowTo(WindowWrap<LongAdder> windowWrap, long startTime) {
+windowWrap.resetTo(startTime);
+windowWrap.value().reset();
+return windowWrap;
+}
+}

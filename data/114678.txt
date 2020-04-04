@@ -1,0 +1,13 @@
+package com.twelvemonkeys.util;
+import java.io.Serializable;
+public class FloatKey extends TypedMap.AbstractKey implements Serializable {
+public FloatKey() {
+super();
+}
+public FloatKey(String pName) {
+super(pName);
+}
+public boolean isCompatibleValue(Object pValue) {
+return pValue instanceof Float;
+}
+}

@@ -1,0 +1,84 @@
+package org.apereo.cas.audit;
+import org.apereo.cas.authentication.Authentication;
+import org.apereo.cas.authentication.AuthenticationResult;
+import org.apereo.cas.authentication.principal.Service;
+import org.apereo.cas.services.RegisteredService;
+import org.apereo.cas.ticket.ServiceTicket;
+import org.apereo.cas.ticket.TicketGrantingTicket;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.val;
+import java.util.Map;
+import java.util.Optional;
+import java.util.TreeMap;
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
+public class AuditableExecutionResult {
+private RegisteredService registeredService;
+private Service service;
+private ServiceTicket serviceTicket;
+private Authentication authentication;
+@Setter
+private RuntimeException exception;
+@Setter
+private Object executionResult;
+private TicketGrantingTicket ticketGrantingTicket;
+private AuthenticationResult authenticationResult;
+@Builder.Default
+private Map<String, Object> properties = new TreeMap<>();
+public static AuditableExecutionResult of(final AuditableContext context) {
+val builder = AuditableExecutionResult.builder();
+context.getTicketGrantingTicket().ifPresent(builder::ticketGrantingTicket);
+context.getAuthentication().ifPresent(builder::authentication);
+context.getAuthenticationResult().ifPresent(builder::authenticationResult);
+context.getRegisteredService().ifPresent(builder::registeredService);
+context.getService().ifPresent(builder::service);
+context.getServiceTicket().ifPresent(builder::serviceTicket);
+builder.properties(context.getProperties());
+return builder.build();
+}
+public boolean isExecutionFailure() {
+return getException().isPresent();
+}
+public void throwExceptionIfNeeded() {
+if (isExecutionFailure()) {
+getException().ifPresent(ex -> {
+throw ex;
+});
+throw new RuntimeException("Auditable task has failed to execute");
+}
+}
+public void addProperty(final String name, final Object value) {
+this.properties.put(name, value);
+}
+public Optional<RegisteredService> getRegisteredService() {
+return Optional.ofNullable(registeredService);
+}
+public Optional<Service> getService() {
+return Optional.ofNullable(service);
+}
+public Optional<ServiceTicket> getServiceTicket() {
+return Optional.ofNullable(serviceTicket);
+}
+public Optional<Object> getExecutionResult() {
+return Optional.ofNullable(executionResult);
+}
+public Optional<Authentication> getAuthentication() {
+return Optional.ofNullable(authentication);
+}
+public Optional<TicketGrantingTicket> getTicketGrantingTicket() {
+return Optional.ofNullable(ticketGrantingTicket);
+}
+public Optional<AuthenticationResult> getAuthenticationResult() {
+return Optional.ofNullable(authenticationResult);
+}
+public Optional<RuntimeException> getException() {
+return Optional.ofNullable(exception);
+}
+public Map<String, Object> getProperties() {
+return properties;
+}
+}

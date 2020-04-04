@@ -1,0 +1,89 @@
+package org.apache.struts2.dispatcher.multipart;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import http.utils.multipartrequest.ServletMultipartRequest;
+import javax.servlet.http.HttpServletRequest;
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
+import java.util.Enumeration;
+import java.util.List;
+public class PellMultiPartRequest extends AbstractMultiPartRequest {
+private static final Logger LOG = LogManager.getLogger(PellMultiPartRequest.class);
+private ServletMultipartRequest multi;
+public void parse(HttpServletRequest servletRequest, String saveDir) throws IOException {
+synchronized (this) {
+setEncoding();
+if (maxSizeProvided){
+int intMaxSize = (maxSize >= Integer.MAX_VALUE ? Integer.MAX_VALUE : Long.valueOf(maxSize).intValue());
+multi = new ServletMultipartRequest(servletRequest, saveDir, intMaxSize);
+}else{
+multi = new ServletMultipartRequest(servletRequest, saveDir);
+}
+}
+}
+public Enumeration getFileParameterNames() {
+return multi.getFileParameterNames();
+}
+public String[] getContentType(String fieldName) {
+return new String[]{multi.getContentType(fieldName)};
+}
+public UploadedFile[] getFile(String fieldName) {
+return new UploadedFile[]{ new StrutsUploadedFile(multi.getFile(fieldName)) };
+}
+public String[] getFileNames(String fieldName) {
+return new String[]{multi.getFile(fieldName).getName()};
+}
+public String[] getFilesystemName(String fieldName) {
+return new String[]{multi.getFileSystemName(fieldName)};
+}
+public String getParameter(String name) {
+return multi.getURLParameter(name);
+}
+public Enumeration<String> getParameterNames() {
+return multi.getParameterNames();
+}
+public String[] getParameterValues(String name) {
+Enumeration enumeration = multi.getURLParameters(name);
+if (!enumeration.hasMoreElements()) {
+return null;
+}
+List<String> values = new ArrayList<String>();
+while (enumeration.hasMoreElements()) {
+values.add((String) enumeration.nextElement());
+}
+return values.toArray(new String[values.size()]);
+}
+private void setEncoding() {
+String encoding = null;
+try {
+encoding = defaultEncoding;
+if (encoding != null) {
+http.utils.multipartrequest.MultipartRequest.setEncoding(encoding);
+} else {
+http.utils.multipartrequest.MultipartRequest.setEncoding("UTF-8");
+}
+} catch (IllegalArgumentException e) {
+if (LOG.isInfoEnabled()) {
+LOG.info("Could not get encoding property 'struts.i18n.encoding' for file upload.  Using system default");
+}
+} catch (UnsupportedEncodingException e) {
+LOG.error("Encoding " + encoding + " is not a valid encoding.  Please check your struts.properties file.");
+}
+}
+public void cleanUp() {
+Enumeration fileParameterNames = multi.getFileParameterNames();
+while (fileParameterNames != null && fileParameterNames.hasMoreElements()) {
+String inputValue = (String) fileParameterNames.nextElement();
+UploadedFile[] files = getFile(inputValue);
+for (UploadedFile currentFile : files) {
+LOG.debug("Removing file {} {}", inputValue, currentFile);
+if ((currentFile != null) && currentFile.isFile()) {
+if (!currentFile.delete()) {
+LOG.warn("Resource Leaking: Could not remove uploaded file [{}]", currentFile.getAbsolutePath());
+}
+}
+}
+}
+}
+}

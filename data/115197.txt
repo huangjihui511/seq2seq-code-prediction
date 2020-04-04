@@ -1,0 +1,34 @@
+package mage.cards.s;
+import java.util.UUID;
+import mage.abilities.common.EntersBattlefieldAllTriggeredAbility;
+import mage.abilities.common.SimpleStaticAbility;
+import mage.abilities.costs.mana.GenericManaCost;
+import mage.abilities.effects.common.AttachEffect;
+import mage.abilities.effects.common.continuous.BoostEquippedEffect;
+import mage.abilities.keyword.EquipAbility;
+import mage.cards.CardImpl;
+import mage.cards.CardSetInfo;
+import mage.constants.CardType;
+import mage.constants.SubType;
+import mage.constants.Outcome;
+import mage.constants.SetTargetPointer;
+import mage.constants.Zone;
+import mage.filter.common.FilterControlledCreaturePermanent;
+public final class StormriderRig extends CardImpl {
+public StormriderRig(UUID ownerId, CardSetInfo setInfo) {
+super(ownerId, setInfo, new CardType[]{CardType.ARTIFACT}, "{2}");
+this.subtype.add(SubType.EQUIPMENT);
+this.addAbility(new SimpleStaticAbility(Zone.BATTLEFIELD, new BoostEquippedEffect(1, 1)));
+this.addAbility(new EntersBattlefieldAllTriggeredAbility(
+Zone.BATTLEFIELD, new AttachEffect(Outcome.Detriment, "attach {source} to it"),
+new FilterControlledCreaturePermanent("a creature"), true, SetTargetPointer.PERMANENT, null, true));
+this.addAbility(new EquipAbility(Outcome.BoostCreature, new GenericManaCost(2)));
+}
+public StormriderRig(final StormriderRig card) {
+super(card);
+}
+@Override
+public StormriderRig copy() {
+return new StormriderRig(this);
+}
+}

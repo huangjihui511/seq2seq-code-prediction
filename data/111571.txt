@@ -1,0 +1,31 @@
+package org.openrefine.wikidata.schema;
+import java.io.IOException;
+import org.testng.annotations.BeforeMethod;
+import com.google.refine.model.Cell;
+import com.google.refine.model.ModelException;
+public abstract class WbVariableTest<T> extends WbExpressionTest<T> {
+protected WbVariableExpr<T> variable;
+public abstract WbVariableExpr<T> initVariableExpr();
+@BeforeMethod
+public void setupVariable()
+throws IOException, ModelException {
+variable = initVariableExpr();
+variable.setColumnName("column A");
+}
+public void evaluatesTo(T expected, String input) {
+Cell cell = new Cell(input, null);
+evaluatesTo(expected, cell);
+}
+public void evaluatesTo(T expected, Cell cell) {
+row.setCell(0, cell);
+evaluatesTo(expected, variable);
+}
+public void isSkipped(String input) {
+Cell cell = new Cell(input, null);
+isSkipped(cell);
+}
+protected void isSkipped(Cell cell) {
+row.setCell(0, cell);
+isSkipped(variable);
+}
+}

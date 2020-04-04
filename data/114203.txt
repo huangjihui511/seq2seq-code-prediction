@@ -1,0 +1,104 @@
+package com.datumbox.framework.applications.nlp;
+import com.datumbox.framework.applications.datamodeling.Modeler;
+import com.datumbox.framework.common.Configuration;
+import com.datumbox.framework.common.dataobjects.AssociativeArray;
+import com.datumbox.framework.core.common.dataobjects.Dataframe;
+import com.datumbox.framework.core.common.dataobjects.Record;
+import com.datumbox.framework.common.storage.interfaces.StorageEngine;
+import com.datumbox.framework.core.common.text.StringCleaner;
+import com.datumbox.framework.core.machinelearning.common.abstracts.AbstractTrainer;
+import com.datumbox.framework.core.machinelearning.modelselection.metrics.ClassificationMetrics;
+import com.datumbox.framework.core.common.text.extractors.AbstractTextExtractor;
+import java.net.URI;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+tokenization, feature selection and modeler training processes. It takes as input
+either a Dataframe object or multiple text files (one for each category) with
+one observation per row.
+public class TextClassifier extends Modeler {
+{
+pipeline = Arrays.asList(FS_KEY, NS_KEY, /* CE_KEY, */ ML_KEY);
+}
+public static class ModelParameters extends Modeler.ModelParameters {
+private static final long serialVersionUID = 1L;
+protected ModelParameters(StorageEngine storageEngine) {
+super(storageEngine);
+}
+}
+public static class TrainingParameters extends Modeler.TrainingParameters {
+private static final long serialVersionUID = 1L;
+private AbstractTextExtractor.AbstractParameters textExtractorParameters;
+public AbstractTextExtractor.AbstractParameters getTextExtractorParameters() {
+return textExtractorParameters;
+}
+public void setTextExtractorParameters(AbstractTextExtractor.AbstractParameters textExtractorParameters) {
+this.textExtractorParameters = textExtractorParameters;
+}
+}
+protected TextClassifier(TrainingParameters trainingParameters, Configuration configuration) {
+super(trainingParameters, configuration);
+}
+protected TextClassifier(String storageName, Configuration configuration) {
+super(storageName, configuration);
+}
+map should have as index the names of each class and as values the URIs
+of the training files. The training files should contain one training example
+per row.
+public void fit(Map<Object, URI> datasets) {
+TrainingParameters tp = (TrainingParameters) knowledgeBase.getTrainingParameters();
+Dataframe trainingData = Dataframe.Builder.parseTextFiles(datasets,
+AbstractTextExtractor.newInstance(tp.getTextExtractorParameters()),
+knowledgeBase.getConfiguration()
+);
+fit(trainingData);
+trainingData.close();
+}
+public Dataframe predict(URI datasetURI) {
+Map<Object, URI> dataset = new HashMap<>();
+dataset.put(null, datasetURI);
+TrainingParameters trainingParameters = (TrainingParameters) knowledgeBase.getTrainingParameters();
+Dataframe testDataset = Dataframe.Builder.parseTextFiles(dataset,
+AbstractTextExtractor.newInstance(trainingParameters.getTextExtractorParameters()),
+knowledgeBase.getConfiguration()
+);
+predict(testDataset);
+return testDataset;
+}
+public Record predict(String text) {
+TrainingParameters trainingParameters = (TrainingParameters) knowledgeBase.getTrainingParameters();
+Dataframe testDataset = new Dataframe(knowledgeBase.getConfiguration());
+testDataset.add(
+new Record(
+new AssociativeArray(
+AbstractTextExtractor.newInstance(trainingParameters.getTextExtractorParameters()).extract(StringCleaner.clear(text))
+),
+null
+)
+);
+predict(testDataset);
+Record r = testDataset.iterator().next();
+testDataset.close();
+return r;
+}
+public ClassificationMetrics validate(Dataframe testDataset) {
+logger.info("validate()");
+predict(testDataset);
+ClassificationMetrics vm = new ClassificationMetrics(testDataset);
+return vm;
+}
+map should have as index the names of each class and as values the URIs
+of the training files. The data files should contain one example
+per row.
+public ClassificationMetrics validate(Map<Object, URI> datasets) {
+TrainingParameters trainingParameters = (TrainingParameters) knowledgeBase.getTrainingParameters();
+Dataframe testDataset = Dataframe.Builder.parseTextFiles(
+datasets,
+AbstractTextExtractor.newInstance(trainingParameters.getTextExtractorParameters()),
+knowledgeBase.getConfiguration()
+);
+ClassificationMetrics vm = validate(testDataset);
+testDataset.close();
+return vm;
+}
+}

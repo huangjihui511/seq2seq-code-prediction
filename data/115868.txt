@@ -1,0 +1,6 @@
+package com.jeff.tianti.org.dao;
+import java.util.List;
+import com.jeff.tianti.org.entity.User;
+public interface UserRoleRelCustomDao {
+List<User> findUserListByRoleCondition(String roleId,String name);
+}

@@ -1,0 +1,6 @@
+package com.graphhopper.jsprit.core.algorithm.recreate;
+import com.graphhopper.jsprit.core.problem.job.Job;
+import com.graphhopper.jsprit.core.problem.solution.route.VehicleRoute;
+public interface JobInsertionCostsCalculatorLight {
+public InsertionData getInsertionData(Job unassignedJob, VehicleRoute route, double bestKnownCosts);
+}

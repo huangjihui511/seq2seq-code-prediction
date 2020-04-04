@@ -1,0 +1,8 @@
+package org.menacheri.jetserver.app;
+import java.util.Properties;
+public interface GameStartListener
+{
+public void start(boolean isInitialized, Properties properties);
+public GameRoom getGameRoom();
+public void setGameRoom(GameRoom gameRoom);
+}

@@ -1,0 +1,40 @@
+package psiprobe.controllers.apps;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import org.apache.catalina.Context;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.web.servlet.ModelAndView;
+import org.springframework.web.servlet.view.InternalResourceView;
+import org.springframework.web.servlet.view.RedirectView;
+import psiprobe.controllers.AbstractContextHandlerController;
+public abstract class AbstractNoSelfContextHandlerController
+extends AbstractContextHandlerController {
+private static final Logger logger =
+LoggerFactory.getLogger(AbstractNoSelfContextHandlerController.class);
+private boolean passQueryString;
+public boolean isPassQueryString() {
+return passQueryString;
+}
+public void setPassQueryString(boolean passQueryString) {
+this.passQueryString = passQueryString;
+}
+@Override
+protected ModelAndView handleContext(String contextName, Context context,
+HttpServletRequest request, HttpServletResponse response) throws Exception {
+try {
+if (request.getContextPath().equals(contextName)) {
+throw new IllegalStateException(
+getMessageSourceAccessor().getMessage("probe.src.contextAction.cannotActOnSelf"));
+}
+executeAction(contextName);
+} catch (Exception e) {
+request.setAttribute("errorMessage", e.getMessage());
+logger.error("Error during invocation", e);
+return new ModelAndView(new InternalResourceView(getViewName()));
+}
+return new ModelAndView(new RedirectView(request.getContextPath() + getViewName()
++ (isPassQueryString() ? "?" + request.getQueryString() : "")));
+}
+protected abstract void executeAction(String contextName) throws Exception;
+}

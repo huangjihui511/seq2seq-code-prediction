@@ -1,0 +1,73 @@
+package com.netflix.astyanax.mapping;
+import com.netflix.astyanax.ColumnListMutation;
+import com.netflix.astyanax.Keyspace;
+import com.netflix.astyanax.MutationBatch;
+import com.netflix.astyanax.model.ColumnFamily;
+import com.netflix.astyanax.model.ColumnList;
+import com.netflix.astyanax.model.Rows;
+import java.util.List;
+@Deprecated
+public class MappingUtil {
+private final Keyspace keyspace;
+private final MappingCache cache;
+private final AnnotationSet<?, ?> annotationSet;
+public MappingUtil(Keyspace keyspace) {
+this(keyspace, null, null);
+}
+public MappingUtil(Keyspace keyspace, AnnotationSet<?, ?> annotationSet) {
+this(keyspace, null, annotationSet);
+}
+public MappingUtil(Keyspace keyspace, MappingCache cache) {
+this(keyspace, cache, null);
+}
+public MappingUtil(Keyspace keyspace, MappingCache cache,
+AnnotationSet<?, ?> annotationSet) {
+this.keyspace = keyspace;
+this.cache = cache;
+this.annotationSet = (annotationSet != null) ? annotationSet
+: new DefaultAnnotationSet();
+}
+public <T, K> void remove(ColumnFamily<K, String> columnFamily, T item)
+throws Exception {
+@SuppressWarnings({ "unchecked" })
+Class<T> clazz = (Class<T>) item.getClass();
+Mapping<T> mapping = getMapping(clazz);
+@SuppressWarnings({ "unchecked" })
+Class<K> idFieldClass = (Class<K>) mapping.getIdFieldClass(); 
+MutationBatch mutationBatch = keyspace.prepareMutationBatch();
+mutationBatch.withRow(columnFamily,
+mapping.getIdValue(item, idFieldClass)).delete();
+mutationBatch.execute();
+}
+public <T, K> void put(ColumnFamily<K, String> columnFamily, T item)
+throws Exception {
+@SuppressWarnings({ "unchecked" })
+Class<T> clazz = (Class<T>) item.getClass();
+Mapping<T> mapping = getMapping(clazz);
+@SuppressWarnings({ "unchecked" })
+Class<K> idFieldClass = (Class<K>) mapping.getIdFieldClass(); 
+MutationBatch mutationBatch = keyspace.prepareMutationBatch();
+ColumnListMutation<String> columnListMutation = mutationBatch.withRow(
+columnFamily, mapping.getIdValue(item, idFieldClass));
+mapping.fillMutation(item, columnListMutation);
+mutationBatch.execute();
+}
+public <T, K> T get(ColumnFamily<K, String> columnFamily, K id,
+Class<T> itemClass) throws Exception {
+Mapping<T> mapping = getMapping(itemClass);
+ColumnList<String> result = keyspace.prepareQuery(columnFamily)
+.getKey(id).execute().getResult();
+return mapping.newInstance(result);
+}
+public <T, K> List<T> getAll(ColumnFamily<K, String> columnFamily,
+Class<T> itemClass) throws Exception {
+Mapping<T> mapping = getMapping(itemClass);
+Rows<K, String> result = keyspace.prepareQuery(columnFamily)
+.getAllRows().execute().getResult();
+return mapping.getAll(result);
+}
+public <T> Mapping<T> getMapping(Class<T> clazz) {
+return (cache != null) ? cache.getMapping(clazz, annotationSet)
+: new Mapping<T>(clazz, annotationSet);
+}
+}

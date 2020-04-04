@@ -1,0 +1,78 @@
+package io.github.bonigarcia.wdm;
+import static io.github.bonigarcia.wdm.DriverManagerType.FIREFOX;
+import java.io.IOException;
+import java.net.URL;
+import java.util.List;
+import java.util.Optional;
+public class FirefoxDriverManager extends WebDriverManager {
+@Override
+protected DriverManagerType getDriverManagerType() {
+return FIREFOX;
+}
+@Override
+protected String getDriverName() {
+return "geckodriver";
+}
+@Override
+protected String getDriverVersion() {
+return config().getFirefoxDriverVersion();
+}
+@Override
+protected URL getDriverUrl() {
+return getDriverUrlCkeckingMirror(config().getFirefoxDriverUrl());
+}
+@Override
+protected Optional<URL> getMirrorUrl() {
+return Optional.of(config().getFirefoxDriverMirrorUrl());
+}
+@Override
+protected Optional<String> getExportParameter() {
+return Optional.of(config().getFirefoxDriverExport());
+}
+@Override
+protected void setDriverVersion(String version) {
+config().setFirefoxDriverVersion(version);
+}
+@Override
+protected void setDriverUrl(URL url) {
+config().setFirefoxDriverUrl(url);
+}
+@Override
+protected List<URL> getDrivers() throws IOException {
+return getDriversFromGitHub();
+}
+@Override
+protected String getCurrentVersion(URL url, String driverName) {
+String currentVersion = url.getFile().substring(
+url.getFile().indexOf('-') + 1, url.getFile().lastIndexOf('-'));
+if (currentVersion.startsWith("v")) {
+currentVersion = currentVersion.substring(1);
+}
+return currentVersion;
+}
+@Override
+protected String preDownload(String target, String version) {
+int iSeparator = target.indexOf(version) - 1;
+int iDash = target.lastIndexOf(version) + version.length();
+int iPoint = target.lastIndexOf(".zip");
+int iPointTazGz = target.lastIndexOf(".tar.gz");
+int iPointGz = target.lastIndexOf(".gz");
+if (iPointTazGz != -1) {
+iPoint = iPointTazGz;
+} else if (iPointGz != -1) {
+iPoint = iPointGz;
+}
+target = target.substring(0, iSeparator + 1)
++ target.substring(iDash + 1, iPoint).toLowerCase()
++ target.substring(iSeparator);
+return target;
+}
+@Override
+protected Optional<String> getBrowserVersion() {
+String[] programFilesEnvs = { getProgramFilesEnv() };
+return getDefaultBrowserVersion(programFilesEnvs,
+"\\\\Mozilla Firefox\\\\firefox.exe", "firefox",
+"/Applications/Firefox.app/Contents/MacOS/firefox", "-v",
+getDriverManagerType().toString());
+}
+}

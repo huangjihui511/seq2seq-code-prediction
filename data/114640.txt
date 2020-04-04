@@ -1,0 +1,21 @@
+package com.twelvemonkeys.image;
+import java.awt.*;
+import java.awt.image.DataBuffer;
+import java.awt.image.SampleModel;
+import java.awt.image.WritableRaster;
+class GenericWritableRaster extends WritableRaster {
+public GenericWritableRaster(final SampleModel model, final DataBuffer buffer, final Point origin) {
+super(model, buffer, origin);
+}
+@Override
+public String toString() {
+return String.format(
+"%s: %s width = %s height = %s #Bands = %s xOff = %s yOff = %s %s",
+getClass().getSimpleName(),
+sampleModel,
+getWidth(), getHeight(), getNumBands(),
+sampleModelTranslateX, sampleModelTranslateY,
+dataBuffer
+);
+}
+}

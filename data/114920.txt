@@ -1,0 +1,9 @@
+package it.unimi.dsi.fastutil;
+import java.util.Collection;
+public interface Size64 {
+long size64();
+@Deprecated
+default int size() {
+return (int)Math.min(Integer.MAX_VALUE, size64());
+}
+}

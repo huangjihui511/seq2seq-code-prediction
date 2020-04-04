@@ -1,0 +1,9 @@
+package io.kubernetes.client.extended.workqueue;
+public interface WorkQueue<T> {
+void add(T item);
+int length();
+T get() throws InterruptedException;
+void done(T item);
+void shutDown();
+boolean isShuttingDown();
+}

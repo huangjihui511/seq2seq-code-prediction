@@ -1,0 +1,13 @@
+package org.cybergarage.upnp;
+import java.util.Vector;
+public class DeviceList extends Vector<Device>
+{
+public final static String ELEM_NAME = "deviceList";
+public DeviceList()
+{
+}
+public Device getDevice(int n)
+{
+return get(n);
+}
+}

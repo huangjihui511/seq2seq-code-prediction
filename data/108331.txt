@@ -1,0 +1,20 @@
+package org.apache.flink.client.program;
+import org.apache.flink.api.common.JobID;
+public class ProgramInvocationException extends Exception {
+private static final long serialVersionUID = -2417524218857151612L;
+public ProgramInvocationException(String message) {
+super(message);
+}
+public ProgramInvocationException(String message, JobID jobID) {
+super(message + " (JobID: " + jobID + ")");
+}
+public ProgramInvocationException(Throwable cause) {
+super(cause);
+}
+public ProgramInvocationException(String message, Throwable cause) {
+super(message, cause);
+}
+public ProgramInvocationException(String message, JobID jobID, Throwable cause) {
+super(message + " (JobID: " + jobID + ")", cause);
+}
+}

@@ -1,0 +1,25 @@
+package com.oracle.svm.agent.restrict;
+import java.util.Arrays;
+import com.oracle.svm.configure.config.ProxyConfiguration;
+import com.oracle.svm.configure.trace.AccessAdvisor;
+import com.oracle.svm.jni.nativeapi.JNIEnvironment;
+import com.oracle.svm.jni.nativeapi.JNIObjectHandle;
+public class ProxyAccessVerifier extends AbstractAccessVerifier {
+private final ProxyConfiguration configuration;
+public ProxyAccessVerifier(ProxyConfiguration configuration, AccessAdvisor advisor) {
+super(advisor);
+this.configuration = configuration;
+}
+public boolean verifyNewProxyInstance(JNIEnvironment env, Object interfaceNames, JNIObjectHandle callerClass) {
+return verifyProxyAccess(env, interfaceNames, callerClass);
+}
+public boolean verifyGetProxyClass(JNIEnvironment env, Object interfaceNames, JNIObjectHandle callerClass) {
+return verifyProxyAccess(env, interfaceNames, callerClass);
+}
+private boolean verifyProxyAccess(JNIEnvironment env, Object interfaceNames, JNIObjectHandle callerClass) {
+if (shouldApproveWithoutChecks(env, callerClass)) {
+return true;
+}
+return (interfaceNames instanceof String[]) && configuration.contains(Arrays.asList((String[]) interfaceNames));
+}
+}

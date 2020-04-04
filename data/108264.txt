@@ -1,0 +1,5 @@
+package org.apache.flink.runtime.state.ttl;
+public interface TtlTimeProvider {
+TtlTimeProvider DEFAULT = System::currentTimeMillis;
+long currentTimestamp();
+}

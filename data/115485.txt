@@ -1,0 +1,12 @@
+package org.gnucash.android.model;
+public enum TransactionType {
+DEBIT, CREDIT;
+private TransactionType opposite;
+static {
+DEBIT.opposite = CREDIT;
+CREDIT.opposite = DEBIT;
+}
+public TransactionType invert() {
+return opposite;
+}
+}

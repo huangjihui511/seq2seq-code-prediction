@@ -1,0 +1,14 @@
+package org.apereo.cas.authentication;
+import org.apereo.cas.services.RegisteredService;
+import org.apereo.cas.services.RegisteredServiceMultifactorPolicyFailureModes;
+import org.springframework.core.Ordered;
+import java.io.Serializable;
+@FunctionalInterface
+public interface MultifactorAuthenticationFailureModeEvaluator extends Serializable, Ordered {
+RegisteredServiceMultifactorPolicyFailureModes evaluate(RegisteredService registeredService,
+MultifactorAuthenticationProvider provider);
+@Override
+default int getOrder() {
+return Ordered.LOWEST_PRECEDENCE;
+}
+}

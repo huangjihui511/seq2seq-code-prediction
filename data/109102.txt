@@ -1,0 +1,13 @@
+package io.vertx.core.cli.converters;
+import java.util.Arrays;
+import java.util.List;
+public final class BooleanConverter implements Converter<Boolean> {
+public static final BooleanConverter INSTANCE = new BooleanConverter();
+private static final List<String> TRUE = Arrays.asList("true", "yes", "on", "1");
+private BooleanConverter() {
+}
+@Override
+public Boolean fromString(String value) {
+return value != null && TRUE.contains(value.toLowerCase());
+}
+}

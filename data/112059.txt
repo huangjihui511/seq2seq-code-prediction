@@ -1,0 +1,96 @@
+package org.springframework.data.mongodb.gridfs;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+import java.io.InputStream;
+import java.util.concurrent.atomic.AtomicBoolean;
+import org.bson.BsonValue;
+import org.reactivestreams.Publisher;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.buffer.DataBuffer;
+import org.springframework.core.io.buffer.DataBufferFactory;
+import org.springframework.core.io.buffer.DataBufferUtils;
+import org.springframework.core.io.buffer.DefaultDataBufferFactory;
+import org.springframework.data.mongodb.util.BsonUtils;
+import org.springframework.lang.Nullable;
+import org.springframework.util.Assert;
+import com.mongodb.client.gridfs.model.GridFSFile;
+import com.mongodb.reactivestreams.client.gridfs.GridFSDownloadPublisher;
+public class ReactiveGridFsResource implements GridFsObject<Object, Publisher<DataBuffer>> {
+private final AtomicBoolean consumed = new AtomicBoolean(false);
+private final @Nullable Object id;
+private final Options options;
+private final String filename;
+private final @Nullable GridFSDownloadPublisher downloadPublisher;
+private final DataBufferFactory dataBufferFactory;
+public ReactiveGridFsResource(String filename, @Nullable GridFSDownloadPublisher downloadPublisher) {
+this(null, filename, Options.none(), downloadPublisher);
+}
+public ReactiveGridFsResource(@Nullable Object id, String filename, Options options,
+@Nullable GridFSDownloadPublisher downloadPublisher) {
+this(id, filename, options, downloadPublisher, new DefaultDataBufferFactory());
+}
+ReactiveGridFsResource(GridFSFile file, @Nullable GridFSDownloadPublisher downloadPublisher, DataBufferFactory dataBufferFactory) {
+this(file.getId(), file.getFilename(), Options.from(file), downloadPublisher, dataBufferFactory);
+}
+ReactiveGridFsResource(@Nullable Object id, String filename, Options options,
+@Nullable GridFSDownloadPublisher downloadPublisher, DataBufferFactory dataBufferFactory) {
+this.id = id;
+this.filename = filename;
+this.options = options;
+this.downloadPublisher = downloadPublisher;
+this.dataBufferFactory = dataBufferFactory;
+}
+public static ReactiveGridFsResource absent(String filename) {
+Assert.notNull(filename, "Filename must not be null");
+return new ReactiveGridFsResource(filename, null);
+}
+@Override
+public Object getFileId() {
+return id instanceof BsonValue ? BsonUtils.toJavaType((BsonValue) id) : id;
+}
+public String getFilename() throws IllegalStateException {
+return this.filename;
+}
+public Mono<GridFSFile> getGridFSFile() {
+return downloadPublisher != null ? Mono.from(downloadPublisher.getGridFSFile()) : Mono.empty();
+}
+public Mono<InputStream> getInputStream() throws IllegalStateException {
+return getDownloadStream() 
+.transform(DataBufferUtils::join) 
+.as(Mono::from) 
+.map(DataBuffer::asInputStream);
+}
+public Flux<DataBuffer> getDownloadStream() {
+if (downloadPublisher == null) {
+return Flux.empty();
+}
+return createDownloadStream(downloadPublisher);
+}
+@Override
+public Flux<DataBuffer> getContent() {
+return getDownloadStream();
+}
+@Override
+public Options getOptions() {
+return options;
+}
+public Flux<DataBuffer> getDownloadStream(int chunkSize) {
+if (downloadPublisher == null) {
+return Flux.empty();
+}
+return createDownloadStream(downloadPublisher.bufferSizeBytes(chunkSize));
+}
+private Flux<DataBuffer> createDownloadStream(GridFSDownloadPublisher publisher) {
+return Flux.from(publisher) 
+.map(dataBufferFactory::wrap) 
+.doOnSubscribe(it -> this.verifyStreamStillAvailable());
+}
+public boolean exists() {
+return downloadPublisher != null;
+}
+private void verifyStreamStillAvailable() {
+if (!consumed.compareAndSet(false, true)) {
+throw new IllegalStateException("Stream already consumed.");
+}
+}
+}

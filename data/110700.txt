@@ -1,0 +1,14 @@
+package org.apache.zookeeper.graph.filterops;
+import org.apache.zookeeper.graph.LogEntry;
+import org.apache.zookeeper.graph.FilterOp;
+import org.apache.zookeeper.graph.FilterException;
+public class OrOp extends FilterOp {
+public boolean matches(LogEntry entry) throws FilterException {
+for (FilterOp f : subOps) {
+if (f.matches(entry)) {
+return true;
+}
+}
+return false;
+}
+}

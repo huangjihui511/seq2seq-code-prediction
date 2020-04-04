@@ -1,0 +1,32 @@
+package com.jeff.tianti.cms.dto;
+import java.util.Date;
+public class CurrentArticleInfoDTO {
+private String articleId;
+private String columnId;
+private Date articleDate;
+private Integer orderNo;
+public String getArticleId() {
+return articleId;
+}
+public void setArticleId(String articleId) {
+this.articleId = articleId;
+}
+public String getColumnId() {
+return columnId;
+}
+public void setColumnId(String columnId) {
+this.columnId = columnId;
+}
+public Date getArticleDate() {
+return articleDate;
+}
+public void setArticleDate(Date articleDate) {
+this.articleDate = articleDate;
+}
+public Integer getOrderNo() {
+return orderNo;
+}
+public void setOrderNo(Integer orderNo) {
+this.orderNo = orderNo;
+}
+}

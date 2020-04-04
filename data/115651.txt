@@ -1,0 +1,51 @@
+package com.graphhopper.jsprit.analysis.toolbox;
+import org.jfree.chart.ChartFactory;
+import org.jfree.chart.ChartUtilities;
+import org.jfree.chart.JFreeChart;
+import org.jfree.chart.plot.PlotOrientation;
+import org.jfree.chart.plot.XYPlot;
+import org.jfree.data.xy.XYSeries;
+import org.jfree.data.xy.XYSeriesCollection;
+import java.awt.*;
+import java.io.File;
+import java.io.IOException;
+import java.util.concurrent.ConcurrentHashMap;
+public class XYLineChartBuilder {
+public static void saveChartAsPNG(JFreeChart chart, String pngFilename) {
+try {
+ChartUtilities.saveChartAsPNG(new File(pngFilename), chart, 1000, 600);
+} catch (IOException e) {
+e.printStackTrace();
+}
+}
+public static XYLineChartBuilder newInstance(String chartTitle, String xDomainName, String yDomainName) {
+return new XYLineChartBuilder(chartTitle, xDomainName, yDomainName);
+}
+private ConcurrentHashMap<String, XYSeries> seriesMap = new ConcurrentHashMap<String, XYSeries>();
+private final String xDomain;
+private final String yDomain;
+private final String chartName;
+private XYLineChartBuilder(String chartName, String xDomainName, String yDomainName) {
+this.xDomain = xDomainName;
+this.yDomain = yDomainName;
+this.chartName = chartName;
+}
+public void addData(String seriesName, double xVal, double yVal) {
+if (!seriesMap.containsKey(seriesName)) {
+seriesMap.put(seriesName, new XYSeries(seriesName, true, true));
+}
+seriesMap.get(seriesName).add(xVal, yVal);
+}
+public JFreeChart build() {
+XYSeriesCollection collection = new XYSeriesCollection();
+for (XYSeries s : seriesMap.values()) {
+collection.addSeries(s);
+}
+JFreeChart chart = ChartFactory.createXYLineChart(chartName, xDomain, yDomain, collection, PlotOrientation.VERTICAL, true, true, false);
+XYPlot plot = chart.getXYPlot();
+plot.setBackgroundPaint(Color.WHITE);
+plot.setDomainGridlinePaint(Color.LIGHT_GRAY);
+plot.setRangeGridlinePaint(Color.LIGHT_GRAY);
+return chart;
+}
+}

@@ -1,0 +1,81 @@
+package com.twlevemonkeys.image;
+import com.twelvemonkeys.image.MappedFileBuffer;
+import org.junit.Test;
+import java.awt.image.DataBuffer;
+import java.io.IOException;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+public class MappedFileBufferTest {
+@Test(expected = IllegalArgumentException.class)
+public void testCreateInvalidType() throws IOException {
+MappedFileBuffer.create(-1, 1, 1);
+}
+@Test(expected = IllegalArgumentException.class)
+public void testCreateInvalidSize() throws IOException {
+MappedFileBuffer.create(DataBuffer.TYPE_USHORT, -1, 1);
+}
+@Test(expected = IllegalArgumentException.class)
+public void testCreateInvalidBands() throws IOException {
+MappedFileBuffer.create(DataBuffer.TYPE_BYTE, 1, -1);
+}
+@Test
+public void testCreateByte() throws IOException {
+DataBuffer buffer = MappedFileBuffer.create(DataBuffer.TYPE_BYTE, 256, 3);
+assertNotNull(buffer);
+assertEquals(DataBuffer.TYPE_BYTE, buffer.getDataType());
+assertEquals(256, buffer.getSize());
+assertEquals(3, buffer.getNumBanks());
+}
+@Test
+public void testSetGetElemByte() throws IOException {
+final int size = 256;
+DataBuffer buffer = MappedFileBuffer.create(DataBuffer.TYPE_BYTE, size, 3);
+assertNotNull(buffer);
+for (int b = 0; b < 3; b++) {
+for (int i = 0; i < size; i++) {
+buffer.setElem(b, i, i);
+assertEquals(i, buffer.getElem(b, i));
+}
+}
+}
+@Test
+public void testCreateUShort() throws IOException {
+DataBuffer buffer = MappedFileBuffer.create(DataBuffer.TYPE_USHORT, 256, 3);
+assertNotNull(buffer);
+assertEquals(DataBuffer.TYPE_USHORT, buffer.getDataType());
+assertEquals(256, buffer.getSize());
+assertEquals(3, buffer.getNumBanks());
+}
+@Test
+public void testSetGetElemUShort() throws IOException {
+final int size = (Short.MAX_VALUE + 1) * 2;
+DataBuffer buffer = MappedFileBuffer.create(DataBuffer.TYPE_USHORT, size, 3);
+assertNotNull(buffer);
+for (int b = 0; b < 3; b++) {
+for (int i = 0; i < size; i++) {
+buffer.setElem(b, i, i);
+assertEquals(i, buffer.getElem(b, i));
+}
+}
+}
+@Test
+public void testCreateInt() throws IOException {
+DataBuffer buffer = MappedFileBuffer.create(DataBuffer.TYPE_INT, 256, 3);
+assertNotNull(buffer);
+assertEquals(DataBuffer.TYPE_INT, buffer.getDataType());
+assertEquals(256, buffer.getSize());
+assertEquals(3, buffer.getNumBanks());
+}
+@Test
+public void testSetGetElemInt() throws IOException {
+final int size = (Short.MAX_VALUE + 1) * 2;
+DataBuffer buffer = MappedFileBuffer.create(DataBuffer.TYPE_INT, size, 3);
+assertNotNull(buffer);
+for (int b = 0; b < 3; b++) {
+for (int i = 0; i < size; i++) {
+buffer.setElem(b, i, i * i);
+assertEquals(i * i, buffer.getElem(b, i));
+}
+}
+}
+}

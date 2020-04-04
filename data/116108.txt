@@ -1,0 +1,31 @@
+package net.i2p.router.message;
+import net.i2p.data.Certificate;
+import net.i2p.data.i2np.DeliveryInstructions;
+import net.i2p.data.i2np.I2NPMessage;
+public class PayloadGarlicConfig extends GarlicConfig {
+private final I2NPMessage _payload;
+public PayloadGarlicConfig(Certificate cert, long id, long expiration,
+DeliveryInstructions di, I2NPMessage message) {
+super(null, cert, id, expiration, di);
+_payload = message;
+}
+public I2NPMessage getPayload() { return _payload; }
+@Override
+protected String getSubData() {
+StringBuilder buf = new StringBuilder();
+buf.append("<payloadMessage>").append(_payload).append("</payloadMessage>");
+return buf.toString();
+}
+@Override
+public void addClove(GarlicConfig config) {
+throw new UnsupportedOperationException();
+}
+@Override
+public int getCloveCount() { return 0; }
+@Override
+public GarlicConfig getClove(int index) {
+throw new UnsupportedOperationException();
+}
+@Override
+public void clearCloves() { }
+}

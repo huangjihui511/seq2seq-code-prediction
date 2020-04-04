@@ -1,0 +1,31 @@
+package org.gnucash.android.model;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
+public enum PeriodType {
+HOUR, DAY, WEEK, MONTH, YEAR;
+public String getFrequencyDescription() {
+switch (this) {
+case HOUR:
+return "HOURLY";
+case DAY:
+return "DAILY";
+case WEEK:
+return "WEEKLY";
+case MONTH:
+return "MONTHLY";
+case YEAR:
+return "YEARLY";
+default:
+return "";
+}
+}
+public String getByParts(long startTime){
+String partString = "";
+if (this == WEEK){
+String dayOfWeek = new SimpleDateFormat("E", Locale.US).format(new Date(startTime));
+partString = "BYDAY=" + dayOfWeek.substring(0, dayOfWeek.length()-1).toUpperCase();
+}
+return partString;
+}
+}

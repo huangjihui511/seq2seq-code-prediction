@@ -1,0 +1,11 @@
+package net.pms.formats.audio;
+public class DTS extends AudioBase {
+@Override
+public Identifier getIdentifier() {
+return Identifier.DTS;
+}
+@Override
+public String[] getSupportedExtensions() {
+return new String[] { "dts" };
+}
+}

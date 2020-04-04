@@ -1,0 +1,499 @@
+package org.apache.pdfbox.pdmodel.fdf;
+import java.io.IOException;
+import java.io.Writer;
+import java.util.ArrayList;
+import java.util.List;
+import org.apache.pdfbox.cos.COSArray;
+import org.apache.pdfbox.cos.COSBase;
+import org.apache.pdfbox.cos.COSDictionary;
+import org.apache.pdfbox.cos.COSInteger;
+import org.apache.pdfbox.cos.COSName;
+import org.apache.pdfbox.cos.COSNumber;
+import org.apache.pdfbox.cos.COSStream;
+import org.apache.pdfbox.cos.COSString;
+import org.apache.pdfbox.pdmodel.common.COSArrayList;
+import org.apache.pdfbox.pdmodel.common.COSObjectable;
+import org.apache.pdfbox.pdmodel.interactive.action.PDAction;
+import org.apache.pdfbox.pdmodel.interactive.action.PDActionFactory;
+import org.apache.pdfbox.pdmodel.interactive.action.PDAdditionalActions;
+import org.apache.pdfbox.pdmodel.interactive.annotation.PDAppearanceDictionary;
+import org.apache.pdfbox.util.XMLUtil;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+public class FDFField implements COSObjectable
+{
+private COSDictionary field;
+public FDFField()
+{
+field = new COSDictionary();
+}
+public FDFField(COSDictionary f)
+{
+field = f;
+}
+public FDFField(Element fieldXML) throws IOException
+{
+this();
+this.setPartialFieldName(fieldXML.getAttribute("name"));
+NodeList nodeList = fieldXML.getChildNodes();
+List<FDFField> kids = new ArrayList<>();
+for (int i = 0; i < nodeList.getLength(); i++)
+{
+Node node = nodeList.item(i);
+if (node instanceof Element)
+{
+Element child = (Element) node;
+switch (child.getTagName())
+{
+case "value":
+setValue(XMLUtil.getNodeValue(child));
+break;
+case "value-richtext":
+setRichText(new COSString(XMLUtil.getNodeValue(child)));
+break;
+case "field":
+kids.add(new FDFField(child));
+break;
+default:
+break;
+}
+}
+}
+if (kids.size() > 0)
+{
+setKids(kids);
+}
+}
+public void writeXML(Writer output) throws IOException
+{
+output.write("<field name=\"" + getPartialFieldName() + "\">\n");
+Object value = getValue();
+if (value instanceof String)
+{
+output.write("<value>" + escapeXML((String) value) + "</value>\n");
+}
+else if (value instanceof List)
+{
+List<String> items = (List<String>) value;
+for (String item : items)
+{
+output.write("<value>" + escapeXML((String) item) + "</value>\n");
+}
+}
+String rt = getRichText();
+if (rt != null)
+{
+output.write("<value-richtext>" + escapeXML(rt) + "</value-richtext>\n");
+}
+List<FDFField> kids = getKids();
+if (kids != null)
+{
+for (FDFField kid : kids)
+{
+kid.writeXML(output);
+}
+}
+output.write("</field>\n");
+}
+@Override
+public COSDictionary getCOSObject()
+{
+return field;
+}
+public List<FDFField> getKids()
+{
+COSArray kids = (COSArray) field.getDictionaryObject(COSName.KIDS);
+List<FDFField> retval = null;
+if (kids != null)
+{
+List<FDFField> actuals = new ArrayList<>();
+for (int i = 0; i < kids.size(); i++)
+{
+actuals.add(new FDFField((COSDictionary) kids.getObject(i)));
+}
+retval = new COSArrayList<>(actuals, kids);
+}
+return retval;
+}
+public final void setKids(List<FDFField> kids)
+{
+field.setItem(COSName.KIDS, COSArrayList.converterToCOSArray(kids));
+}
+public String getPartialFieldName()
+{
+return field.getString(COSName.T);
+}
+public void setPartialFieldName(String partial)
+{
+field.setString(COSName.T, partial);
+}
+public Object getValue() throws IOException
+{
+COSBase value = field.getDictionaryObject(COSName.V);
+if (value instanceof COSName)
+{
+return ((COSName) value).getName();
+}
+else if (value instanceof COSArray)
+{
+return COSArrayList.convertCOSStringCOSArrayToList((COSArray) value);
+}
+else if (value instanceof COSString)
+{
+return ((COSString) value).getString();
+}
+else if (value instanceof COSStream)
+{
+return ((COSStream) value).toTextString();
+}
+else if (value != null)
+{
+throw new IOException("Error:Unknown type for field import" + value);
+}
+else
+{
+return null;
+}
+}
+public COSBase getCOSValue() throws IOException
+{
+COSBase value = field.getDictionaryObject(COSName.V);
+if (value instanceof COSName)
+{
+return value;
+}
+else if (value instanceof COSArray)
+{
+return value;
+}
+else if (value instanceof COSString || value instanceof COSStream)
+{
+return value;
+}
+else if (value != null)
+{
+throw new IOException("Error:Unknown type for field import" + value);
+}
+else
+{
+return null;
+}
+}
+public void setValue(Object value) throws IOException
+{
+COSBase cos = null;
+if (value instanceof List)
+{
+cos = COSArrayList.convertStringListToCOSStringCOSArray((List<String>) value);
+}
+else if (value instanceof String)
+{
+cos = new COSString((String) value);
+}
+else if (value instanceof COSObjectable)
+{
+cos = ((COSObjectable) value).getCOSObject();
+}
+else if (value != null)
+{
+throw new IOException("Error:Unknown type for field import" + value);
+}
+field.setItem(COSName.V, cos);
+}
+public void setValue(COSBase value)
+{
+field.setItem(COSName.V, value);
+}
+public Integer getFieldFlags()
+{
+Integer retval = null;
+COSNumber ff = (COSNumber) field.getDictionaryObject(COSName.FF);
+if (ff != null)
+{
+retval = ff.intValue();
+}
+return retval;
+}
+public void setFieldFlags(Integer ff)
+{
+COSInteger value = null;
+if (ff != null)
+{
+value = COSInteger.get(ff);
+}
+field.setItem(COSName.FF, value);
+}
+public void setFieldFlags(int ff)
+{
+field.setInt(COSName.FF, ff);
+}
+public Integer getSetFieldFlags()
+{
+Integer retval = null;
+COSNumber ff = (COSNumber) field.getDictionaryObject(COSName.SET_FF);
+if (ff != null)
+{
+retval = ff.intValue();
+}
+return retval;
+}
+public void setSetFieldFlags(Integer ff)
+{
+COSInteger value = null;
+if (ff != null)
+{
+value = COSInteger.get(ff);
+}
+field.setItem(COSName.SET_FF, value);
+}
+public void setSetFieldFlags(int ff)
+{
+field.setInt(COSName.SET_FF, ff);
+}
+public Integer getClearFieldFlags()
+{
+Integer retval = null;
+COSNumber ff = (COSNumber) field.getDictionaryObject(COSName.CLR_FF);
+if (ff != null)
+{
+retval = ff.intValue();
+}
+return retval;
+}
+public void setClearFieldFlags(Integer ff)
+{
+COSInteger value = null;
+if (ff != null)
+{
+value = COSInteger.get(ff);
+}
+field.setItem(COSName.CLR_FF, value);
+}
+public void setClearFieldFlags(int ff)
+{
+field.setInt(COSName.CLR_FF, ff);
+}
+public Integer getWidgetFieldFlags()
+{
+Integer retval = null;
+COSNumber f = (COSNumber) field.getDictionaryObject("F");
+if (f != null)
+{
+retval = f.intValue();
+}
+return retval;
+}
+public void setWidgetFieldFlags(Integer f)
+{
+COSInteger value = null;
+if (f != null)
+{
+value = COSInteger.get(f);
+}
+field.setItem(COSName.F, value);
+}
+public void setWidgetFieldFlags(int f)
+{
+field.setInt(COSName.F, f);
+}
+public Integer getSetWidgetFieldFlags()
+{
+Integer retval = null;
+COSNumber ff = (COSNumber) field.getDictionaryObject(COSName.SET_F);
+if (ff != null)
+{
+retval = ff.intValue();
+}
+return retval;
+}
+public void setSetWidgetFieldFlags(Integer ff)
+{
+COSInteger value = null;
+if (ff != null)
+{
+value = COSInteger.get(ff);
+}
+field.setItem(COSName.SET_F, value);
+}
+public void setSetWidgetFieldFlags(int ff)
+{
+field.setInt(COSName.SET_F, ff);
+}
+public Integer getClearWidgetFieldFlags()
+{
+Integer retval = null;
+COSNumber ff = (COSNumber) field.getDictionaryObject(COSName.CLR_F);
+if (ff != null)
+{
+retval = ff.intValue();
+}
+return retval;
+}
+public void setClearWidgetFieldFlags(Integer ff)
+{
+COSInteger value = null;
+if (ff != null)
+{
+value = COSInteger.get(ff);
+}
+field.setItem(COSName.CLR_F, value);
+}
+public void setClearWidgetFieldFlags(int ff)
+{
+field.setInt(COSName.CLR_F, ff);
+}
+public PDAppearanceDictionary getAppearanceDictionary()
+{
+PDAppearanceDictionary retval = null;
+COSDictionary dict = (COSDictionary) field.getDictionaryObject(COSName.AP);
+if (dict != null)
+{
+retval = new PDAppearanceDictionary(dict);
+}
+return retval;
+}
+public void setAppearanceDictionary(PDAppearanceDictionary ap)
+{
+field.setItem(COSName.AP, ap);
+}
+public FDFNamedPageReference getAppearanceStreamReference()
+{
+FDFNamedPageReference retval = null;
+COSDictionary ref = (COSDictionary) field.getDictionaryObject(COSName.AP_REF);
+if (ref != null)
+{
+retval = new FDFNamedPageReference(ref);
+}
+return retval;
+}
+public void setAppearanceStreamReference(FDFNamedPageReference ref)
+{
+field.setItem(COSName.AP_REF, ref);
+}
+public FDFIconFit getIconFit()
+{
+FDFIconFit retval = null;
+COSDictionary dic = (COSDictionary) field.getDictionaryObject(COSName.IF);
+if (dic != null)
+{
+retval = new FDFIconFit(dic);
+}
+return retval;
+}
+public void setIconFit(FDFIconFit fit)
+{
+field.setItem(COSName.IF, fit);
+}
+public List<Object> getOptions()
+{
+List<Object> retval = null;
+COSArray array = (COSArray) field.getDictionaryObject(COSName.OPT);
+if (array != null)
+{
+List<Object> objects = new ArrayList<>();
+for (int i = 0; i < array.size(); i++)
+{
+COSBase next = array.getObject(i);
+if (next instanceof COSString)
+{
+objects.add(((COSString) next).getString());
+}
+else
+{
+COSArray value = (COSArray) next;
+objects.add(new FDFOptionElement(value));
+}
+}
+retval = new COSArrayList<>(objects, array);
+}
+return retval;
+}
+public void setOptions(List<Object> options)
+{
+COSArray value = COSArrayList.converterToCOSArray(options);
+field.setItem(COSName.OPT, value);
+}
+public PDAction getAction()
+{
+return PDActionFactory.createAction((COSDictionary) field.getDictionaryObject(COSName.A));
+}
+public void setAction(PDAction a)
+{
+field.setItem(COSName.A, a);
+}
+public PDAdditionalActions getAdditionalActions()
+{
+PDAdditionalActions retval = null;
+COSDictionary dict = (COSDictionary) field.getDictionaryObject(COSName.AA);
+if (dict != null)
+{
+retval = new PDAdditionalActions(dict);
+}
+return retval;
+}
+public void setAdditionalActions(PDAdditionalActions aa)
+{
+field.setItem(COSName.AA, aa);
+}
+public String getRichText()
+{
+COSBase rv = field.getDictionaryObject(COSName.RV);
+if (rv == null)
+{
+return null;
+}
+else if (rv instanceof COSString)
+{
+return ((COSString) rv).getString();
+}
+else
+{
+return ((COSStream) rv).toTextString();
+}
+}
+public void setRichText(COSString rv)
+{
+field.setItem(COSName.RV, rv);
+}
+public void setRichText(COSStream rv)
+{
+field.setItem(COSName.RV, rv);
+}
+private String escapeXML(String input)
+{
+StringBuilder escapedXML = new StringBuilder();
+for (int i = 0; i < input.length(); i++)
+{
+char c = input.charAt(i);
+switch (c)
+{
+case '<':
+escapedXML.append("&lt;");
+break;
+case '>':
+escapedXML.append("&gt;");
+break;
+case '\"':
+escapedXML.append("&quot;");
+break;
+case '&':
+escapedXML.append("&amp;");
+break;
+case '\'':
+escapedXML.append("&apos;");
+break;
+default:
+if (c > 0x7e)
+{
+escapedXML.append("&#").append((int) c).append(";");
+}
+else
+{
+escapedXML.append(c);
+}
+}
+}
+return escapedXML.toString();
+}
+}

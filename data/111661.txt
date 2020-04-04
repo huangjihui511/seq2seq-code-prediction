@@ -1,0 +1,64 @@
+package net.glowstone.util.pathfinding;
+import com.google.common.collect.Sets;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import net.glowstone.block.GlowBlock;
+import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.util.Vector;
+public interface IAlgorithm {
+List<Vector> calculatePath(final GlowBlock startPoint, final GlowBlock endPoint,
+final Map<Material, Double> materialWeights,
+Material... blockedMaterials);
+default Map<Vector, Double> getNeighbors(final Location location,
+final Map<Material, Double> materialWeights,
+final Set<Material> blockedMaterials) {
+Map<Vector, Double> neighbors = new HashMap<>();
+final Vector start = location.toVector();
+for (Vector neighbor : getFaceNeighbors(start)) {
+final Material materialAt = location.getWorld().getBlockAt(
+neighbor.toLocation(location.getWorld())).getType();
+if (blockedMaterials.contains(materialAt)) {
+continue;
+}
+if (materialAt.equals(Material.AIR) && location.getWorld().getBlockAt(
+neighbor.add(new Vector(0, -1, 0)).toLocation(
+location.getWorld())).getType().equals(Material.AIR)) {
+continue;
+}
+if (materialAt.isSolid()  && location.getWorld().getBlockAt(
+neighbor.add(new Vector(0, 1, 0)).toLocation(
+location.getWorld())).getType().isSolid()) {
+continue;
+}
+neighbors.put(neighbor, materialWeights.getOrDefault(materialAt, 0.0));
+}
+return neighbors;
+}
+default Set<Vector> getFaceNeighbors(final Vector vector) {
+Vector[] faces = new Vector[] {
+new Vector(vector.getBlockX() + 1, vector.getBlockY(), vector.getBlockZ()),
+new Vector(vector.getBlockX() - 1, vector.getBlockY(), vector.getBlockZ()),
+new Vector(vector.getBlockX(), vector.getBlockY() + 1, vector.getBlockZ()),
+new Vector(vector.getBlockX(), vector.getBlockY() - 1, vector.getBlockZ()),
+new Vector(vector.getBlockX(), vector.getBlockY(), vector.getBlockZ() + 1),
+new Vector(vector.getBlockX(), vector.getBlockY(), vector.getBlockZ() - 1)
+};
+return Sets.newHashSet(faces);
+}
+default Set<Vector> getCornerNeighbors(final Vector vector) {
+Vector[] faces = new Vector[] {
+new Vector(vector.getBlockX() + 1, vector.getBlockY() - 1, vector.getBlockZ() + 1),
+new Vector(vector.getBlockX() + 1, vector.getBlockY() - 1, vector.getBlockZ() - 1),
+new Vector(vector.getBlockX() + 1, vector.getBlockY() + 1, vector.getBlockZ() + 1),
+new Vector(vector.getBlockX() + 1, vector.getBlockY() + 1, vector.getBlockZ() - 1),
+new Vector(vector.getBlockX() - 1, vector.getBlockY() + 1, vector.getBlockZ() + 1),
+new Vector(vector.getBlockX() - 1, vector.getBlockY() + 1, vector.getBlockZ() - 1),
+new Vector(vector.getBlockX() - 1, vector.getBlockY() - 1, vector.getBlockZ() + 1),
+new Vector(vector.getBlockX() - 1, vector.getBlockY() - 1, vector.getBlockZ() - 1)
+};
+return Sets.newHashSet(faces);
+}
+}

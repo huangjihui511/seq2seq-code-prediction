@@ -1,0 +1,19 @@
+package net.pms.formats.image;
+public class PICT extends ImageBase {
+@Override
+public Identifier getIdentifier() {
+return Identifier.PICT;
+}
+@Override
+public String[] getSupportedExtensions() {
+return new String[] {
+"pict",
+"pct",
+"pic"
+};
+}
+@Override
+public String mimeType() {
+return "image/x-pict";
+}
+}

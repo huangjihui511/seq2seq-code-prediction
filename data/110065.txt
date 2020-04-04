@@ -1,0 +1,255 @@
+package spark;
+import spark.route.HttpMethod;
+import spark.utils.SparkUtils;
+abstract class Routable {
+private ResponseTransformer defaultResponseTransformer;
+protected abstract void addRoute(HttpMethod httpMethod, RouteImpl route);
+@Deprecated
+protected abstract void addRoute(String httpMethod, RouteImpl route);
+protected abstract void addFilter(HttpMethod httpMethod, FilterImpl filter);
+@Deprecated
+protected abstract void addFilter(String httpMethod, FilterImpl filter);
+public void get(String path, Route route) {
+addRoute(HttpMethod.get, createRouteImpl(path, route));
+}
+public void post(String path, Route route) {
+addRoute(HttpMethod.post, createRouteImpl(path, route));
+}
+public void put(String path, Route route) {
+addRoute(HttpMethod.put, createRouteImpl(path, route));
+}
+public void patch(String path, Route route) {
+addRoute(HttpMethod.patch, createRouteImpl(path, route));
+}
+public void delete(String path, Route route) {
+addRoute(HttpMethod.delete, createRouteImpl(path, route));
+}
+public void head(String path, Route route) {
+addRoute(HttpMethod.head, createRouteImpl(path, route));
+}
+public void trace(String path, Route route) {
+addRoute(HttpMethod.trace, createRouteImpl(path, route));
+}
+public void connect(String path, Route route) {
+addRoute(HttpMethod.connect, createRouteImpl(path, route));
+}
+public void options(String path, Route route) {
+addRoute(HttpMethod.options, createRouteImpl(path, route));
+}
+public void before(String path, Filter filter) {
+addFilter(HttpMethod.before, FilterImpl.create(path, filter));
+}
+public void after(String path, Filter filter) {
+addFilter(HttpMethod.after, FilterImpl.create(path, filter));
+}
+public void get(String path, String acceptType, Route route) {
+addRoute(HttpMethod.get, createRouteImpl(path, acceptType, route));
+}
+public void post(String path, String acceptType, Route route) {
+addRoute(HttpMethod.post, createRouteImpl(path, acceptType, route));
+}
+public void put(String path, String acceptType, Route route) {
+addRoute(HttpMethod.put, createRouteImpl(path, acceptType, route));
+}
+public void patch(String path, String acceptType, Route route) {
+addRoute(HttpMethod.patch, createRouteImpl(path, acceptType, route));
+}
+public void delete(String path, String acceptType, Route route) {
+addRoute(HttpMethod.delete, createRouteImpl(path, acceptType, route));
+}
+public void head(String path, String acceptType, Route route) {
+addRoute(HttpMethod.head, createRouteImpl(path, acceptType, route));
+}
+public void trace(String path, String acceptType, Route route) {
+addRoute(HttpMethod.trace, createRouteImpl(path, acceptType, route));
+}
+public void connect(String path, String acceptType, Route route) {
+addRoute(HttpMethod.connect, createRouteImpl(path, acceptType, route));
+}
+public void options(String path, String acceptType, Route route) {
+addRoute(HttpMethod.options, createRouteImpl(path, acceptType, route));
+}
+public void before(Filter filter) {
+addFilter(HttpMethod.before, FilterImpl.create(SparkUtils.ALL_PATHS, filter));
+}
+public void after(Filter filter) {
+addFilter(HttpMethod.after, FilterImpl.create(SparkUtils.ALL_PATHS, filter));
+}
+public void before(String path, String acceptType, Filter filter) {
+addFilter(HttpMethod.before, FilterImpl.create(path, acceptType, filter));
+}
+public void after(String path, String acceptType, Filter filter) {
+addFilter(HttpMethod.after, FilterImpl.create(path, acceptType, filter));
+}
+public void afterAfter(Filter filter) {
+addFilter(HttpMethod.afterafter, FilterImpl.create(SparkUtils.ALL_PATHS, filter));
+}
+public void afterAfter(String path, Filter filter) {
+addFilter(HttpMethod.afterafter, FilterImpl.create(path, filter));
+}
+public void get(String path, TemplateViewRoute route, TemplateEngine engine) {
+addRoute(HttpMethod.get, TemplateViewRouteImpl.create(path, route, engine));
+}
+public void get(String path,
+String acceptType,
+TemplateViewRoute route,
+TemplateEngine engine) {
+addRoute(HttpMethod.get, TemplateViewRouteImpl.create(path, acceptType, route, engine));
+}
+public void post(String path, TemplateViewRoute route, TemplateEngine engine) {
+addRoute(HttpMethod.post, TemplateViewRouteImpl.create(path, route, engine));
+}
+public void post(String path,
+String acceptType,
+TemplateViewRoute route,
+TemplateEngine engine) {
+addRoute(HttpMethod.post, TemplateViewRouteImpl.create(path, acceptType, route, engine));
+}
+public void put(String path, TemplateViewRoute route, TemplateEngine engine) {
+addRoute(HttpMethod.put, TemplateViewRouteImpl.create(path, route, engine));
+}
+public void put(String path,
+String acceptType,
+TemplateViewRoute route,
+TemplateEngine engine) {
+addRoute(HttpMethod.put, TemplateViewRouteImpl.create(path, acceptType, route, engine));
+}
+public void delete(String path, TemplateViewRoute route, TemplateEngine engine) {
+addRoute(HttpMethod.delete, TemplateViewRouteImpl.create(path, route, engine));
+}
+public void delete(String path,
+String acceptType,
+TemplateViewRoute route,
+TemplateEngine engine) {
+addRoute(HttpMethod.delete, TemplateViewRouteImpl.create(path, acceptType, route, engine));
+}
+public void patch(String path, TemplateViewRoute route, TemplateEngine engine) {
+addRoute(HttpMethod.patch, TemplateViewRouteImpl.create(path, route, engine));
+}
+public void patch(String path,
+String acceptType,
+TemplateViewRoute route,
+TemplateEngine engine) {
+addRoute(HttpMethod.patch, TemplateViewRouteImpl.create(path, acceptType, route, engine));
+}
+public void head(String path, TemplateViewRoute route, TemplateEngine engine) {
+addRoute(HttpMethod.head, TemplateViewRouteImpl.create(path, route, engine));
+}
+public void head(String path,
+String acceptType,
+TemplateViewRoute route,
+TemplateEngine engine) {
+addRoute(HttpMethod.head, TemplateViewRouteImpl.create(path, acceptType, route, engine));
+}
+public void trace(String path, TemplateViewRoute route, TemplateEngine engine) {
+addRoute(HttpMethod.trace, TemplateViewRouteImpl.create(path, route, engine));
+}
+public void trace(String path,
+String acceptType,
+TemplateViewRoute route,
+TemplateEngine engine) {
+addRoute(HttpMethod.trace, TemplateViewRouteImpl.create(path, acceptType, route, engine));
+}
+public void connect(String path, TemplateViewRoute route, TemplateEngine engine) {
+addRoute(HttpMethod.connect, TemplateViewRouteImpl.create(path, route, engine));
+}
+public void connect(String path,
+String acceptType,
+TemplateViewRoute route,
+TemplateEngine engine) {
+addRoute(HttpMethod.connect, TemplateViewRouteImpl.create(path, acceptType, route, engine));
+}
+public void options(String path, TemplateViewRoute route, TemplateEngine engine) {
+addRoute(HttpMethod.options, TemplateViewRouteImpl.create(path, route, engine));
+}
+public void options(String path,
+String acceptType,
+TemplateViewRoute route,
+TemplateEngine engine) {
+addRoute(HttpMethod.options, TemplateViewRouteImpl.create(path, acceptType, route, engine));
+}
+public void get(String path, Route route, ResponseTransformer transformer) {
+addRoute(HttpMethod.get, ResponseTransformerRouteImpl.create(path, route, transformer));
+}
+public void get(String path, String acceptType, Route route, ResponseTransformer transformer) {
+addRoute(HttpMethod.get, ResponseTransformerRouteImpl.create(path, acceptType, route, transformer));
+}
+public void post(String path, Route route, ResponseTransformer transformer) {
+addRoute(HttpMethod.post, ResponseTransformerRouteImpl.create(path, route, transformer));
+}
+public void post(String path, String acceptType, Route route, ResponseTransformer transformer) {
+addRoute(HttpMethod.post, ResponseTransformerRouteImpl.create(path, acceptType, route, transformer));
+}
+public void put(String path, Route route, ResponseTransformer transformer) {
+addRoute(HttpMethod.put, ResponseTransformerRouteImpl.create(path, route, transformer));
+}
+public void put(String path, String acceptType, Route route, ResponseTransformer transformer) {
+addRoute(HttpMethod.put, ResponseTransformerRouteImpl.create(path, acceptType, route, transformer));
+}
+public void delete(String path, Route route, ResponseTransformer transformer) {
+addRoute(HttpMethod.delete, ResponseTransformerRouteImpl.create(path, route, transformer));
+}
+public void delete(String path,
+String acceptType,
+Route route,
+ResponseTransformer transformer) {
+addRoute(HttpMethod.delete, ResponseTransformerRouteImpl.create(path, acceptType, route, transformer));
+}
+public void head(String path, Route route, ResponseTransformer transformer) {
+addRoute(HttpMethod.head, ResponseTransformerRouteImpl.create(path, route, transformer));
+}
+public void head(String path, String acceptType, Route route, ResponseTransformer transformer) {
+addRoute(HttpMethod.head, ResponseTransformerRouteImpl.create(path, acceptType, route, transformer));
+}
+public void connect(String path, Route route, ResponseTransformer transformer) {
+addRoute(HttpMethod.connect, ResponseTransformerRouteImpl.create(path, route, transformer));
+}
+public void connect(String path,
+String acceptType,
+Route route,
+ResponseTransformer transformer) {
+addRoute(HttpMethod.connect, ResponseTransformerRouteImpl.create(path, acceptType, route, transformer));
+}
+public void trace(String path, Route route, ResponseTransformer transformer) {
+addRoute(HttpMethod.trace, ResponseTransformerRouteImpl.create(path, route, transformer));
+}
+public void trace(String path,
+String acceptType,
+Route route,
+ResponseTransformer transformer) {
+addRoute(HttpMethod.trace, ResponseTransformerRouteImpl.create(path, acceptType, route, transformer));
+}
+public void options(String path, Route route, ResponseTransformer transformer) {
+addRoute(HttpMethod.options, ResponseTransformerRouteImpl.create(path, route, transformer));
+}
+public void options(String path,
+String acceptType,
+Route route,
+ResponseTransformer transformer) {
+addRoute(HttpMethod.options, ResponseTransformerRouteImpl.create(path, acceptType, route, transformer));
+}
+public void patch(String path, Route route, ResponseTransformer transformer) {
+addRoute(HttpMethod.patch, ResponseTransformerRouteImpl.create(path, route, transformer));
+}
+public void patch(String path,
+String acceptType,
+Route route,
+ResponseTransformer transformer) {
+addRoute(HttpMethod.patch, ResponseTransformerRouteImpl.create(path, acceptType, route, transformer));
+}
+private RouteImpl createRouteImpl(String path, String acceptType, Route route) {
+if (defaultResponseTransformer != null) {
+return ResponseTransformerRouteImpl.create(path, acceptType, route, defaultResponseTransformer);
+}
+return RouteImpl.create(path, acceptType, route);
+}
+private RouteImpl createRouteImpl(String path, Route route) {
+if (defaultResponseTransformer != null) {
+return ResponseTransformerRouteImpl.create(path, route, defaultResponseTransformer);
+}
+return RouteImpl.create(path, route);
+}
+public void defaultResponseTransformer(ResponseTransformer transformer) {
+defaultResponseTransformer = transformer;
+}
+}

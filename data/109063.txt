@@ -1,0 +1,121 @@
+package examples;
+import io.vertx.core.buffer.Buffer;
+import io.vertx.core.parsetools.JsonParser;
+import io.vertx.core.parsetools.RecordParser;
+public class ParseToolsExamples {
+public void recordParserExample1() {
+final RecordParser parser = RecordParser.newDelimited("\n", h -> {
+System.out.println(h.toString());
+});
+parser.handle(Buffer.buffer("HELLO\nHOW ARE Y"));
+parser.handle(Buffer.buffer("OU?\nI AM"));
+parser.handle(Buffer.buffer("DOING OK"));
+parser.handle(Buffer.buffer("\n"));
+}
+public void recordParserExample2() {
+RecordParser.newFixed(4, h -> {
+System.out.println(h.toString());
+});
+}
+public void jsonParserExample1() {
+JsonParser parser = JsonParser.newParser();
+parser.handler(event -> {
+switch (event.type()) {
+case START_OBJECT:
+break;
+case END_OBJECT:
+break;
+case START_ARRAY:
+break;
+case END_ARRAY:
+break;
+case VALUE:
+String field = event.fieldName();
+if (field != null) {
+} else {
+if (event.isString()) {
+} else {
+}
+}
+break;
+}
+});
+}
+public void jsonParserExample2() {
+JsonParser parser = JsonParser.newParser();
+parser.handle(Buffer.buffer("[{\"firstName\":\"Bob\","));
+parser.handle(Buffer.buffer("\"lastName\":\"Morane\"},"));
+parser.handle(Buffer.buffer("{\"firstName\":\"Luke\",\"lastName\":\"Lucky\"}"));
+parser.handle(Buffer.buffer("]"));
+parser.end();
+}
+public void jsonParserExample3() {
+JsonParser parser = JsonParser.newParser();
+parser.objectValueMode();
+parser.handler(event -> {
+switch (event.type()) {
+case START_ARRAY:
+break;
+case END_ARRAY:
+break;
+case VALUE:
+break;
+}
+});
+parser.handle(Buffer.buffer("[{\"firstName\":\"Bob\"},\"lastName\":\"Morane\"),...]"));
+parser.end();
+}
+public void jsonParserExample4() {
+JsonParser parser = JsonParser.newParser();
+parser.handler(event -> {
+switch (event.type()) {
+case START_OBJECT:
+parser.objectValueMode();
+break;
+case VALUE:
+String id = event.fieldName();
+System.out.println("User with id " + id + " : " + event.value());
+break;
+case END_OBJECT:
+parser.objectEventMode();
+break;
+}
+});
+parser.handle(Buffer.buffer("{\"39877483847\":{\"firstName\":\"Bob\"},\"lastName\":\"Morane\"),...}"));
+parser.end();
+}
+public void jsonParserExample5() {
+JsonParser parser = JsonParser.newParser();
+parser.handler(event -> {
+switch (event.type()) {
+case START_OBJECT:
+parser.arrayValueMode();
+break;
+case VALUE:
+System.out.println("Value : " + event.value());
+break;
+case END_OBJECT:
+parser.arrayEventMode();
+break;
+}
+});
+parser.handle(Buffer.buffer("[0,1,2,3,4,...]"));
+parser.end();
+}
+private static class User {
+private String firstName;
+private String lastName;
+}
+public void jsonParserExample6(JsonParser parser) {
+parser.handler(event -> {
+String id = event.fieldName();
+User user = event.mapTo(User.class);
+System.out.println("User with id " + id + " : " + user.firstName + " " + user.lastName);
+});
+}
+public void jsonParserExample7() {
+JsonParser parser = JsonParser.newParser();
+parser.exceptionHandler(err -> {
+});
+}
+}

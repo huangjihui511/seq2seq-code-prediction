@@ -1,0 +1,45 @@
+package com.google.cloud.tools.jib.builder;
+import com.google.cloud.tools.jib.event.EventHandlers;
+import com.google.cloud.tools.jib.event.events.TimerEvent;
+import com.google.cloud.tools.jib.event.events.TimerEvent.State;
+import com.google.common.annotations.VisibleForTesting;
+import java.io.Closeable;
+import java.time.Clock;
+import java.time.Duration;
+import javax.annotation.Nullable;
+public class TimerEventDispatcher implements Closeable {
+private static final Clock DEFAULT_CLOCK = Clock.systemUTC();
+private final EventHandlers eventHandlers;
+private final String description;
+private final Clock clock;
+private final Timer timer;
+public TimerEventDispatcher(EventHandlers eventHandlers, String description) {
+this(eventHandlers, description, DEFAULT_CLOCK, null);
+}
+@VisibleForTesting
+TimerEventDispatcher(
+EventHandlers eventHandlers, String description, Clock clock, @Nullable Timer parentTimer) {
+this.eventHandlers = eventHandlers;
+this.description = description;
+this.clock = clock;
+this.timer = new Timer(clock, parentTimer);
+dispatchTimerEvent(State.START, Duration.ZERO, description);
+}
+public TimerEventDispatcher subTimer(String description) {
+return new TimerEventDispatcher(eventHandlers, description, clock, timer);
+}
+public void lap() {
+dispatchTimerEvent(State.LAP, timer.lap(), description);
+}
+public void lap(String newDescription) {
+dispatchTimerEvent(State.LAP, timer.lap(), newDescription);
+}
+@Override
+public void close() {
+dispatchTimerEvent(State.FINISHED, timer.lap(), description);
+}
+private void dispatchTimerEvent(State state, Duration duration, String eventDescription) {
+eventHandlers.dispatch(
+new TimerEvent(state, timer, duration, timer.getElapsedTime(), eventDescription));
+}
+}

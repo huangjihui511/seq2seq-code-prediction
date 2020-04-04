@@ -1,0 +1,25 @@
+package tests;
+import com.google.auto.factory.AutoFactory;
+import com.google.auto.factory.Provided;
+import javax.annotation.Nullable;
+import javax.inject.Provider;
+@AutoFactory
+final class MultipleProvidedParamsSameKey {
+private final String one;
+private final String two;
+private final String three;
+private final Provider<String> providerOne;
+private final Provider<String> providerTwo;
+public MultipleProvidedParamsSameKey(
+@Provided String one,
+@Provided String two,
+@Nullable @Provided String three,
+@Provided Provider<String> providerOne,
+@Provided Provider<String> providerTwo) {
+this.one = one;
+this.two = two;
+this.three = three;
+this.providerOne = providerOne;
+this.providerTwo = providerTwo;
+}
+}

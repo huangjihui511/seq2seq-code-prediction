@@ -1,0 +1,8 @@
+package com.netflix.astyanax;
+import com.netflix.astyanax.connectionpool.exceptions.ConnectionException;
+public interface MutationBatchManager {
+public MutationBatch getSharedMutationBatch();
+public MutationBatch getNewMutationBatch();
+public void commitSharedMutationBatch() throws ConnectionException ;
+public void discard();
+}

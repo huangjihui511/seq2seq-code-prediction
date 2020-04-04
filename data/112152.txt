@@ -1,0 +1,46 @@
+package org.menacheri.jetclient.handlers.netty;
+import org.jboss.netty.buffer.ChannelBuffer;
+import org.jboss.netty.buffer.ChannelBuffers;
+import org.jboss.netty.channel.Channel;
+import org.jboss.netty.channel.ChannelHandler.Sharable;
+import org.jboss.netty.channel.ChannelHandlerContext;
+import org.jboss.netty.handler.codec.oneone.OneToOneEncoder;
+import org.menacheri.jetclient.communication.MessageBuffer;
+import org.menacheri.jetclient.event.Event;
+import org.menacheri.jetclient.event.Events;
+@Sharable
+public class MessageBufferEventEncoder extends OneToOneEncoder
+{
+@Override
+protected Object encode(ChannelHandlerContext ctx, Channel channel,
+Object msg) throws Exception
+{
+if (null == msg)
+{
+return msg;
+}
+Event event = (Event) msg;
+ChannelBuffer opcode = ChannelBuffers.buffer(1);
+opcode.writeByte(event.getType());
+if (Events.LOG_IN == event.getType() || Events.RECONNECT == event.getType())
+{
+ChannelBuffer protocolVersion = ChannelBuffers.buffer(1);
+protocolVersion.writeByte(Events.PROTOCOL_VERSION);
+opcode = ChannelBuffers.wrappedBuffer(opcode, protocolVersion);
+}
+ChannelBuffer buffer = null;
+if (null != event.getSource())
+{
+@SuppressWarnings("unchecked")
+MessageBuffer<ChannelBuffer> msgBuffer = (MessageBuffer<ChannelBuffer>) event
+.getSource();
+ChannelBuffer data = msgBuffer.getNativeBuffer();
+buffer = ChannelBuffers.wrappedBuffer(opcode, data);
+}
+else
+{
+buffer = opcode;
+}
+return buffer;
+}
+}

@@ -1,0 +1,26 @@
+package psiprobe.tools;
+import java.lang.reflect.InvocationTargetException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+public class AccessorFactory {
+private static final Logger logger = LoggerFactory.getLogger(AccessorFactory.class);
+private AccessorFactory() {
+}
+public static Accessor getInstance() {
+return getSimple();
+}
+@SuppressWarnings("unused")
+private static Accessor getReflective() {
+try {
+return new ReflectiveAccessor();
+} catch (ClassNotFoundException | InstantiationException | IllegalAccessException
+| NoSuchMethodException | IllegalArgumentException | InvocationTargetException
+| SecurityException e) {
+logger.trace("", e);
+return null;
+}
+}
+private static Accessor getSimple() {
+return new SimpleAccessor();
+}
+}

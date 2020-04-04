@@ -1,0 +1,95 @@
+package com.xkcoding.rbac.security.config;
+import cn.hutool.core.util.StrUtil;
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.Multimap;
+import com.xkcoding.rbac.security.common.Consts;
+import com.xkcoding.rbac.security.common.Status;
+import com.xkcoding.rbac.security.exception.SecurityException;
+import com.xkcoding.rbac.security.model.Permission;
+import com.xkcoding.rbac.security.model.Role;
+import com.xkcoding.rbac.security.repository.PermissionDao;
+import com.xkcoding.rbac.security.repository.RoleDao;
+import com.xkcoding.rbac.security.vo.UserPrincipal;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.springframework.stereotype.Component;
+import org.springframework.web.method.HandlerMethod;
+import org.springframework.web.servlet.mvc.condition.RequestMethodsRequestCondition;
+import org.springframework.web.servlet.mvc.method.RequestMappingInfo;
+import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
+import javax.servlet.http.HttpServletRequest;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
+@Component
+public class RbacAuthorityService {
+@Autowired
+private RoleDao roleDao;
+@Autowired
+private PermissionDao permissionDao;
+@Autowired
+private RequestMappingHandlerMapping mapping;
+public boolean hasPermission(HttpServletRequest request, Authentication authentication) {
+checkRequest(request);
+Object userInfo = authentication.getPrincipal();
+boolean hasPermission = false;
+if (userInfo instanceof UserDetails) {
+UserPrincipal principal = (UserPrincipal) userInfo;
+Long userId = principal.getId();
+List<Role> roles = roleDao.selectByUserId(userId);
+List<Long> roleIds = roles.stream()
+.map(Role::getId)
+.collect(Collectors.toList());
+List<Permission> permissions = permissionDao.selectByRoleIdList(roleIds);
+List<Permission> btnPerms = permissions.stream()
+.filter(permission -> Objects.equals(permission.getType(), Consts.BUTTON))
+.filter(permission -> StrUtil.isNotBlank(permission.getUrl()))
+.filter(permission -> StrUtil.isNotBlank(permission.getMethod()))
+.collect(Collectors.toList());
+for (Permission btnPerm : btnPerms) {
+AntPathRequestMatcher antPathMatcher = new AntPathRequestMatcher(btnPerm.getUrl(), btnPerm.getMethod());
+if (antPathMatcher.matches(request)) {
+hasPermission = true;
+break;
+}
+}
+return hasPermission;
+} else {
+return false;
+}
+}
+private void checkRequest(HttpServletRequest request) {
+String currentMethod = request.getMethod();
+Multimap<String, String> urlMapping = allUrlMapping();
+for (String uri : urlMapping.keySet()) {
+AntPathRequestMatcher antPathMatcher = new AntPathRequestMatcher(uri);
+if (antPathMatcher.matches(request)) {
+if (!urlMapping.get(uri)
+.contains(currentMethod)) {
+throw new SecurityException(Status.HTTP_BAD_METHOD);
+} else {
+return;
+}
+}
+}
+throw new SecurityException(Status.REQUEST_NOT_FOUND);
+}
+private Multimap<String, String> allUrlMapping() {
+Multimap<String, String> urlMapping = ArrayListMultimap.create();
+Map<RequestMappingInfo, HandlerMethod> handlerMethods = mapping.getHandlerMethods();
+handlerMethods.forEach((k, v) -> {
+Set<String> url = k.getPatternsCondition()
+.getPatterns();
+RequestMethodsRequestCondition method = k.getMethodsCondition();
+url.forEach(s -> urlMapping.putAll(s, method.getMethods()
+.stream()
+.map(Enum::toString)
+.collect(Collectors.toList())));
+});
+return urlMapping;
+}
+}

@@ -1,0 +1,15 @@
+package net.pms.formats.audio;
+public class OGA extends AudioBase {
+@Override
+public Identifier getIdentifier() {
+return Identifier.OGA;
+}
+@Override
+public String[] getSupportedExtensions() {
+return new String[] {
+"oga",
+"spx",
+"opus",
+};
+}
+}

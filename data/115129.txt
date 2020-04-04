@@ -1,0 +1,40 @@
+package io.ebean;
+public final class DocStoreQueueEntry {
+public enum Action {
+INDEX(1),
+DELETE(2),
+NESTED(3);
+int value;
+Action(int value) {
+this.value = value;
+}
+public int getValue() {
+return value;
+}
+}
+private final Action type;
+private final String queueId;
+private final String path;
+private final Object beanId;
+public DocStoreQueueEntry(Action type, String queueId, Object beanId) {
+this(type, queueId, null, beanId);
+}
+public DocStoreQueueEntry(Action type, String queueId, String path, Object beanId) {
+this.type = type;
+this.queueId = queueId;
+this.path = path;
+this.beanId = beanId;
+}
+public Action getType() {
+return type;
+}
+public String getQueueId() {
+return queueId;
+}
+public String getPath() {
+return path;
+}
+public Object getBeanId() {
+return beanId;
+}
+}

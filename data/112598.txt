@@ -1,0 +1,133 @@
+package org.jb2011.lnf.beautyeye.ch15_slider;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Rectangle;
+import javax.swing.JComponent;
+import javax.swing.JSlider;
+import javax.swing.plaf.ComponentUI;
+import javax.swing.plaf.basic.BasicSliderUI;
+import org.jb2011.lnf.beautyeye.utils.BEUtils;
+public class BESliderUI extends BasicSliderUI
+{
+public BESliderUI(JSlider b){
+super(b);
+}
+public static ComponentUI createUI(JComponent b) {
+return new BESliderUI((JSlider)b);
+}
+public void paintTrack(Graphics g)  {
+Rectangle trackBounds = trackRect;
+if ( slider.getOrientation() == JSlider.HORIZONTAL )
+{
+int cy = (trackBounds.height / 2) - 2;
+int cw = trackBounds.width;
+g.translate(trackBounds.x, trackBounds.y + cy);
+if(slider.isEnabled())
+{
+__Icon9Factory__.getInstance().getSliderTrack()
+.draw((Graphics2D)g, 0,0, cw, THUMB_HEIGHT_HORIZONAL);
+__Icon9Factory__.getInstance().getSliderTrack_forground()
+.draw((Graphics2D)g, 0,0, thumbRect.x, THUMB_HEIGHT_HORIZONAL);
+}
+else
+{
+__Icon9Factory__.getInstance().getSliderTrack_disable()
+.draw((Graphics2D)g, 0,0, cw, THUMB_HEIGHT_HORIZONAL);
+__Icon9Factory__.getInstance().getSliderTrack_forground_disable()
+.draw((Graphics2D)g, 0,0, thumbRect.x, THUMB_HEIGHT_HORIZONAL);
+}
+g.translate(-trackBounds.x, -(trackBounds.y + cy));
+}
+else
+{
+int cx = (trackBounds.width / 2) - 2;
+int ch = trackBounds.height;
+g.translate(trackBounds.x + cx, trackBounds.y);
+if(slider.isEnabled())
+{
+__Icon9Factory__.getInstance().getSliderTrack_VERITICAL()
+.draw((Graphics2D)g, 0,0, THUMB_WIDTH_VERTICAL, ch);
+__Icon9Factory__.getInstance().getSliderTrack_VERTICAL_forground()
+.draw((Graphics2D)g, 0,thumbRect.y, THUMB_WIDTH_VERTICAL, ch - thumbRect.y);
+}
+else
+{
+__Icon9Factory__.getInstance().getSliderTrack_VERITICAL_disable()
+.draw((Graphics2D)g, 0,0, THUMB_WIDTH_VERTICAL, ch);
+__Icon9Factory__.getInstance().getSliderTrack_VERTICAL_forground_disable()
+.draw((Graphics2D)g, 0,thumbRect.y, THUMB_WIDTH_VERTICAL, ch - thumbRect.y);
+}
+g.translate(-(trackBounds.x + cx), -trackBounds.y);
+}
+}
+public void paintFocus(Graphics g)
+{
+g.setColor( getFocusColor() );
+BEUtils.drawDashedRect(g, focusRect.x, focusRect.y,
+focusRect.width, focusRect.height);
+}
+public void paintThumb(Graphics g)
+{
+Rectangle knobBounds = thumbRect;
+int w = knobBounds.width;
+int h = knobBounds.height;
+g.translate(knobBounds.x, knobBounds.y);
+if (slider.isEnabled())
+{
+g.setColor(slider.getBackground());
+}
+else
+{
+g.setColor(slider.getBackground().darker());
+}
+if(isPaintNoTrangleThumb())
+{
+if(slider.getOrientation() == JSlider.HORIZONTAL)
+g.drawImage(
+slider.isEnabled()?__IconFactory__.getInstance().getSliderTick1_notrangle().getImage()
+:__IconFactory__.getInstance().getSliderTick1_notrangle_disable().getImage()
+, 0, 0, null);
+else
+g.drawImage(slider.isEnabled()?__IconFactory__.getInstance().getSliderTick1_notrangle_vertical().getImage()
+:__IconFactory__.getInstance().getSliderTick1_notrangle_VERTICAL_disable().getImage()
+, 0, 0, null);
+}
+else if (slider.getOrientation() == JSlider.HORIZONTAL)
+{
+g.drawImage(slider.isEnabled()?__IconFactory__.getInstance().getSliderTick1().getImage()
+:__IconFactory__.getInstance().getSliderTick1_disable().getImage()
+, 0, 0, null);
+}
+else
+{ 
+g.drawImage(slider.isEnabled()?__IconFactory__.getInstance().getSliderTick1_vertical().getImage()
+:__IconFactory__.getInstance().getSliderTick1_VERTICAL_disable().getImage()
+, 0, 0, null);
+}
+g.translate(-knobBounds.x, -knobBounds.y);
+}
+protected boolean isPaintNoTrangleThumb()
+{
+Boolean paintThumbArrowShape = (Boolean) slider
+.getClientProperty("Slider.paintThumbArrowShape");
+return (!slider.getPaintTicks() && paintThumbArrowShape == null)
+|| paintThumbArrowShape == Boolean.FALSE;
+}
+protected Dimension getThumbSize()
+{
+boolean isPaintNoTrangle = isPaintNoTrangleThumb();
+Dimension size = new Dimension();
+if (slider.getOrientation() == JSlider.VERTICAL)
+{
+size.width = 17;
+size.height = isPaintNoTrangle?16:12;
+}
+else
+{
+size.width = isPaintNoTrangle?16:12;
+size.height = 17;
+}
+return size;
+}
+}

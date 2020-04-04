@@ -1,0 +1,101 @@
+package net.openhft.affinity;
+import net.openhft.affinity.impl.NoCpuLayout;
+import org.jetbrains.annotations.NotNull;
+import java.lang.reflect.Field;
+public class NonForkingAffinityLock extends AffinityLock implements ThreadLifecycleListener {
+private static final Field GROUP_FIELD = makeThreadFieldModifiable("group");
+private static final Field TARGET_FIELD = makeThreadFieldModifiable("target");
+private static final LockInventory LOCK_INVENTORY = new LockInventory(new NoCpuLayout(PROCESSORS)) {
+@Override
+protected AffinityLock newLock(int cpuId, boolean base, boolean reservable) {
+return new NonForkingAffinityLock(cpuId, base, reservable, this);
+}
+};
+NonForkingAffinityLock(int cpuId, boolean base, boolean reservable, LockInventory lockInventory) {
+super(cpuId, base, reservable, lockInventory);
+}
+public static AffinityLock acquireLock() {
+return acquireLock(true);
+}
+public static AffinityLock acquireCore() {
+return acquireCore(true);
+}
+public static AffinityLock acquireLock(boolean bind) {
+return acquireLock(bind, AffinityLock.ANY_CPU, AffinityStrategies.ANY);
+}
+public static AffinityLock acquireCore(boolean bind) {
+return acquireCore(bind, AffinityLock.ANY_CPU, AffinityStrategies.ANY);
+}
+private static AffinityLock acquireLock(boolean bind, int cpuId, @NotNull AffinityStrategy... strategies) {
+return LOCK_INVENTORY.acquireLock(bind, cpuId, strategies);
+}
+private static AffinityLock acquireCore(boolean bind, int cpuId, @NotNull AffinityStrategy... strategies) {
+return LOCK_INVENTORY.acquireCore(bind, cpuId, strategies);
+}
+public static void cpuLayout(@NotNull CpuLayout cpuLayout) {
+LOCK_INVENTORY.set(cpuLayout);
+}
+@NotNull
+public static CpuLayout cpuLayout() {
+return LOCK_INVENTORY.getCpuLayout();
+}
+@NotNull
+public static String dumpLocks() {
+return LOCK_INVENTORY.dumpLocks();
+}
+private static Field makeThreadFieldModifiable(String fieldName) {
+try {
+Field field = Thread.class.getDeclaredField(fieldName);
+field.setAccessible(true);
+return field;
+} catch (NoSuchFieldException e) {
+throw new RuntimeException(Thread.class.getName() + " class doesn't have a " + fieldName + " field! Quite unexpected!");
+}
+}
+private static void changeGroupOfThread(Thread thread, ThreadGroup group) {
+try {
+GROUP_FIELD.set(thread, group);
+} catch (IllegalAccessException e) {
+throw new RuntimeException("Failed changing " + Thread.class.getName() + "'s the '" + GROUP_FIELD.getName() + "' field! Reason: " + e.getMessage());
+}
+}
+private static void wrapRunnableOfThread(Thread thread, final AffinityLock lock) {
+try {
+final Runnable originalRunnable = (Runnable) TARGET_FIELD.get(thread);
+TARGET_FIELD.set(
+thread,
+new Runnable() {
+@Override
+public void run() {
+lock.release();
+originalRunnable.run();
+}
+}
+);
+} catch (IllegalAccessException e) {
+throw new RuntimeException("Failed wrapping " + Thread.class.getName() + "'s '" + TARGET_FIELD.getName() + "' field! Reason: " + e.getMessage());
+}
+}
+@Override
+public void bind(boolean wholeCore) {
+super.bind(wholeCore);
+Thread thread = Thread.currentThread();
+changeGroupOfThread(thread, new ThreadTrackingGroup(thread.getThreadGroup(), this));
+}
+@Override
+public void release() {
+Thread thread = Thread.currentThread();
+changeGroupOfThread(thread, thread.getThreadGroup().getParent());
+super.release();
+}
+@Override
+public void started(Thread t) {
+wrapRunnableOfThread(t, this);
+}
+@Override
+public void startFailed(Thread t) {
+}
+@Override
+public void terminated(Thread t) {
+}
+}

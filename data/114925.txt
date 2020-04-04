@@ -1,0 +1,69 @@
+package it.unimi.dsi.fastutil.io;
+public class FastByteArrayInputStream extends MeasurableInputStream implements RepositionableStream {
+public byte[] array;
+public int offset;
+public int length;
+private int position;
+private int mark;
+public FastByteArrayInputStream(final byte[] array, final int offset, final int length) {
+this.array = array;
+this.offset = offset;
+this.length = length;
+}
+public FastByteArrayInputStream(final byte[] array) {
+this(array, 0, array.length);
+}
+@Override
+public boolean markSupported() {
+return true;
+}
+@Override
+public void reset() {
+position = mark;
+}
+@Override
+public void close() {}
+@Override
+public void mark(final int dummy) {
+mark = position;
+}
+@Override
+public int available() {
+return length - position;
+}
+@Override
+public long skip(long n) {
+if (n <= length - position) {
+position += (int)n;
+return n;
+}
+n = length - position;
+position = length;
+return n;
+}
+@Override
+public int read() {
+if (length == position) return -1;
+return array[offset + position++] & 0xFF;
+}
+@Override
+public int read(final byte b[], final int offset, final int length) {
+if (this.length == this.position) return length == 0 ? 0 : -1;
+final int n = Math.min(length, this.length - this.position);
+System.arraycopy(array, this.offset + this.position, b, offset, n);
+this.position += n;
+return n;
+}
+@Override
+public long position() {
+return position;
+}
+@Override
+public void position(final long newPosition) {
+position = (int)Math.min(newPosition, length);
+}
+@Override
+public long length() {
+return length;
+}
+}

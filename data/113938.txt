@@ -1,0 +1,30 @@
+package org.spongepowered.mod.network.brokenmod;
+import io.netty.channel.ChannelHandlerContext;
+import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
+import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
+import net.minecraftforge.fml.common.network.simpleimpl.SimpleChannelHandlerWrapper;
+import net.minecraftforge.fml.relauncher.Side;
+public class BrokenModSimpleNetworkChannelWrapper<REQ extends IMessage, REPLY extends IMessage> extends SimpleChannelHandlerWrapper<REQ, REPLY> {
+private BrokenModData brokenModData;
+public BrokenModSimpleNetworkChannelWrapper(Class<? extends IMessageHandler<? super REQ, ? extends REPLY>> handler, Side side, Class<REQ> requestType) {
+super(handler, side, requestType);
+this.onInit(side);
+}
+public BrokenModSimpleNetworkChannelWrapper(IMessageHandler<? super REQ, ? extends REPLY> handler, Side side, Class<REQ> requestType) {
+super(handler, side, requestType);
+this.onInit(side);
+}
+private void onInit(Side side) {
+this.brokenModData = new BrokenModData(() -> side);
+}
+@Override
+protected void channelRead0(ChannelHandlerContext ctx, REQ msg) throws Exception {
+this.brokenModData.schedule(() -> {
+try {
+super.channelRead0(ctx, msg);
+} catch (Exception e) {
+throw new RuntimeException("Exception when invoking mod packet handler!", e);
+}
+});
+}
+}

@@ -1,0 +1,9 @@
+package org.jupiter.benchmark.tcp;
+import org.jupiter.rpc.ServiceProviderImpl;
+@ServiceProviderImpl
+public class ServiceImpl implements Service {
+@Override
+public String hello(String arg) {
+return arg;
+}
+}

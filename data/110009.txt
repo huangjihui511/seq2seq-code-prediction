@@ -1,0 +1,11 @@
+package com.google.cloud.tools.jib.plugins.common;
+public class InvalidContainerVolumeException extends Exception {
+private String invalidVolume;
+InvalidContainerVolumeException(String message, String invalidVolume, Throwable cause) {
+super(message, cause);
+this.invalidVolume = invalidVolume;
+}
+public String getInvalidVolume() {
+return invalidVolume;
+}
+}

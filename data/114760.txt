@@ -1,0 +1,9 @@
+package com.springboot.demo.sys.service.impl;
+import com.springboot.demo.sys.entity.SysRoleMenu;
+import com.springboot.demo.sys.mapper.SysRoleMenuMapper;
+import com.springboot.demo.sys.service.SysRoleMenuService;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import org.springframework.stereotype.Service;
+@Service
+public class SysRoleMenuServiceImpl extends ServiceImpl<SysRoleMenuMapper, SysRoleMenu> implements SysRoleMenuService {
+}

@@ -1,0 +1,56 @@
+package org.springframework.integration.support.management;
+@SuppressWarnings("deprecation")
+public class AggregatingMessageChannelMetrics extends DefaultMessageChannelMetrics {
+private static final int DEFAULT_SAMPLE_SIZE = 1000;
+private final int sampleSize;
+private long start;
+public AggregatingMessageChannelMetrics() {
+this(null, DEFAULT_SAMPLE_SIZE);
+}
+public AggregatingMessageChannelMetrics(String name, int sampleSize) {
+super(name);
+this.sampleSize = sampleSize;
+}
+public AggregatingMessageChannelMetrics(String name, ExponentialMovingAverage sendDuration,
+ExponentialMovingAverageRate sendErrorRate, ExponentialMovingAverageRatio sendSuccessRatio,
+ExponentialMovingAverageRate sendRate, int sampleSize) {
+super(name, sendDuration, sendErrorRate, sendSuccessRatio, sendRate);
+this.sampleSize = sampleSize;
+}
+@Override
+public synchronized MetricsContext beforeSend() {
+long count = this.sendCount.getAndIncrement();
+if (isFullStatsEnabled() && count % this.sampleSize == 0) {
+this.start = System.nanoTime();
+this.sendRate.increment(this.start);
+}
+return new AggregatingChannelMetricsContext(this.start, count + 1);
+}
+@Override
+public void afterSend(MetricsContext context, boolean result) {
+AggregatingChannelMetricsContext aggregatingContext = (AggregatingChannelMetricsContext) context;
+long newCount = aggregatingContext.newCount;
+if (result) {
+if (isFullStatsEnabled() && newCount % this.sampleSize == 0) {
+long now = System.nanoTime();
+this.sendSuccessRatio.success(now);
+this.sendDuration.append(now - aggregatingContext.start);
+}
+}
+else {
+if (isFullStatsEnabled() && newCount % this.sampleSize == 0) {
+long now = System.nanoTime();
+this.sendSuccessRatio.failure(now);
+this.sendErrorRate.increment(now);
+}
+this.sendErrorCount.incrementAndGet();
+}
+}
+protected static class AggregatingChannelMetricsContext extends DefaultChannelMetricsContext {
+protected long newCount; 
+public AggregatingChannelMetricsContext(long start, long newCount) {
+super(start);
+this.newCount = newCount;
+}
+}
+}

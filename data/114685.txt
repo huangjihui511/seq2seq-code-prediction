@@ -1,0 +1,5 @@
+package com.twelvemonkeys.util;
+import java.util.EventListener;
+public interface ResourceChangeListener extends EventListener {
+void resourceChanged(Resource pResource);
+}

@@ -1,0 +1,5 @@
+package us.codecraft.webmagic;
+public interface Task {
+public String getUUID();
+public Site getSite();
+}

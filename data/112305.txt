@@ -1,0 +1,14 @@
+package com.github.jknack.handlebars.internal.path;
+import com.github.jknack.handlebars.Context;
+import com.github.jknack.handlebars.ValueResolver;
+public class ResolveThisPath extends ThisPath {
+public ResolveThisPath(final String name) {
+super(name);
+}
+@Override
+public Object eval(final ValueResolver resolver, final Context context, final Object data,
+final Chain chain) {
+Object value = resolver.resolve(data);
+return value == null ? data : value;
+}
+}

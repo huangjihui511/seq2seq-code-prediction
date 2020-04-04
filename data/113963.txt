@@ -1,0 +1,49 @@
+package org.spongepowered.mod.mixin.core.item;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.item.ItemLilyPad;
+import net.minecraft.util.EnumFacing;
+import net.minecraft.util.EnumHand;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.World;
+import net.minecraftforge.common.util.BlockSnapshot;
+import net.minecraftforge.event.world.BlockEvent;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Redirect;
+import org.spongepowered.common.mixin.core.item.ItemMixin;
+import javax.annotation.Nullable;
+@Mixin(ItemLilyPad.class)
+public abstract class ItemLilyPadMixin_Forge extends ItemMixin {
+@Redirect(method = "onItemRightClick",
+at = @At(value = "INVOKE",
+target = "Lnet/minecraftforge/common/util/BlockSnapshot;getBlockSnapshot(Lnet/minecraft/world/World;Lnet/minecraft/util/math/BlockPos;)Lnet/minecraftforge/common/util/BlockSnapshot;",
+remap = false
+)
+)
+private BlockSnapshot sponge$IgnoreSnapshotCreationDuetoTracking(final World world, final BlockPos pos) {
+return null;
+}
+@SuppressWarnings("deprecation")
+@Redirect(method = "onItemRightClick",
+at = @At(
+value = "INVOKE",
+target = "Lnet/minecraftforge/event/ForgeEventFactory;onPlayerBlockPlace(Lnet/minecraft/entity/player/EntityPlayer;Lnet/minecraftforge/common/util/BlockSnapshot;Lnet/minecraft/util/EnumFacing;Lnet/minecraft/util/EnumHand;)Lnet/minecraftforge/event/world/BlockEvent$PlaceEvent;",
+remap = false
+)
+)
+@Nullable
+private BlockEvent.PlaceEvent sponge$IgnoreForgeEventDueToTracker(final EntityPlayer player, final BlockSnapshot blockSnapshot,
+final EnumFacing direction, final EnumHand hand) {
+return null;
+}
+@Redirect(method = "onItemRightClick",
+at = @At(
+value = "INVOKE",
+target = "Lnet/minecraftforge/event/world/BlockEvent$PlaceEvent;isCanceled()Z",
+remap = false)
+)
+@SuppressWarnings("deprecation")
+private boolean sponge$IgnoreEventCancellation(final BlockEvent.PlaceEvent placeEvent) {
+return false;
+}
+}

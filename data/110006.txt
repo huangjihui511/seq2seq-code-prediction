@@ -1,0 +1,36 @@
+package com.google.cloud.tools.jib.plugins.common;
+import com.google.cloud.tools.jib.event.events.TimerEvent;
+import com.google.cloud.tools.jib.event.events.TimerEvent.State;
+import java.util.function.Consumer;
+public class TimerEventHandler implements Consumer<TimerEvent> {
+private static StringBuilder getTabs(TimerEvent.Timer timer) {
+StringBuilder tabs = new StringBuilder();
+while (timer.getParent().isPresent()) {
+tabs.append("\t");
+timer = timer.getParent().get();
+}
+return tabs;
+}
+private static String buildLogMessage(TimerEvent timerEvent) {
+StringBuilder logMessageBuilder = getTabs(timerEvent.getTimer());
+if (timerEvent.getState() == State.START) {
+return logMessageBuilder.append("TIMING\t").append(timerEvent.getDescription()).toString();
+} else {
+return logMessageBuilder
+.append("TIMED\t")
+.append(timerEvent.getDescription())
+.append(" : ")
+.append(timerEvent.getDuration().toNanos() / 1000 / 1000.0)
+.append(" ms")
+.toString();
+}
+}
+private final Consumer<String> logMessageConsumer;
+public TimerEventHandler(Consumer<String> logMessageConsumer) {
+this.logMessageConsumer = logMessageConsumer;
+}
+@Override
+public void accept(TimerEvent timerEvent) {
+logMessageConsumer.accept(buildLogMessage(timerEvent));
+}
+}

@@ -1,0 +1,33 @@
+package org.pf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Modifier;
+public class DefaultPluginFactory implements PluginFactory {
+private static final Logger log = LoggerFactory.getLogger(DefaultPluginFactory.class);
+@Override
+public Plugin create(final PluginWrapper pluginWrapper) {
+String pluginClassName = pluginWrapper.getDescriptor().getPluginClass();
+log.debug("Create instance for plugin '{}'", pluginClassName);
+Class<?> pluginClass;
+try {
+pluginClass = pluginWrapper.getPluginClassLoader().loadClass(pluginClassName);
+} catch (ClassNotFoundException e) {
+log.error(e.getMessage(), e);
+return null;
+}
+int modifiers = pluginClass.getModifiers();
+if (Modifier.isAbstract(modifiers) || Modifier.isInterface(modifiers)
+|| (!Plugin.class.isAssignableFrom(pluginClass))) {
+log.error("The plugin class '{}' is not valid", pluginClassName);
+return null;
+}
+try {
+Constructor<?> constructor = pluginClass.getConstructor(PluginWrapper.class);
+return (Plugin) constructor.newInstance(pluginWrapper);
+} catch (Exception e) {
+log.error(e.getMessage(), e);
+}
+return null;
+}
+}

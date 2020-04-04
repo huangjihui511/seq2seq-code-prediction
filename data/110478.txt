@@ -1,0 +1,7 @@
+package com.baomidou.mybatisplus.annotation;
+public enum FieldFill {
+DEFAULT,
+INSERT,
+UPDATE,
+INSERT_UPDATE
+}

@@ -1,0 +1,50 @@
+package com.xkcoding.rbac.security.exception.handler;
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.json.JSONUtil;
+import com.xkcoding.rbac.security.common.ApiResponse;
+import com.xkcoding.rbac.security.common.BaseException;
+import com.xkcoding.rbac.security.common.Status;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.DisabledException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.ControllerAdvice;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.servlet.NoHandlerFoundException;
+import javax.validation.ConstraintViolationException;
+@ControllerAdvice
+@Slf4j
+public class GlobalExceptionHandler {
+@ExceptionHandler(value = Exception.class)
+@ResponseBody
+public ApiResponse handlerException(Exception e) {
+if (e instanceof NoHandlerFoundException) {
+return ApiResponse.ofStatus(Status.REQUEST_NOT_FOUND);
+} else if (e instanceof HttpRequestMethodNotSupportedException) {
+return ApiResponse.ofStatus(Status.HTTP_BAD_METHOD);
+} else if (e instanceof MethodArgumentNotValidException) {
+return ApiResponse.of(Status.BAD_REQUEST.getCode(), ((MethodArgumentNotValidException) e).getBindingResult()
+.getAllErrors()
+.get(0)
+.getDefaultMessage(), null);
+} else if (e instanceof ConstraintViolationException) {
+return ApiResponse.of(Status.BAD_REQUEST.getCode(), CollUtil.getFirst(((ConstraintViolationException) e).getConstraintViolations())
+.getMessage(), null);
+} else if (e instanceof MethodArgumentTypeMismatchException) {
+return ApiResponse.ofStatus(Status.PARAM_NOT_MATCH);
+} else if (e instanceof HttpMessageNotReadableException) {
+return ApiResponse.ofStatus(Status.PARAM_NOT_NULL);
+} else if (e instanceof BadCredentialsException) {
+return ApiResponse.ofStatus(Status.USERNAME_PASSWORD_ERROR);
+} else if (e instanceof DisabledException) {
+return ApiResponse.ofStatus(Status.USER_DISABLED);
+} else if (e instanceof BaseException) {
+return ApiResponse.ofException((BaseException) e);
+}
+return ApiResponse.ofStatus(Status.ERROR);
+}
+}

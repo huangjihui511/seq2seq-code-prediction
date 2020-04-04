@@ -1,0 +1,59 @@
+package org.apache.pdfbox.debugger.flagbitspane;
+import javax.swing.JPanel;
+import org.apache.pdfbox.cos.COSDictionary;
+import org.apache.pdfbox.cos.COSName;
+import org.apache.pdfbox.pdmodel.PDDocument;
+public class FlagBitsPane
+{
+private FlagBitsPaneView view;
+private final PDDocument document;
+public FlagBitsPane(PDDocument document, final COSDictionary dictionary, COSName flagType)
+{
+this.document = document;
+createPane(dictionary, flagType);
+}
+private void createPane(final COSDictionary dictionary, final COSName flagType)
+{
+Flag flag;
+if (COSName.FLAGS.equals(flagType))
+{
+flag = new FontFlag(dictionary);
+view = new FlagBitsPaneView(
+flag.getFlagType(), flag.getFlagValue(), flag.getFlagBits(), flag.getColumnNames());
+}
+if (COSName.F.equals(flagType))
+{
+flag = new AnnotFlag(dictionary);
+view = new FlagBitsPaneView(
+flag.getFlagType(), flag.getFlagValue(), flag.getFlagBits(), flag.getColumnNames());
+}
+if (COSName.FF.equals(flagType))
+{
+flag = new FieldFlag(dictionary);
+view = new FlagBitsPaneView(
+flag.getFlagType(), flag.getFlagValue(), flag.getFlagBits(), flag.getColumnNames());
+}
+if (COSName.PANOSE.equals(flagType))
+{
+flag = new PanoseFlag(dictionary);
+view = new FlagBitsPaneView(
+flag.getFlagType(), flag.getFlagValue(), flag.getFlagBits(), flag.getColumnNames());
+}
+if (COSName.P.equals(flagType))
+{
+flag = new EncryptFlag(dictionary);
+view = new FlagBitsPaneView(
+flag.getFlagType(), flag.getFlagValue(), flag.getFlagBits(), flag.getColumnNames());
+}
+if (COSName.SIG_FLAGS.equals(flagType))
+{
+flag = new SigFlag(document, dictionary);
+view = new FlagBitsPaneView(
+flag.getFlagType(), flag.getFlagValue(), flag.getFlagBits(), flag.getColumnNames());
+}
+}
+public JPanel getPane()
+{
+return view.getPanel();
+}
+}

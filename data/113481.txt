@@ -1,0 +1,21 @@
+package com.pokegoapi.examples;
+import com.pokegoapi.auth.GoogleUserCredentialProvider;
+import com.pokegoapi.exceptions.request.RequestFailedException;
+import okhttp3.OkHttpClient;
+import java.util.Scanner;
+public class GoogleUserInteractionExample {
+public static void main(String[] args) {
+OkHttpClient http = new OkHttpClient();
+try {
+GoogleUserCredentialProvider provider = new GoogleUserCredentialProvider(http);
+System.out.println("Please go to " + provider.LOGIN_URL);
+System.out.println("Enter authorisation code:");
+Scanner sc = new Scanner(System.in);
+String access = sc.nextLine();
+provider.login(access);
+System.out.println("Refresh token:" + provider.refreshToken);
+} catch (RequestFailedException e) {
+e.printStackTrace();
+}
+}
+}
